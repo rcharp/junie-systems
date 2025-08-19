@@ -63,8 +63,8 @@ const Hero = () => {
             </div>
             
             <h1 className="text-6xl lg:text-7xl font-bold leading-tight">
-              AI answering service
-              <span className="bg-gradient-hero bg-clip-text text-transparent"> always availabee</span>
+              Never miss a 
+              <span className="bg-gradient-hero bg-clip-text text-transparent">lead again</span>
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">

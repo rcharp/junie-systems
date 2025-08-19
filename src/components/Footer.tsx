@@ -1,4 +1,4 @@
-import availabeeLogo from "@/assets/availabee-logo-minimal.png";
+import availabeeLogo from "@/assets/availabee-phone-logo.png";
 import { Mail, MapPin } from "lucide-react";
 
 const Footer = () => {
@@ -11,7 +11,7 @@ const Footer = () => {
               <img 
                 src={availabeeLogo} 
                 alt="Availabee AI Logo" 
-                className="w-8 h-8 filter invert"
+                className="w-10 h-10 filter invert"
               />
               <span className="text-2xl font-bold lowercase">availabee</span>
             </div>

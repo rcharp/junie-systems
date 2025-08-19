@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import availabeeLogo from "@/assets/availabee-logo-minimal.png";
+import availabeeLogo from "@/assets/availabee-phone-logo.png";
 
 const Header = () => {
   return (
@@ -9,7 +9,7 @@ const Header = () => {
           <img 
             src={availabeeLogo} 
             alt="Availabee AI Logo" 
-            className="w-8 h-8"
+            className="w-12 h-12"
           />
           <span className="text-2xl font-bold text-foreground lowercase">availabee</span>
         </div>
