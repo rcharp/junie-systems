@@ -1,4 +1,4 @@
-import availabeeLogo from "@/assets/availabee-logo.png";
+import availabeeLogo from "@/assets/availabee-logo-minimal.png";
 import { Mail, MapPin } from "lucide-react";
 
 const Footer = () => {
@@ -11,9 +11,9 @@ const Footer = () => {
               <img 
                 src={availabeeLogo} 
                 alt="Availabee AI Logo" 
-                className="w-10 h-10 rounded-lg bg-white/10 p-1"
+                className="w-8 h-8 filter invert"
               />
-              <span className="text-xl font-bold">Availabee</span>
+              <span className="text-2xl font-bold lowercase">availabee</span>
             </div>
             <p className="text-primary-foreground/80 leading-relaxed">
               The AI answering service that never sleeps, never misses a call, and always captures your leads.

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import availabeeLogo from "@/assets/availabee-logo.png";
+import availabeeLogo from "@/assets/availabee-logo-minimal.png";
 
 const Header = () => {
   return (
@@ -9,9 +9,9 @@ const Header = () => {
           <img 
             src={availabeeLogo} 
             alt="Availabee AI Logo" 
-            className="w-10 h-10 rounded-lg"
+            className="w-8 h-8"
           />
-          <span className="text-xl font-bold text-foreground">Availabee</span>
+          <span className="text-2xl font-bold text-foreground lowercase">availabee</span>
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
