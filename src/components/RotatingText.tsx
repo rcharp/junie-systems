@@ -9,17 +9,37 @@ interface RotatingTextProps {
 const RotatingText = ({ words, className = "", baseSize = "text-6xl lg:text-7xl" }: RotatingTextProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const textRef = useRef<HTMLDivElement>(null);
+  const [textSize, setTextSize] = useState(baseSize);
+  const textRef = useRef<HTMLSpanElement>(null);
 
   const currentWord = words[currentIndex];
   const article = currentWord === "appointment" ? "an" : "a";
 
-  console.log("RotatingText rendering:", { currentWord, currentIndex, words });
+  // Check if text needs resizing to prevent wrapping
+  useEffect(() => {
+    if (textRef.current) {
+      const element = textRef.current;
+      const container = element.parentElement;
+      
+      if (container) {
+        // Reset to base size first
+        setTextSize(baseSize);
+        
+        // Check after a brief delay to allow rendering
+        setTimeout(() => {
+          const containerWidth = container.offsetWidth;
+          const elementWidth = element.scrollWidth;
+          
+          if (elementWidth > containerWidth * 0.95) { // If close to wrapping
+            setTextSize("text-4xl lg:text-5xl"); // Smaller size
+          }
+        }, 50);
+      }
+    }
+  }, [currentWord, baseSize]);
 
   useEffect(() => {
-    console.log("Setting up interval for word rotation");
     const interval = setInterval(() => {
-      console.log("Changing word from index", currentIndex, "to", (currentIndex + 1) % words.length);
       setIsAnimating(true);
       setTimeout(() => {
         setCurrentIndex((prev) => (prev + 1) % words.length);
@@ -28,12 +48,12 @@ const RotatingText = ({ words, className = "", baseSize = "text-6xl lg:text-7xl"
     }, 2500);
 
     return () => clearInterval(interval);
-  }, [words.length, currentIndex]);
+  }, [words.length]);
 
   return (
-    <span className={`font-bold leading-tight ${baseSize}`}>
+    <span ref={textRef} className={`font-bold leading-tight ${textSize}`}>
       Never miss {article}{" "}
-      <span className={`${className} border border-red-500`}>
+      <span className={className}>
         {currentWord}
       </span>{" "}
       <span className="text-foreground">again</span>
