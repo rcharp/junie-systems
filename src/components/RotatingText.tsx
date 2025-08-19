@@ -18,11 +18,11 @@ const RotatingText = ({ words, className = "" }: RotatingTextProps) => {
   }, [words.length]);
 
   const currentWord = words[currentIndex];
-  const article = "a"; // All words (lead, sale, call) use "a"
+  const article = currentWord === "appointment" ? "an" : "a";
 
   return (
     <>
-      <span className="text-6xl lg:text-7xl font-bold leading-tight">
+      <span className="text-4xl lg:text-5xl font-bold leading-tight">
         Never miss {article}{" "}
         <span className={className}>
           {currentWord}
@@ -32,7 +32,7 @@ const RotatingText = ({ words, className = "" }: RotatingTextProps) => {
       
       {/* Fallback for browsers without JavaScript */}
       <noscript>
-        <span className="text-6xl lg:text-7xl font-bold leading-tight">
+        <span className="text-4xl lg:text-5xl font-bold leading-tight">
           Never miss a{" "}
           <span className={className}>lead</span>{" "}
           <span className="text-foreground">again</span>
