@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import RotatingText from "./RotatingText";
 
 const Hero = () => {
   const [email, setEmail] = useState("");
@@ -57,14 +58,13 @@ const Hero = () => {
       <div className="container mx-auto px-4 py-32">
         <div className="max-w-4xl mx-auto text-center space-y-12 animate-slide-up">
           <div className="space-y-6">
-            <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
-              <CheckCircle className="w-4 h-4" />
-              <span>Trusted by 500+ businesses</span>
-            </div>
-            
             <h1 className="text-6xl lg:text-7xl font-bold leading-tight">
-              Never miss a 
-              <span className="bg-gradient-hero bg-clip-text text-transparent"> lead again</span>
+              Never miss a{" "}
+              <RotatingText 
+                words={["lead", "sale", "customer", "call", "appointment"]}
+                className="text-primary"
+              />{" "}
+              <span className="text-foreground">again</span>
             </h1>
             
             <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
