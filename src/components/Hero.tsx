@@ -58,14 +58,10 @@ const Hero = () => {
       <div className="container mx-auto px-4 py-32">
         <div className="max-w-4xl mx-auto text-center space-y-12 animate-slide-up">
           <div className="space-y-6">
-            <h1 className="text-6xl lg:text-7xl font-bold leading-tight">
-              Never miss a{" "}
-              <RotatingText 
-                words={["lead", "sale", "customer", "call", "appointment"]}
-                className="text-primary"
-              />{" "}
-              <span className="text-foreground">again</span>
-            </h1>
+            <RotatingText 
+              words={["lead", "sale", "customer", "call", "appointment"]}
+              className="text-primary"
+            />
             
             <p className="text-xl text-muted-foreground leading-relaxed max-w-3xl mx-auto">
               10x better than voicemail. 10x cheaper than hiring staff. Let Availabee answer your calls, book appointments, and capture leads while you focus on running your business.
