@@ -6,7 +6,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
           <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-            <span className="text-xl font-bold text-primary-foreground">a</span>
+            <span className="text-2xl font-bold text-primary-foreground">a</span>
           </div>
         </div>
         
