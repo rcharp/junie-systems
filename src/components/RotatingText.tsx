@@ -23,23 +23,23 @@ const RotatingText = ({ words, className = "" }: RotatingTextProps) => {
   return (
     <>
       <div className="text-4xl lg:text-5xl font-bold leading-tight">
-        <div>
-          Never miss {article}{" "}
+        <div>Never miss</div>
+        <div className="text-foreground">
+          {article}{" "}
           <span className={className}>
             {currentWord}
-          </span>
+          </span>{" "}
+          again
         </div>
-        <div className="text-foreground">again</div>
       </div>
       
       {/* Fallback for browsers without JavaScript */}
       <noscript>
         <div className="text-4xl lg:text-5xl font-bold leading-tight">
-          <div>
-            Never miss a{" "}
-            <span className={className}>lead</span>
+          <div>Never miss</div>
+          <div className="text-foreground">
+            a <span className={className}>lead</span> again
           </div>
-          <div className="text-foreground">again</div>
         </div>
       </noscript>
     </>
