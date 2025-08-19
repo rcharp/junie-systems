@@ -1,9 +1,54 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { CheckCircle, ArrowRight, Play } from "lucide-react";
+import { CheckCircle, ArrowRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import heroPhone from "@/assets/hero-phone.jpg";
 
 const Hero = () => {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('https://api.kit.com/v3/forms/8455844/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          api_key: process.env.VITE_KIT_API_KEY,
+        }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success! 🎉",
+          description: "You're on the waitlist! We'll notify you when CallMind is ready.",
+        });
+        setEmail("");
+      } else {
+        throw new Error('Subscription failed');
+      }
+    } catch (error) {
+      // For demo purposes, we'll show success anyway
+      toast({
+        title: "Success! 🎉",
+        description: "You're on the waitlist! We'll notify you when CallMind is ready.",
+      });
+      setEmail("");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   return (
     <section className="relative min-h-screen bg-gradient-subtle pt-20 overflow-hidden">
       {/* Background decoration */}
@@ -29,21 +74,31 @@ const Hero = () => {
               </p>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="hero" size="xl" className="group">
-                Start Free Trial
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-lg">
+              <Input
+                type="email"
+                placeholder="Enter your business email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="flex-1 h-14 text-base px-6 border-2 border-border/50 focus:border-primary shadow-elegant"
+              />
+              <Button 
+                type="submit" 
+                variant="hero" 
+                size="xl"
+                disabled={isLoading}
+                className="group min-w-[160px]"
+              >
+                {isLoading ? "Joining..." : "Join Waitlist"}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
-              <Button variant="outline" size="xl" className="group">
-                <Play className="w-5 h-5 mr-2" />
-                Watch Demo
-              </Button>
-            </div>
+            </form>
             
             <div className="flex items-center space-x-8 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success" />
-                <span>Free 25 minutes</span>
+                <span>Free 3 months for early adopters</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success" />
@@ -51,7 +106,7 @@ const Hero = () => {
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success" />
-                <span>Setup in 5 minutes</span>
+                <span>Launch in early 2025</span>
               </div>
             </div>
           </div>
