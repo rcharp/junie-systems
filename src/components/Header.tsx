@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import availabeeLogo from "@/assets/availabee-phone-logo.png";
+import availabeeLogo from "@/assets/availabee-bee-trail-logo.png";
 
 const Header = () => {
   return (
