@@ -1,17 +1,11 @@
 import { Button } from "@/components/ui/button";
-import availabeeLogo from "@/assets/availabee-bee-trail-logo.png";
 
 const Header = () => {
   return (
     <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <img 
-            src={availabeeLogo} 
-            alt="Availabee AI Logo" 
-            className="w-12 h-12"
-          />
-          <span className="text-2xl font-bold text-foreground lowercase">availabee</span>
+        <div className="flex items-center">
+          <span className="text-2xl font-bold text-primary lowercase">availabee</span>
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
