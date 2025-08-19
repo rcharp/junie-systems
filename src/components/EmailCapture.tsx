@@ -32,7 +32,7 @@ const EmailCapture = () => {
       if (response.ok) {
         toast({
           title: "Success! 🎉",
-          description: "You're on the waitlist! We'll notify you when CallMind is ready.",
+        description: "You're on the waitlist! We'll notify you when Availabee is ready.",
         });
         setEmail("");
       } else {
@@ -42,7 +42,7 @@ const EmailCapture = () => {
       // For demo purposes, we'll show success anyway
       toast({
         title: "Success! 🎉",
-        description: "You're on the waitlist! We'll notify you when CallMind is ready.",
+        description: "You're on the waitlist! We'll notify you when Availabee is ready.",
       });
       setEmail("");
     } finally {
@@ -66,7 +66,7 @@ const EmailCapture = () => {
               </Badge>
               <CardTitle className="text-3xl lg:text-4xl font-bold">
                 Be the first to experience
-                <span className="bg-gradient-hero bg-clip-text text-transparent"> CallMind AI</span>
+                <span className="bg-gradient-hero bg-clip-text text-transparent"> Availabee AI</span>
               </CardTitle>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Join our exclusive early access program and get 3 months free when we launch. 

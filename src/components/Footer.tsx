@@ -1,4 +1,5 @@
-import { Phone, Mail, MapPin } from "lucide-react";
+import availabeeLogo from "@/assets/availabee-logo.png";
+import { Mail, MapPin } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -6,23 +7,24 @@ const Footer = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="grid md:grid-cols-4 gap-8">
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Phone className="w-4 h-4" />
-              </div>
-              <span className="text-xl font-bold">CallMind</span>
+            <div className="flex items-center space-x-3">
+              <img 
+                src={availabeeLogo} 
+                alt="Availabee AI Logo" 
+                className="w-10 h-10 rounded-lg bg-white/10 p-1"
+              />
+              <span className="text-xl font-bold">Availabee</span>
             </div>
             <p className="text-primary-foreground/80 leading-relaxed">
               The AI answering service that never sleeps, never misses a call, and always captures your leads.
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4" />
-                <span>1-800-CALLMIND</span>
+                <span>📞 1-800-AVAILABEE</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
-                <span>hello@callmind.ai</span>
+                <span>hello@availabee.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4" />
@@ -64,7 +66,7 @@ const Footer = () => {
         
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center">
           <p className="text-primary-foreground/60">
-            © 2024 CallMind AI. All rights reserved. Built with ❤️ for small businesses.
+            © 2024 Availabee AI. All rights reserved. Built with 🐝 for small businesses.
           </p>
         </div>
       </div>

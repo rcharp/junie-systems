@@ -80,7 +80,7 @@ const Features = () => {
             <span className="bg-gradient-hero bg-clip-text text-transparent"> never miss a call</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            CallMind combines cutting-edge AI with business intelligence to create the perfect virtual receptionist for your company.
+            Availabee combines cutting-edge AI with business intelligence to create the perfect virtual receptionist for your company.
           </p>
         </div>
 

@@ -38,7 +38,7 @@ const Demo = () => {
         <div className="text-center space-y-4 mb-16">
           <Badge variant="outline" className="text-primary">Live Demo</Badge>
           <h2 className="text-4xl lg:text-5xl font-bold">
-            See CallMind 
+            See Availabee 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> in action</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -105,7 +105,7 @@ const Demo = () => {
             <div className="relative rounded-2xl overflow-hidden shadow-elegant">
               <img 
                 src={dashboardPreview}
-                alt="CallMind AI dashboard showing call analytics and performance metrics"
+                alt="Availabee AI dashboard showing call analytics and performance metrics"
                 className="w-full h-auto"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />

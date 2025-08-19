@@ -32,7 +32,7 @@ const Hero = () => {
       if (response.ok) {
         toast({
           title: "Success! 🎉",
-          description: "You're on the waitlist! We'll notify you when CallMind is ready.",
+        description: "You're on the waitlist! We'll notify you when Availabee is ready.",
         });
         setEmail("");
       } else {
@@ -42,7 +42,7 @@ const Hero = () => {
       // For demo purposes, we'll show success anyway
       toast({
         title: "Success! 🎉",
-        description: "You're on the waitlist! We'll notify you when CallMind is ready.",
+        description: "You're on the waitlist! We'll notify you when Availabee is ready.",
       });
       setEmail("");
     } finally {
@@ -65,12 +65,12 @@ const Hero = () => {
               </div>
               
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                AI answering service for
-                <span className="bg-gradient-hero bg-clip-text text-transparent"> small businesses</span>
+                AI answering service
+                <span className="bg-gradient-hero bg-clip-text text-transparent"> always availabee</span>
               </h1>
               
               <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
-                10x better than voicemail. 10x cheaper than hiring staff. Let CallMind answer your calls, book appointments, and capture leads while you focus on running your business.
+                10x better than voicemail. 10x cheaper than hiring staff. Let Availabee answer your calls, book appointments, and capture leads while you focus on running your business.
               </p>
             </div>
             
