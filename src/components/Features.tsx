@@ -5,10 +5,8 @@ import {
   Calendar, 
   MessageSquare, 
   Clock, 
-  TrendingUp, 
-  Shield,
+  TrendingUp,
   Zap,
-  Globe,
   Brain
 } from "lucide-react";
 
@@ -41,7 +39,7 @@ const Features = () => {
     {
       icon: <Clock className="w-8 h-8" />,
       title: "Instant Notifications",
-      description: "Get real-time alerts via SMS, email, or app notifications for important calls and bookings.",
+      description: "Get real-time alerts via SMS or email for important calls and bookings.",
       badge: "Real-Time"
     },
     {
@@ -51,22 +49,10 @@ const Features = () => {
       badge: "Insights"
     },
     {
-      icon: <Shield className="w-8 h-8" />,
-      title: "Enterprise Security",
-      description: "Bank-level encryption and HIPAA compliance to keep your business data secure.",
-      badge: "Secure"
-    },
-    {
       icon: <Zap className="w-8 h-8" />,
       title: "Instant Setup",
       description: "Get started in minutes with our simple setup wizard. No technical expertise required.",
       badge: "Easy Setup"
-    },
-    {
-      icon: <Globe className="w-8 h-8" />,
-      title: "Multi-Language Support",
-      description: "Serve customers in 50+ languages with automatic language detection and translation.",
-      badge: "Global"
     }
   ];
 
