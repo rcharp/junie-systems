@@ -5,69 +5,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/useAuth";
 import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3, TrendingUp, MessageSquare } from "lucide-react";
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
 import { BlandCallInterface } from "@/components/BlandCallInterface";
 import { handleRobustSignOut } from "@/lib/auth-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 
 const Dashboard = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Check if user is authenticated
-    const checkAuth = async () => {
-      console.log('Dashboard: Checking auth...');
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        console.log('Dashboard: Session check result:', { session: !!session, user: !!session?.user, error });
-        
-        if (error) {
-          console.error('Dashboard: Session error:', error);
-          navigate("/login");
-          return;
-        }
-        
-        if (!session?.user) {
-          console.log('Dashboard: No user found, redirecting to login');
-          navigate("/login");
-          return;
-        }
-        
-        console.log('Dashboard: User found, setting state');
-        setUser(session.user);
-        setLoading(false);
-      } catch (err) {
-        console.error('Dashboard: Error in checkAuth:', err);
-        setLoading(false);
-        navigate("/login");
-      }
-    };
-
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Dashboard: Auth state change:', { event, hasSession: !!session, hasUser: !!session?.user });
-        if (!session?.user) {
-          navigate("/login");
-        } else {
-          setUser(session.user);
-          setLoading(false);
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [loading, user, navigate]);
 
   const handleSignOut = async () => {
     try {
@@ -84,6 +41,10 @@ const Dashboard = () => {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
   }
 
   return (

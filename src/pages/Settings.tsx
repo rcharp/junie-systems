@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -13,11 +13,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save } from "lucide-react";
-import { User as SupabaseUser } from "@supabase/supabase-js";
 
 const Settings = () => {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useAuth();
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -51,28 +49,12 @@ const Settings = () => {
   const [instantAlerts, setInstantAlerts] = useState(true);
 
   useEffect(() => {
-    checkUser();
-  }, []);
-
-  const checkUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        navigate("/login");
-        return;
-      }
-
-      setUser(user);
-      // Here you would load user settings from the database
-      loadUserSettings(user.id);
-    } catch (error) {
-      console.error('Error checking user:', error);
+    if (!loading && !user) {
       navigate("/login");
-    } finally {
-      setLoading(false);
+    } else if (user) {
+      loadUserSettings(user.id);
     }
-  };
+  }, [loading, user, navigate]);
 
   const loadUserSettings = async (userId: string) => {
     // This would load settings from your database
@@ -111,6 +93,10 @@ const Settings = () => {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
   }
 
   return (
