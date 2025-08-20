@@ -86,16 +86,13 @@ const BlandAIMonitoring = () => {
 
   const fetchCallDetails = async (callId: string) => {
     try {
-      const response = await fetch(`/functions/v1/bland-ai-calls?action=get-call&call_id=${callId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const { data, error } = await supabase.functions.invoke('bland-ai-calls', {
+        body: { action: 'get-call', call_id: callId },
+        method: 'POST',
       });
 
-      if (!response.ok) throw new Error('Failed to fetch call details');
+      if (error) throw error;
       
-      const data = await response.json();
       setSelectedCall(data);
     } catch (error: any) {
       console.error('Error fetching call details:', error);
@@ -109,16 +106,13 @@ const BlandAIMonitoring = () => {
 
   const fetchTranscript = async (callId: string) => {
     try {
-      const response = await fetch(`/functions/v1/bland-ai-calls?action=get-transcript&call_id=${callId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const { data, error } = await supabase.functions.invoke('bland-ai-calls', {
+        body: { action: 'get-transcript', call_id: callId },
+        method: 'POST',
       });
 
-      if (!response.ok) throw new Error('Failed to fetch transcript');
+      if (error) throw error;
       
-      const data = await response.json();
       setTranscript(data);
     } catch (error: any) {
       console.error('Error fetching transcript:', error);

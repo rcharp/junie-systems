@@ -7,26 +7,26 @@ const HowItWorks = () => {
     {
       icon: <Settings className="w-8 h-8" />,
       step: "STEP 1",
-      title: "Train Availabee on your business",
-      description: "Use your Google Business profile, website address or simple business information to get started."
+      title: "Connect your business line",
+      description: "Set up call forwarding from your existing business number to Availabee in under 5 minutes. No new phone system required."
     },
     {
       icon: <CheckCircle className="w-8 h-8" />,
       step: "STEP 2", 
-      title: "Confirm Availabee has things right",
-      description: "Availabee will be trained on your specific business information. Make adjustments, add questions you want asked when taking a message, and more."
+      title: "Train your AI assistant",
+      description: "Configure Availabee with your business information, FAQs, appointment booking rules, and preferred communication style."
     },
     {
       icon: <Phone className="w-8 h-8" />,
       step: "STEP 3",
-      title: "Forward your calls to Availabee",
-      description: "No need to change your existing business number. Just forward calls to Availabee when you want her to answer."
+      title: "Customize call handling",
+      description: "Set when Availabee should answer, what information to collect, and how to route urgent calls to you."
     },
     {
       icon: <MessageSquare className="w-8 h-8" />,
       step: "STEP 4",
-      title: "Availabee answers your calls and takes messages",
-      description: "When a call comes in, Availabee will answer the call, answer questions, and take a message according to your needs. You'll then be notified by email and/or text, and every call recording and transcript is saved in your calls inbox."
+      title: "Never miss another call",
+      description: "Availabee handles incoming calls 24/7, captures leads, schedules appointments, and forwards urgent matters instantly via text or email."
     }
   ];
 

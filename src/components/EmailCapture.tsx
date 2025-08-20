@@ -109,11 +109,6 @@ const EmailCapture = () => {
                 </div>
               </div>
               
-              <div className="text-center">
-                <p className="text-xs text-muted-foreground">
-                  Already have 1,247+ businesses on the waitlist 🔥
-                </p>
-              </div>
             </CardContent>
           </Card>
         </div>

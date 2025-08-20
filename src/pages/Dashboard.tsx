@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3 } from "lucide-react";
+import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3, TrendingUp, MessageSquare } from "lucide-react";
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
@@ -167,81 +167,122 @@ const Dashboard = () => {
         </div>
 
         {/* Main Dashboard Content */}
+        {/* Welcome Card moved to top */}
+        <Card className="mb-8 bg-gradient-hero text-white border-0">
+          <CardHeader>
+            <CardTitle className="text-white">🎉 Welcome to Availabee AI!</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-white/90 mb-4">
+              Your intelligent scheduling assistant is ready to help you save time and never miss an important meeting again.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button variant="secondary">
+                Watch Tutorial
+              </Button>
+              <Button variant="outline" className="border-white/20 text-white hover:bg-white/20 hover:text-white">
+                Connect Calendar
+              </Button>
+              <Button variant="outline" className="border-white/20 text-white hover:bg-white/20 hover:text-white">
+                Import Contacts
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full lg:w-auto grid-cols-5">
-            <TabsTrigger value="overview" className="flex items-center space-x-2">
-              <BarChart3 className="w-4 h-4" />
-              <span>Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="calls" className="flex items-center space-x-2">
-              <Phone className="w-4 h-4" />
-              <span>Calls</span>
-            </TabsTrigger>
-            <TabsTrigger value="monitoring" className="flex items-center space-x-2">
-              <Phone className="w-4 h-4" />
-              <span>AI Monitor</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center space-x-2">
-              <BarChart3 className="w-4 h-4" />
-              <span>Analytics</span>
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="flex items-center space-x-2">
-              <Bell className="w-4 h-4" />
-              <span>Notifications</span>
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="calls">Calls</TabsTrigger>
+            <TabsTrigger value="monitoring">AI Monitor</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Recent Activity */}
-              <Card className="lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    Recent Activity
-                    <Button size="sm" variant="outline">
-                      <Plus className="w-4 h-4 mr-2" />
-                      New Meeting
-                    </Button>
-                  </CardTitle>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Meetings</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      { title: "Call with Sarah Johnson", time: "2 hours ago", status: "Completed", type: "call" },
-                      { title: "Urgent service request", time: "4 hours ago", status: "Completed", type: "urgent" },
-                      { title: "Pricing inquiry call", time: "6 hours ago", status: "Completed", type: "info" },
-                      { title: "Appointment rescheduling", time: "Yesterday", status: "Completed", type: "appointment" },
-                    ].map((activity, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <Phone className="w-4 h-4 text-muted-foreground" />
-                          <div>
-                            <h4 className="font-medium">{activity.title}</h4>
-                            <p className="text-sm text-muted-foreground">{activity.time}</p>
-                          </div>
-                        </div>
-                        <Badge variant={activity.status === "Completed" ? "default" : "secondary"}>
-                          {activity.status}
-                        </Badge>
+                  <div className="text-2xl font-bold">24</div>
+                  <p className="text-xs text-muted-foreground">+20% from last month</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Hours Saved</CardTitle>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">12.5</div>
+                  <p className="text-xs text-muted-foreground">+15% from last month</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Contacts</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">142</div>
+                  <p className="text-xs text-muted-foreground">+5 new this week</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">98%</div>
+                  <p className="text-xs text-muted-foreground">+2% from last month</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {[
+                    { time: "2 minutes ago", action: "Scheduled meeting with John Smith", type: "success" },
+                    { time: "15 minutes ago", action: "Rescheduled call with Sarah Johnson", type: "warning" },
+                    { time: "1 hour ago", action: "Cancelled meeting with Mike Davis", type: "error" },
+                    { time: "2 hours ago", action: "Confirmed appointment with Lisa Wilson", type: "success" },
+                  ].map((activity, index) => (
+                    <div key={index} className="flex items-center space-x-3">
+                      <div className={`w-2 h-2 rounded-full ${
+                        activity.type === 'success' ? 'bg-green-500' :
+                        activity.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.action}</p>
+                        <p className="text-xs text-muted-foreground">{activity.time}</p>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
 
-              {/* Quick Actions */}
               <Card>
                 <CardHeader>
                   <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                   <Button className="w-full justify-start" variant="outline">
                     <Phone className="w-4 h-4 mr-2" />
-                    Test AI Call
+                    Schedule New Meeting
                   </Button>
                   <Button className="w-full justify-start" variant="outline">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Schedule Meeting
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Send Quick Message
                   </Button>
                   <Button className="w-full justify-start" variant="outline">
                     <Users className="w-4 h-4 mr-2" />
@@ -272,29 +313,6 @@ const Dashboard = () => {
             <NotificationSettings />
           </TabsContent>
         </Tabs>
-
-        {/* Getting Started Card */}
-        <Card className="mt-8 bg-gradient-hero text-white border-0">
-          <CardHeader>
-            <CardTitle className="text-white">🎉 Welcome to Availabee AI!</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-white/90 mb-4">
-              Your intelligent scheduling assistant is ready to help you save time and never miss an important meeting again.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="secondary">
-                Watch Tutorial
-              </Button>
-              <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                Connect Calendar
-              </Button>
-              <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                Import Contacts
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </main>
     </div>
   );

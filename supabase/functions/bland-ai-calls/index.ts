@@ -19,7 +19,15 @@ serve(async (req) => {
     }
 
     const url = new URL(req.url);
-    const action = url.searchParams.get('action') || (req.method === 'POST' ? 'send-call' : 'list-calls');
+    let action = url.searchParams.get('action');
+    
+    // If no action in URL params and it's POST, check body
+    if (!action && req.method === 'POST') {
+      const body = await req.json();
+      action = body.action || 'send-call';
+    } else if (!action) {
+      action = 'list-calls';
+    }
 
     switch (action) {
       case 'list-calls': {
@@ -56,7 +64,11 @@ serve(async (req) => {
       }
 
       case 'get-call': {
-        const callId = url.searchParams.get('call_id');
+        let callId = url.searchParams.get('call_id');
+        if (!callId && req.method === 'POST') {
+          const body = await req.json();
+          callId = body.call_id;
+        }
         if (!callId) {
           throw new Error('call_id parameter is required');
         }
@@ -83,7 +95,11 @@ serve(async (req) => {
       }
 
       case 'get-transcript': {
-        const callId = url.searchParams.get('call_id');
+        let callId = url.searchParams.get('call_id');
+        if (!callId && req.method === 'POST') {
+          const body = await req.json();
+          callId = body.call_id;
+        }
         if (!callId) {
           throw new Error('call_id parameter is required');
         }
