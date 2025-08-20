@@ -134,14 +134,14 @@ const Signup = () => {
             alt="Availabee Logo" 
             className="h-8 w-8"
           />
-          <span className="text-xl font-bold text-foreground">Availabee</span>
+          <span className="text-xl font-bold text-muted-foreground">Availabee</span>
         </a>
       </div>
 
       {/* Main Card */}
       <Card className="w-full max-w-md relative z-10 bg-card border shadow-2xl">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold text-foreground">
+          <CardTitle className="text-2xl font-bold text-muted-foreground">
             Create your account
           </CardTitle>
           <CardDescription className="text-muted-foreground">
@@ -152,7 +152,7 @@ const Signup = () => {
         <CardContent className="space-y-6">
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-muted-foreground text-sm font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -164,7 +164,7 @@ const Signup = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground text-sm font-medium">Password</Label>
+              <Label htmlFor="password" className="text-muted-foreground text-sm font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -176,7 +176,7 @@ const Signup = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-foreground text-sm font-medium">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-muted-foreground text-sm font-medium">Confirm Password</Label>
               <Input
                 id="confirmPassword"
                 type="password"
