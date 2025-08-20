@@ -78,7 +78,7 @@ const Dashboard = () => {
               alt="Availabee Logo" 
               className="h-8 w-8"
             />
-            <h1 className="text-xl font-bold text-primary">Availabee Dashboard</h1>
+            
           </div>
           
           <div className="flex items-center space-x-4">
