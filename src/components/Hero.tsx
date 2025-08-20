@@ -54,7 +54,7 @@ const Hero = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent))_0%,transparent_50%)] opacity-10 pointer-events-none" />
       
       <div className="container mx-auto px-4 py-32">
-        <div className="grid lg:grid-cols-5 gap-12 items-center animate-slide-up">
+        <div className="grid lg:grid-cols-3 gap-12 items-center animate-slide-up">
           {/* Left Column - Text Content */}
           <div className="space-y-8 text-center lg:text-left lg:col-span-2">
             <div className="space-y-6">
@@ -104,7 +104,7 @@ const Hero = () => {
           </div>
 
           {/* Right Column - Phone Image */}
-          <div className="lg:flex lg:justify-end lg:col-span-3">
+          <div className="lg:flex lg:justify-end lg:col-span-1">
             <div className="relative flex justify-center lg:block">
               <img 
                 src="/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png" 
