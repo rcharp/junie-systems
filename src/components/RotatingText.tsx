@@ -22,7 +22,7 @@ const RotatingText = ({ words, className = "" }: RotatingTextProps) => {
 
   return (
     <>
-      <div className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+      <div className="text-5xl sm:text-6xl lg:text-5xl xl:text-6xl font-bold leading-tight">
         <div>Never miss {article}</div>
         <div className="text-foreground">
           <span className={className}>
