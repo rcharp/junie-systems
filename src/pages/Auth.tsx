@@ -185,7 +185,7 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-white/20 h-12"
+                className="bg-white border-white/30 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
               />
             </div>
             <div className="space-y-2">
@@ -197,7 +197,7 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-white/20 h-12"
+                className="bg-white border-white/30 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
               />
             </div>
             
