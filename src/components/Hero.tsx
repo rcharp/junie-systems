@@ -114,8 +114,8 @@ const Hero = () => {
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
               <img 
-                src="/lovable-uploads/6c473fae-e0b3-44ab-bb60-c373e617ab26.png" 
-                alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking"
+                src="/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png" 
+                alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
                 className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-2xl shadow-2xl"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent rounded-2xl" />
