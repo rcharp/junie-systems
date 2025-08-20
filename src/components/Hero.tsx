@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import RotatingText from "./RotatingText";
+import { removeBackground, loadImageFromUrl } from "@/utils/backgroundRemoval";
 
 
 const Hero = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,6 +53,33 @@ const Hero = () => {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const processImage = async () => {
+      setIsProcessingImage(true);
+      try {
+        const img = await loadImageFromUrl("/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png");
+        const processedBlob = await removeBackground(img);
+        const url = URL.createObjectURL(processedBlob);
+        setProcessedImageUrl(url);
+      } catch (error) {
+        console.error('Failed to process image:', error);
+        // Fallback to original image
+        setProcessedImageUrl("/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png");
+      } finally {
+        setIsProcessingImage(false);
+      }
+    };
+
+    processImage();
+
+    // Cleanup function to revoke the blob URL
+    return () => {
+      if (processedImageUrl) {
+        URL.revokeObjectURL(processedImageUrl);
+      }
+    };
+  }, []);
   return (
     <section className="relative min-h-screen bg-gradient-subtle pt-20 overflow-hidden">
       {/* Background decoration */}
@@ -113,11 +143,17 @@ const Hero = () => {
           {/* Right Column - Phone Image */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
-              <img 
-                src="/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png" 
-                alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
-                className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-2xl shadow-2xl"
-              />
+              {isProcessingImage ? (
+                <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl aspect-[9/16] bg-muted rounded-2xl shadow-2xl flex items-center justify-center">
+                  <div className="text-muted-foreground">Processing image...</div>
+                </div>
+              ) : (
+                <img 
+                  src={processedImageUrl || "/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png"}
+                  alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
+                  className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-2xl shadow-2xl"
+                />
+              )}
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent rounded-2xl" />
             </div>
           </div>
