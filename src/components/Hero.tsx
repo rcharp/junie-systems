@@ -19,33 +19,30 @@ const Hero = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://api.kit.com/v3/forms/8455844/subscribe', {
+      // Use the kit-subscribe edge function for secure API key handling
+      const response = await fetch('/api/kit-subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          email: email,
-          api_key: process.env.VITE_KIT_API_KEY,
-        }),
+        body: JSON.stringify({ email }),
       });
 
       if (response.ok) {
         toast({
           title: "Success! 🎉",
-        description: "You're on the waitlist! We'll notify you when Availabee is ready.",
+          description: "You're on the waitlist! We'll notify you when Availabee is ready.",
         });
         setEmail("");
       } else {
         throw new Error('Subscription failed');
       }
     } catch (error) {
-      // For demo purposes, we'll show success anyway
       toast({
-        title: "Success! 🎉",
-        description: "You're on the waitlist! We'll notify you when Availabee is ready.",
+        title: "Error",
+        description: "Failed to join waitlist. Please try again.",
+        variant: "destructive",
       });
-      setEmail("");
     } finally {
       setIsLoading(false);
     }
