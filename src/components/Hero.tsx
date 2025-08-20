@@ -69,7 +69,7 @@ const Hero = () => {
               </h1>
               
               <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
-                10x better than voicemail. 10x cheaper than hiring staff. Let Availabee answer your calls, book appointments, and capture leads while you focus on running your business.
+                10x better than voicemail. 10x cheaper than an answering service. Grow your business while Availabee answers your calls, helps set appointments, and sends you the messages.
               </p>
             </div>
             
@@ -97,15 +97,11 @@ const Hero = () => {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success" />
-                <span>Free 3 months for early adopters</span>
+                <span>First 25 minutes completely free</span>
               </div>
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success" />
-                <span>No credit card required</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                <span>Launch in early 2025</span>
+                <span>No credit card required to start</span>
               </div>
             </div>
           </div>
