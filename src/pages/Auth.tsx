@@ -25,10 +25,10 @@ const Auth = () => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Redirect authenticated users to home
+        // Redirect authenticated users to dashboard
         if (session?.user) {
           setTimeout(() => {
-            navigate("/");
+            navigate("/dashboard");
           }, 0);
         }
       }
@@ -41,7 +41,7 @@ const Auth = () => {
       
       // Redirect if already authenticated
       if (session?.user) {
-        navigate("/");
+        navigate("/dashboard");
       }
     });
 
@@ -53,7 +53,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -78,22 +78,17 @@ const Auth = () => {
             variant: "destructive",
           });
         }
-      } else {
-        // Check if email confirmation is required
-        if (data.user && !data.user.email_confirmed_at) {
-          toast({
-            title: "Check your email",
-            description: "We've sent you a confirmation link. Please check your email and click the link to complete your registration.",
-          });
-          setEmail("");
-          setPassword("");
-        } else if (data.user && data.user.email_confirmed_at) {
-          toast({
-            title: "Account created!",
-            description: "Your account has been created successfully. You can now sign in.",
-          });
-          setIsSignUp(false); // Switch to sign in mode
-        }
+      } else if (data.user) {
+        // Auto-confirm the user and sign them in immediately
+        toast({
+          title: "Account created! 🎉",
+          description: "Welcome to Availabee! Redirecting to your dashboard...",
+        });
+        
+        // Redirect to dashboard immediately
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
       }
     } catch (error: any) {
       toast({
@@ -127,11 +122,15 @@ const Auth = () => {
           throw error;
         }
       } else if (data.user) {
-        // Navigation will be handled by onAuthStateChange
         toast({
-          title: "Welcome back!",
-          description: "You've been successfully signed in.",
+          title: "Welcome back! 🎉",
+          description: "Redirecting to your dashboard...",
         });
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1000);
       }
     } catch (error: any) {
       toast({
