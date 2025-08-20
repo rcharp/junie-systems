@@ -14,6 +14,186 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          caller_name: string
+          created_at: string
+          email: string | null
+          id: string
+          notes: string | null
+          phone_number: string
+          preferred_date: string
+          preferred_time: string
+          service_type: string
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          caller_name: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone_number: string
+          preferred_date: string
+          preferred_time: string
+          service_type: string
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          caller_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone_number?: string
+          preferred_date?: string
+          preferred_time?: string
+          service_type?: string
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      business_settings: {
+        Row: {
+          ai_personality: string | null
+          appointment_booking: boolean | null
+          auto_forward: boolean | null
+          business_address: string | null
+          business_description: string | null
+          business_hours: string | null
+          business_name: string | null
+          business_phone: string | null
+          business_type: string | null
+          common_questions: string | null
+          created_at: string
+          custom_greeting: string | null
+          email_notifications: boolean | null
+          forwarding_number: string | null
+          id: string
+          instant_alerts: boolean | null
+          lead_capture: boolean | null
+          max_call_duration: number | null
+          push_notifications: boolean | null
+          record_calls: boolean | null
+          sms_notifications: boolean | null
+          updated_at: string
+          urgent_keywords: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_personality?: string | null
+          appointment_booking?: boolean | null
+          auto_forward?: boolean | null
+          business_address?: string | null
+          business_description?: string | null
+          business_hours?: string | null
+          business_name?: string | null
+          business_phone?: string | null
+          business_type?: string | null
+          common_questions?: string | null
+          created_at?: string
+          custom_greeting?: string | null
+          email_notifications?: boolean | null
+          forwarding_number?: string | null
+          id?: string
+          instant_alerts?: boolean | null
+          lead_capture?: boolean | null
+          max_call_duration?: number | null
+          push_notifications?: boolean | null
+          record_calls?: boolean | null
+          sms_notifications?: boolean | null
+          updated_at?: string
+          urgent_keywords?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_personality?: string | null
+          appointment_booking?: boolean | null
+          auto_forward?: boolean | null
+          business_address?: string | null
+          business_description?: string | null
+          business_hours?: string | null
+          business_name?: string | null
+          business_phone?: string | null
+          business_type?: string | null
+          common_questions?: string | null
+          created_at?: string
+          custom_greeting?: string | null
+          email_notifications?: boolean | null
+          forwarding_number?: string | null
+          id?: string
+          instant_alerts?: boolean | null
+          lead_capture?: boolean | null
+          max_call_duration?: number | null
+          push_notifications?: boolean | null
+          record_calls?: boolean | null
+          sms_notifications?: boolean | null
+          updated_at?: string
+          urgent_keywords?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      call_logs: {
+        Row: {
+          best_time_to_call: string | null
+          call_duration: number | null
+          call_status: string | null
+          call_type: string
+          caller_name: string
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          phone_number: string
+          recording_url: string | null
+          transcript: string | null
+          updated_at: string
+          urgency_level: string
+          user_id: string | null
+        }
+        Insert: {
+          best_time_to_call?: string | null
+          call_duration?: number | null
+          call_status?: string | null
+          call_type: string
+          caller_name: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          phone_number: string
+          recording_url?: string | null
+          transcript?: string | null
+          updated_at?: string
+          urgency_level: string
+          user_id?: string | null
+        }
+        Update: {
+          best_time_to_call?: string | null
+          call_duration?: number | null
+          call_status?: string | null
+          call_type?: string
+          caller_name?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          phone_number?: string
+          recording_url?: string | null
+          transcript?: string | null
+          updated_at?: string
+          urgency_level?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       content_suggestions: {
         Row: {
           confidence_score: number | null
