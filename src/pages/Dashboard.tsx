@@ -3,10 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus } from "lucide-react";
+import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3 } from "lucide-react";
+import CallList from "@/components/CallList";
+import NotificationSettings from "@/components/NotificationSettings";
+import CallAnalytics from "@/components/CallAnalytics";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -161,66 +165,104 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        {/* Main Dashboard Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Recent Activity */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                Recent Activity
-                <Button size="sm" variant="outline">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Meeting
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { title: "Meeting with Sarah Johnson", time: "2 hours ago", status: "Completed" },
-                  { title: "Follow-up call scheduled", time: "4 hours ago", status: "Scheduled" },
-                  { title: "Team sync meeting", time: "Yesterday", status: "Completed" },
-                  { title: "Client presentation prep", time: "2 days ago", status: "Completed" },
-                ].map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                    <div>
-                      <h4 className="font-medium">{activity.title}</h4>
-                      <p className="text-sm text-muted-foreground">{activity.time}</p>
-                    </div>
-                    <Badge variant={activity.status === "Completed" ? "default" : "secondary"}>
-                      {activity.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Main Dashboard Content */}
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="grid w-full lg:w-auto grid-cols-4">
+            <TabsTrigger value="overview" className="flex items-center space-x-2">
+              <BarChart3 className="w-4 h-4" />
+              <span>Overview</span>
+            </TabsTrigger>
+            <TabsTrigger value="calls" className="flex items-center space-x-2">
+              <Phone className="w-4 h-4" />
+              <span>Calls</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center space-x-2">
+              <BarChart3 className="w-4 h-4" />
+              <span>Analytics</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center space-x-2">
+              <Bell className="w-4 h-4" />
+              <span>Notifications</span>
+            </TabsTrigger>
+          </TabsList>
 
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button className="w-full justify-start" variant="outline">
-                <Calendar className="w-4 h-4 mr-2" />
-                Schedule Meeting
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Users className="w-4 h-4 mr-2" />
-                Manage Contacts
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Settings className="w-4 h-4 mr-2" />
-                AI Preferences
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Bell className="w-4 h-4 mr-2" />
-                Notifications
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Recent Activity */}
+              <Card className="lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    Recent Activity
+                    <Button size="sm" variant="outline">
+                      <Plus className="w-4 h-4 mr-2" />
+                      New Meeting
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[
+                      { title: "Call with Sarah Johnson", time: "2 hours ago", status: "Completed", type: "call" },
+                      { title: "Urgent service request", time: "4 hours ago", status: "Completed", type: "urgent" },
+                      { title: "Pricing inquiry call", time: "6 hours ago", status: "Completed", type: "info" },
+                      { title: "Appointment rescheduling", time: "Yesterday", status: "Completed", type: "appointment" },
+                    ].map((activity, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 border border-border rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <Phone className="w-4 h-4 text-muted-foreground" />
+                          <div>
+                            <h4 className="font-medium">{activity.title}</h4>
+                            <p className="text-sm text-muted-foreground">{activity.time}</p>
+                          </div>
+                        </div>
+                        <Badge variant={activity.status === "Completed" ? "default" : "secondary"}>
+                          {activity.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Phone className="w-4 h-4 mr-2" />
+                    Test AI Call
+                  </Button>
+                  <Button className="w-full justify-start" variant="outline">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Schedule Meeting
+                  </Button>
+                  <Button className="w-full justify-start" variant="outline">
+                    <Users className="w-4 h-4 mr-2" />
+                    Manage Contacts
+                  </Button>
+                  <Button className="w-full justify-start" variant="outline">
+                    <Settings className="w-4 h-4 mr-2" />
+                    AI Settings
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="calls">
+            <CallList />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <CallAnalytics />
+          </TabsContent>
+
+          <TabsContent value="notifications">
+            <NotificationSettings />
+          </TabsContent>
+        </Tabs>
 
         {/* Getting Started Card */}
         <Card className="mt-8 bg-gradient-hero text-white border-0">
