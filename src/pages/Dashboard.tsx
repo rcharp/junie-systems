@@ -11,7 +11,7 @@ import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3,
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
-import BlandAIMonitoring from "@/components/BlandAIMonitoring";
+
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -191,10 +191,9 @@ const Dashboard = () => {
         </Card>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="calls">Calls</TabsTrigger>
-            <TabsTrigger value="monitoring">AI Monitor</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
@@ -299,10 +298,6 @@ const Dashboard = () => {
 
           <TabsContent value="calls">
             <CallList />
-          </TabsContent>
-
-          <TabsContent value="monitoring">
-            <BlandAIMonitoring />
           </TabsContent>
 
           <TabsContent value="analytics">
