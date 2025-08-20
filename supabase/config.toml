@@ -87,3 +87,7 @@ verify_jwt = false
 [[edge_runtime.policies]]
 entrypoint = "supabase/functions/create-answering-pathway/index.ts"
 verify_jwt = false
+
+[[edge_runtime.policies]]
+entrypoint = "supabase/functions/create-home-service-pathway/index.ts"
+verify_jwt = false

@@ -41,7 +41,7 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
   const handleCreatePathway = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-answering-pathway', {
+      const { data, error } = await supabase.functions.invoke('create-home-service-pathway', {
         body: formData
       });
 
