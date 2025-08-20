@@ -6,23 +6,23 @@ const WhyAvailabee = () => {
   const features = [
     {
       icon: <Brain className="w-8 h-8" />,
-      title: "Amazing human-like AI to answer your phone",
-      description: "You'll outshine your competition with the most modern AI voice tech."
+      title: "Next-generation AI voice technology",
+      description: "Powered by advanced conversational AI that understands context, handles complex requests, and provides a superior customer experience."
     },
     {
       icon: <Bell className="w-8 h-8" />,
-      title: "Get notified right away",
-      description: "Availabee will email and/or text you every time a new call comes in, so you can quickly decide how best to handle it."
+      title: "Stay connected to your business",
+      description: "Receive instant notifications via text and email for every call. Stay informed and respond to urgent matters immediately, even when you're away."
     },
     {
       icon: <MessageSquare className="w-8 h-8" />,
-      title: "Custom message taking",
-      description: "You determine the most important information that your business needs in a message, and Availabee will make sure to get it from your callers."
+      title: "Intelligent information gathering",
+      description: "Configure exactly what information matters most for your business. Availabee asks the right questions and captures complete, actionable details from every caller."
     },
     {
       icon: <FileText className="w-8 h-8" />,
-      title: "Recordings, transcripts, call management",
-      description: "Every call is recorded and transcribed for you in your inbox."
+      title: "Complete call documentation",
+      description: "Access detailed call recordings, AI-generated transcripts, and organized conversation summaries all in one convenient dashboard."
     }
   ];
 
@@ -32,11 +32,11 @@ const WhyAvailabee = () => {
         <div className="text-center space-y-4 mb-16">
           <Badge variant="outline" className="text-primary">Why Availabee</Badge>
           <h2 className="text-4xl lg:text-5xl font-bold">
-            Why Availabee is right for 
-            <span className="bg-gradient-hero bg-clip-text text-transparent"> your small business</span>
+            Built specifically for 
+            <span className="bg-gradient-hero bg-clip-text text-transparent"> growing businesses</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            The power of the latest AI tech, working for you 24/7.
+            Intelligent call handling that grows with your business and adapts to your unique needs.
           </p>
         </div>
 

@@ -9,7 +9,7 @@ const Pricing = () => {
       name: "Professional",
       price: "$49",
       period: "/month",
-      description: "Perfect for small business and solo owners who need Availabee to answer calls when they can't.",
+      description: "Ideal for entrepreneurs and small businesses who want professional call handling without the overhead.",
       features: [
         "Unlimited minutes",
         "Message taking with custom questions", 
@@ -25,7 +25,7 @@ const Pricing = () => {
       name: "Scale", 
       price: "$149",
       period: "/month",
-      description: "Perfect for growing businesses that want Availabee to answer calls and take action on their behalf.",
+      description: "Designed for expanding businesses that need advanced features and seamless integrations.",
       features: [
         "Everything in Professional",
         "Appointment scheduling",

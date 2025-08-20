@@ -6,18 +6,18 @@ const Benefits = () => {
   const benefits = [
     {
       icon: <Phone className="w-12 h-12" />,
-      title: "Never miss another call or opportunity",
-      description: "Availabee is there anytime you're not available. You'll never miss another opportunity just because you can't answer the phone."
+      title: "Capture every business opportunity",
+      description: "Your AI assistant is available 24/7, ensuring no potential customer goes unanswered. Turn every call into a chance to grow your business."
     },
     {
       icon: <PhoneOff className="w-12 h-12" />,
-      title: "No more hangups on voicemail",
-      description: "No one leaves a voicemail anymore. But everyone talks to Availabee. She'll answer the phone, take a message for you, and send it your way."
+      title: "Real conversations, not voicemail",
+      description: "Customers prefer talking to someone who can help immediately. Availabee engages callers in natural conversation and captures detailed messages you actually need."
     },
     {
       icon: <DollarSign className="w-12 h-12" />,
-      title: "10x cheaper than an answering service",
-      description: "There's no need to spend a bunch of money on an outsourced answering service. Availabee can do it for you for a fraction of the cost."
+      title: "Enterprise quality at startup prices",
+      description: "Get professional call handling that rivals expensive call centers at a fraction of the cost. Pay for results, not overhead."
     }
   ];
 
@@ -26,8 +26,8 @@ const Benefits = () => {
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold">
-            Never miss an opportunity because you 
-            <span className="bg-gradient-hero bg-clip-text text-transparent"> can't answer the phone</span>
+            Transform every missed call into a 
+            <span className="bg-gradient-hero bg-clip-text text-transparent"> business opportunity</span>
           </h2>
         </div>
 
