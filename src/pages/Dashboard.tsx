@@ -122,7 +122,7 @@ const Dashboard = () => {
               Your intelligent call answering service is ready to help you never miss another customer call.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button variant="secondary">
+              <Button variant="secondary" onClick={() => navigate("/setup-guide")}>
                 Setup Guide
               </Button>
             </div>
