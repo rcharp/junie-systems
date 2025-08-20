@@ -9,7 +9,7 @@ const Footer = () => {
             <div className="flex items-center space-x-3">
               <img 
                 src="/lovable-uploads/2c8f89e8-0c88-4986-956d-eb3fde70715c.png" 
-                alt="Availabee AI Logo" 
+                alt="Availabee Logo" 
                 className="w-10 h-10"
               />
               <span className="text-2xl font-bold lowercase">availabee</span>
@@ -65,7 +65,7 @@ const Footer = () => {
         
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center">
           <p className="text-primary-foreground/60">
-            © 2024 Availabee AI. All rights reserved. Built with 🐝 for small businesses.
+            © 2024 Availabee. All rights reserved. Built with 🐝 for small businesses.
           </p>
         </div>
       </div>

@@ -105,7 +105,7 @@ const Demo = () => {
             <div className="relative rounded-2xl overflow-hidden shadow-elegant">
               <img 
                 src={dashboardPreview}
-                alt="Availabee AI dashboard showing call analytics and performance metrics"
+                alt="Availabee dashboard showing call analytics and performance metrics"
                 className="w-full h-auto"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />

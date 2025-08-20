@@ -130,7 +130,7 @@ const Settings = () => {
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-foreground mb-2">Account Settings</h2>
             <p className="text-muted-foreground">
-              Configure your Availabee AI assistant and account preferences.
+              Configure your Availabee assistant and account preferences.
             </p>
           </div>
 

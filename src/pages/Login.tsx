@@ -90,31 +90,31 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-accent/10 to-primary-glow/20" />
-      <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-primary/30 to-transparent rounded-full blur-3xl" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-gradient-to-br from-accent/20 to-transparent rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary-glow/5" />
+      <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl" />
+      <div className="absolute bottom-10 right-10 w-96 h-96 bg-gradient-to-br from-accent/10 to-transparent rounded-full blur-3xl" />
       
       {/* Header with logo */}
       <div className="absolute top-6 left-6 flex items-center space-x-3 z-10">
         <a href="/" className="flex items-center space-x-3">
           <img 
-            src="/lovable-uploads/2c8f89e8-0c88-4986-956d-eb3fde70715c.png" 
+            src="/lovable-uploads/f549978f-b787-41df-b6f2-3f0235d3d6ed.png" 
             alt="Availabee Logo" 
             className="h-8 w-8"
           />
-          <span className="text-xl font-bold text-white">Availabee</span>
+          <span className="text-xl font-bold text-foreground">Availabee</span>
         </a>
       </div>
 
       {/* Main Card */}
-      <Card className="w-full max-w-md relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
+      <Card className="w-full max-w-md relative z-10 bg-card border shadow-2xl">
         <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-bold text-white">
+          <CardTitle className="text-2xl font-bold text-foreground">
             Login to Availabee
           </CardTitle>
-          <CardDescription className="text-white/80">
+          <CardDescription className="text-muted-foreground">
             Welcome back to Availabee
           </CardDescription>
         </CardHeader>
@@ -122,7 +122,7 @@ const Login = () => {
         <CardContent className="space-y-6">
           <form onSubmit={handleSignIn} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-white text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-foreground text-sm font-medium">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -130,11 +130,11 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="bg-white border-white/30 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
+                className="h-12"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-white text-sm font-medium">Password</Label>
+              <Label htmlFor="password" className="text-foreground text-sm font-medium">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -142,7 +142,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="bg-white border-white/30 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
+                className="h-12"
               />
             </div>
             
@@ -150,9 +150,9 @@ const Login = () => {
               <input 
                 type="checkbox" 
                 id="remember" 
-                className="w-4 h-4 text-primary bg-white/10 border-white/20 rounded focus:ring-primary/50"
+                className="w-4 h-4 text-primary bg-background border rounded focus:ring-primary/50"
               />
-              <Label htmlFor="remember" className="text-white/80 text-sm">
+              <Label htmlFor="remember" className="text-muted-foreground text-sm">
                 Remember me
               </Label>
             </div>
@@ -168,10 +168,10 @@ const Login = () => {
           
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/20" />
+              <span className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-transparent px-2 text-white/60">
+              <span className="bg-card px-2 text-muted-foreground">
                 OR CONTINUE WITH
               </span>
             </div>
@@ -179,7 +179,7 @@ const Login = () => {
           
           <Button
             variant="outline"
-            className="w-full h-12 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+            className="w-full h-12 transition-all duration-300"
             onClick={() => {
               toast({
                 title: "Coming Soon",
@@ -199,7 +199,7 @@ const Login = () => {
           <div className="text-center">
             <button
               type="button"
-              className="text-sm text-white/80 hover:text-white underline transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
               onClick={() => {
                 toast({
                   title: "Password Reset",
@@ -214,7 +214,7 @@ const Login = () => {
           <div className="text-center">
             <Link
               to="/signup"
-              className="text-sm text-white/80 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Don't have an account? <span className="underline font-medium">Sign up</span>
             </Link>
@@ -223,7 +223,7 @@ const Login = () => {
           <div className="text-center">
             <Link
               to="/"
-              className="text-sm text-white/60 hover:text-white/80 transition-colors"
+              className="text-sm text-muted-foreground/60 hover:text-muted-foreground transition-colors"
             >
               ← Back to Home
             </Link>
