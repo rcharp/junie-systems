@@ -20,7 +20,7 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const webhookData = await req.json();
-    console.log('Received Bland AI webhook:', webhookData);
+    console.log('Received AI call webhook:', webhookData);
 
     const { call_id, status, transcript, duration, recording_url, metadata } = webhookData;
 
@@ -28,8 +28,8 @@ serve(async (req) => {
     const { error: updateError } = await supabase
       .from('call_logs')
       .update({
-        status: status,
-        duration: duration,
+        call_status: status,
+        call_duration: duration,
         transcript: transcript,
         recording_url: recording_url,
         ended_at: new Date().toISOString(),
@@ -48,25 +48,41 @@ serve(async (req) => {
     // Extract message information from transcript if call was completed
     if (status === 'completed' && transcript) {
       try {
-        // Simple extraction logic - you might want to enhance this
+        // Enhanced extraction logic with better parsing
         const callerInfo = extractCallerInfo(transcript);
         
         if (callerInfo.caller_name || callerInfo.phone_number) {
+          // Get user_id from call_logs
+          const { data: callLog, error: callError } = await supabase
+            .from('call_logs')
+            .select('user_id')
+            .eq('call_id', call_id)
+            .single();
+
+          if (callError) {
+            console.error('Error finding call log:', callError);
+            throw callError;
+          }
+
           const { error: messageError } = await supabase
             .from('call_messages')
             .insert({
+              user_id: callLog.user_id,
               call_id: call_id,
-              caller_name: callerInfo.caller_name,
-              phone_number: callerInfo.phone_number,
+              caller_name: callerInfo.caller_name || 'Unknown Caller',
+              phone_number: callerInfo.phone_number || 'Unknown',
               email: callerInfo.email,
-              message: callerInfo.message,
+              message: callerInfo.message || transcript.substring(0, 500),
               urgency_level: callerInfo.urgency_level,
               best_time_to_call: callerInfo.best_time_to_call,
-              call_type: callerInfo.call_type
+              call_type: callerInfo.call_type,
+              status: 'new'
             });
 
           if (messageError) {
             console.error('Error saving message:', messageError);
+          } else {
+            console.log('Successfully saved call message for user:', callLog.user_id);
           }
         }
       } catch (extractError) {
@@ -93,7 +109,7 @@ serve(async (req) => {
   }
 });
 
-// Helper function to extract caller information from transcript
+// Enhanced helper function to extract caller information from transcript
 function extractCallerInfo(transcript: string) {
   const info = {
     caller_name: null as string | null,
@@ -105,38 +121,78 @@ function extractCallerInfo(transcript: string) {
     call_type: 'inquiry' as string
   };
 
-  // Simple regex patterns - enhance as needed
-  const nameMatch = transcript.match(/(?:my name is|i'm|this is)\s+([a-zA-Z\s]+)/i);
-  if (nameMatch) {
-    info.caller_name = nameMatch[1].trim();
+  // Enhanced regex patterns for better extraction
+  const namePatterns = [
+    /(?:my name is|i'm|this is|call me)\s+([a-zA-Z\s]{2,30})/i,
+    /(?:name)\s*[:,]?\s*([a-zA-Z\s]{2,30})/i
+  ];
+
+  for (const pattern of namePatterns) {
+    const match = transcript.match(pattern);
+    if (match && match[1].trim().length > 1) {
+      info.caller_name = match[1].trim();
+      break;
+    }
   }
 
-  const phoneMatch = transcript.match(/(?:my number is|call me at|phone number is)\s*([\d\s\-\(\)]+)/i);
-  if (phoneMatch) {
-    info.phone_number = phoneMatch[1].replace(/\D/g, '');
+  // Enhanced phone number extraction
+  const phonePatterns = [
+    /(?:my number is|call me at|phone number is|you can reach me at)\s*([\d\s\-\(\)\+\.]{7,20})/i,
+    /(?:number)\s*[:,]?\s*([\d\s\-\(\)\+\.]{7,20})/i
+  ];
+
+  for (const pattern of phonePatterns) {
+    const match = transcript.match(pattern);
+    if (match) {
+      const cleaned = match[1].replace(/\D/g, '');
+      if (cleaned.length >= 7) {
+        info.phone_number = cleaned;
+        break;
+      }
+    }
   }
 
-  const emailMatch = transcript.match(/(?:my email is|email me at)\s*([^\s]+@[^\s]+)/i);
+  // Enhanced email extraction
+  const emailPattern = /(?:my email is|email me at|email)\s*[:,]?\s*([^\s,]+@[^\s,]+\.[^\s,]+)/i;
+  const emailMatch = transcript.match(emailPattern);
   if (emailMatch) {
     info.email = emailMatch[1];
   }
 
-  // Check for urgency keywords
-  if (/urgent|emergency|asap|immediately|rush/i.test(transcript)) {
-    info.urgency_level = 'urgent';
-  } else if (/important|soon|quickly/i.test(transcript)) {
-    info.urgency_level = 'high';
+  // Best time to call extraction
+  const timePatterns = [
+    /(?:best time to call|call me)\s*(?:is|at)?\s*(morning|afternoon|evening|weekdays?|weekends?|[\d]{1,2}(?:am|pm|:\d{2})?)/i,
+    /(?:available|free)\s*(?:in the|during the)?\s*(morning|afternoon|evening|weekdays?|weekends?)/i
+  ];
+
+  for (const pattern of timePatterns) {
+    const match = transcript.match(pattern);
+    if (match) {
+      info.best_time_to_call = match[1];
+      break;
+    }
   }
 
-  // Check for call type
-  if (/appointment|schedule|book/i.test(transcript)) {
+  // Enhanced urgency detection
+  if (/urgent|emergency|asap|immediately|right away|rush|critical/i.test(transcript)) {
+    info.urgency_level = 'urgent';
+  } else if (/important|soon|quickly|priority|needed|serious/i.test(transcript)) {
+    info.urgency_level = 'high';
+  } else if (/when you can|whenever|no rush|not urgent/i.test(transcript)) {
+    info.urgency_level = 'low';
+  }
+
+  // Enhanced call type detection
+  if (/appointment|schedule|book|meeting|consultation|visit/i.test(transcript)) {
     info.call_type = 'appointment';
-  } else if (/complaint|problem|issue|wrong/i.test(transcript)) {
+  } else if (/complaint|problem|issue|wrong|dissatisfied|unhappy|bad|terrible/i.test(transcript)) {
     info.call_type = 'complaint';
-  } else if (/support|help|assistance/i.test(transcript)) {
+  } else if (/support|help|assistance|technical|fix|repair|troubleshoot/i.test(transcript)) {
     info.call_type = 'support';
-  } else if (/buy|purchase|price|cost|sale/i.test(transcript)) {
+  } else if (/buy|purchase|price|cost|sale|order|interested in buying|want to buy/i.test(transcript)) {
     info.call_type = 'sales';
+  } else if (/question|ask|wondering|curious|information|details/i.test(transcript)) {
+    info.call_type = 'inquiry';
   }
 
   return info;

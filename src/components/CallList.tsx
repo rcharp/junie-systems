@@ -1,156 +1,357 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Play, Volume2, MessageSquare, Calendar, Phone, Clock } from "lucide-react";
-import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Phone, Clock, User, Calendar, Play, Download, MessageSquare, CheckCircle } from "lucide-react";
+import { format } from "date-fns";
+
+interface CallLog {
+  id: string;
+  call_id?: string;
+  caller_name: string;
+  phone_number: string;
+  call_status: string;
+  call_type: string;
+  urgency_level: string;
+  message: string;
+  email?: string;
+  call_duration?: number;
+  recording_url?: string;
+  transcript?: string;
+  created_at: string;
+  updated_at: string;
+  best_time_to_call?: string;
+}
+
+interface CallMessage {
+  id: string;
+  call_id?: string;
+  caller_name: string;
+  phone_number: string;
+  email?: string;
+  message: string;
+  urgency_level: string;
+  best_time_to_call?: string;
+  call_type: string;
+  status: string;
+  created_at: string;
+}
 
 const CallList = () => {
-  const [calls] = useState([
-    {
-      id: 1,
-      title: "New customer consultation",
-      caller: "Sarah Johnson",
-      phone: "+1 (555) 123-4567",
-      type: "Sales Call",
-      status: "Completed",
-      duration: "3:24",
-      time: "2 hours ago",
-      outcome: "Appointment scheduled",
-      leadCaptured: true,
-      appointmentSet: true,
-      color: "text-success"
-    },
-    {
-      id: 2,
-      title: "Emergency service request",
-      caller: "Mike Thompson",
-      phone: "+1 (555) 987-6543",
-      type: "Urgent",
-      status: "Completed",
-      duration: "1:47",
-      time: "4 hours ago",
-      outcome: "Urgent callback requested",
-      leadCaptured: true,
-      appointmentSet: false,
-      color: "text-destructive"
-    },
-    {
-      id: 3,
-      title: "Pricing inquiry",
-      caller: "Jennifer Davis",
-      phone: "+1 (555) 456-7890",
-      type: "Info Request",
-      status: "Completed",
-      duration: "2:15",
-      time: "6 hours ago",
-      outcome: "Information provided",
-      leadCaptured: true,
-      appointmentSet: false,
-      color: "text-primary"
-    },
-    {
-      id: 4,
-      title: "Appointment rescheduling",
-      caller: "Robert Wilson",
-      phone: "+1 (555) 321-0987",
-      type: "Existing Client",
-      status: "Completed",
-      duration: "1:32",
-      time: "Yesterday",
-      outcome: "Rescheduled successfully",
-      leadCaptured: false,
-      appointmentSet: true,
-      color: "text-accent"
-    },
-    {
-      id: 5,
-      title: "Product demo request",
-      caller: "Lisa Anderson",
-      phone: "+1 (555) 654-3210",
-      type: "Sales Call",
-      status: "Completed",
-      duration: "4:12",
-      time: "2 days ago",
-      outcome: "Demo scheduled",
-      leadCaptured: true,
-      appointmentSet: true,
-      color: "text-success"
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [callLogs, setCallLogs] = useState<CallLog[]>([]);
+  const [callMessages, setCallMessages] = useState<CallMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'logs' | 'messages'>('messages');
+
+  useEffect(() => {
+    if (user) {
+      fetchCallData();
     }
-  ]);
+  }, [user]);
+
+  const fetchCallData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch call logs
+      const { data: logs, error: logsError } = await supabase
+        .from('call_logs')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (logsError) throw logsError;
+
+      // Fetch call messages
+      const { data: messages, error: messagesError } = await supabase
+        .from('call_messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (messagesError) throw messagesError;
+
+      setCallLogs(logs || []);
+      setCallMessages(messages || []);
+    } catch (error: any) {
+      console.error('Error fetching call data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load call data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markMessageAsRead = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('call_messages')
+        .update({ status: 'read' })
+        .eq('id', messageId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setCallMessages(prev => 
+        prev.map(msg => 
+          msg.id === messageId ? { ...msg, status: 'read' } : msg
+        )
+      );
+
+      toast({
+        title: "Message marked as read",
+        description: "The message has been marked as read",
+      });
+    } catch (error: any) {
+      console.error('Error updating message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update message status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getUrgencyColor = (urgency: string) => {
+    switch (urgency.toLowerCase()) {
+      case 'urgent':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'high':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default:
+        return 'bg-green-100 text-green-800 border-green-200';
+    }
+  };
+
+  const getCallTypeColor = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'appointment':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'complaint':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'sales':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'support':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span className="flex items-center space-x-2">
-            <Phone className="w-5 h-5" />
-            <span>Recent Calls</span>
-          </span>
-          <Badge variant="secondary">{calls.length} calls today</Badge>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+        <Button
+          variant={activeTab === 'messages' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('messages')}
+          className="flex-1"
+        >
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Messages ({callMessages.filter(m => m.status === 'new').length} new)
+        </Button>
+        <Button
+          variant={activeTab === 'logs' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('logs')}
+          className="flex-1"
+        >
+          <Phone className="w-4 h-4 mr-2" />
+          Call Logs ({callLogs.length})
+        </Button>
+      </div>
+
+      {/* Messages Tab */}
+      {activeTab === 'messages' && (
         <div className="space-y-4">
-          {calls.map((call) => (
-            <Card key={call.id} className="group hover:shadow-elegant transition-all duration-300 cursor-pointer border-border/50">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Button size="icon" variant="outline" className="rounded-full">
-                      <Play className="w-4 h-4" />
-                    </Button>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-medium">{call.title}</h4>
-                        <Badge variant="secondary" className={call.color}>
-                          {call.type}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
-                        <span className="font-medium text-foreground">{call.caller}</span>
-                        <span>{call.phone}</span>
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{call.time}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <Badge variant={call.status === "Completed" ? "default" : "secondary"}>
-                    {call.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                    <div className="flex items-center space-x-1">
-                      <Volume2 className="w-4 h-4" />
-                      <span>{call.duration}</span>
-                    </div>
-                    {call.leadCaptured && (
-                      <div className="flex items-center space-x-1">
-                        <MessageSquare className="w-4 h-4 text-success" />
-                        <span className="text-success">Lead captured</span>
-                      </div>
-                    )}
-                    {call.appointmentSet && (
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4 text-primary" />
-                        <span className="text-primary">Appointment set</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    <span className="font-medium">Outcome:</span> {call.outcome}
-                  </div>
-                </div>
+          {callMessages.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
+                <p className="text-muted-foreground">
+                  When someone calls your AI assistant, their messages will appear here.
+                </p>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            callMessages.map((message) => (
+              <Card key={message.id} className={`${message.status === 'new' ? 'border-primary bg-primary/5' : ''}`}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-semibold">{message.caller_name}</span>
+                      </div>
+                      <Badge className={getUrgencyColor(message.urgency_level)}>
+                        {message.urgency_level}
+                      </Badge>
+                      <Badge className={getCallTypeColor(message.call_type)}>
+                        {message.call_type}
+                      </Badge>
+                      {message.status === 'new' && (
+                        <Badge variant="secondary">New</Badge>
+                      )}
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(message.created_at), 'MMM d, h:mm a')}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{message.phone_number}</span>
+                    </div>
+                    {message.email && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-muted-foreground">Email:</span>
+                        <span>{message.email}</span>
+                      </div>
+                    )}
+                    {message.best_time_to_call && (
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span>Best time: {message.best_time_to_call}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Message:</label>
+                    <p className="mt-1 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
+                      {message.message}
+                    </p>
+                  </div>
+
+                  {message.status === 'new' && (
+                    <div className="flex justify-end">
+                      <Button
+                        size="sm"
+                        onClick={() => markMessageAsRead(message.id)}
+                        className="flex items-center space-x-2"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Mark as Read</span>
+                      </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      {/* Call Logs Tab */}
+      {activeTab === 'logs' && (
+        <div className="space-y-4">
+          {callLogs.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <Phone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-semibold mb-2">No call logs yet</h3>
+                <p className="text-muted-foreground">
+                  Your AI assistant's call history will appear here.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            callLogs.map((call) => (
+              <Card key={call.id}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-semibold">{call.caller_name}</span>
+                      </div>
+                      <Badge variant={call.call_status === 'completed' ? 'default' : 'secondary'}>
+                        {call.call_status}
+                      </Badge>
+                      <Badge className={getUrgencyColor(call.urgency_level)}>
+                        {call.urgency_level}
+                      </Badge>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(call.created_at), 'MMM d, h:mm a')}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{call.phone_number}</span>
+                    </div>
+                    {call.call_duration && (
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <span>{Math.floor(call.call_duration / 60)}m {call.call_duration % 60}s</span>
+                      </div>
+                    )}
+                    <Badge className={getCallTypeColor(call.call_type)}>
+                      {call.call_type}
+                    </Badge>
+                  </div>
+                  
+                  {call.message && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Message:</label>
+                      <p className="mt-1 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
+                        {call.message}
+                      </p>
+                    </div>
+                  )}
+
+                  {(call.recording_url || call.transcript) && (
+                    <div className="flex space-x-2">
+                      {call.recording_url && (
+                        <Button size="sm" variant="outline" className="flex items-center space-x-2">
+                          <Play className="w-4 h-4" />
+                          <span>Play Recording</span>
+                        </Button>
+                      )}
+                      {call.transcript && (
+                        <Button size="sm" variant="outline" className="flex items-center space-x-2">
+                          <Download className="w-4 h-4" />
+                          <span>View Transcript</span>
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 

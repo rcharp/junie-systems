@@ -1,197 +1,338 @@
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Phone, Calendar, MessageSquare, Clock, Users, Target } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { Phone, Clock, TrendingUp, Users, MessageSquare, AlertTriangle } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { format, subDays, eachDayOfInterval } from "date-fns";
+
+interface CallMetrics {
+  totalCalls: number;
+  totalMessages: number;
+  averageDuration: number;
+  urgentCalls: number;
+  completionRate: number;
+  dailyStats: Array<{
+    date: string;
+    calls: number;
+    messages: number;
+  }>;
+  callTypeDistribution: Array<{
+    type: string;
+    count: number;
+    color: string;
+  }>;
+  urgencyDistribution: Array<{
+    level: string;
+    count: number;
+    color: string;
+  }>;
+}
 
 const CallAnalytics = () => {
-  const metrics = [
-    {
-      title: "Total Calls",
-      value: "247",
-      change: "+12%",
-      trend: "up",
-      icon: <Phone className="w-4 h-4" />,
-      period: "vs last week"
-    },
-    {
-      title: "Answer Rate",
-      value: "100%",
-      change: "0%",
-      trend: "stable",
-      icon: <Target className="w-4 h-4" />,
-      period: "always perfect"
-    },
-    {
-      title: "Conversion Rate",
-      value: "89%",
-      change: "+5%",
-      trend: "up",
-      icon: <TrendingUp className="w-4 h-4" />,
-      period: "vs last week"
-    },
-    {
-      title: "Avg Call Duration",
-      value: "2:34",
-      change: "-8s",
-      trend: "down",
-      icon: <Clock className="w-4 h-4" />,
-      period: "vs last week"
-    },
-    {
-      title: "Appointments Set",
-      value: "156",
-      change: "+18%",
-      trend: "up",
-      icon: <Calendar className="w-4 h-4" />,
-      period: "vs last week"
-    },
-    {
-      title: "Leads Captured",
-      value: "203",
-      change: "+15%",
-      trend: "up",
-      icon: <MessageSquare className="w-4 h-4" />,
-      period: "vs last week"
+  const { user } = useAuth();
+  const [metrics, setMetrics] = useState<CallMetrics | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
+
+  useEffect(() => {
+    if (user) {
+      fetchAnalytics();
     }
-  ];
+  }, [user, timeRange]);
 
-  const callTypes = [
-    { type: "Sales Calls", count: 89, percentage: 36, color: "bg-success" },
-    { type: "Support Requests", count: 62, percentage: 25, color: "bg-primary" },
-    { type: "Urgent Calls", count: 31, percentage: 13, color: "bg-destructive" },
-    { type: "Info Requests", count: 45, percentage: 18, color: "bg-accent" },
-    { type: "Existing Clients", count: 20, percentage: 8, color: "bg-muted" }
-  ];
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      
+      const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
+      const startDate = subDays(new Date(), days);
+      
+      // Fetch call logs
+      const { data: callLogs, error: callError } = await supabase
+        .from('call_logs')
+        .select('*')
+        .eq('user_id', user?.id)
+        .gte('created_at', startDate.toISOString());
 
-  const hourlyStats = [
-    { hour: "9 AM", calls: 23 },
-    { hour: "10 AM", calls: 31 },
-    { hour: "11 AM", calls: 28 },
-    { hour: "12 PM", calls: 35 },
-    { hour: "1 PM", calls: 29 },
-    { hour: "2 PM", calls: 33 },
-    { hour: "3 PM", calls: 27 },
-    { hour: "4 PM", calls: 25 },
-    { hour: "5 PM", calls: 16 }
-  ];
+      // Fetch call messages
+      const { data: callMessages, error: messageError } = await supabase
+        .from('call_messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .gte('created_at', startDate.toISOString());
 
-  return (
-    <div className="space-y-6">
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {metrics.map((metric, index) => (
-          <Card key={index} className="hover:shadow-elegant transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{metric.title}</CardTitle>
-              <div className="text-muted-foreground">{metric.icon}</div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metric.value}</div>
-              <div className="flex items-center space-x-1 text-xs">
-                {metric.trend === 'up' && <TrendingUp className="w-3 h-3 text-success" />}
-                {metric.trend === 'down' && <TrendingDown className="w-3 h-3 text-destructive" />}
-                <span className={
-                  metric.trend === 'up' ? 'text-success' :
-                  metric.trend === 'down' ? 'text-destructive' :
-                  'text-muted-foreground'
-                }>
-                  {metric.change}
-                </span>
-                <span className="text-muted-foreground">{metric.period}</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      if (callError) throw callError;
+      if (messageError) throw messageError;
 
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Call Types Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Users className="w-5 h-5" />
-              <span>Call Types</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {callTypes.map((type, index) => (
-                <div key={index} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{type.type}</span>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-muted-foreground">{type.count} calls</span>
-                      <Badge variant="secondary">{type.percentage}%</Badge>
-                    </div>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className={`${type.color} h-2 rounded-full transition-all duration-500`}
-                      style={{ width: `${type.percentage}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+      const logs = callLogs || [];
+      const messages = callMessages || [];
 
-        {/* Hourly Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Clock className="w-5 h-5" />
-              <span>Hourly Distribution</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {hourlyStats.map((stat, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm font-medium w-16">{stat.hour}</span>
-                  <div className="flex-1 mx-4">
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-500"
-                        style={{ width: `${(stat.calls / 35) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <span className="text-sm text-muted-foreground w-12 text-right">{stat.calls}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      // Calculate metrics
+      const totalDuration = logs.reduce((sum, call) => sum + (call.call_duration || 0), 0);
+      const completedCalls = logs.filter(call => call.call_status === 'completed').length;
+      const urgentItems = [...logs, ...messages].filter(item => item.urgency_level === 'urgent').length;
 
-      {/* Performance Summary */}
-      <Card className="bg-gradient-subtle border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <TrendingUp className="w-5 h-5 text-success" />
-            <span>Performance Summary</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid md:grid-cols-3 gap-6 text-center">
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-success">100%</div>
-              <div className="text-sm text-muted-foreground">Calls Answered</div>
-              <p className="text-xs text-muted-foreground">Never miss a single call</p>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-primary">89%</div>
-              <div className="text-sm text-muted-foreground">Lead Conversion</div>
-              <p className="text-xs text-muted-foreground">Outstanding performance</p>
-            </div>
-            <div className="space-y-2">
-              <div className="text-3xl font-bold text-accent">2:34</div>
-              <div className="text-sm text-muted-foreground">Avg Duration</div>
-              <p className="text-xs text-muted-foreground">Efficient conversations</p>
-            </div>
+      // Generate daily stats
+      const dateRange = eachDayOfInterval({ start: startDate, end: new Date() });
+      const dailyStats = dateRange.map(date => {
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const callsOnDate = logs.filter(call => 
+          format(new Date(call.created_at), 'yyyy-MM-dd') === dateStr
+        ).length;
+        const messagesOnDate = messages.filter(msg => 
+          format(new Date(msg.created_at), 'yyyy-MM-dd') === dateStr
+        ).length;
+
+        return {
+          date: format(date, 'MMM d'),
+          calls: callsOnDate,
+          messages: messagesOnDate,
+        };
+      });
+
+      // Call type distribution
+      const callTypes = [...logs, ...messages].reduce((acc, item) => {
+        acc[item.call_type] = (acc[item.call_type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const callTypeColors = {
+        'appointment': '#3b82f6',
+        'sales': '#10b981',
+        'support': '#8b5cf6',
+        'complaint': '#ef4444',
+        'inquiry': '#f59e0b',
+      };
+
+      const callTypeDistribution = Object.entries(callTypes).map(([type, count]) => ({
+        type: type.charAt(0).toUpperCase() + type.slice(1),
+        count: count as number,
+        color: callTypeColors[type as keyof typeof callTypeColors] || '#6b7280',
+      }));
+
+      // Urgency distribution
+      const urgencyLevels = [...logs, ...messages].reduce((acc, item) => {
+        acc[item.urgency_level] = (acc[item.urgency_level] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const urgencyColors = {
+        'urgent': '#ef4444',
+        'high': '#f97316',
+        'medium': '#eab308',
+        'low': '#22c55e',
+      };
+
+      const urgencyDistribution = Object.entries(urgencyLevels).map(([level, count]) => ({
+        level: level.charAt(0).toUpperCase() + level.slice(1),
+        count: count as number,
+        color: urgencyColors[level as keyof typeof urgencyColors] || '#6b7280',
+      }));
+
+      setMetrics({
+        totalCalls: logs.length,
+        totalMessages: messages.length,
+        averageDuration: logs.length > 0 ? Math.round(totalDuration / logs.length) : 0,
+        urgentCalls: urgentItems,
+        completionRate: logs.length > 0 ? Math.round((completedCalls / logs.length) * 100) : 0,
+        dailyStats,
+        callTypeDistribution,
+        urgencyDistribution,
+      });
+    } catch (error) {
+      console.error('Error fetching analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <Card>
+        <CardContent className="p-6 text-center">
+          <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <h3 className="text-lg font-semibold mb-2">No analytics data</h3>
+          <p className="text-muted-foreground">
+            Analytics will appear here once your AI assistant starts handling calls.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Time Range Selector */}
+      <div className="flex space-x-2">
+        {['7d', '30d', '90d'].map((range) => (
+          <button
+            key={range}
+            onClick={() => setTimeRange(range as any)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              timeRange === range
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            {range === '7d' ? 'Last 7 days' : range === '30d' ? 'Last 30 days' : 'Last 90 days'}
+          </button>
+        ))}
+      </div>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Calls</CardTitle>
+            <Phone className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.totalCalls}</div>
+            <p className="text-xs text-muted-foreground">
+              AI assistant handled calls
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Messages Captured</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.totalMessages}</div>
+            <p className="text-xs text-muted-foreground">
+              Leads and inquiries
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Avg Call Duration</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{Math.floor(metrics.averageDuration / 60)}m {metrics.averageDuration % 60}s</div>
+            <p className="text-xs text-muted-foreground">
+              Average time per call
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Urgent Calls</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.urgentCalls}</div>
+            <p className="text-xs text-muted-foreground">
+              Requiring immediate attention
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Daily Activity Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Daily Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={metrics.dailyStats}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Line 
+                  type="monotone" 
+                  dataKey="calls" 
+                  stroke="#3b82f6" 
+                  strokeWidth={2}
+                  name="Calls"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="messages" 
+                  stroke="#10b981" 
+                  strokeWidth={2}
+                  name="Messages"
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Call Type and Urgency Distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Call Type Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={metrics.callTypeDistribution}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    dataKey="count"
+                    label={({ type, count }) => `${type}: ${count}`}
+                  >
+                    {metrics.callTypeDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Urgency Levels</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={metrics.urgencyDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="level" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count">
+                    {metrics.urgencyDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

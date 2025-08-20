@@ -143,15 +143,21 @@ export type Database = {
       call_logs: {
         Row: {
           best_time_to_call: string | null
+          business_name: string | null
+          business_type: string | null
           call_duration: number | null
+          call_id: string | null
           call_status: string | null
           call_type: string
           caller_name: string
           created_at: string
           email: string | null
+          ended_at: string | null
           id: string
           message: string
+          metadata: Json | null
           phone_number: string
+          provider: string | null
           recording_url: string | null
           transcript: string | null
           updated_at: string
@@ -160,15 +166,21 @@ export type Database = {
         }
         Insert: {
           best_time_to_call?: string | null
+          business_name?: string | null
+          business_type?: string | null
           call_duration?: number | null
+          call_id?: string | null
           call_status?: string | null
           call_type: string
           caller_name: string
           created_at?: string
           email?: string | null
+          ended_at?: string | null
           id?: string
           message: string
+          metadata?: Json | null
           phone_number: string
+          provider?: string | null
           recording_url?: string | null
           transcript?: string | null
           updated_at?: string
@@ -177,8 +189,63 @@ export type Database = {
         }
         Update: {
           best_time_to_call?: string | null
+          business_name?: string | null
+          business_type?: string | null
           call_duration?: number | null
+          call_id?: string | null
           call_status?: string | null
+          call_type?: string
+          caller_name?: string
+          created_at?: string
+          email?: string | null
+          ended_at?: string | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          phone_number?: string
+          provider?: string | null
+          recording_url?: string | null
+          transcript?: string | null
+          updated_at?: string
+          urgency_level?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      call_messages: {
+        Row: {
+          best_time_to_call: string | null
+          call_id: string | null
+          call_type: string
+          caller_name: string
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          phone_number: string
+          status: string | null
+          updated_at: string
+          urgency_level: string
+          user_id: string
+        }
+        Insert: {
+          best_time_to_call?: string | null
+          call_id?: string | null
+          call_type: string
+          caller_name: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          phone_number: string
+          status?: string | null
+          updated_at?: string
+          urgency_level?: string
+          user_id: string
+        }
+        Update: {
+          best_time_to_call?: string | null
+          call_id?: string | null
           call_type?: string
           caller_name?: string
           created_at?: string
@@ -186,11 +253,10 @@ export type Database = {
           id?: string
           message?: string
           phone_number?: string
-          recording_url?: string | null
-          transcript?: string | null
+          status?: string | null
           updated_at?: string
           urgency_level?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
