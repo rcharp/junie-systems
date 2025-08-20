@@ -1,4 +1,3 @@
-import availabeeLogo from "@/assets/availabee-logo-minimal.png";
 import { Mail, MapPin } from "lucide-react";
 
 const Footer = () => {
@@ -9,7 +8,7 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img 
-                src={availabeeLogo} 
+                src="/lovable-uploads/f549978f-b787-41df-b6f2-3f0235d3d6ed.png" 
                 alt="Availabee AI Logo" 
                 className="w-10 h-10"
               />

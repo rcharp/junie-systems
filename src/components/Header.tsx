@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import availabeeLogo from "@/assets/availabee-logo-minimal.png";
 
 const Header = () => {
   return (
@@ -8,7 +7,7 @@ const Header = () => {
         <div className="flex items-center">
           <a href="/" className="flex items-center">
             <img 
-              src={availabeeLogo} 
+              src="/lovable-uploads/f549978f-b787-41df-b6f2-3f0235d3d6ed.png" 
               alt="Availabee Logo" 
               className="h-10 w-10"
             />
