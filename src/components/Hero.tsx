@@ -1,16 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import RotatingText from "./RotatingText";
+import { removeBackground, loadImage } from "@/utils/backgroundRemoval";
 
 
 const Hero = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [processedImageUrl, setProcessedImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const processImage = async () => {
+      try {
+        const response = await fetch('/lovable-uploads/0e37271a-e8a7-4cb0-9a0b-feae3bab3e21.png');
+        const blob = await response.blob();
+        const imageElement = await loadImage(blob);
+        const processedBlob = await removeBackground(imageElement);
+        const processedUrl = URL.createObjectURL(processedBlob);
+        setProcessedImageUrl(processedUrl);
+      } catch (error) {
+        console.error('Error processing image:', error);
+        // Fallback to original image
+        setProcessedImageUrl('/lovable-uploads/0e37271a-e8a7-4cb0-9a0b-feae3bab3e21.png');
+      }
+    };
+
+    processImage();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,12 +134,15 @@ const Hero = () => {
           {/* Right Column - Phone Image */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
-              <img 
-                src="/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png" 
-                alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
-                className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-2xl shadow-2xl"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent rounded-2xl" />
+              {processedImageUrl ? (
+                <img 
+                  src={processedImageUrl} 
+                  alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
+                  className="w-full max-w-md lg:max-w-lg xl:max-w-xl drop-shadow-2xl"
+                />
+              ) : (
+                <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl h-96 bg-muted animate-pulse rounded-2xl" />
+              )}
             </div>
           </div>
         </div>
