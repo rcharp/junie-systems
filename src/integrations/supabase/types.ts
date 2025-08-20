@@ -240,7 +240,6 @@ export type Database = {
       }
       tiktok_accounts: {
         Row: {
-          access_token: string | null
           bio: string | null
           created_at: string | null
           display_name: string | null
@@ -252,16 +251,15 @@ export type Database = {
           last_sync_at: string | null
           likes_count: number | null
           profile_image_url: string | null
-          refresh_token: string | null
           tiktok_user_id: string | null
           tiktok_username: string
           token_expires_at: string | null
           updated_at: string | null
           user_id: string
+          vault_key_id: string | null
           video_count: number | null
         }
         Insert: {
-          access_token?: string | null
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
@@ -273,16 +271,15 @@ export type Database = {
           last_sync_at?: string | null
           likes_count?: number | null
           profile_image_url?: string | null
-          refresh_token?: string | null
           tiktok_user_id?: string | null
           tiktok_username: string
           token_expires_at?: string | null
           updated_at?: string | null
           user_id: string
+          vault_key_id?: string | null
           video_count?: number | null
         }
         Update: {
-          access_token?: string | null
           bio?: string | null
           created_at?: string | null
           display_name?: string | null
@@ -294,12 +291,12 @@ export type Database = {
           last_sync_at?: string | null
           likes_count?: number | null
           profile_image_url?: string | null
-          refresh_token?: string | null
           tiktok_user_id?: string | null
           tiktok_username?: string
           token_expires_at?: string | null
           updated_at?: string | null
           user_id?: string
+          vault_key_id?: string | null
           video_count?: number | null
         }
         Relationships: [
@@ -569,7 +566,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_tiktok_tokens: {
+        Args: { account_id: string }
+        Returns: Json
+      }
+      store_tiktok_tokens: {
+        Args: {
+          access_token: string
+          account_id: string
+          refresh_token: string
+        }
+        Returns: string
+      }
+      update_tiktok_tokens: {
+        Args: {
+          account_id: string
+          new_access_token?: string
+          new_refresh_token?: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
