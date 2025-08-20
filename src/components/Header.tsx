@@ -5,22 +5,24 @@ const Header = () => {
     <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center">
-          <img 
-            src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-            alt="Availabee Logo" 
-            className="h-10 w-10"
-          />
+          <a href="/" className="flex items-center">
+            <img 
+              src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
+              alt="Availabee Logo" 
+              className="h-10 w-10"
+            />
+          </a>
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+          <a href="#features" className="text-foreground hover:text-foreground/80 transition-colors font-medium">
             Features
           </a>
-          <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">
+          <a href="#pricing" className="text-foreground hover:text-foreground/80 transition-colors font-medium">
             Pricing
           </a>
-          <a href="#demo" className="text-muted-foreground hover:text-foreground transition-colors">
-            Demo
+          <a href="#how-it-works" className="text-foreground hover:text-foreground/80 transition-colors font-medium">
+            How It Works
           </a>
         </nav>
         
