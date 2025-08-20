@@ -24,15 +24,31 @@ const Dashboard = () => {
   useEffect(() => {
     // Check if user is authenticated
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
+      console.log('Dashboard: Checking auth...');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('Dashboard: Session check result:', { session: !!session, user: !!session?.user, error });
+        
+        if (error) {
+          console.error('Dashboard: Session error:', error);
+          navigate("/login");
+          return;
+        }
+        
+        if (!session?.user) {
+          console.log('Dashboard: No user found, redirecting to login');
+          navigate("/login");
+          return;
+        }
+        
+        console.log('Dashboard: User found, setting state');
+        setUser(session.user);
+        setLoading(false);
+      } catch (err) {
+        console.error('Dashboard: Error in checkAuth:', err);
+        setLoading(false);
         navigate("/login");
-        return;
       }
-      
-      setUser(session.user);
-      setLoading(false);
     };
 
     checkAuth();
@@ -40,10 +56,12 @@ const Dashboard = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Dashboard: Auth state change:', { event, hasSession: !!session, hasUser: !!session?.user });
         if (!session?.user) {
           navigate("/login");
         } else {
           setUser(session.user);
+          setLoading(false);
         }
       }
     );
