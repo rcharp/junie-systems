@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3, TrendingUp, MessageSquare } from "lucide-react";
+import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3, TrendingUp, MessageSquare, Bot } from "lucide-react";
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
+import { PathwaySetup } from "@/components/PathwaySetup";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -108,9 +109,13 @@ const Dashboard = () => {
         </Card>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="calls">Messages & Calls</TabsTrigger>
+            <TabsTrigger value="ai-setup">
+              <Bot className="w-4 h-4 mr-2" />
+              AI Setup
+            </TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
@@ -218,6 +223,19 @@ const Dashboard = () => {
             <CallList />
           </TabsContent>
 
+          <TabsContent value="ai-setup" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5" />
+                  AI Answering Service Setup
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PathwaySetup />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="analytics">
             <CallAnalytics />
