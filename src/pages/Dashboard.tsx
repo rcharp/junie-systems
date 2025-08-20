@@ -11,6 +11,7 @@ import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3,
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
+import { handleRobustSignOut } from "@/lib/auth-utils";
 
 
 const Dashboard = () => {
@@ -51,20 +52,10 @@ const Dashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      
-      toast({
-        title: "Signed out",
-        description: "You've been successfully signed out.",
-      });
-      navigate("/");
+      await handleRobustSignOut(supabase);
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An error occurred during sign out",
-        variant: "destructive",
-      });
+      // Force redirect even if there's an error
+      window.location.href = '/';
     }
   };
 
