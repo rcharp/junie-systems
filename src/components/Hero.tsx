@@ -56,7 +56,7 @@ const Hero = () => {
       <div className="container mx-auto px-4 py-32">
         <div className="grid lg:grid-cols-2 gap-12 items-center animate-slide-up">
           {/* Left Column - Text Content */}
-          <div className="space-y-8 lg:col-span-1 col-span-2">
+          <div className="space-y-8 lg:col-span-1 col-span-2 text-center lg:text-left">
             <div className="space-y-6">
               <h1>
                 <RotatingText 
@@ -65,12 +65,12 @@ const Hero = () => {
                 />
               </h1>
               
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl">
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0">
                 Transform missed calls into business opportunities. Our intelligent AI receptionist answers every call professionally, captures leads, and ensures you never lose a potential customer again.
               </p>
             </div>
             
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-lg">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto lg:mx-0">
               <Input
                 type="email"
                 placeholder="Enter your business email"
@@ -91,7 +91,7 @@ const Hero = () => {
               </Button>
             </form>
             
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 text-sm text-muted-foreground">
               <div className="flex items-center space-x-2">
                 <CheckCircle className="w-4 h-4 text-success" />
                 <span>First 30 minutes completely free</span>
