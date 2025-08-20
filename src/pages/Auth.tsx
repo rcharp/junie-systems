@@ -55,7 +55,7 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -64,20 +64,36 @@ const Auth = () => {
       });
 
       if (error) {
-        if (error.message.includes("already registered")) {
+        if (error.message.includes("already registered") || error.message.includes("User already registered")) {
           toast({
             title: "Account exists",
             description: "This email is already registered. Try signing in instead.",
             variant: "destructive",
           });
+          setIsSignUp(false); // Switch to sign in mode
         } else {
-          throw error;
+          toast({
+            title: "Signup Error",
+            description: error.message || "An error occurred during sign up",
+            variant: "destructive",
+          });
         }
       } else {
-        toast({
-          title: "Check your email",
-          description: "We've sent you a confirmation link to complete your registration.",
-        });
+        // Check if email confirmation is required
+        if (data.user && !data.user.email_confirmed_at) {
+          toast({
+            title: "Check your email",
+            description: "We've sent you a confirmation link. Please check your email and click the link to complete your registration.",
+          });
+          setEmail("");
+          setPassword("");
+        } else if (data.user && data.user.email_confirmed_at) {
+          toast({
+            title: "Account created!",
+            description: "Your account has been created successfully. You can now sign in.",
+          });
+          setIsSignUp(false); // Switch to sign in mode
+        }
       }
     } catch (error: any) {
       toast({
