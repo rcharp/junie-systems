@@ -602,6 +602,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      log_security_event: {
+        Args: { event_data?: Json; event_type: string }
+        Returns: undefined
+      }
       store_tiktok_tokens: {
         Args: {
           access_token: string
