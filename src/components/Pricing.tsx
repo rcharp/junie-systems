@@ -67,7 +67,7 @@ const Pricing = () => {
             <span className="bg-gradient-hero bg-clip-text text-transparent"> today</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Free for the first 25 minutes. No credit card required to start. Cancel anytime.
+            Free for the first 30 minutes. No credit card required to start. Cancel anytime.
           </p>
         </div>
 
@@ -111,11 +111,7 @@ const Pricing = () => {
                 </ul>
                 
                 <Button 
-                  className={`w-full ${
-                    plan.popular 
-                      ? 'bg-primary hover:bg-primary/90' 
-                      : 'bg-secondary hover:bg-secondary/80'
-                  }`}
+                  className="w-full bg-primary hover:bg-primary/90"
                   size="lg"
                 >
                   {plan.ctaText}
@@ -127,7 +123,7 @@ const Pricing = () => {
 
         <div className="text-center mt-12 space-y-4">
           <p className="text-muted-foreground">
-            All plans include 25 free minutes to get started. No setup fees or hidden costs.
+            All plans include 30 free minutes to get started. No setup fees or hidden costs.
           </p>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
             <span>✓ 24/7 AI answering service</span>
