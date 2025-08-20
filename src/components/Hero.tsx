@@ -56,7 +56,7 @@ const Hero = () => {
       <div className="container mx-auto px-4 py-32">
         <div className="grid lg:grid-cols-2 gap-12 items-center animate-slide-up">
           {/* Left Column - Text Content */}
-          <div className="space-y-8 lg:col-span-1 col-span-2 text-center lg:text-left">
+          <div className="space-y-8 text-center lg:text-left">
             <div className="space-y-6">
               <h1>
                 <RotatingText 
