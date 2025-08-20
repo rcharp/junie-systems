@@ -10,7 +10,6 @@ import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3,
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
-import AICallInterface from "@/components/AICallInterface";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -109,10 +108,9 @@ const Dashboard = () => {
         </Card>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="ai-calls">AI Calls</TabsTrigger>
-            <TabsTrigger value="calls">Messages</TabsTrigger>
+            <TabsTrigger value="calls">Messages & Calls</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
@@ -214,10 +212,6 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-
-          <TabsContent value="ai-calls">
-            <AICallInterface />
           </TabsContent>
 
           <TabsContent value="calls">
