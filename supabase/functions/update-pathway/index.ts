@@ -594,14 +594,33 @@ Thank you for choosing ${business.name}! We appreciate your business and look fo
 
     console.log(`Updating pathway ${updateData.pathway_id} with comprehensive home service flows...`);
 
-    // Update the pathway using Bland AI API
-    const response = await fetch(`https://api.bland.ai/v1/pathway/update`, {
+    // Update the pathway using Bland AI API with correct format
+    const response = await fetch(`https://api.bland.ai/v1/pathway/${updateData.pathway_id}`, {
       method: "POST",
       headers: {
         "Authorization": BLAND_AI_API_KEY,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(comprehensivePathway),
+      body: JSON.stringify({
+        name: `${business.name} - Home Service Answering System`,
+        description: `Comprehensive AI answering service for ${business.name} - handles quotes, scheduling, emergencies, and all customer service`,
+        nodes: comprehensivePathway.nodes.map(node => ({
+          id: node.id,
+          type: node.type === "conversation" ? "Default" : node.type === "end_call" ? "End Call" : "Default",
+          data: {
+            name: node.name,
+            prompt: node.prompt || node.data?.prompt,
+            isStart: node.id === "greeting"
+          }
+        })),
+        edges: comprehensivePathway.nodes.flatMap(node => 
+          (node.conditions || []).map(condition => ({
+            source: node.id,
+            target: condition.target_node,
+            condition: condition.condition
+          }))
+        )
+      }),
     });
 
     if (!response.ok) {
