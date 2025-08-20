@@ -5,13 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Session, User } from "@supabase/supabase-js";
 
-const Auth = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+const Signup = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -50,6 +50,25 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "Password mismatch",
+        description: "Please make sure your passwords match.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -70,7 +89,6 @@ const Auth = () => {
             description: "This email is already registered. Try signing in instead.",
             variant: "destructive",
           });
-          setIsSignUp(false); // Switch to sign in mode
         } else {
           toast({
             title: "Signup Error",
@@ -101,50 +119,6 @@ const Auth = () => {
     }
   };
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        if (error.message.includes("Invalid login credentials")) {
-          toast({
-            title: "Invalid credentials",
-            description: "Please check your email and password and try again.",
-            variant: "destructive",
-          });
-        } else {
-          throw error;
-        }
-      } else if (data.user) {
-        toast({
-          title: "Welcome back! 🎉",
-          description: "Redirecting to your dashboard...",
-        });
-        
-        // Redirect to dashboard
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1000);
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An error occurred during sign in",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmit = isSignUp ? handleSignUp : handleSignIn;
-
   return (
     <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background decoration */}
@@ -166,15 +140,15 @@ const Auth = () => {
       <Card className="w-full max-w-md relative z-10 bg-white/10 backdrop-blur-xl border border-white/20 shadow-2xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-bold text-white">
-            {isSignUp ? "Create your account" : "Login to Availabee"}
+            Create your account
           </CardTitle>
           <CardDescription className="text-white/80">
-            {isSignUp ? "Start your AI scheduling journey" : "Welcome back to Availabee"}
+            Start your AI scheduling journey
           </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email" className="text-white text-sm font-medium">Email</Label>
               <Input
@@ -192,33 +166,44 @@ const Auth = () => {
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder="Create a password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="bg-white border-white/30 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-white text-sm font-medium">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="bg-white border-white/30 text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary/20 h-12"
+              />
+            </div>
             
-            {!isSignUp && (
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="checkbox" 
-                  id="remember" 
-                  className="w-4 h-4 text-primary bg-white/10 border-white/20 rounded focus:ring-primary/50"
-                />
-                <Label htmlFor="remember" className="text-white/80 text-sm">
-                  Remember me
-                </Label>
+            <div className="text-xs text-white/70 space-y-1">
+              <p>By creating an account, you agree to our:</p>
+              <div className="flex space-x-4">
+                <button type="button" className="underline hover:text-white transition-colors">
+                  Terms of Service
+                </button>
+                <button type="button" className="underline hover:text-white transition-colors">
+                  Privacy Policy
+                </button>
               </div>
-            )}
+            </div>
             
             <Button 
               type="submit" 
               className="w-full h-12 bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary text-white font-semibold shadow-glow transition-all duration-300" 
               disabled={loading}
             >
-              {loading ? "Loading..." : (isSignUp ? "Sign Up" : "Log In")}
+              {loading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
           
@@ -237,7 +222,6 @@ const Auth = () => {
             variant="outline"
             className="w-full h-12 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
             onClick={() => {
-              // Add social login functionality here
               toast({
                 title: "Coming Soon",
                 description: "Social login will be available soon!",
@@ -253,47 +237,22 @@ const Auth = () => {
             Connect with Google
           </Button>
           
-          {!isSignUp && (
-            <div className="text-center">
-              <button
-                type="button"
-                className="text-sm text-white/80 hover:text-white underline transition-colors"
-                onClick={() => {
-                  toast({
-                    title: "Password Reset",
-                    description: "Password reset functionality will be added soon!",
-                  });
-                }}
-              >
-                Forgot your password?
-              </button>
-            </div>
-          )}
-          
           <div className="text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+            <Link
+              to="/login"
               className="text-sm text-white/80 hover:text-white transition-colors"
             >
-              {isSignUp 
-                ? "Already have an account? " 
-                : "Don't have an account? "
-              }
-              <span className="underline font-medium">
-                {isSignUp ? "Log in" : "Sign up"}
-              </span>
-            </button>
+              Already have an account? <span className="underline font-medium">Log in</span>
+            </Link>
           </div>
           
           <div className="text-center">
-            <button
-              type="button"
-              onClick={() => navigate("/")}
+            <Link
+              to="/"
               className="text-sm text-white/60 hover:text-white/80 transition-colors"
             >
               ← Back to Home
-            </button>
+            </Link>
           </div>
         </CardContent>
       </Card>
@@ -301,4 +260,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default Signup;

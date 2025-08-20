@@ -28,14 +28,14 @@ const Header = () => {
           <Button 
             variant="ghost" 
             className="hidden sm:inline-flex"
-            onClick={() => window.location.href = "/auth"}
+            onClick={() => window.location.href = "/login"}
           >
             Sign In
           </Button>
           <Button 
             variant="hero" 
             size="lg"
-            onClick={() => window.location.href = "/auth"}
+            onClick={() => window.location.href = "/signup"}
           >
             Get Started Free
           </Button>
