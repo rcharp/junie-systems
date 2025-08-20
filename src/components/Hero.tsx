@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { CheckCircle, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import RotatingText from "./RotatingText";
-import heroPhone from "@/assets/hero-ai-phone.jpg";
+
 
 const Hero = () => {
   const [email, setEmail] = useState("");
@@ -114,8 +114,8 @@ const Hero = () => {
           <div className="flex justify-center lg:justify-end">
             <div className="relative">
               <img 
-                src={heroPhone} 
-                alt="Availabee AI call assistant interface on smartphone"
+                src="/lovable-uploads/6c473fae-e0b3-44ab-bb60-c373e617ab26.png" 
+                alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking"
                 className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-2xl shadow-2xl"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent rounded-2xl" />
