@@ -128,12 +128,14 @@ const Signup = () => {
       
       {/* Header with logo */}
       <div className="absolute top-6 left-6 flex items-center space-x-3 z-10">
-        <img 
-          src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-          alt="Availabee Logo" 
-          className="h-8 w-8"
-        />
-        <span className="text-xl font-bold text-white">Availabee</span>
+        <a href="/" className="flex items-center space-x-3">
+          <img 
+            src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
+            alt="Availabee Logo" 
+            className="h-8 w-8"
+          />
+          <span className="text-xl font-bold text-white">Availabee</span>
+        </a>
       </div>
 
       {/* Main Card */}

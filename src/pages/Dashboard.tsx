@@ -74,12 +74,13 @@ const Dashboard = () => {
       <header className="bg-white/80 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <img 
-              src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-              alt="Availabee Logo" 
-              className="h-8 w-8"
-            />
-            
+            <a href="/" className="flex items-center">
+              <img 
+                src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
+                alt="Availabee Logo" 
+                className="h-8 w-8"
+              />
+            </a>
           </div>
           
           <div className="flex items-center space-x-4">

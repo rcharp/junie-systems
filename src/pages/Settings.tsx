@@ -122,11 +122,13 @@ const Settings = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <img 
-              src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-              alt="Availabee Logo" 
-              className="h-8 w-8"
-            />
+            <a href="/" className="flex items-center">
+              <img 
+                src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
+                alt="Availabee Logo" 
+                className="h-8 w-8"
+              />
+            </a>
             <h1 className="text-xl font-bold text-primary">Settings</h1>
           </div>
           
