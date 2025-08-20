@@ -125,12 +125,6 @@ const Dashboard = () => {
               <Button variant="secondary">
                 Setup Guide
               </Button>
-              <Button variant="outline" className="border-white/20 text-white hover:bg-white/20 hover:text-white">
-                Configure Phone
-              </Button>
-              <Button variant="outline" className="border-white/20 text-white hover:bg-white/20 hover:text-white">
-                View Settings
-              </Button>
             </div>
           </CardContent>
         </Card>
