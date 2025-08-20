@@ -11,6 +11,7 @@ import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3 
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
+import BlandAIMonitoring from "@/components/BlandAIMonitoring";
 
 const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -167,7 +168,7 @@ const Dashboard = () => {
 
         {/* Main Dashboard Content */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full lg:w-auto grid-cols-4">
+          <TabsList className="grid w-full lg:w-auto grid-cols-5">
             <TabsTrigger value="overview" className="flex items-center space-x-2">
               <BarChart3 className="w-4 h-4" />
               <span>Overview</span>
@@ -175,6 +176,10 @@ const Dashboard = () => {
             <TabsTrigger value="calls" className="flex items-center space-x-2">
               <Phone className="w-4 h-4" />
               <span>Calls</span>
+            </TabsTrigger>
+            <TabsTrigger value="monitoring" className="flex items-center space-x-2">
+              <Phone className="w-4 h-4" />
+              <span>AI Monitor</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center space-x-2">
               <BarChart3 className="w-4 h-4" />
@@ -253,6 +258,10 @@ const Dashboard = () => {
 
           <TabsContent value="calls">
             <CallList />
+          </TabsContent>
+
+          <TabsContent value="monitoring">
+            <BlandAIMonitoring />
           </TabsContent>
 
           <TabsContent value="analytics">
