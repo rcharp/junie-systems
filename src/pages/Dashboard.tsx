@@ -11,6 +11,7 @@ import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3,
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
+import { BlandCallInterface } from "@/components/BlandCallInterface";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 
 
@@ -134,9 +135,10 @@ const Dashboard = () => {
         </Card>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="calls">Calls</TabsTrigger>
+            <TabsTrigger value="bland-ai">Bland AI</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
           </TabsList>
@@ -242,6 +244,10 @@ const Dashboard = () => {
 
           <TabsContent value="calls">
             <CallList />
+          </TabsContent>
+
+          <TabsContent value="bland-ai">
+            <BlandCallInterface />
           </TabsContent>
 
           <TabsContent value="analytics">
