@@ -26,20 +26,22 @@ const Header = () => {
           </a>
         </nav>
         
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
           <Button 
             variant="ghost" 
-            className="hidden sm:inline-flex"
+            size="sm"
             onClick={() => window.location.href = "/login"}
           >
             Sign In
           </Button>
           <Button 
             variant="hero" 
-            size="lg"
+            size="sm" 
+            className="sm:text-base"
             onClick={() => window.location.href = "/signup"}
           >
-            Get Started Free
+            <span className="hidden sm:inline">Get Started Free</span>
+            <span className="sm:hidden">Sign Up</span>
           </Button>
         </div>
       </div>
