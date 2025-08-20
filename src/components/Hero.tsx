@@ -104,12 +104,12 @@ const Hero = () => {
           </div>
 
           {/* Right Column - Phone Image */}
-          <div className="flex justify-center lg:justify-end w-full">
-            <div className="relative w-full flex justify-center">
+          <div className="flex justify-center lg:justify-end">
+            <div className="relative">
               <img 
                 src="/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png" 
                 alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
-                className="w-80 sm:w-96 lg:w-full lg:max-w-md xl:max-w-lg"
+                className="w-80 sm:w-96 lg:max-w-md xl:max-w-lg mx-auto lg:mx-0"
               />
               <div className="absolute inset-0 from-primary/20 to-transparent rounded-2xl" />
             </div>
