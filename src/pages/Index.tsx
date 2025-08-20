@@ -4,7 +4,7 @@ import Benefits from "@/components/Benefits";
 import Features from "@/components/Features";
 import WhyAvailabee from "@/components/WhyAvailabee";
 import HowItWorks from "@/components/HowItWorks";
-import Comparison from "@/components/Comparison";
+
 import Pricing from "@/components/Pricing";
 import EmailCapture from "@/components/EmailCapture";
 import Footer from "@/components/Footer";
@@ -19,7 +19,7 @@ const Index = () => {
         <WhyAvailabee />
         <HowItWorks />
         <Features />
-        <Comparison />
+        
         <Pricing />
         <EmailCapture />
       </main>
