@@ -118,7 +118,7 @@ const Hero = () => {
                 alt="Availabee AI call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
                 className="w-full max-w-md lg:max-w-lg xl:max-w-xl rounded-2xl shadow-2xl"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent rounded-2xl" />
+              <div className="absolute inset-0 from-primary/20 to-transparent rounded-2xl" />
             </div>
           </div>
         </div>
