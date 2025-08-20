@@ -108,74 +108,26 @@ const Dashboard = () => {
           </p>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="hover:shadow-elegant transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Meetings</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-muted-foreground">+2 from last week</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-elegant transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Hours Saved</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">24.5</div>
-              <p className="text-xs text-muted-foreground">+5.2 from last week</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-elegant transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Contacts</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">48</div>
-              <p className="text-xs text-muted-foreground">+8 from last week</p>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-elegant transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
-              <Badge variant="secondary" className="text-xs">
-                AI Powered
-              </Badge>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">94%</div>
-              <p className="text-xs text-muted-foreground">+3% from last week</p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Main Dashboard Content */}
         {/* Welcome Card moved to top */}
         <Card className="mb-8 bg-gradient-hero text-white border-0">
           <CardHeader>
-            <CardTitle className="text-white">🎉 Welcome to Availabee AI!</CardTitle>
+            <CardTitle className="text-white">🎉 Welcome to Availabee!</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-white/90 mb-4">
-              Your intelligent scheduling assistant is ready to help you save time and never miss an important meeting again.
+              Your intelligent call answering service is ready to help you never miss another customer call.
             </p>
             <div className="flex flex-wrap gap-3">
               <Button variant="secondary">
-                Watch Tutorial
+                Setup Guide
               </Button>
               <Button variant="outline" className="border-white/20 text-white hover:bg-white/20 hover:text-white">
-                Connect Calendar
+                Configure Phone
               </Button>
               <Button variant="outline" className="border-white/20 text-white hover:bg-white/20 hover:text-white">
-                Import Contacts
+                View Settings
               </Button>
             </div>
           </CardContent>
@@ -190,12 +142,13 @@ const Dashboard = () => {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
+
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Meetings</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Total Calls</CardTitle>
+                  <Phone className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">24</div>
@@ -214,7 +167,7 @@ const Dashboard = () => {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Contacts</CardTitle>
+                  <CardTitle className="text-sm font-medium">Leads Captured</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -242,10 +195,10 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    { time: "2 minutes ago", action: "Scheduled meeting with John Smith", type: "success" },
-                    { time: "15 minutes ago", action: "Rescheduled call with Sarah Johnson", type: "warning" },
-                    { time: "1 hour ago", action: "Cancelled meeting with Mike Davis", type: "error" },
-                    { time: "2 hours ago", action: "Confirmed appointment with Lisa Wilson", type: "success" },
+                    { time: "2 minutes ago", action: "Answered call from potential customer", type: "success" },
+                    { time: "15 minutes ago", action: "Took message from existing client", type: "warning" },
+                    { time: "1 hour ago", action: "Forwarded urgent call to owner", type: "error" },
+                    { time: "2 hours ago", action: "Scheduled appointment for new prospect", type: "success" },
                   ].map((activity, index) => (
                     <div key={index} className="flex items-center space-x-3">
                       <div className={`w-2 h-2 rounded-full ${
@@ -268,15 +221,15 @@ const Dashboard = () => {
                 <CardContent className="space-y-3">
                   <Button className="w-full justify-start" variant="outline">
                     <Phone className="w-4 h-4 mr-2" />
-                    Schedule New Meeting
+                    Configure Call Forwarding
                   </Button>
                   <Button className="w-full justify-start" variant="outline">
                     <MessageSquare className="w-4 h-4 mr-2" />
-                    Send Quick Message
+                    Review Call Scripts
                   </Button>
                   <Button className="w-full justify-start" variant="outline">
                     <Users className="w-4 h-4 mr-2" />
-                    Manage Contacts
+                    Manage Business Info
                   </Button>
                   <Button className="w-full justify-start" variant="outline">
                     <Settings className="w-4 h-4 mr-2" />

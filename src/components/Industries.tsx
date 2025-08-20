@@ -43,8 +43,8 @@ const Industries = () => {
         <div className="text-center space-y-4 mb-16">
           <Badge variant="outline" className="text-primary">Built for businesses like yours</Badge>
           <h2 className="text-4xl lg:text-5xl font-bold">
-            Join other small businesses in your 
-            <span className="bg-gradient-hero bg-clip-text text-transparent"> industry using Availabee</span>
+            Perfect for businesses across 
+            <span className="bg-gradient-hero bg-clip-text text-transparent"> every industry</span>
           </h2>
         </div>
 
