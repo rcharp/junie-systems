@@ -19,8 +19,13 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Extract webhook_id from URL query params or body
+    const url = new URL(req.url);
+    const webhookId = url.searchParams.get('webhook_id');
+    
     const webhookData = await req.json();
     console.log('Received AI call webhook:', webhookData);
+    console.log('Webhook ID:', webhookId);
 
     const { call_id, status, transcript, duration, recording_url, metadata } = webhookData;
 
@@ -52,22 +57,38 @@ serve(async (req) => {
         const callerInfo = extractCallerInfo(transcript);
         
         if (callerInfo.caller_name || callerInfo.phone_number) {
-          // Get user_id from call_logs
-          const { data: callLog, error: callError } = await supabase
-            .from('call_logs')
-            .select('user_id')
-            .eq('call_id', call_id)
-            .single();
+          let userId = null;
 
-          if (callError) {
-            console.error('Error finding call log:', callError);
-            throw callError;
+          // First try to get user_id from webhook_id if provided
+          if (webhookId) {
+            const { data: userFromWebhook, error: webhookError } = await supabase
+              .rpc('get_user_id_by_webhook_id', { _webhook_id: webhookId });
+            
+            if (!webhookError && userFromWebhook) {
+              userId = userFromWebhook;
+              console.log('Found user via webhook_id:', userId);
+            }
+          }
+
+          // Fallback: Get user_id from call_logs if webhook_id didn't work
+          if (!userId) {
+            const { data: callLog, error: callError } = await supabase
+              .from('call_logs')
+              .select('user_id')
+              .eq('call_id', call_id)
+              .single();
+
+            if (callError) {
+              console.error('Error finding call log:', callError);
+              throw callError;
+            }
+            userId = callLog.user_id;
           }
 
           const { error: messageError } = await supabase
             .from('call_messages')
             .insert({
-              user_id: callLog.user_id,
+              user_id: userId,
               call_id: call_id,
               caller_name: callerInfo.caller_name || 'Unknown Caller',
               phone_number: callerInfo.phone_number || 'Unknown',

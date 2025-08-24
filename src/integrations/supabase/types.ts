@@ -471,6 +471,7 @@ export type Database = {
           subscription_status: string | null
           trial_ends_at: string | null
           updated_at: string | null
+          webhook_id: string | null
         }
         Insert: {
           company_name?: string | null
@@ -481,6 +482,7 @@ export type Database = {
           subscription_status?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
+          webhook_id?: string | null
         }
         Update: {
           company_name?: string | null
@@ -491,6 +493,7 @@ export type Database = {
           subscription_status?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
+          webhook_id?: string | null
         }
         Relationships: []
       }
@@ -659,6 +662,10 @@ export type Database = {
       }
       get_user_id_by_email: {
         Args: { _email: string }
+        Returns: string
+      }
+      get_user_id_by_webhook_id: {
+        Args: { _webhook_id: string }
         Returns: string
       }
       has_role: {
