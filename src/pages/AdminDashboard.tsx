@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Phone, Calendar, TrendingUp, Shield, Activity } from 'lucide-react';
+import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { useNavigate } from 'react-router-dom';
 
 interface Stats {
@@ -186,6 +187,9 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Webhook Monitor */}
+        <WebhookMonitor />
 
         {/* Recent Activity */}
         <Card>
