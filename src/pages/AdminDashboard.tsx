@@ -28,14 +28,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/dashboard');
-      return;
-    }
-
-    // Only redirect if we're sure the user is not admin (loading is complete)
-    if (!loading && user && !isAdmin) {
-      console.log('User is not admin, redirecting to dashboard');
-      navigate('/dashboard');
+      navigate('/login');
       return;
     }
 
@@ -123,18 +116,22 @@ const AdminDashboard = () => {
     return null;
   }
 
-  if (!isAdmin) {
+  if (!loading && !isAdmin) {
+    // Show 404 for non-admin users
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-xl font-semibold mb-2">Access Denied</div>
-          <p className="text-muted-foreground mb-4">You need admin privileges to access this page.</p>
-          <button 
+        <div className="text-center space-y-4">
+          <h1 className="text-6xl font-bold text-muted-foreground">404</h1>
+          <h2 className="text-2xl font-semibold">Page Not Found</h2>
+          <p className="text-muted-foreground max-w-md">
+            The page you're looking for doesn't exist or you don't have permission to access it.
+          </p>
+          <Button 
             onClick={() => navigate('/dashboard')}
-            className="text-primary hover:underline"
+            className="mt-4"
           >
             Return to Dashboard
-          </button>
+          </Button>
         </div>
       </div>
     );
