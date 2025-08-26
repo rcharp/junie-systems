@@ -10,8 +10,6 @@ import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3,
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
-import { PathwaySetup } from "@/components/PathwaySetup";
-import { PathwayUpdater } from "@/components/PathwayUpdater";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -240,13 +238,6 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <WebhookInfo />
-                <div className="border-t pt-6">
-                  <PathwayUpdater />
-                </div>
-                <div className="border-t pt-6">
-                  <h3 className="font-semibold mb-4">Create New Pathway (Optional)</h3>
-                  <PathwaySetup />
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
