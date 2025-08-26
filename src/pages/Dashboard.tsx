@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3, TrendingUp, MessageSquare, Bot } from "lucide-react";
+import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3, TrendingUp, MessageSquare, Bot, Shield } from "lucide-react";
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 
 const Dashboard = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -63,6 +63,17 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            {isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/admin")}
+                className="text-primary hover:bg-primary/10"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Admin
+              </Button>
+            )}
             <Button variant="ghost" size="icon">
               <Bell className="w-5 h-5" />
             </Button>

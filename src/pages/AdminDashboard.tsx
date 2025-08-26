@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Phone, Calendar, TrendingUp, Shield, Activity } from 'lucide-react';
+import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft } from 'lucide-react';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { useNavigate } from 'react-router-dom';
 
@@ -119,13 +120,24 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Availabee Admin Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Monitor system performance and user activity
-            </p>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground mb-2">
+                Availabee Admin Dashboard
+              </h1>
+              <p className="text-muted-foreground">
+                Monitor system performance and user activity
+              </p>
+            </div>
           </div>
           <Badge variant="secondary" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
