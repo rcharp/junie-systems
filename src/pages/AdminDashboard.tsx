@@ -24,7 +24,7 @@ const AdminDashboard = () => {
     totalAppointments: 0,
     activeUsers: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  
 
   useEffect(() => {
     if (!loading && !user) {
@@ -34,7 +34,6 @@ const AdminDashboard = () => {
 
     if (!loading && isAdmin) {
       fetchStats();
-      fetchRecentActivity();
     }
   }, [user, isAdmin, loading, navigate]);
 
@@ -75,31 +74,6 @@ const AdminDashboard = () => {
     }
   };
 
-  const fetchRecentActivity = async () => {
-    try {
-      const { data: calls } = await supabase
-        .from('call_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      const { data: appointments } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      const combined = [
-        ...(calls || []).map(call => ({ ...call, type: 'call' })),
-        ...(appointments || []).map(apt => ({ ...apt, type: 'appointment' }))
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 10);
-
-      setRecentActivity(combined);
-    } catch (error) {
-      console.error('Error fetching recent activity:', error);
-    }
-  };
 
   if (loading || (user && !isAdmin && loading)) {
     return (
@@ -223,52 +197,6 @@ const AdminDashboard = () => {
 
         {/* Webhook Monitor */}
         <WebhookMonitor />
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest calls and appointments across all users
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((item, index) => (
-                <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    {item.type === 'call' ? (
-                      <Phone className="h-4 w-4 text-blue-500" />
-                    ) : (
-                      <Calendar className="h-4 w-4 text-green-500" />
-                    )}
-                    <div>
-                      <p className="font-medium">
-                        {item.type === 'call' ? 'Call from' : 'Appointment by'} {item.caller_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {item.phone_number} • {item.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Badge variant={item.type === 'call' ? 'default' : 'secondary'}>
-                      {item.type}
-                    </Badge>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(item.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              {recentActivity.length === 0 && (
-                <p className="text-center text-muted-foreground py-8">
-                  No recent activity found
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Availabee Info */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
