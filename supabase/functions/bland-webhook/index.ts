@@ -29,25 +29,46 @@ serve(async (req) => {
 
     const { call_id, status, transcript, duration, recording_url, metadata } = webhookData;
 
-    // Update call log with webhook data
-    const { error: updateError } = await supabase
+    // Get user_id from webhook_id if provided
+    let userId = null;
+    if (webhookId) {
+      const { data: userFromWebhook, error: webhookError } = await supabase
+        .rpc('get_user_id_by_webhook_id', { _webhook_id: webhookId });
+      
+      if (!webhookError && userFromWebhook) {
+        userId = userFromWebhook;
+        console.log('Found user via webhook_id:', userId);
+      }
+    }
+
+    // Insert or update call log with webhook data
+    const { error: upsertError } = await supabase
       .from('call_logs')
-      .update({
-        call_status: status,
-        call_duration: duration,
-        transcript: transcript,
-        recording_url: recording_url,
+      .upsert({
+        call_id: call_id || crypto.randomUUID(),
+        user_id: userId,
+        caller_name: 'Webhook Caller',
+        phone_number: 'Unknown',
+        call_status: status || 'received',
+        call_duration: duration || 0,
+        transcript: transcript || '',
+        recording_url: recording_url || '',
+        message: transcript ? transcript.substring(0, 500) : 'Webhook data received',
+        urgency_level: 'medium',
+        call_type: 'webhook',
         ended_at: new Date().toISOString(),
         metadata: {
           ...metadata,
-          webhook_received_at: new Date().toISOString()
+          webhook_received_at: new Date().toISOString(),
+          raw_webhook_data: webhookData
         }
-      })
-      .eq('call_id', call_id);
+      }, {
+        onConflict: 'call_id'
+      });
 
-    if (updateError) {
-      console.error('Error updating call log:', updateError);
-      throw updateError;
+    if (upsertError) {
+      console.error('Error upserting call log:', upsertError);
+      throw upsertError;
     }
 
     // Extract message information from transcript if call was completed
