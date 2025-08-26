@@ -27,12 +27,19 @@ const AdminDashboard = () => {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
+    if (!loading && !user) {
       navigate('/dashboard');
       return;
     }
 
-    if (isAdmin) {
+    // Only redirect if we're sure the user is not admin (loading is complete)
+    if (!loading && user && !isAdmin) {
+      console.log('User is not admin, redirecting to dashboard');
+      navigate('/dashboard');
+      return;
+    }
+
+    if (!loading && isAdmin) {
       fetchStats();
       fetchRecentActivity();
     }
@@ -101,7 +108,7 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (loading || (user && !isAdmin && loading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -112,8 +119,25 @@ const AdminDashboard = () => {
     );
   }
 
-  if (!user || !isAdmin) {
+  if (!user) {
     return null;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xl font-semibold mb-2">Access Denied</div>
+          <p className="text-muted-foreground mb-4">You need admin privileges to access this page.</p>
+          <button 
+            onClick={() => navigate('/dashboard')}
+            className="text-primary hover:underline"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
