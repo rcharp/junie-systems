@@ -95,3 +95,7 @@ verify_jwt = false
 [[edge_runtime.policies]]
 entrypoint = "supabase/functions/update-pathway/index.ts"
 verify_jwt = false
+
+[[edge_runtime.policies]]
+entrypoint = "supabase/functions/get-business-data/index.ts"
+verify_jwt = false

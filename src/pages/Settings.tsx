@@ -27,6 +27,8 @@ const Settings = () => {
   const [businessAddress, setBusinessAddress] = useState("");
   const [businessHours, setBusinessHours] = useState("");
   const [businessDescription, setBusinessDescription] = useState("");
+  const [servicesOffered, setServicesOffered] = useState("");
+  const [pricingStructure, setPricingStructure] = useState("");
 
   // Call Settings State
   const [forwardingNumber, setForwardingNumber] = useState("");
@@ -237,6 +239,34 @@ const Settings = () => {
                       placeholder="Brief description of your business and services..."
                       rows={4}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="servicesOffered">Services Offered</Label>
+                    <Textarea
+                      id="servicesOffered"
+                      value={servicesOffered}
+                      onChange={(e) => setServicesOffered(e.target.value)}
+                      placeholder="List your main services: Consultation, Installation, Maintenance, Support..."
+                      rows={3}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Describe the main services your business offers, separated by commas
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="pricingStructure">Pricing Structure</Label>
+                    <Textarea
+                      id="pricingStructure"
+                      value={pricingStructure}
+                      onChange={(e) => setPricingStructure(e.target.value)}
+                      placeholder="Hourly rates: $50-150/hr, Project-based pricing available, Free consultations..."
+                      rows={3}
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Provide general pricing information that can be shared with potential clients
+                    </p>
                   </div>
 
                   <Button onClick={() => saveSettings("Business")} disabled={saving}>

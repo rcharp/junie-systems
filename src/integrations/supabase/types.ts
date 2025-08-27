@@ -79,8 +79,10 @@ export type Database = {
           instant_alerts: boolean | null
           lead_capture: boolean | null
           max_call_duration: number | null
+          pricing_structure: string | null
           push_notifications: boolean | null
           record_calls: boolean | null
+          services_offered: string | null
           sms_notifications: boolean | null
           updated_at: string
           urgent_keywords: string | null
@@ -105,8 +107,10 @@ export type Database = {
           instant_alerts?: boolean | null
           lead_capture?: boolean | null
           max_call_duration?: number | null
+          pricing_structure?: string | null
           push_notifications?: boolean | null
           record_calls?: boolean | null
+          services_offered?: string | null
           sms_notifications?: boolean | null
           updated_at?: string
           urgent_keywords?: string | null
@@ -131,8 +135,10 @@ export type Database = {
           instant_alerts?: boolean | null
           lead_capture?: boolean | null
           max_call_duration?: number | null
+          pricing_structure?: string | null
           push_notifications?: boolean | null
           record_calls?: boolean | null
+          services_offered?: string | null
           sms_notifications?: boolean | null
           updated_at?: string
           urgent_keywords?: string | null
