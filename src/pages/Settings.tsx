@@ -437,25 +437,25 @@ const Settings = () => {
                       </Button>
                     </div>
                     <div className="space-y-2">
-                      <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground">
-                        <div className="col-span-1">Open</div>
+                      <div className="grid grid-cols-12 gap-1 text-xs font-medium text-muted-foreground px-1">
+                        <div className="col-span-1 text-center">Open</div>
                         <div className="col-span-3">Day</div>
                         <div className="col-span-3">Opening</div>
                         <div className="col-span-3">Closing</div>
-                        <div className="col-span-2">Action</div>
+                        <div className="col-span-2 text-center">Remove</div>
                       </div>
                       {businessHours.map((hour) => {
                         const validationMessage = hour.isOpen ? getTimeValidationMessage(hour.openTime, hour.closeTime) : null;
                         return (
                           <div key={hour.id} className="space-y-1">
-                            <div className="grid grid-cols-12 gap-2 items-center">
+                            <div className="grid grid-cols-12 gap-1 items-center">
                               <div className="col-span-1 flex justify-center">
                                 <Checkbox
                                   checked={hour.isOpen}
                                   onCheckedChange={(checked) => 
                                     updateBusinessHours(hour.id, 'isOpen', !!checked)
                                   }
-                                  className="h-4 w-4"
+                                  className="h-3 w-3"
                                 />
                               </div>
                               <div className="col-span-3">
@@ -464,7 +464,7 @@ const Settings = () => {
                                   onValueChange={(value) => updateBusinessHours(hour.id, 'day', value)}
                                   disabled={!hour.isOpen}
                                 >
-                                  <SelectTrigger className={`h-9 ${!hour.isOpen ? "opacity-50" : ""}`}>
+                                  <SelectTrigger className={`h-8 text-sm ${!hour.isOpen ? "opacity-50" : ""}`}>
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -482,7 +482,7 @@ const Settings = () => {
                                   value={hour.openTime}
                                   onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
                                   disabled={!hour.isOpen}
-                                  className={`h-9 ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                  className={`h-8 text-sm ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                 />
                               </div>
                               <div className="col-span-3">
@@ -491,19 +491,19 @@ const Settings = () => {
                                   value={hour.closeTime}
                                   onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
                                   disabled={!hour.isOpen}
-                                  className={`h-9 ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                  className={`h-8 text-sm ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                 />
                               </div>
-                              <div className="col-span-2">
+                              <div className="col-span-2 flex justify-center">
                                 <Button
                                   type="button"
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => removeBusinessHours(hour.id)}
                                   disabled={businessHours.length <= 1}
-                                  className="h-9 w-full"
+                                  className="h-8 w-8 p-0"
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 className="w-3 h-3" />
                                 </Button>
                               </div>
                             </div>
@@ -566,13 +566,15 @@ const Settings = () => {
                               onChange={(e) => updateService(index, 'name', e.target.value)}
                             />
                           </div>
-                          <div className="w-32">
-                            <Input
-                              placeholder="Price"
-                              value={service.price}
-                              onChange={(e) => updateService(index, 'price', e.target.value)}
-                            />
-                          </div>
+                           <div className="w-32 relative">
+                             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                             <Input
+                               placeholder="0.00"
+                               value={service.price}
+                               onChange={(e) => updateService(index, 'price', e.target.value)}
+                               className="pl-6"
+                             />
+                           </div>
                           {services.length > 1 && (
                             <Button
                               type="button"
