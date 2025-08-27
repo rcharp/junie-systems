@@ -8,14 +8,33 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('get-business-data function called with method:', req.method);
+  console.log('Request URL:', req.url);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    console.log('Environment check - SUPABASE_URL exists:', !!supabaseUrl);
+    console.log('Environment check - SERVICE_ROLE_KEY exists:', !!supabaseKey);
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing environment variables');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
     
     // Create Supabase client with service role key for server-side access
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -25,6 +44,7 @@ serve(async (req) => {
     const pathParts = url.pathname.split('/');
     const userId = pathParts[pathParts.length - 1]; // Get the last part of the path
 
+    console.log('URL path parts:', pathParts);
     console.log('Fetching business data for user:', userId);
 
     if (!userId || userId === 'get-business-data') {
