@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe } from "lucide-react";
+import { WebhookInfo } from "@/components/WebhookInfo";
+import NotificationSettings from "@/components/NotificationSettings";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -157,7 +159,7 @@ const Settings = () => {
           </div>
 
           <Tabs defaultValue="business" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="business">
                 <Building className="w-4 h-4 mr-2" />
                 Business
@@ -169,6 +171,10 @@ const Settings = () => {
               <TabsTrigger value="ai">
                 <Bot className="w-4 h-4 mr-2" />
                 AI Assistant
+              </TabsTrigger>
+              <TabsTrigger value="ai-setup">
+                <Bot className="w-4 h-4 mr-2" />
+                AI Setup
               </TabsTrigger>
               <TabsTrigger value="notifications">
                 <Bell className="w-4 h-4 mr-2" />
@@ -506,76 +512,24 @@ const Settings = () => {
               </Card>
             </TabsContent>
 
-            {/* Notifications */}
-            <TabsContent value="notifications">
+            {/* AI Setup */}
+            <TabsContent value="ai-setup">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Bell className="w-5 h-5 mr-2" />
-                    Notification Preferences
+                  <CardTitle className="flex items-center gap-2">
+                    <Bot className="h-5 w-5" />
+                    AI Answering Service Setup
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Email Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Receive call summaries and alerts via email
-                        </p>
-                      </div>
-                      <Switch
-                        checked={emailNotifications}
-                        onCheckedChange={setEmailNotifications}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>SMS Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Get text message alerts for important calls
-                        </p>
-                      </div>
-                      <Switch
-                        checked={smsNotifications}
-                        onCheckedChange={setSmsNotifications}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Push Notifications</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Browser notifications for real-time updates
-                        </p>
-                      </div>
-                      <Switch
-                        checked={pushNotifications}
-                        onCheckedChange={setPushNotifications}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Instant Alerts</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Immediate notifications for urgent calls
-                        </p>
-                      </div>
-                      <Switch
-                        checked={instantAlerts}
-                        onCheckedChange={setInstantAlerts}
-                      />
-                    </div>
-                  </div>
-
-                  <Button onClick={() => saveSettings("Notification")} disabled={saving}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {saving ? "Saving..." : "Save Notification Settings"}
-                  </Button>
+                  <WebhookInfo />
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* Notifications */}
+            <TabsContent value="notifications">
+              <NotificationSettings />
             </TabsContent>
 
             {/* Account */}

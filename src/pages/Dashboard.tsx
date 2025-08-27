@@ -120,20 +120,12 @@ const Dashboard = () => {
         </Card>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-1">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-1">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="calls" className="text-xs sm:text-sm">
               <span className="hidden md:inline">Messages & </span>Calls
             </TabsTrigger>
-            <TabsTrigger value="ai-setup" className="text-xs sm:text-sm">
-              <Bot className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">AI </span>Setup
-            </TabsTrigger>
             <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
-            <TabsTrigger value="notifications" className="text-xs sm:text-sm col-span-2 md:col-span-1">
-              <span className="hidden sm:inline">Notifications</span>
-              <span className="sm:hidden">Notifs</span>
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -239,26 +231,8 @@ const Dashboard = () => {
             <CallList />
           </TabsContent>
 
-          <TabsContent value="ai-setup" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bot className="h-5 w-5" />
-                  AI Answering Service Setup
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <WebhookInfo />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="analytics">
             <CallAnalytics />
-          </TabsContent>
-
-          <TabsContent value="notifications">
-            <NotificationSettings />
           </TabsContent>
         </Tabs>
       </main>
