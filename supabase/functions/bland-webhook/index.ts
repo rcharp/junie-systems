@@ -16,14 +16,46 @@ serve(async (req) => {
   try {
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const BLAND_WEBHOOK_SIGNATURE = Deno.env.get('BLAND_WEBHOOK_SIGNATURE')!;
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Extract webhook_id from URL query params or body
+    // Get the raw request body for signature verification
+    const rawBody = await req.text();
+    
+    // Verify webhook signature
+    const providedSignature = req.headers.get('x-bland-signature') || req.headers.get('bland-signature') || req.headers.get('signature');
+    
+    if (!providedSignature) {
+      console.error('No webhook signature provided');
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Webhook signature required' 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Verify the signature matches our expected signature
+    if (providedSignature !== BLAND_WEBHOOK_SIGNATURE) {
+      console.error('Invalid webhook signature:', providedSignature);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Invalid webhook signature' 
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log('Webhook signature verified successfully');
+
+    // Extract webhook_id from URL query params
     const url = new URL(req.url);
     const webhookId = url.searchParams.get('webhook_id');
     
-    const webhookData = await req.json();
+    const webhookData = JSON.parse(rawBody);
     console.log('Received AI call webhook:', webhookData);
     console.log('Webhook ID:', webhookId);
 
