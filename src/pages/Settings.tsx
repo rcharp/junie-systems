@@ -259,30 +259,26 @@ const Settings = () => {
           </div>
 
           <Tabs defaultValue="business" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
-              <TabsTrigger value="business">
-                <Building className="w-4 h-4 mr-2" />
-                Business
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="business" className="flex items-center gap-2">
+                <Building className="w-4 h-4" />
+                <span className="hidden sm:inline">Business</span>
               </TabsTrigger>
-              <TabsTrigger value="calls">
-                <Phone className="w-4 h-4 mr-2" />
-                Call Settings
+              <TabsTrigger value="calls" className="flex items-center gap-2">
+                <Phone className="w-4 h-4" />
+                <span className="hidden sm:inline">Calls</span>
               </TabsTrigger>
-              <TabsTrigger value="ai">
-                <Bot className="w-4 h-4 mr-2" />
-                AI Assistant
+              <TabsTrigger value="ai" className="flex items-center gap-2">
+                <Bot className="w-4 h-4" />
+                <span className="hidden sm:inline">AI</span>
               </TabsTrigger>
-              <TabsTrigger value="ai-setup">
-                <Bot className="w-4 h-4 mr-2" />
-                AI Setup
+              <TabsTrigger value="notifications" className="flex items-center gap-2">
+                <Bell className="w-4 h-4" />
+                <span className="hidden sm:inline">Notifications</span>
               </TabsTrigger>
-              <TabsTrigger value="notifications">
-                <Bell className="w-4 h-4 mr-2" />
-                Notifications
-              </TabsTrigger>
-              <TabsTrigger value="account">
-                <User className="w-4 h-4 mr-2" />
-                Account
+              <TabsTrigger value="account" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Account</span>
               </TabsTrigger>
             </TabsList>
 
@@ -318,6 +314,7 @@ const Settings = () => {
                           <SelectItem value="handyman">Handyman Services</SelectItem>
                           <SelectItem value="hvac">HVAC & Air Conditioning</SelectItem>
                           <SelectItem value="landscaping">Landscaping</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
                           <SelectItem value="pest-control">Pest Control</SelectItem>
                           <SelectItem value="plumbing">Plumbing</SelectItem>
                           <SelectItem value="pool-spa">Pool & Spa Services</SelectItem>
