@@ -313,12 +313,16 @@ const Settings = () => {
                           <SelectValue placeholder="Select business type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="restaurant">Restaurant</SelectItem>
-                          <SelectItem value="medical">Medical Practice</SelectItem>
-                          <SelectItem value="legal">Legal Services</SelectItem>
-                          <SelectItem value="retail">Retail</SelectItem>
-                          <SelectItem value="consulting">Consulting</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="electric">Electric Services</SelectItem>
+                          <SelectItem value="garage-door">Garage Door Services</SelectItem>
+                          <SelectItem value="handyman">Handyman Services</SelectItem>
+                          <SelectItem value="hvac">HVAC & Air Conditioning</SelectItem>
+                          <SelectItem value="landscaping">Landscaping</SelectItem>
+                          <SelectItem value="pest-control">Pest Control</SelectItem>
+                          <SelectItem value="plumbing">Plumbing</SelectItem>
+                          <SelectItem value="pool-spa">Pool & Spa Services</SelectItem>
+                          <SelectItem value="cleaning">Professional Cleaning</SelectItem>
+                          <SelectItem value="roofing">Roofing</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
