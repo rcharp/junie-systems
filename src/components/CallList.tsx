@@ -243,7 +243,7 @@ const CallList = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Message:</label>
+                    <label className="text-sm font-medium text-muted-foreground">Summary:</label>
                     <p className="mt-1 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
                       {message.message}
                     </p>
@@ -322,12 +322,29 @@ const CallList = () => {
                   
                   {call.message && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Message:</label>
+                      <label className="text-sm font-medium text-muted-foreground">Summary:</label>
                       <p className="mt-1 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
                         {call.message}
                       </p>
                     </div>
                   )}
+
+                  {/* Additional call details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {call.email && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-muted-foreground font-medium">Email:</span>
+                        <span>{call.email}</span>
+                      </div>
+                    )}
+                    {call.best_time_to_call && (
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground font-medium">Best time:</span>
+                        <span>{call.best_time_to_call}</span>
+                      </div>
+                    )}
+                  </div>
 
                   {(call.recording_url || call.transcript) && (
                     <div className="flex space-x-2">
