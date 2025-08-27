@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import CallDetails from "./pages/CallDetails";
 import Settings from "./pages/Settings";
 import SetupGuide from "./pages/SetupGuide";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/call/:callId" element={<CallDetails />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/setup-guide" element={<SetupGuide />} />
             <Route path="/admin" element={<AdminDashboard />} />

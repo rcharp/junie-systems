@@ -41,21 +41,44 @@ serve(async (req) => {
       }
     }
 
-    // Insert or update call log with webhook data
+    // Extract caller info from transcript first
+    let callerInfo = {
+      caller_name: 'Unknown Caller',
+      phone_number: 'Unknown',
+      email: null,
+      message: 'Webhook data received',
+      urgency_level: 'medium',
+      call_type: 'other'
+    };
+
+    if (transcript) {
+      const extracted = extractCallerInfo(transcript);
+      callerInfo = {
+        caller_name: extracted.caller_name || 'Unknown Caller',
+        phone_number: extracted.phone_number || 'Unknown',
+        email: extracted.email,
+        message: extracted.message ? extracted.message.substring(0, 500) : transcript.substring(0, 500),
+        urgency_level: extracted.urgency_level,
+        call_type: extracted.call_type
+      };
+    }
+
+    // Insert or update call log with extracted data
     const { error: upsertError } = await supabase
       .from('call_logs')
       .upsert({
         call_id: call_id || crypto.randomUUID(),
         user_id: userId,
-        caller_name: 'Webhook Caller',
-        phone_number: 'Unknown',
+        caller_name: callerInfo.caller_name,
+        phone_number: callerInfo.phone_number,
+        email: callerInfo.email,
         call_status: status || 'completed',
         call_duration: duration || 0,
         transcript: transcript || '',
         recording_url: recording_url || '',
-        message: transcript ? transcript.substring(0, 500) : 'Webhook data received',
-        urgency_level: 'medium',
-        call_type: 'other',
+        message: callerInfo.message,
+        urgency_level: callerInfo.urgency_level,
+        call_type: callerInfo.call_type,
         ended_at: new Date().toISOString(),
         metadata: {
           ...metadata,

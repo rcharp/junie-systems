@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -43,6 +44,7 @@ interface CallMessage {
 const CallList = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [callMessages, setCallMessages] = useState<CallMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,7 +201,11 @@ const CallList = () => {
             </Card>
           ) : (
             callMessages.map((message) => (
-              <Card key={message.id} className={`${message.status === 'new' ? 'border-primary bg-primary/5' : ''}`}>
+              <Card 
+                key={message.id} 
+                className={`cursor-pointer hover:shadow-md transition-shadow ${message.status === 'new' ? 'border-primary bg-primary/5' : ''}`}
+                onClick={() => navigate(`/call/${message.id}`)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
@@ -283,7 +289,11 @@ const CallList = () => {
             </Card>
           ) : (
             callLogs.map((call) => (
-              <Card key={call.id}>
+              <Card 
+                key={call.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/call/${call.id}`)}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
