@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -30,9 +31,17 @@ const Settings = () => {
   const [businessType, setBusinessType] = useState("");
   const [businessPhone, setBusinessPhone] = useState("");
   const [businessAddress, setBusinessAddress] = useState("");
-  const [businessHours, setBusinessHours] = useState("");
   const [businessDescription, setBusinessDescription] = useState("");
   const [businessWebsite, setBusinessWebsite] = useState("");
+  const [businessHours, setBusinessHours] = useState([
+    { day: "sunday", isOpen: false, openTime: "09:00", closeTime: "17:00" },
+    { day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { day: "saturday", isOpen: false, openTime: "09:00", closeTime: "17:00" },
+  ]);
   const [services, setServices] = useState<{name: string, price: string}[]>([
     { name: "", price: "" }
   ]);
@@ -83,7 +92,17 @@ const Settings = () => {
         setBusinessType(data.business_type || "");
         setBusinessPhone(data.business_phone || "");
         setBusinessAddress(data.business_address || "");
-        setBusinessHours(data.business_hours || "");
+        // Parse business hours
+        if (data.business_hours) {
+          try {
+            const hoursData = JSON.parse(data.business_hours);
+            if (Array.isArray(hoursData)) {
+              setBusinessHours(hoursData);
+            }
+          } catch (e) {
+            // Keep default hours if parsing fails
+          }
+        }
         setBusinessDescription(data.business_description || "");
         setBusinessWebsite(data.business_website || "");
         setForwardingNumber(data.forwarding_number || "");
@@ -134,6 +153,22 @@ const Settings = () => {
     setServices(newServices);
   };
 
+  const updateBusinessHours = (index: number, field: keyof typeof businessHours[0], value: string | boolean) => {
+    const newHours = [...businessHours];
+    newHours[index] = { ...newHours[index], [field]: value };
+    setBusinessHours(newHours);
+  };
+
+  const dayNames = {
+    sunday: "Sunday",
+    monday: "Monday", 
+    tuesday: "Tuesday",
+    wednesday: "Wednesday",
+    thursday: "Thursday",
+    friday: "Friday",
+    saturday: "Saturday"
+  };
+
   const saveSettings = async (section: string) => {
     if (!user) return;
     
@@ -147,7 +182,7 @@ const Settings = () => {
           business_type: businessType,
           business_phone: businessPhone,
           business_address: businessAddress,
-          business_hours: businessHours,
+          business_hours: JSON.stringify(businessHours),
           business_description: businessDescription,
           business_website: businessWebsite,
           services_offered: JSON.stringify(services.filter(s => s.name.trim() !== "")),
@@ -346,15 +381,67 @@ const Settings = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="businessHours">Business Hours</Label>
-                    <Textarea
-                      id="businessHours"
-                      value={businessHours}
-                      onChange={(e) => setBusinessHours(e.target.value)}
-                      placeholder="Monday - Friday: 9:00 AM - 5:00 PM"
-                      rows={3}
-                    />
+                  <div className="space-y-4">
+                    <Label>Business Hours</Label>
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-4 gap-3 text-sm font-medium text-muted-foreground">
+                        <div>Open</div>
+                        <div>Day</div>
+                        <div>Opening Time</div>
+                        <div>Closing Time</div>
+                      </div>
+                      {businessHours.map((hour, index) => (
+                        <div key={hour.day} className="grid grid-cols-4 gap-3 items-center">
+                          <div className="flex items-center justify-center">
+                            <Checkbox
+                              checked={hour.isOpen}
+                              onCheckedChange={(checked) => 
+                                updateBusinessHours(index, 'isOpen', !!checked)
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Select
+                              value={hour.day}
+                              onValueChange={(value) => updateBusinessHours(index, 'day', value)}
+                              disabled={!hour.isOpen}
+                            >
+                              <SelectTrigger className={!hour.isOpen ? "opacity-50" : ""}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {Object.entries(dayNames).map(([value, label]) => (
+                                  <SelectItem key={value} value={value}>
+                                    {label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Input
+                              type="time"
+                              value={hour.openTime}
+                              onChange={(e) => updateBusinessHours(index, 'openTime', e.target.value)}
+                              disabled={!hour.isOpen}
+                              className={!hour.isOpen ? "opacity-50" : ""}
+                            />
+                          </div>
+                          <div>
+                            <Input
+                              type="time"
+                              value={hour.closeTime}
+                              onChange={(e) => updateBusinessHours(index, 'closeTime', e.target.value)}
+                              disabled={!hour.isOpen}
+                              className={!hour.isOpen ? "opacity-50" : ""}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Configure your operating hours for each day of the week
+                    </p>
                   </div>
 
                   <div className="space-y-2">
