@@ -70,6 +70,7 @@ export type Database = {
           business_name: string | null
           business_phone: string | null
           business_type: string | null
+          business_website: string | null
           common_questions: string | null
           created_at: string
           custom_greeting: string | null
@@ -98,6 +99,7 @@ export type Database = {
           business_name?: string | null
           business_phone?: string | null
           business_type?: string | null
+          business_website?: string | null
           common_questions?: string | null
           created_at?: string
           custom_greeting?: string | null
@@ -126,6 +128,7 @@ export type Database = {
           business_name?: string | null
           business_phone?: string | null
           business_type?: string | null
+          business_website?: string | null
           common_questions?: string | null
           created_at?: string
           custom_greeting?: string | null

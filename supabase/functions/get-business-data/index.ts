@@ -59,6 +59,7 @@ serve(async (req) => {
         business_address,
         business_hours,
         business_description,
+        business_website,
         services_offered,
         pricing_structure,
         custom_greeting,

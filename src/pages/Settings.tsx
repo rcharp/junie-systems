@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save } from "lucide-react";
+import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe } from "lucide-react";
 
 const Settings = () => {
   const { user, loading } = useAuth();
@@ -27,8 +27,10 @@ const Settings = () => {
   const [businessAddress, setBusinessAddress] = useState("");
   const [businessHours, setBusinessHours] = useState("");
   const [businessDescription, setBusinessDescription] = useState("");
-  const [servicesOffered, setServicesOffered] = useState("");
-  const [pricingStructure, setPricingStructure] = useState("");
+  const [businessWebsite, setBusinessWebsite] = useState("");
+  const [services, setServices] = useState<{name: string, price: string}[]>([
+    { name: "", price: "" }
+  ]);
 
   // Call Settings State
   const [forwardingNumber, setForwardingNumber] = useState("");
@@ -61,6 +63,22 @@ const Settings = () => {
   const loadUserSettings = async (userId: string) => {
     // This would load settings from your database
     // For now, we'll use default values
+  };
+
+  const addService = () => {
+    setServices([...services, { name: "", price: "" }]);
+  };
+
+  const removeService = (index: number) => {
+    if (services.length > 1) {
+      setServices(services.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateService = (index: number, field: 'name' | 'price', value: string) => {
+    const newServices = [...services];
+    newServices[index][field] = value;
+    setServices(newServices);
   };
 
   const saveSettings = async (section: string) => {
@@ -242,30 +260,61 @@ const Settings = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="servicesOffered">Services Offered</Label>
-                    <Textarea
-                      id="servicesOffered"
-                      value={servicesOffered}
-                      onChange={(e) => setServicesOffered(e.target.value)}
-                      placeholder="List your main services: Consultation, Installation, Maintenance, Support..."
-                      rows={3}
+                    <Label htmlFor="businessWebsite">Business Website</Label>
+                    <Input
+                      id="businessWebsite"
+                      value={businessWebsite}
+                      onChange={(e) => setBusinessWebsite(e.target.value)}
+                      placeholder="https://www.yourbusiness.com"
                     />
-                    <p className="text-sm text-muted-foreground">
-                      Describe the main services your business offers, separated by commas
-                    </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="pricingStructure">Pricing Structure</Label>
-                    <Textarea
-                      id="pricingStructure"
-                      value={pricingStructure}
-                      onChange={(e) => setPricingStructure(e.target.value)}
-                      placeholder="Hourly rates: $50-150/hr, Project-based pricing available, Free consultations..."
-                      rows={3}
-                    />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Services & Pricing</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addService}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Service
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {services.map((service, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <div className="flex-1">
+                            <Input
+                              placeholder="Service name (e.g., Consultation)"
+                              value={service.name}
+                              onChange={(e) => updateService(index, 'name', e.target.value)}
+                            />
+                          </div>
+                          <div className="w-32">
+                            <Input
+                              placeholder="Price"
+                              value={service.price}
+                              onChange={(e) => updateService(index, 'price', e.target.value)}
+                            />
+                          </div>
+                          {services.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeService(index)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      Provide general pricing information that can be shared with potential clients
+                      Add your services and their corresponding prices that can be shared with potential clients
                     </p>
                   </div>
 
