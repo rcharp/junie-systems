@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -65,8 +66,56 @@ const Settings = () => {
   }, [loading, user, navigate]);
 
   const loadUserSettings = async (userId: string) => {
-    // This would load settings from your database
-    // For now, we'll use default values
+    try {
+      const { data, error } = await supabase
+        .from('business_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading settings:', error);
+        return;
+      }
+
+      if (data) {
+        setBusinessName(data.business_name || "");
+        setBusinessType(data.business_type || "");
+        setBusinessPhone(data.business_phone || "");
+        setBusinessAddress(data.business_address || "");
+        setBusinessHours(data.business_hours || "");
+        setBusinessDescription(data.business_description || "");
+        setBusinessWebsite(data.business_website || "");
+        setForwardingNumber(data.forwarding_number || "");
+        setUrgentKeywords(data.urgent_keywords || "");
+        setAutoForward(data.auto_forward || false);
+        setRecordCalls(data.record_calls !== false);
+        setMaxCallDuration(data.max_call_duration?.toString() || "5");
+        setAiPersonality(data.ai_personality || "professional");
+        setCustomGreeting(data.custom_greeting || "");
+        setCommonQuestions(data.common_questions || "");
+        setAppointmentBooking(data.appointment_booking || false);
+        setLeadCapture(data.lead_capture !== false);
+        setEmailNotifications(data.email_notifications !== false);
+        setSmsNotifications(data.sms_notifications || false);
+        setPushNotifications(data.push_notifications !== false);
+        setInstantAlerts(data.instant_alerts !== false);
+        
+        // Parse services from pricing_structure and services_offered
+        if (data.services_offered) {
+          try {
+            const servicesData = JSON.parse(data.services_offered);
+            if (Array.isArray(servicesData)) {
+              setServices(servicesData.length > 0 ? servicesData : [{ name: "", price: "" }]);
+            }
+          } catch (e) {
+            setServices([{ name: "", price: "" }]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading user settings:', error);
+    }
   };
 
   const addService = () => {
@@ -86,18 +135,69 @@ const Settings = () => {
   };
 
   const saveSettings = async (section: string) => {
+    if (!user) return;
+    
     setSaving(true);
     try {
-      // Here you would save the settings to your database
-      // For now, we'll just show a success message
-      
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      let updateData: any = {};
+
+      if (section === "Business") {
+        updateData = {
+          business_name: businessName,
+          business_type: businessType,
+          business_phone: businessPhone,
+          business_address: businessAddress,
+          business_hours: businessHours,
+          business_description: businessDescription,
+          business_website: businessWebsite,
+          services_offered: JSON.stringify(services.filter(s => s.name.trim() !== "")),
+          pricing_structure: services.map(s => `${s.name}: ${s.price}`).join(', ')
+        };
+      } else if (section === "Call") {
+        updateData = {
+          forwarding_number: forwardingNumber,
+          urgent_keywords: urgentKeywords,
+          auto_forward: autoForward,
+          record_calls: recordCalls,
+          max_call_duration: parseInt(maxCallDuration)
+        };
+      } else if (section === "AI Assistant") {
+        updateData = {
+          ai_personality: aiPersonality,
+          custom_greeting: customGreeting,
+          common_questions: commonQuestions,
+          appointment_booking: appointmentBooking,
+          lead_capture: leadCapture
+        };
+      } else if (section === "Notifications") {
+        updateData = {
+          email_notifications: emailNotifications,
+          sms_notifications: smsNotifications,
+          push_notifications: pushNotifications,
+          instant_alerts: instantAlerts
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('business_settings')
+        .upsert({
+          user_id: user.id,
+          ...updateData,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
       
       toast({
         title: "Settings saved",
         description: `Your ${section.toLowerCase()} settings have been updated successfully.`,
       });
     } catch (error: any) {
+      console.error('Error saving settings:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to save settings",
