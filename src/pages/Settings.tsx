@@ -36,13 +36,11 @@ const Settings = () => {
   const [businessDescription, setBusinessDescription] = useState("");
   const [businessWebsite, setBusinessWebsite] = useState("");
   const [businessHours, setBusinessHours] = useState([
-    { day: "sunday", isOpen: false, openTime: "09:00", closeTime: "17:00" },
-    { day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-    { day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-    { day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-    { day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-    { day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-    { day: "saturday", isOpen: false, openTime: "09:00", closeTime: "17:00" },
+    { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+    { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
   ]);
   const [services, setServices] = useState<{name: string, price: string}[]>([
     { name: "", price: "" }
@@ -155,10 +153,51 @@ const Settings = () => {
     setServices(newServices);
   };
 
-  const updateBusinessHours = (index: number, field: keyof typeof businessHours[0], value: string | boolean) => {
-    const newHours = [...businessHours];
-    newHours[index] = { ...newHours[index], [field]: value };
+  const updateBusinessHours = (id: number, field: keyof typeof businessHours[0], value: string | boolean) => {
+    const newHours = businessHours.map(hour => 
+      hour.id === id ? { ...hour, [field]: value } : hour
+    );
     setBusinessHours(newHours);
+  };
+
+  const addBusinessHours = () => {
+    const newId = Math.max(...businessHours.map(h => h.id), 0) + 1;
+    setBusinessHours([...businessHours, {
+      id: newId,
+      day: "monday",
+      isOpen: true,
+      openTime: "09:00",
+      closeTime: "17:00"
+    }]);
+  };
+
+  const removeBusinessHours = (id: number) => {
+    if (businessHours.length > 1) {
+      setBusinessHours(businessHours.filter(hour => hour.id !== id));
+    }
+  };
+
+  const validateTime = (openTime: string, closeTime: string): boolean => {
+    const open = new Date(`2000-01-01T${openTime}:00`);
+    const close = new Date(`2000-01-01T${closeTime}:00`);
+    
+    // Check if times are valid (between 00:00 and 23:59)
+    if (openTime < "00:00" || openTime > "23:59" || closeTime < "00:00" || closeTime > "23:59") {
+      return false;
+    }
+    
+    // Check if close time is after open time (same day only)
+    return close > open;
+  };
+
+  const getTimeValidationMessage = (openTime: string, closeTime: string): string | null => {
+    if (!validateTime(openTime, closeTime)) {
+      if (openTime >= closeTime) {
+        return "Closing time must be after opening time (same-day hours only)";
+      }
+      return "Invalid time range";
+    }
+    return null;
   };
 
   const dayNames = {
@@ -384,65 +423,101 @@ const Settings = () => {
                   </div>
 
                   <div className="space-y-4">
-                    <Label>Business Hours</Label>
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-4 gap-3 text-sm font-medium text-muted-foreground">
-                        <div>Open</div>
-                        <div>Day</div>
-                        <div>Opening Time</div>
-                        <div>Closing Time</div>
+                    <div className="flex items-center justify-between">
+                      <Label>Business Hours</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addBusinessHours}
+                        className="flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Hours
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-12 gap-2 text-sm font-medium text-muted-foreground">
+                        <div className="col-span-1">Open</div>
+                        <div className="col-span-3">Day</div>
+                        <div className="col-span-3">Opening</div>
+                        <div className="col-span-3">Closing</div>
+                        <div className="col-span-2">Action</div>
                       </div>
-                      {businessHours.map((hour, index) => (
-                        <div key={hour.day} className="grid grid-cols-4 gap-3 items-center">
-                          <div className="flex items-center justify-center">
-                            <Checkbox
-                              checked={hour.isOpen}
-                              onCheckedChange={(checked) => 
-                                updateBusinessHours(index, 'isOpen', !!checked)
-                              }
-                            />
+                      {businessHours.map((hour) => {
+                        const validationMessage = hour.isOpen ? getTimeValidationMessage(hour.openTime, hour.closeTime) : null;
+                        return (
+                          <div key={hour.id} className="space-y-1">
+                            <div className="grid grid-cols-12 gap-2 items-center">
+                              <div className="col-span-1 flex justify-center">
+                                <Checkbox
+                                  checked={hour.isOpen}
+                                  onCheckedChange={(checked) => 
+                                    updateBusinessHours(hour.id, 'isOpen', !!checked)
+                                  }
+                                  className="h-4 w-4"
+                                />
+                              </div>
+                              <div className="col-span-3">
+                                <Select
+                                  value={hour.day}
+                                  onValueChange={(value) => updateBusinessHours(hour.id, 'day', value)}
+                                  disabled={!hour.isOpen}
+                                >
+                                  <SelectTrigger className={`h-9 ${!hour.isOpen ? "opacity-50" : ""}`}>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {Object.entries(dayNames).map(([value, label]) => (
+                                      <SelectItem key={value} value={value}>
+                                        {label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="col-span-3">
+                                <Input
+                                  type="time"
+                                  value={hour.openTime}
+                                  onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
+                                  disabled={!hour.isOpen}
+                                  className={`h-9 ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                />
+                              </div>
+                              <div className="col-span-3">
+                                <Input
+                                  type="time"
+                                  value={hour.closeTime}
+                                  onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
+                                  disabled={!hour.isOpen}
+                                  className={`h-9 ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                />
+                              </div>
+                              <div className="col-span-2">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeBusinessHours(hour.id)}
+                                  disabled={businessHours.length <= 1}
+                                  className="h-9 w-full"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                            {validationMessage && (
+                              <div className="col-span-12 text-sm text-destructive ml-1">
+                                {validationMessage}
+                              </div>
+                            )}
                           </div>
-                          <div>
-                            <Select
-                              value={hour.day}
-                              onValueChange={(value) => updateBusinessHours(index, 'day', value)}
-                              disabled={!hour.isOpen}
-                            >
-                              <SelectTrigger className={!hour.isOpen ? "opacity-50" : ""}>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {Object.entries(dayNames).map(([value, label]) => (
-                                  <SelectItem key={value} value={value}>
-                                    {label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div>
-                            <Input
-                              type="time"
-                              value={hour.openTime}
-                              onChange={(e) => updateBusinessHours(index, 'openTime', e.target.value)}
-                              disabled={!hour.isOpen}
-                              className={!hour.isOpen ? "opacity-50" : ""}
-                            />
-                          </div>
-                          <div>
-                            <Input
-                              type="time"
-                              value={hour.closeTime}
-                              onChange={(e) => updateBusinessHours(index, 'closeTime', e.target.value)}
-                              disabled={!hour.isOpen}
-                              className={!hour.isOpen ? "opacity-50" : ""}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Configure your operating hours for each day of the week
+                      Add multiple time periods for days with split hours (e.g., lunch breaks). Times must be within the same day (12:00 AM - 11:59 PM).
                     </p>
                   </div>
 
