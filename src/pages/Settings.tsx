@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,10 +21,12 @@ import NotificationSettings from "@/components/NotificationSettings";
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
 const Settings = () => {
+  console.log("Settings component rendering...");
   const { user, loading } = useAuth();
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  console.log("Settings state:", { user: user?.email, loading });
 
   // Business Info State
   const [businessName, setBusinessName] = useState("");
@@ -267,13 +269,13 @@ const Settings = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <a href="/" className="flex items-center">
+            <Link to="/" className="flex items-center">
               <img 
                 src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
                 alt="Availabee Logo" 
                 className="h-8 w-8"
               />
-            </a>
+            </Link>
             <h1 className="text-xl font-bold text-primary">Settings</h1>
           </div>
           
