@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe } from "lucide-react";
 
+// Fixed: Removed servicesOffered and pricingStructure state variables
+
 const Settings = () => {
   const { user, loading } = useAuth();
   const [saving, setSaving] = useState(false);
