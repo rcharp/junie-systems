@@ -542,20 +542,42 @@ const Settings = () => {
                       Account Information
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Email Address</Label>
-                      <Input value={user?.email || ""} disabled />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Account Status</Label>
-                      <Badge variant="secondary">Active</Badge>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Plan</Label>
-                      <Badge variant="outline">Professional</Badge>
-                    </div>
-                  </CardContent>
+                   <CardContent className="space-y-4">
+                     <div className="space-y-2">
+                       <Label>User ID</Label>
+                       <div className="flex items-center space-x-2">
+                         <Input value={user?.id || ""} disabled className="font-mono text-sm" />
+                         <Button
+                           variant="outline"
+                           size="sm"
+                           onClick={() => {
+                             if (user?.id) {
+                               navigator.clipboard.writeText(user.id);
+                               toast({
+                                 title: "Copied!",
+                                 description: "User ID copied to clipboard",
+                               });
+                             }
+                           }}
+                         >
+                           Copy
+                         </Button>
+                       </div>
+                     </div>
+                     
+                     <div className="space-y-2">
+                       <Label>Email Address</Label>
+                       <Input value={user?.email || ""} disabled />
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Account Status</Label>
+                       <Badge variant="secondary">Active</Badge>
+                     </div>
+                     <div className="space-y-2">
+                       <Label>Plan</Label>
+                       <Badge variant="outline">Professional</Badge>
+                     </div>
+                   </CardContent>
                 </Card>
 
                 <Card>
