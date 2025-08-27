@@ -112,32 +112,45 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Dashboard
+    <div className="min-h-screen bg-gradient-subtle">
+      {/* Header Navigation */}
+      <header className="bg-white/80 backdrop-blur-sm border-b border-border">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground mb-2">
-                Availabee Admin Dashboard
-              </h1>
-              <p className="text-muted-foreground">
-                Monitor system performance and user activity
-              </p>
-            </div>
+            <a href="/" className="flex items-center">
+              <img 
+                src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
+                alt="Availabee Logo" 
+                className="h-8 w-8"
+              />
+            </a>
+            <h1 className="text-xl font-bold text-primary">Admin Dashboard</h1>
           </div>
-          <Badge variant="secondary" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" />
-            Admin Access
-          </Badge>
+          
+          <div className="flex items-center space-x-4">
+            <Badge variant="secondary" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Admin Access
+            </Badge>
+            <Badge variant="outline">
+              {user?.email}
+            </Badge>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold text-foreground mb-2">
+            System Overview
+          </h2>
+          <p className="text-muted-foreground">
+            Monitor platform performance and user activity
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -241,7 +254,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
