@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Phone, Loader2, Settings, CheckCircle } from 'lucide-react';
+import { WebsiteImporter } from '@/components/WebsiteImporter';
 
 export const PathwaySetup = () => {
   const { toast } = useToast();
@@ -36,6 +37,20 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleWebsiteDataExtracted = (extractedData: any) => {
+    setFormData(prev => ({
+      ...prev,
+      business_name: extractedData.business_name || prev.business_name,
+      business_type: extractedData.business_type || prev.business_type,
+      business_hours: extractedData.business_hours || prev.business_hours,
+      business_address: extractedData.business_address || prev.business_address,
+      business_phone: extractedData.business_phone || prev.business_phone,
+      common_questions: extractedData.services_offered ? 
+        `Q: What services do you offer?\nA: ${extractedData.services_offered}\n\n${prev.common_questions}` : 
+        prev.common_questions
+    }));
   };
 
   const handleCreatePathway = async () => {
@@ -135,6 +150,11 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        <WebsiteImporter 
+          onDataExtracted={handleWebsiteDataExtracted}
+          className="mb-6"
+        />
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="business_name">Business Name *</Label>

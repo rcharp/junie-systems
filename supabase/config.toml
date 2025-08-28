@@ -98,3 +98,6 @@ verify_jwt = false
 
 [functions.get-business-data]
 verify_jwt = false
+
+[functions.extract-business-data]
+verify_jwt = false

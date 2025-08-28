@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe } from "lucide-react";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
+import { WebsiteImporter } from "@/components/WebsiteImporter";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -286,6 +287,31 @@ const Settings = () => {
     }
   };
 
+  const handleWebsiteDataExtracted = (extractedData: any) => {
+    if (extractedData.business_name) setBusinessName(extractedData.business_name);
+    if (extractedData.business_phone) setBusinessPhone(extractedData.business_phone);
+    if (extractedData.business_address) setBusinessAddress(extractedData.business_address);
+    if (extractedData.business_description) setBusinessDescription(extractedData.business_description);
+    if (extractedData.business_website) setBusinessWebsite(extractedData.business_website);
+    if (extractedData.business_hours) {
+      // Try to parse the hours into structured format
+      setBusinessHours(prev => [...prev, {
+        id: Math.max(...prev.map(h => h.id), 0) + 1,
+        day: "monday",
+        isOpen: true,
+        openTime: "09:00",
+        closeTime: "17:00"
+      }]);
+    }
+    if (extractedData.services_offered) {
+      const servicesText = extractedData.services_offered;
+      const servicesList = servicesText.split(/[,\n]/).map(s => s.trim()).filter(s => s);
+      if (servicesList.length > 0) {
+        setServices(servicesList.slice(0, 5).map(service => ({ name: service, price: "" })));
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -370,6 +396,11 @@ const Settings = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  <WebsiteImporter 
+                    onDataExtracted={handleWebsiteDataExtracted}
+                    className="mb-6"
+                  />
+                  
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="businessName">Business Name</Label>
