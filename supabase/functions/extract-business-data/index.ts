@@ -574,6 +574,7 @@ serve(async (req) => {
     console.log('Basic description:', businessData.business_description)
 
     // Generate AI-powered description with better error handling
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (businessData.business_name && openAIApiKey) {
       try {
         console.log('Generating AI description with OpenAI...');
