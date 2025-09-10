@@ -138,16 +138,18 @@ function parseServices(html: string): string[] {
   
   // Service-related keywords by category
   const servicePatterns = [
-    // HVAC & Home Services
-    /(?:air conditioning|hvac|heating|cooling|ac repair|furnace|ductwork)/gi,
+    // HVAC & Home Services (more comprehensive)
+    /(?:air conditioning|hvac|heating|cooling|ac repair|furnace|ductwork|heat pump|central air|mini split|thermostat|air handler|refrigeration)/gi,
     // Construction & Trades
-    /(?:plumbing|electrical|roofing|flooring|painting|carpentry|renovation)/gi,
+    /(?:plumbing|electrical|roofing|flooring|painting|carpentry|renovation|contracting|installation)/gi,
     // Professional Services
-    /(?:consulting|accounting|legal|marketing|design|development)/gi,
+    /(?:consulting|accounting|legal|marketing|design|development|tax preparation|business services)/gi,
     // Automotive
-    /(?:auto repair|mechanic|tire|brake|transmission|oil change)/gi,
+    /(?:auto repair|mechanic|tire|brake|transmission|oil change|car service|vehicle maintenance)/gi,
     // Healthcare
-    /(?:dental|medical|physical therapy|massage|chiropractic)/gi
+    /(?:dental|medical|physical therapy|massage|chiropractic|health services|wellness)/gi,
+    // Cleaning Services
+    /(?:cleaning|janitorial|housekeeping|carpet cleaning|pressure washing|maintenance)/gi
   ];
   
   // Look for services in specific HTML sections
@@ -465,6 +467,33 @@ serve(async (req) => {
       }
     }
 
+    // Extract business addresses directly from webpage content
+    const addressPatterns = [
+      // Complete address with street, city, state, zip
+      /(\d+\s+[A-Za-z0-9\s,.-]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way|Court|Ct\.?|Place|Pl\.?)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/gi,
+      // Address with just street and state/zip
+      /(\d+[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/gi,
+      // Address in structured format (span, div, etc.)
+      /<(?:span|div|p)[^>]*(?:address|location)[^>]*>([^<]*\d+[^<]*(?:St|Street|Ave|Avenue|Rd|Road|Dr|Drive|Ln|Lane|Blvd|Boulevard)[^<]*)<\/(?:span|div|p)>/gi,
+      // Schema.org address markup
+      /<[^>]*itemprop="(?:address|streetAddress)"[^>]*>([^<]+)<\/[^>]*>/gi
+    ];
+
+    for (const pattern of addressPatterns) {
+      const matches = websiteContent.match(pattern);
+      if (matches) {
+        for (const match of matches) {
+          const cleanAddress = match.replace(/<[^>]*>/g, '').trim();
+          if (validateAddress(cleanAddress) && cleanAddress.length < 200) {
+            businessData.business_address = cleanAddress;
+            console.log('Found address from website:', cleanAddress);
+            break;
+          }
+        }
+        if (businessData.business_address) break;
+      }
+    }
+
     // Extract email addresses
     const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
     const emailMatches = websiteContent.match(emailPattern);
@@ -540,16 +569,20 @@ serve(async (req) => {
 
     // Determine business type based on content
     const businessTypeKeywords = {
-      'Restaurant': /restaurant|food|dining|menu|eat/gi,
+      'HVAC': /hvac|heating|cooling|air conditioning|ac repair|furnace|ductwork|air handler|heat pump/gi,
+      'Construction': /construction|contractor|building|remodeling|renovation/gi,
+      'Plumbing': /plumber|plumbing|pipe|drain|water heater|sewer/gi,
+      'Electrical': /electrician|electrical|wiring|electric|power/gi,
+      'Restaurant': /restaurant|food|dining|menu|eat|cuisine/gi,
       'Retail': /store|shop|buy|sell|retail|merchandise/gi,
-      'Service': /service|repair|maintenance|consulting/gi,
-      'Healthcare': /medical|health|doctor|clinic|dental/gi,
+      'Automotive': /auto|car|vehicle|mechanic|tire|brake|transmission/gi,
+      'Healthcare': /medical|health|doctor|clinic|dental|physician/gi,
       'Professional': /law|legal|accounting|consulting|professional/gi,
-      'Automotive': /auto|car|vehicle|mechanic|tire/gi,
-      'Real Estate': /real estate|property|homes|realtor/gi,
-      'Beauty': /salon|spa|beauty|hair|nail/gi,
-      'Fitness': /gym|fitness|workout|personal training/gi,
-      'Education': /school|education|training|classes/gi
+      'Real Estate': /real estate|property|homes|realtor|mortgage/gi,
+      'Beauty': /salon|spa|beauty|hair|nail|massage/gi,
+      'Fitness': /gym|fitness|workout|personal training|yoga/gi,
+      'Education': /school|education|training|classes|tutoring/gi,
+      'Service': /service|repair|maintenance|cleaning/gi
     };
 
     for (const [type, pattern] of Object.entries(businessTypeKeywords)) {
