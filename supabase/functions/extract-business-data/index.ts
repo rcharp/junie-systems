@@ -483,7 +483,7 @@ serve(async (req) => {
             phone = phone.substring(1);
           }
           if (phone.length === 10) {
-            businessData.business_phone = `(${phone.substring(0,3)}) ${phone.substring(3,6)}-${phone.substring(6)}`;
+            businessData.business_phone = '(' + phone.substring(0,3) + ') ' + phone.substring(3,6) + '-' + phone.substring(6);
             break;
           }
         }
