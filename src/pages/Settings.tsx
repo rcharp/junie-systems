@@ -573,7 +573,7 @@ const Settings = () => {
                         Business Type <span className="text-red-500">*</span>
                       </Label>
                       <Select value={businessType} onValueChange={setBusinessType}>
-                        <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
+                        <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
                           <SelectValue placeholder="Select business type" />
                         </SelectTrigger>
                         <SelectContent>
