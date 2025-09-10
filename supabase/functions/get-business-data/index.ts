@@ -175,7 +175,6 @@ serve(async (req) => {
         business_type,
         business_phone,
         business_address,
-        business_address_state_full,
         business_hours,
         business_description,
         business_website,
@@ -213,16 +212,11 @@ serve(async (req) => {
 
     console.log('Successfully retrieved business data for user:', userId);
 
-    // Normalize the business address before sending, using full state name if available
+    // Normalize the business address before sending
     const normalizedData = {
       ...businessData,
-      business_address: businessData.business_address ? 
-        normalizeAddressWithFullState(businessData.business_address, businessData.business_address_state_full) : 
-        businessData.business_address
+      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address
     };
-
-    // Remove the internal state field from the response
-    delete normalizedData.business_address_state_full;
 
     return new Response(
       JSON.stringify(normalizedData),

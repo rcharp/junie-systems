@@ -525,14 +525,6 @@ const Settings = () => {
           return;
         }
 
-        // Debug: Log address data before constructing fullAddress
-        console.log('=== ADDRESS DEBUG ===');
-        console.log('addressData:', addressData);
-        console.log('addressData.street:', addressData.street);
-        console.log('addressData.city:', addressData.city);
-        console.log('addressData.state:', addressData.state);
-        console.log('addressData.zip:', addressData.zip);
-
         // Combine address fields into a single address string
         const fullAddress = [
           addressData.street,
@@ -540,25 +532,6 @@ const Settings = () => {
           addressData.state,
           addressData.zip
         ].filter(Boolean).join(', ');
-
-        console.log('fullAddress constructed:', fullAddress);
-
-        // Get the full state name for storage
-        const stateMap = {
-          'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
-          'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
-          'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
-          'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
-          'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
-          'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
-          'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
-          'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
-          'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
-          'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
-          'DC': 'District of Columbia'
-        };
-        
-        const fullStateName = stateMap[addressData.state?.toUpperCase()] || addressData.state;
 
         // Clear validation errors if we reach here
         setValidationErrors({
@@ -575,18 +548,12 @@ const Settings = () => {
           business_type: businessType,
           business_phone: businessPhone,
           business_address: fullAddress,
-          business_address_state_full: fullStateName,
           business_hours: JSON.stringify(businessHours),
           business_description: businessDescription,
           business_website: businessWebsite,
           services_offered: JSON.stringify(validServices),
           pricing_structure: validServices.map(s => `${s.name}: ${s.price}`).join(', ')
         };
-
-        console.log('=== API SAVE DEBUG ===');
-        console.log('updateData being sent:', updateData);
-        console.log('business_address:', updateData.business_address);
-        console.log('business_address_state_full:', updateData.business_address_state_full);
       } else if (section === "Call") {
         updateData = {
           forwarding_number: forwardingNumber,
