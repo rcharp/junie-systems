@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -185,8 +185,15 @@ const Settings = () => {
     }
   };
 
+  const serviceInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   const addService = () => {
     setServices([...services, { name: "", price: "" }]);
+    // Focus on the new service input after state update
+    setTimeout(() => {
+      const newIndex = services.length;
+      serviceInputRefs.current[newIndex]?.focus();
+    }, 0);
   };
 
   const removeService = async (index: number) => {
@@ -1038,6 +1045,7 @@ const Settings = () => {
                           <div key={index} className="flex gap-2 items-center">
                             <div className="flex-1">
                               <Input
+                                ref={(el) => serviceInputRefs.current[index] = el}
                                 placeholder="Service name (e.g., Consultation)"
                                 value={service.name}
                                 onChange={(e) => updateService(index, 'name', e.target.value)}
