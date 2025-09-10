@@ -26,6 +26,7 @@ async function generateBusinessDescription(businessData: BusinessData): Promise<
   }
 
   try {
+    console.log('Generating AI business description...');
     const prompt = `Based on the following business information, write a compelling and professional business description (2-3 sentences):
 
 Business Name: ${businessData.business_name}
@@ -557,42 +558,70 @@ serve(async (req) => {
                            !businessData.business_address.includes('div'); // Not HTML
 
     if (!hasValidAddress && businessData.business_name) {
-      console.log('Address not found or invalid, searching Google for business info...');
-      const googleData = await searchGoogleForBusiness(businessData.business_name, url);
-      
-      // Merge Google data with extracted data, prioritizing Google for missing/invalid fields
-      if (googleData.business_address) {
-        businessData.business_address = googleData.business_address;
-      }
-      if (!businessData.business_phone && googleData.business_phone) {
-        businessData.business_phone = googleData.business_phone;
-      }
-      if ((!businessData.business_hours || businessData.business_hours.includes('font-')) && googleData.business_hours) {
-        businessData.business_hours = googleData.business_hours;
+      try {
+        console.log('Address not found or invalid, searching Google for business info...');
+        const googleData = await Promise.race([
+          searchGoogleForBusiness(businessData.business_name, url),
+          new Promise<Partial<BusinessData>>((_, reject) => 
+            setTimeout(() => reject(new Error('Google search timeout')), 8000)
+          )
+        ]);
+        
+        // Merge Google data with extracted data, prioritizing Google for missing/invalid fields
+        if (googleData.business_address) {
+          businessData.business_address = googleData.business_address;
+        }
+        if (!businessData.business_phone && googleData.business_phone) {
+          businessData.business_phone = googleData.business_phone;
+        }
+        if ((!businessData.business_hours || businessData.business_hours.includes('font-')) && googleData.business_hours) {
+          businessData.business_hours = googleData.business_hours;
+        }
+      } catch (error) {
+        console.error('Google search failed or timed out:', error.message);
       }
     }
 
-    // Search for additional services and pricing from review sites
+    // Search for additional services and pricing from review sites (with timeout)
     if (businessData.business_name && businessData.business_address) {
-      console.log('Searching for additional services and pricing information...');
-      const additionalData = await searchForAdditionalBusinessInfo(businessData.business_name, businessData.business_address);
-      
-      // Enhance services if we found more detailed information
-      if (additionalData.services_offered && (!businessData.services_offered || businessData.services_offered.length < 50)) {
-        businessData.services_offered = additionalData.services_offered;
-      }
-      
-      // Add pricing information if found
-      if (additionalData.pricing_structure && !businessData.pricing_structure) {
-        businessData.pricing_structure = additionalData.pricing_structure;
+      try {
+        console.log('Searching for additional services and pricing information...');
+        const additionalData = await Promise.race([
+          searchForAdditionalBusinessInfo(businessData.business_name, businessData.business_address),
+          new Promise<Partial<BusinessData>>((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 8000)
+          )
+        ]);
+        
+        // Enhance services if we found more detailed information
+        if (additionalData.services_offered && (!businessData.services_offered || businessData.services_offered.length < 50)) {
+          businessData.services_offered = additionalData.services_offered;
+        }
+        
+        // Add pricing information if found
+        if (additionalData.pricing_structure && !businessData.pricing_structure) {
+          businessData.pricing_structure = additionalData.pricing_structure;
+        }
+      } catch (error) {
+        console.error('Additional search timed out or failed:', error.message);
       }
     }
 
-    // Generate AI-enhanced business description
-    console.log('Generating AI-enhanced business description...');
-    const enhancedDescription = await generateBusinessDescription(businessData);
-    if (enhancedDescription && enhancedDescription.length > 20) {
-      businessData.business_description = enhancedDescription;
+    // Generate AI-enhanced business description (with timeout)
+    try {
+      console.log('Generating AI-enhanced business description...');
+      const enhancedDescription = await Promise.race([
+        generateBusinessDescription(businessData),
+        new Promise<string>((_, reject) => 
+          setTimeout(() => reject(new Error('AI generation timeout')), 5000)
+        )
+      ]);
+      
+      if (enhancedDescription && enhancedDescription.length > 20) {
+        businessData.business_description = enhancedDescription;
+      }
+    } catch (error) {
+      console.error('AI description generation failed or timed out:', error.message);
     }
 
     console.log('Final extracted business data:', businessData)
@@ -608,10 +637,14 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error extracting business data:', error)
+    console.error('Error stack:', error.stack)
+    
     return new Response(
       JSON.stringify({ 
+        success: false,
         error: 'Failed to extract business data',
-        details: error.message 
+        details: error.message,
+        stack: error.stack
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
