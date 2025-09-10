@@ -753,61 +753,132 @@ serve(async (req) => {
     console.log('=== FINAL BUSINESS DATA ===');
     console.log(JSON.stringify(businessData, null, 2));
 
-    // Validate required fields
+    // Strict validation for ALL required fields before saving
     const requiredFields = {
       business_name: businessData.business_name,
+      business_phone: businessData.business_phone,
       business_type: businessData.business_type,
       business_address: businessData.business_address,
       business_website: url,
+      business_description: businessData.business_description,
       services_offered: businessData.services_offered,
       pricing_structure: businessData.pricing_structure
     };
 
+    // Check for missing or empty required fields
     const missingFields = Object.entries(requiredFields)
-      .filter(([key, value]) => !value || (typeof value === 'string' && value.trim().length === 0))
+      .filter(([key, value]) => {
+        if (!value) return true;
+        if (typeof value === 'string') {
+          const trimmed = value.trim();
+          // Check for placeholder/fallback values that shouldn't be considered valid
+          const invalidValues = [
+            'Business Name Not Found',
+            'Address Not Available', 
+            'Contact for Pricing',
+            'Professional Services',
+            'Local Business'
+          ];
+          return trimmed.length === 0 || invalidValues.includes(trimmed);
+        }
+        return false;
+      })
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
-      console.log('Missing required fields:', missingFields);
+      console.log('Missing required fields - cannot save:', missingFields);
       
-      // Provide fallback values for missing fields
-      if (!businessData.business_name) {
-        businessData.business_name = 'Business Name Not Found';
-      }
-      if (!businessData.business_type) {
-        businessData.business_type = 'Local Business';
-      }
-      if (!businessData.business_address) {
-        businessData.business_address = 'Address Not Available';
-      }
-      if (!businessData.services_offered) {
-        businessData.services_offered = 'Professional Services';
-      }
-      if (!businessData.pricing_structure) {
-        businessData.pricing_structure = 'Contact for Pricing';
-      }
-
       return new Response(
         JSON.stringify({ 
-          success: true,
+          success: false,
+          error: 'Incomplete business data - missing required fields',
+          message: 'All business information must be complete before saving. Please ensure all required fields are filled.',
+          missingFields: missingFields,
+          requiredFields: [
+            'Business Name',
+            'Phone Number', 
+            'Business Type',
+            'Business Address',
+            'Website URL',
+            'Business Description',
+            'Services Offered',
+            'Pricing Structure'
+          ],
+          suggestions: [
+            'Try using the business\'s main website instead of social media pages',
+            'Check if the website has a contact or about page with complete information',
+            'Search for the business on Google to find missing details',
+            'Manually enter any missing information after import'
+          ],
           data: {
             ...businessData,
             business_website: url
-          },
-          warnings: [
-            'Some required business information could not be automatically extracted: ' + missingFields.join(', '),
-            'Please verify and update the business information manually for best results.'
-          ],
-          missingFields: missingFields,
-          url: url
+          }
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
+
+    // Additional validation for phone number format
+    if (businessData.business_phone) {
+      const phoneRegex = /^\(\d{3}\)\s\d{3}-\d{4}$/;
+      if (!phoneRegex.test(businessData.business_phone)) {
+        console.log('Invalid phone number format:', businessData.business_phone);
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Invalid phone number format',
+            message: 'Phone number must be in format: (XXX) XXX-XXXX',
+            data: {
+              ...businessData,
+              business_website: url
+            }
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+
+    // Additional validation for address format
+    if (businessData.business_address && !validateAddress(businessData.business_address)) {
+      console.log('Invalid address format:', businessData.business_address);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Invalid address format',
+          message: 'Address must include street number, street name, city, state, and ZIP code',
+          data: {
+            ...businessData,
+            business_website: url
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    // Validation for minimum description length
+    if (businessData.business_description && businessData.business_description.length < 20) {
+      console.log('Business description too short:', businessData.business_description);
+      return new Response(
+        JSON.stringify({ 
+          success: false,
+          error: 'Business description too short',
+          message: 'Business description must be at least 20 characters long',
+          data: {
+            ...businessData,
+            business_website: url
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    console.log('✅ All required fields validated successfully');
 
     return new Response(
       JSON.stringify({ 
         success: true,
+        message: 'Business data extracted and validated successfully',
         data: {
           ...businessData,
           business_website: url
