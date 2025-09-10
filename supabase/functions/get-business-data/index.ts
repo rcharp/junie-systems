@@ -70,7 +70,7 @@ const normalizeState = (state: string): string => {
   return stateMap[state.toUpperCase()] || state;
 };
 
-const normalizeAddress = (address: string): string => {
+const normalizeAddressWithFullState = (address: string, fullStateName?: string): string => {
   if (!address) return address;
   
   // Split address by commas to identify parts
@@ -80,15 +80,17 @@ const normalizeAddress = (address: string): string => {
     // Normalize street (first part)
     parts[0] = normalizeStreetTypes(parts[0]);
     
-    // Normalize state in the last part (which typically contains state and ZIP)
+    // Use full state name if available, otherwise normalize state abbreviation
     const lastPart = parts[parts.length - 1];
     const stateZipMatch = lastPart.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
+    
     if (stateZipMatch) {
-      const normalizedState = normalizeState(stateZipMatch[1]);
-      parts[parts.length - 1] = `${normalizedState} ${stateZipMatch[2]}`;
+      // If we have a full state name stored, use it; otherwise normalize the abbreviation
+      const stateToUse = fullStateName || normalizeState(stateZipMatch[1]);
+      parts[parts.length - 1] = `${stateToUse} ${stateZipMatch[2]}`;
     } else {
-      // Just state without ZIP
-      parts[parts.length - 1] = normalizeState(lastPart);
+      // Just state without ZIP - use full state name if available
+      parts[parts.length - 1] = fullStateName || normalizeState(lastPart);
     }
   } else {
     // For simpler addresses, just normalize street types
@@ -96,6 +98,11 @@ const normalizeAddress = (address: string): string => {
   }
   
   return parts.join(', ');
+};
+
+// Keep the original function for backward compatibility
+const normalizeAddress = (address: string): string => {
+  return normalizeAddressWithFullState(address);
 };
 
 serve(async (req) => {
@@ -168,6 +175,7 @@ serve(async (req) => {
         business_type,
         business_phone,
         business_address,
+        business_address_state_full,
         business_hours,
         business_description,
         business_website,
@@ -205,11 +213,16 @@ serve(async (req) => {
 
     console.log('Successfully retrieved business data for user:', userId);
 
-    // Normalize the business address before sending
+    // Normalize the business address before sending, using full state name if available
     const normalizedData = {
       ...businessData,
-      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address
+      business_address: businessData.business_address ? 
+        normalizeAddressWithFullState(businessData.business_address, businessData.business_address_state_full) : 
+        businessData.business_address
     };
+
+    // Remove the internal state field from the response
+    delete normalizedData.business_address_state_full;
 
     return new Response(
       JSON.stringify(normalizedData),

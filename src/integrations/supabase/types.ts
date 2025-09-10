@@ -65,6 +65,7 @@ export type Database = {
           appointment_booking: boolean | null
           auto_forward: boolean | null
           business_address: string | null
+          business_address_state_full: string | null
           business_description: string | null
           business_hours: string | null
           business_name: string | null
@@ -94,6 +95,7 @@ export type Database = {
           appointment_booking?: boolean | null
           auto_forward?: boolean | null
           business_address?: string | null
+          business_address_state_full?: string | null
           business_description?: string | null
           business_hours?: string | null
           business_name?: string | null
@@ -123,6 +125,7 @@ export type Database = {
           appointment_booking?: boolean | null
           auto_forward?: boolean | null
           business_address?: string | null
+          business_address_state_full?: string | null
           business_description?: string | null
           business_hours?: string | null
           business_name?: string | null
