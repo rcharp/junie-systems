@@ -236,19 +236,22 @@ Make it customer-focused, highlight unique value, and sound professional. Focus 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'llama-3.1-sonar-large-128k-online',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a professional marketing copywriter who creates compelling business descriptions that attract customers. Write in a clear, engaging style that highlights what makes the business special. Keep responses concise and professional.' 
+            content: 'You are a professional marketing copywriter who creates compelling business descriptions that attract customers. Write in a clear, engaging style that highlights what makes the business special. Keep responses concise and professional. Focus on unique value propositions and customer benefits.' 
           },
           { role: 'user', content: prompt }
         ],
-        max_tokens: 200,
-        temperature: 0.2,
+        max_tokens: 150,
+        temperature: 0.3,
         top_p: 0.9,
         frequency_penalty: 1,
-        presence_penalty: 0
+        presence_penalty: 0,
+        return_images: false,
+        return_related_questions: false,
+        search_recency_filter: 'month'
       }),
     });
 
