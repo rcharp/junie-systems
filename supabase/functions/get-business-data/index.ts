@@ -212,10 +212,11 @@ serve(async (req) => {
 
     console.log('Successfully retrieved business data for user:', userId);
 
-    // Normalize the business address before sending and return raw data only
+    // Normalize the business address and parse services before sending
     const normalizedData = {
       ...businessData,
-      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address
+      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
+      services_offered: businessData.services_offered ? JSON.parse(businessData.services_offered) : []
     };
 
     return new Response(
