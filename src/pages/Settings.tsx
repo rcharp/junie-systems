@@ -259,7 +259,7 @@ const Settings = () => {
         // Validate required business fields BEFORE processing
         const requiredFields = {
           businessName: businessName?.trim(),
-          businessType: businessType?.trim(), 
+          businessType: businessType?.trim() || (!businessType ? "" : businessType), 
           businessPhone: businessPhone?.trim(),
           businessDescription: businessDescription?.trim()
         };
@@ -270,7 +270,7 @@ const Settings = () => {
 
         const newValidationErrors = {
           businessName: !requiredFields.businessName,
-          businessType: !requiredFields.businessType,
+          businessType: !requiredFields.businessType || requiredFields.businessType === "",
           businessPhone: !requiredFields.businessPhone || !isValidPhone,
           businessDescription: !requiredFields.businessDescription,
           businessAddress: false,
