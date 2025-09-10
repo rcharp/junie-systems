@@ -18,6 +18,46 @@ interface BusinessData {
   business_type?: string
 }
 
+// Extract business name from URL patterns (for social media pages)
+function extractBusinessNameFromUrl(url: string): string | null {
+  try {
+    // Facebook business page patterns
+    const fbMatch = url.match(/facebook\.com\/(?:p\/)?([^\/\?]+)/i);
+    if (fbMatch && fbMatch[1]) {
+      let name = fbMatch[1]
+        .replace(/-LLC-\d+/i, ' LLC')
+        .replace(/-Inc-\d+/i, ' Inc')
+        .replace(/-\d+$/, '')
+        .replace(/[-_]/g, ' ')
+        .trim();
+      
+      // Capitalize each word
+      name = name.split(' ').map(word => 
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ');
+      
+      return name;
+    }
+    
+    // Instagram patterns
+    const igMatch = url.match(/instagram\.com\/([^\/\?]+)/i);
+    if (igMatch && igMatch[1]) {
+      return igMatch[1].replace(/[._]/g, ' ').trim();
+    }
+    
+    // LinkedIn patterns
+    const liMatch = url.match(/linkedin\.com\/company\/([^\/\?]+)/i);
+    if (liMatch && liMatch[1]) {
+      return liMatch[1].replace(/-/g, ' ').trim();
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting business name from URL:', error);
+    return null;
+  }
+}
+
 // Enhanced address validation
 function validateAddress(address: string): boolean {
   if (!address || address.length < 10) return false;
@@ -264,27 +304,98 @@ serve(async (req) => {
 
     console.log('Fetching webpage...')
     
-    // Fetch the webpage with timeout
-    const response = await Promise.race([
-      fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive',
-          'Upgrade-Insecure-Requests': '1'
+    // Check if it's a social media URL that might need special handling
+    const isSocialMedia = /facebook\.com|instagram\.com|twitter\.com|linkedin\.com|yelp\.com/i.test(url);
+    
+    // Enhanced headers for better compatibility
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'DNT': '1',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Sec-Fetch-User': '?1',
+      'Cache-Control': 'max-age=0'
+    };
+
+    // Add additional headers for Facebook and social media
+    if (isSocialMedia) {
+      console.log('Detected social media URL, using enhanced headers');
+      headers['Referer'] = 'https://www.google.com/';
+      headers['Sec-Ch-Ua'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
+      headers['Sec-Ch-Ua-Mobile'] = '?0';
+      headers['Sec-Ch-Ua-Platform'] = '"Windows"';
+    }
+    
+    // Fetch the webpage with timeout and better error handling
+    let response;
+    try {
+      response = await Promise.race([
+        fetch(url, { headers }),
+        new Promise<Response>((_, reject) => 
+          setTimeout(() => reject(new Error('Fetch timeout after 15 seconds')), 15000)
+        )
+      ]);
+    } catch (fetchError) {
+      console.error('Initial fetch failed:', fetchError);
+      
+      // For social media pages, try to extract business name from URL and search for info
+      if (isSocialMedia) {
+        console.log('Social media page fetch failed, trying to extract info from URL...');
+        const urlBusinessName = extractBusinessNameFromUrl(url);
+        if (urlBusinessName) {
+          console.log('Extracted business name from URL:', urlBusinessName);
+          const searchResults = await searchBusinessData(urlBusinessName, parsedUrl.hostname);
+          
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              data: {
+                business_name: urlBusinessName,
+                business_address: searchResults.address,
+                business_phone: searchResults.phone,
+                business_description: `${urlBusinessName} - Professional services provider`,
+                business_website: url
+              },
+              url: url,
+              note: 'Data extracted from URL pattern and external search due to page access restrictions'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
-      }),
-      new Promise<Response>((_, reject) => 
-        setTimeout(() => reject(new Error('Fetch timeout')), 10000)
-      )
-    ]);
+      }
+      
+      return new Response(
+        JSON.stringify({ 
+          error: `Unable to access webpage. ${isSocialMedia ? 'Social media pages often restrict automated access. Try using the business website instead.' : 'Please check the URL and try again.'}`,
+          details: fetchError.message 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
 
     if (!response.ok) {
-      console.error('Failed to fetch webpage:', response.status)
+      console.error('Failed to fetch webpage:', response.status, response.statusText)
+      
+      // Provide specific error messages for different status codes
+      let errorMessage = `Failed to fetch webpage (${response.status})`;
+      if (response.status === 403) {
+        errorMessage = isSocialMedia 
+          ? 'Access denied. Social media pages often restrict automated access. Try using the business website instead.'
+          : 'Access denied. The website may have restrictions.';
+      } else if (response.status === 404) {
+        errorMessage = 'Page not found. Please check the URL and try again.';
+      } else if (response.status >= 500) {
+        errorMessage = 'Website server error. Please try again later.';
+      }
+      
       return new Response(
-        JSON.stringify({ error: `Failed to fetch webpage: ${response.status}` }),
+        JSON.stringify({ error: errorMessage }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
