@@ -505,6 +505,26 @@ const Settings = () => {
           return;
         }
 
+        // Validate individual address fields
+        const missingAddressFields = [];
+        if (!addressData.street?.trim()) missingAddressFields.push('street address');
+        if (!addressData.city?.trim()) missingAddressFields.push('city');
+        if (!addressData.state?.trim()) missingAddressFields.push('state');
+        if (!addressData.zip?.trim()) missingAddressFields.push('ZIP code');
+
+        if (missingAddressFields.length > 0) {
+          setValidationErrors(prev => ({...prev, businessAddress: true}));
+          
+          toast({
+            title: "Address Required",
+            description: `Please provide the following address fields: ${missingAddressFields.join(', ')}.`,
+            variant: "destructive",
+            duration: 5000,
+          });
+          setSaving(false);
+          return;
+        }
+
         // Combine address fields into a single address string
         const fullAddress = [
           addressData.street,
@@ -512,19 +532,6 @@ const Settings = () => {
           addressData.state,
           addressData.zip
         ].filter(Boolean).join(', ');
-
-        if (!fullAddress.trim()) {
-          setValidationErrors(prev => ({...prev, businessAddress: true}));
-          
-          toast({
-            title: "Address Required",
-            description: "Please provide a complete business address highlighted in red.",
-            variant: "destructive",
-            duration: 5000,
-          });
-          setSaving(false);
-          return;
-        }
 
         // Clear validation errors if we reach here
         setValidationErrors({
