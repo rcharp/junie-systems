@@ -7,6 +7,97 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Address normalization functions
+const normalizeStreetTypes = (street: string): string => {
+  const streetTypes = {
+    'St.': 'Street', 'St': 'Street',
+    'Ave.': 'Avenue', 'Ave': 'Avenue',
+    'Blvd.': 'Boulevard', 'Blvd': 'Boulevard',
+    'Dr.': 'Drive', 'Dr': 'Drive',
+    'Rd.': 'Road', 'Rd': 'Road',
+    'Ln.': 'Lane', 'Ln': 'Lane',
+    'Ct.': 'Court', 'Ct': 'Court',
+    'Pl.': 'Place', 'Pl': 'Place',
+    'Pkwy.': 'Parkway', 'Pkwy': 'Parkway',
+    'Cir.': 'Circle', 'Cir': 'Circle',
+    'Ter.': 'Terrace', 'Ter': 'Terrace',
+    'Way.': 'Way', 'Wy': 'Way'
+  };
+
+  const directions = {
+    'N.': 'North', 'N': 'North',
+    'S.': 'South', 'S': 'South',
+    'E.': 'East', 'E': 'East',
+    'W.': 'West', 'W': 'West',
+    'NE.': 'Northeast', 'NE': 'Northeast',
+    'NW.': 'Northwest', 'NW': 'Northwest',
+    'SE.': 'Southeast', 'SE': 'Southeast',
+    'SW.': 'Southwest', 'SW': 'Southwest'
+  };
+
+  let normalized = street;
+  
+  // Replace street types (with word boundaries)
+  Object.entries(streetTypes).forEach(([abbrev, full]) => {
+    const regex = new RegExp(`\\b${abbrev.replace('.', '\\.')}\\b`, 'gi');
+    normalized = normalized.replace(regex, full);
+  });
+
+  // Replace directions (with word boundaries)
+  Object.entries(directions).forEach(([abbrev, full]) => {
+    const regex = new RegExp(`\\b${abbrev.replace('.', '\\.')}\\b`, 'gi');
+    normalized = normalized.replace(regex, full);
+  });
+
+  return normalized;
+};
+
+const normalizeState = (state: string): string => {
+  const stateMap = {
+    'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+    'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+    'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+    'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+    'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+    'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+    'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+    'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+    'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+    'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+    'DC': 'District of Columbia'
+  };
+
+  return stateMap[state.toUpperCase()] || state;
+};
+
+const normalizeAddress = (address: string): string => {
+  if (!address) return address;
+  
+  // Split address by commas to identify parts
+  const parts = address.split(',').map(part => part.trim());
+  
+  if (parts.length >= 3) {
+    // Normalize street (first part)
+    parts[0] = normalizeStreetTypes(parts[0]);
+    
+    // Normalize state in the last part (which typically contains state and ZIP)
+    const lastPart = parts[parts.length - 1];
+    const stateZipMatch = lastPart.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
+    if (stateZipMatch) {
+      const normalizedState = normalizeState(stateZipMatch[1]);
+      parts[parts.length - 1] = `${normalizedState} ${stateZipMatch[2]}`;
+    } else {
+      // Just state without ZIP
+      parts[parts.length - 1] = normalizeState(lastPart);
+    }
+  } else {
+    // For simpler addresses, just normalize street types
+    parts[0] = normalizeStreetTypes(parts[0] || '');
+  }
+  
+  return parts.join(', ');
+};
+
 serve(async (req) => {
   console.log('get-business-data function called with method:', req.method);
   console.log('Request URL:', req.url);
@@ -114,8 +205,14 @@ serve(async (req) => {
 
     console.log('Successfully retrieved business data for user:', userId);
 
+    // Normalize the business address before sending
+    const normalizedData = {
+      ...businessData,
+      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address
+    };
+
     return new Response(
-      JSON.stringify(businessData),
+      JSON.stringify(normalizedData),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
