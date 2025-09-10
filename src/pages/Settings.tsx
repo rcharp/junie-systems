@@ -233,6 +233,65 @@ const Settings = () => {
       let updateData: any = {};
 
       if (section === "Business") {
+        // Validate required business fields BEFORE processing
+        const requiredFields = {
+          businessName: businessName?.trim(),
+          businessType: businessType?.trim(), 
+          businessPhone: businessPhone?.trim(),
+          businessDescription: businessDescription?.trim()
+        };
+
+        const missingFields = Object.entries(requiredFields)
+          .filter(([key, value]) => !value || value.length === 0)
+          .map(([key]) => key);
+
+        if (missingFields.length > 0) {
+          const fieldNames = missingFields.map(field => {
+            switch(field) {
+              case 'businessName': return 'Business Name';
+              case 'businessType': return 'Business Type';
+              case 'businessPhone': return 'Phone Number';
+              case 'businessDescription': return 'Business Description';
+              default: return field;
+            }
+          });
+          
+          toast({
+            title: "Missing Required Fields",
+            description: `Please fill in all required fields: ${fieldNames.join(', ')}`,
+            variant: "destructive",
+            duration: 5000,
+          });
+          setSaving(false);
+          return;
+        }
+
+        // Validate services - each service must have both name and price
+        const validServices = services.filter(s => s.name.trim() !== "");
+        const invalidServices = validServices.filter(s => !s.price.trim());
+        
+        if (invalidServices.length > 0) {
+          toast({
+            title: "Service Pricing Required",
+            description: `All services must have prices. ${invalidServices.length} service(s) are missing prices.`,
+            variant: "destructive",
+            duration: 5000,
+          });
+          setSaving(false);
+          return;
+        }
+
+        if (validServices.length === 0) {
+          toast({
+            title: "Services Required",
+            description: "Please add at least one service with pricing.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          setSaving(false);
+          return;
+        }
+
         // Combine address fields into a single address string
         const fullAddress = [
           addressData.street,
@@ -240,6 +299,17 @@ const Settings = () => {
           addressData.state,
           addressData.zip
         ].filter(Boolean).join(', ');
+
+        if (!fullAddress.trim()) {
+          toast({
+            title: "Address Required",
+            description: "Please provide a complete business address.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          setSaving(false);
+          return;
+        }
 
         updateData = {
           business_name: businessName,
@@ -249,8 +319,8 @@ const Settings = () => {
           business_hours: JSON.stringify(businessHours),
           business_description: businessDescription,
           business_website: businessWebsite,
-          services_offered: JSON.stringify(services.filter(s => s.name.trim() !== "")),
-          pricing_structure: services.map(s => `${s.name}: ${s.price}`).join(', ')
+          services_offered: JSON.stringify(validServices),
+          pricing_structure: validServices.map(s => `${s.name}: ${s.price}`).join(', ')
         };
       } else if (section === "Call") {
         updateData = {
