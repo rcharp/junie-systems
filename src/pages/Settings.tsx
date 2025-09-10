@@ -797,6 +797,16 @@ const Settings = () => {
                             setDescriptionUpdateTimeout(timeout);
                           }
                         }}
+                        onBlur={() => {
+                          if (businessName && businessType && businessSettingsId) {
+                            // Clear any pending timeout
+                            if (descriptionUpdateTimeout) {
+                              clearTimeout(descriptionUpdateTimeout);
+                            }
+                            // Immediately update description on blur
+                            autoUpdateDescription(businessName);
+                          }
+                        }}
                         placeholder="Your Business Name"
                         className={validationErrors.businessName ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                       />
