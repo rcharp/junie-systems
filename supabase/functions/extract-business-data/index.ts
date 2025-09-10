@@ -657,4 +657,4 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
-});  // Closing the serve() function call
+})  // Closing the serve() function call
