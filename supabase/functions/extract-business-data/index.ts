@@ -17,27 +17,53 @@ interface BusinessData {
   business_description?: string
 }
 
-async function generateBusinessDescription(businessData: BusinessData): Promise<string> {
+// Simplified Google search for address
+async function findBusinessAddress(businessName: string, domain: string): Promise<string | null> {
+  try {
+    console.log(`Searching Google for address: ${businessName}`);
+    
+    const searchQuery = `"${businessName}" address phone -site:${domain}`;
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+    
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    if (!response.ok) return null;
+    
+    const html = await response.text();
+    
+    // Look for address patterns
+    const addressRegex = /(\d+[^,\n]*(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5})/i;
+    const match = html.match(addressRegex);
+    
+    if (match && match[1]) {
+      const address = match[1].trim();
+      console.log('Found address from Google:', address);
+      return address;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error searching for address:', error);
+    return null;
+  }
+}
+
+// Generate AI description
+async function generateDescription(businessData: BusinessData): Promise<string> {
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   
   if (!openAIApiKey) {
-    console.log('OpenAI API key not found, using original description');
+    console.log('No OpenAI key, using basic description');
     return businessData.business_description || '';
   }
 
   try {
-    console.log('Generating AI business description...');
-    const prompt = `Based on the following business information, write a compelling and professional business description (2-3 sentences):
-
-Business Name: ${businessData.business_name}
-Services: ${businessData.services_offered}
-Location: ${businessData.business_address}
-Hours: ${businessData.business_hours}
-Phone: ${businessData.business_phone}
-Current Description: ${businessData.business_description}
-
-Write a compelling business description that highlights their strengths and appeals to potential customers. Keep it professional, concise, and engaging.`;
-
+    console.log('Generating AI description...');
+    
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -47,202 +73,37 @@ Write a compelling business description that highlights their strengths and appe
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'You are a professional marketing copywriter who creates compelling business descriptions.' },
-          { role: 'user', content: prompt }
+          { 
+            role: 'system', 
+            content: 'Write compelling 2-3 sentence business descriptions that highlight strengths and appeal to customers.' 
+          },
+          { 
+            role: 'user', 
+            content: `Create a professional business description for:
+Business: ${businessData.business_name}
+Services: ${businessData.services_offered || 'General services'}
+Location: ${businessData.business_address || 'Local area'}
+Current description: ${businessData.business_description || 'None'}` 
+          }
         ],
-        max_tokens: 200,
+        max_tokens: 150,
         temperature: 0.7
       }),
     });
 
-    if (!response.ok) {
-      console.error('OpenAI API error:', response.status, await response.text());
-      return businessData.business_description || '';
+    if (response.ok) {
+      const data = await response.json();
+      const description = data.choices[0]?.message?.content?.trim();
+      if (description && description.length > 20) {
+        console.log('Generated description:', description);
+        return description;
+      }
     }
-
-    const data = await response.json();
-    const generatedDescription = data.choices[0].message.content.trim();
     
-    console.log('Generated business description:', generatedDescription);
-    return generatedDescription;
-  } catch (error) {
-    console.error('Error generating business description:', error);
     return businessData.business_description || '';
-  }
-}
-
-async function searchForAdditionalBusinessInfo(businessName: string, address: string): Promise<Partial<BusinessData>> {
-  console.log(`Searching for additional business info: ${businessName}`);
-  
-  try {
-    // Search for business reviews and additional info
-    const searchQueries = [
-      `"${businessName}" ${address} services pricing yelp`,
-      `"${businessName}" reviews google business`,
-      `"${businessName}" rates prices costs`
-    ];
-    
-    const extractedData: Partial<BusinessData> = {};
-    let services: string[] = [];
-    let pricing: string[] = [];
-    
-    for (const searchQuery of searchQueries) {
-      try {
-        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-        
-        const response = await fetch(searchUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-          }
-        });
-        
-        if (!response.ok) continue;
-        
-        const html = await response.text();
-        
-        // Enhanced service patterns
-        const servicePatterns = [
-          /((?:services?|offers?|specializes? in)[^<\n]{20,400})/gi,
-          /((?:residential|commercial|emergency)[^<\n]{10,250}(?:service|repair|installation|maintenance|cleaning))/gi,
-          /((?:hvac|plumbing|electrical|roofing|landscaping|cleaning|construction)[^<\n]{10,200})/gi,
-          /((?:we\s+(?:provide|offer|specialize|handle|install|repair))[^<\n]{20,300})/gi
-        ];
-        
-        // Enhanced pricing patterns
-        const pricingPatterns = [
-          /((?:prices?|pricing|costs?|rates?|fees?)[^<\n]{20,250})/gi,
-          /((?:\$\d+[^<\n]{5,150}))/gi,
-          /((?:starting\s+(?:at|from))[^<\n]{10,150})/gi,
-          /((?:free\s+(?:estimate|quote|consultation|inspection))[^<\n]{5,100})/gi,
-          /((?:\d+\s*(?:dollars?|USD|per|hour|each))[^<\n]{5,100})/gi
-        ];
-        
-        // Extract services
-        for (const pattern of servicePatterns) {
-          const matches = html.match(pattern);
-          if (matches) {
-            matches.forEach(match => {
-              const clean = match.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-              if (clean.length > 15 && clean.length < 400 && !services.some(s => s.includes(clean.substring(0, 20)))) {
-                services.push(clean);
-              }
-            });
-          }
-        }
-        
-        // Extract pricing
-        for (const pattern of pricingPatterns) {
-          const matches = html.match(pattern);
-          if (matches) {
-            matches.forEach(match => {
-              const clean = match.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
-              if (clean.length > 5 && clean.length < 200 && !pricing.some(p => p.includes(clean.substring(0, 15)))) {
-                pricing.push(clean);
-              }
-            });
-          }
-        }
-        
-        // Limit to avoid too much data
-        if (services.length >= 5 && pricing.length >= 3) break;
-        
-      } catch (searchError) {
-        console.error('Error in search query:', searchError);
-        continue;
-      }
-    }
-    
-    if (services.length > 0) {
-      extractedData.services_offered = services.slice(0, 5).join('; ');
-      console.log('Found services from search:', extractedData.services_offered);
-    }
-    
-    if (pricing.length > 0) {
-      extractedData.pricing_structure = pricing.slice(0, 3).join('; ');
-      console.log('Found pricing from search:', extractedData.pricing_structure);
-    }
-    
-    return extractedData;
   } catch (error) {
-    console.error('Error searching for additional business info:', error);
-    return {};
-  }
-}
-
-async function searchGoogleForBusiness(businessName: string, website: string): Promise<Partial<BusinessData>> {
-  console.log(`Searching Google for: ${businessName}`);
-  
-  try {
-    // Create search query combining business name and website domain
-    const domain = new URL(website).hostname.replace('www.', '');
-    const searchQuery = `"${businessName}" ${domain} address phone hours`;
-    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
-    
-    const response = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
-    });
-    
-    if (!response.ok) {
-      console.log('Google search failed, trying alternative approach');
-      return {};
-    }
-    
-    const html = await response.text();
-    
-    // Extract data from Google search results
-    const extractedData: Partial<BusinessData> = {};
-    
-    // Look for address patterns in Google results
-    const addressPatterns = [
-      /(\d+[^,\n]*(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Way|Circle|Cir|Court|Ct|Plaza|Pkwy|Parkway)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/gi,
-      /(\d+[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/gi
-    ];
-    
-    for (const pattern of addressPatterns) {
-      const addressMatch = html.match(pattern);
-      if (addressMatch && addressMatch[0]) {
-        const address = addressMatch[0].trim();
-        // Validate it's not HTML or CSS
-        if (!address.includes('<') && !address.includes('font-') && address.length < 200) {
-          extractedData.business_address = address;
-          console.log('Found address from Google:', extractedData.business_address);
-          break;
-        }
-      }
-    }
-    
-    // Look for phone numbers
-    const phonePattern = /(\(\d{3}\)\s*\d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\(\d{3}\)\d{3}-\d{4})/g;
-    const phoneMatch = html.match(phonePattern);
-    if (phoneMatch && phoneMatch[0]) {
-      extractedData.business_phone = phoneMatch[0].trim();
-      console.log('Found phone from Google:', extractedData.business_phone);
-    }
-    
-    // Look for hours patterns
-    const hoursPatterns = [
-      /((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)[^<\n]*(?:\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)|\d{1,2}\s*(?:AM|PM|am|pm))[^<\n]*)/gi,
-      /(Hours[^<\n]*(?:\d{1,2}:\d{2}|\d{1,2}\s*(?:AM|PM))[^<\n]*)/gi
-    ];
-    
-    for (const pattern of hoursPatterns) {
-      const hoursMatch = html.match(pattern);
-      if (hoursMatch && hoursMatch[0]) {
-        const hours = hoursMatch[0].trim().substring(0, 200);
-        if (!hours.includes('font-') && !hours.includes('<')) {
-          extractedData.business_hours = hours;
-          console.log('Found hours from Google:', extractedData.business_hours);
-          break;
-        }
-      }
-    }
-    
-    return extractedData;
-  } catch (error) {
-    console.error('Error searching Google:', error);
-    return {};
+    console.error('AI description error:', error);
+    return businessData.business_description || '';
   }
 }
 
@@ -252,10 +113,10 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting business data extraction...')
+    console.log('=== Starting business data extraction ===')
     
     const { url } = await req.json()
-    console.log('Extracting data from URL:', url)
+    console.log('URL:', url)
 
     if (!url) {
       return new Response(
@@ -264,9 +125,10 @@ serve(async (req) => {
       )
     }
 
-    // Validate URL format
+    // Validate URL
+    let parsedUrl;
     try {
-      new URL(url)
+      parsedUrl = new URL(url);
     } catch {
       return new Response(
         JSON.stringify({ error: 'Invalid URL format' }),
@@ -274,7 +136,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('Fetching webpage content...')
+    console.log('Fetching webpage...')
     
     // Fetch the webpage
     const response = await fetch(url, {
@@ -292,339 +154,176 @@ serve(async (req) => {
     }
 
     const html = await response.text()
-    console.log('Webpage fetched successfully, content length:', html.length)
+    console.log('Webpage fetched, length:', html.length)
 
-    // Extract business data using regex patterns and DOM parsing
+    // Initialize business data
     const businessData: BusinessData = {}
 
-    // First try to extract structured data (JSON-LD)
-    const jsonLdMatches = html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([^<]+)<\/script>/gi)
-    let structuredData: any = null
+    // Extract business name
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
+    const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i)
+    const ogTitleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i)
     
-    for (const match of jsonLdMatches) {
-      try {
-        const data = JSON.parse(match[1])
-        if (data['@type'] === 'LocalBusiness' || data['@type'] === 'Organization' || data.name) {
-          structuredData = data
+    if (ogTitleMatch) {
+      businessData.business_name = ogTitleMatch[1].replace(/\s*[-|–]\s*(Home|About|Contact|Services).*$/i, '').trim()
+    } else if (titleMatch) {
+      businessData.business_name = titleMatch[1].replace(/\s*[-|–]\s*(Home|About|Contact|Services).*$/i, '').trim()
+    } else if (h1Match) {
+      businessData.business_name = h1Match[1].trim()
+    }
+
+    console.log('Business name:', businessData.business_name)
+
+    // Extract phone number
+    const phonePatterns = [
+      /href="tel:([^"]+)"/i,
+      /(\(\d{3}\)\s?\d{3}-\d{4})/,
+      /(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})/
+    ]
+    
+    for (const pattern of phonePatterns) {
+      const match = html.match(pattern)
+      if (match) {
+        let phone = match[1].replace(/\D/g, '')
+        if (phone.length === 11 && phone.startsWith('1')) {
+          phone = phone.substring(1)
+        }
+        if (phone.length === 10) {
+          businessData.business_phone = `(${phone.substring(0,3)}) ${phone.substring(3,6)}-${phone.substring(6)}`
           break
         }
-      } catch (e) {
-        // Continue to next JSON-LD block
       }
     }
 
-    // Extract business name with priority order
-    if (structuredData?.name) {
-      businessData.business_name = structuredData.name
-    } else {
-      // Try meta property first
-      const ogTitleMatch = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i)
-      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
-      const h1Match = html.match(/<h1[^>]*>([^<]+)<\/h1>/i)
-      
-      if (ogTitleMatch) {
-        businessData.business_name = ogTitleMatch[1].replace(/\s*[-|–]\s*(Home|About|Contact|Services).*$/i, '').trim()
-      } else if (titleMatch) {
-        businessData.business_name = titleMatch[1].replace(/\s*[-|–]\s*(Home|About|Contact|Services).*$/i, '').trim()
-      } else if (h1Match) {
-        businessData.business_name = h1Match[1].trim()
+    console.log('Phone:', businessData.business_phone)
+
+    // Extract email
+    const emailMatch = html.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g)
+    if (emailMatch) {
+      const filtered = emailMatch.filter(email => 
+        !email.includes('example.com') && 
+        !email.includes('noreply') &&
+        !email.includes('wordpress')
+      )
+      if (filtered.length > 0) {
+        businessData.business_email = filtered[0]
       }
     }
 
-    // Extract phone numbers with structured data priority
-    if (structuredData?.telephone) {
-      businessData.business_phone = structuredData.telephone
-    } else {
-      const phonePatterns = [
-        /href="tel:([^"]+)"/gi,
-        /(?:phone|tel|call)[:\s]*([+]?[\d\s\-\(\)\.]{10,})/gi,
-        /(\+?1?[-.\s]?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4})/g,
-        /(\(\d{3}\)\s?\d{3}-\d{4})/g,
-        /(\d{3}[-.\s]?\d{3}[-.\s]?\d{4})/g
-      ]
-      
-      for (const pattern of phonePatterns) {
-        const matches = html.matchAll(pattern)
-        for (const match of matches) {
-          let phone = match[1].replace(/[^\d+\-\(\)\s]/g, '').trim()
-          // Clean up phone format
-          phone = phone.replace(/\D/g, '')
-          if (phone.length === 11 && phone.startsWith('1')) {
-            phone = phone.substring(1)
-          }
-          if (phone.length === 10) {
-            businessData.business_phone = `(${phone.substring(0,3)}) ${phone.substring(3,6)}-${phone.substring(6)}`
-            break
-          }
-        }
-        if (businessData.business_phone) break
-      }
-    }
-
-    // Extract email addresses with structured data priority
-    if (structuredData?.email) {
-      businessData.business_email = structuredData.email
-    } else {
-      const emailPattern = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g
-      const emailMatches = html.match(emailPattern)
-      if (emailMatches) {
-        // Filter out common non-business emails and prioritize contact/info emails
-        const prioritizedEmails = emailMatches.filter(email => 
-          !email.includes('example.com') && 
-          !email.includes('test.com') &&
-          !email.includes('noreply') &&
-          !email.includes('no-reply') &&
-          !email.includes('wordpress') &&
-          !email.includes('admin@')
-        ).sort((a, b) => {
-          // Prioritize contact, info, hello emails
-          const priority = ['contact', 'info', 'hello', 'support']
-          const aScore = priority.findIndex(p => a.toLowerCase().includes(p))
-          const bScore = priority.findIndex(p => b.toLowerCase().includes(p))
-          return (aScore === -1 ? 999 : aScore) - (bScore === -1 ? 999 : bScore)
-        })
-        
-        if (prioritizedEmails.length > 0) {
-          businessData.business_email = prioritizedEmails[0]
-        }
-      }
-    }
-
-    // Extract address with structured data priority
-    if (structuredData?.address) {
-      if (typeof structuredData.address === 'string') {
-        businessData.business_address = structuredData.address
-      } else if (structuredData.address.streetAddress) {
-        const addr = structuredData.address
-        businessData.business_address = [
-          addr.streetAddress,
-          addr.addressLocality,
-          addr.addressRegion,
-          addr.postalCode
-        ].filter(Boolean).join(', ')
-      }
-    } else {
-      // Try to find address in various formats
-      const addressPatterns = [
-        /(?:address|location)[:\s]*([^<\n]{20,150})/gi,
-        /(\d+\s+[A-Za-z0-9\s,.-]+(?:Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Way|Circle|Cir|Court|Ct|Place|Pl)[^<\n]{0,50})/gi,
-        /(\d+\s+[A-Za-z0-9\s,.-]+,\s*[A-Za-z\s]+,?\s*[A-Z]{2}\s*\d{5})/gi
-      ]
-
-      for (const pattern of addressPatterns) {
-        const matches = html.matchAll(pattern)
-        for (const match of matches) {
-          let address = match[1].trim()
-          // Clean up common HTML artifacts
-          address = address.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
-          if (address.length > 15 && address.length < 200) {
-            businessData.business_address = address
-            break
-          }
-        }
-        if (businessData.business_address) break
-      }
-    }
-
-    // Extract business hours with structured data priority
-    if (structuredData?.openingHours || structuredData?.openingHoursSpecification) {
-      const hours = structuredData.openingHours || structuredData.openingHoursSpecification
-      if (Array.isArray(hours)) {
-        businessData.business_hours = hours.join(', ')
-      } else if (typeof hours === 'string') {
-        businessData.business_hours = hours
-      }
-    } else {
-      const hoursPatterns = [
-        /(?:hours?|open)[:\s]*([^<\n]{10,300})/gi,
-        /(?:monday|mon|tuesday|tue|wednesday|wed|thursday|thu|friday|fri|saturday|sat|sunday|sun)[^<\n]{5,150}/gi,
-        /(open\s+(?:24\/7|24\s+hours))/gi
-      ]
-
-      for (const pattern of hoursPatterns) {
-        const matches = html.match(pattern)
-        if (matches && matches.length > 0) {
-          let hours = matches[0].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
-          if (hours.length > 5 && hours.length < 500) {
-            businessData.business_hours = hours
-            break
-          }
-        }
-      }
-    }
-
-    // Extract services with structured data priority and enhanced patterns
-    if (structuredData?.hasOfferCatalog || structuredData?.makesOffer) {
-      const services = structuredData.hasOfferCatalog || structuredData.makesOffer
-      if (Array.isArray(services)) {
-        businessData.services_offered = services.map(s => s.name || s).join(', ')
-      } else if (typeof services === 'string') {
-        businessData.services_offered = services
-      }
-    } else {
-      const servicePatterns = [
-        /(?:services?|what we do|we offer|we provide|specializing in)[^<]{20,500}/gi,
-        /(?:specializ|expert|professional)[^<]{20,400}/gi,
-        /<h[1-6][^>]*>([^<]*(?:service|repair|install|maintenance|consultation|cleaning|hvac|plumbing|electrical|roofing)[^<]*)<\/h[1-6]>/gi,
-        /(?:residential|commercial|emergency)[^<]{10,200}(?:service|repair|installation)/gi,
-        /(?:we\s+(?:provide|offer|specialize|handle))[^<]{20,300}/gi
-      ]
-
-      let bestMatch = ''
-      for (const pattern of servicePatterns) {
-        const matches = html.match(pattern)
-        if (matches && matches.length > 0) {
-          let services = matches[0].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
-          if (services.length > bestMatch.length && services.length < 800) {
-            bestMatch = services
-          }
-        }
-      }
-      if (bestMatch) {
-        businessData.services_offered = bestMatch
-      }
-    }
-
-    // Extract pricing information
-    const pricingPatterns = [
-      /(?:pricing|rates?|costs?|fees?)[^<]{20,300}/gi,
-      /(?:\$\d+[^<\n]{5,100})/gi,
-      /(?:starting\s+(?:at|from))[^<]{10,100}/gi,
-      /(?:free\s+(?:estimate|quote|consultation))[^<]{5,50}/gi
+    // Extract address from website first
+    const addressPatterns = [
+      /(\d+\s+[A-Za-z0-9\s,.-]+(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Way)[^<\n]{0,50})/i,
+      /(\d+[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5})/i
     ]
 
-    let pricingInfo = []
-    for (const pattern of pricingPatterns) {
+    for (const pattern of addressPatterns) {
+      const match = html.match(pattern)
+      if (match) {
+        const address = match[1].replace(/<[^>]*>/g, '').trim()
+        if (address.length > 15 && address.length < 150) {
+          businessData.business_address = address
+          break
+        }
+      }
+    }
+
+    console.log('Address from website:', businessData.business_address)
+
+    // If no address found, search Google
+    if (!businessData.business_address && businessData.business_name) {
+      console.log('No address on website, searching Google...')
+      try {
+        const foundAddress = await Promise.race([
+          findBusinessAddress(businessData.business_name, parsedUrl.hostname),
+          new Promise<string | null>((_, reject) => 
+            setTimeout(() => reject(new Error('Address search timeout')), 6000)
+          )
+        ]);
+        
+        if (foundAddress) {
+          businessData.business_address = foundAddress;
+        }
+      } catch (error) {
+        console.error('Address search failed:', error.message);
+      }
+    }
+
+    // Extract services
+    const servicePatterns = [
+      /(?:services|what we do|we offer)[^<]{20,300}/gi,
+      /(?:hvac|plumbing|electrical|roofing|cleaning)[^<]{10,200}/gi,
+      /(?:repair|install|maintain|service)[^<]{10,150}/gi
+    ]
+
+    let services = []
+    for (const pattern of servicePatterns) {
       const matches = html.match(pattern)
       if (matches) {
         matches.forEach(match => {
           const clean = match.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
-          if (clean.length > 5 && clean.length < 200 && !pricingInfo.includes(clean)) {
-            pricingInfo.push(clean)
+          if (clean.length > 10 && clean.length < 200) {
+            services.push(clean)
           }
         })
       }
     }
 
-    if (pricingInfo.length > 0) {
-      businessData.pricing_structure = pricingInfo.slice(0, 3).join('; ')
+    if (services.length > 0) {
+      businessData.services_offered = services.slice(0, 3).join('; ')
     }
 
-    // Extract description with structured data priority
-    if (structuredData?.description) {
-      businessData.business_description = structuredData.description
-    } else {
-      const descriptionPatterns = [
-        /<meta\s+name="description"\s+content="([^"]+)"/i,
-        /<meta\s+property="og:description"\s+content="([^"]+)"/i,
-        /(?:about\s+(?:us|our\s+company|our\s+business))[^<]{20,400}/gi,
-        /(?:we\s+are|we\s+specialize|established)[^<]{20,300}/gi
-      ]
+    console.log('Services:', businessData.services_offered)
 
-      for (const pattern of descriptionPatterns) {
-        const match = html.match(pattern)
-        if (match && match[1]) {
-          let desc = match[1].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
-          if (desc.length > 10 && desc.length < 1000) {
-            businessData.business_description = desc
-            break
+    // Extract pricing
+    const pricingPatterns = [
+      /(?:\$\d+[^<\n]{5,100})/gi,
+      /(?:starting at|from \$)[^<\n]{5,50}/gi,
+      /(?:free estimate|free quote)/gi
+    ]
+
+    let pricing = []
+    for (const pattern of pricingPatterns) {
+      const matches = html.match(pattern)
+      if (matches) {
+        matches.forEach(match => {
+          const clean = match.replace(/<[^>]*>/g, '').trim()
+          if (clean.length > 5 && clean.length < 100) {
+            pricing.push(clean)
           }
-        }
+        })
       }
     }
 
-    // Clean up all extracted data
-    Object.keys(businessData).forEach(key => {
-      if (businessData[key as keyof BusinessData]) {
-        let value = businessData[key as keyof BusinessData] as string
-        // Remove HTML entities and clean whitespace
-        value = value.replace(/&[#\w]+;/g, '').replace(/\s+/g, ' ').trim()
-        businessData[key as keyof BusinessData] = value
-      }
-    })
-
-    console.log('Initial extracted data:', businessData)
-
-    // Check if we need to search Google for missing/invalid address
-    const hasValidAddress = businessData.business_address && 
-                           businessData.business_address.length > 10 && 
-                           businessData.business_address.length < 200 &&
-                           /\d+.*[A-Za-z]/.test(businessData.business_address) && // Has number and letters
-                           !businessData.business_address.includes('font-') && // Not CSS
-                           !businessData.business_address.includes('color:') && // Not CSS
-                           !businessData.business_address.includes('<') && // Not HTML
-                           !businessData.business_address.includes('applet') && // Not HTML tags
-                           !businessData.business_address.includes('body') && // Not CSS/HTML
-                           !businessData.business_address.includes('div'); // Not HTML
-
-    if (!hasValidAddress && businessData.business_name) {
-      try {
-        console.log('Address not found or invalid, searching Google for business info...');
-        const googleData = await Promise.race([
-          searchGoogleForBusiness(businessData.business_name, url),
-          new Promise<Partial<BusinessData>>((_, reject) => 
-            setTimeout(() => reject(new Error('Google search timeout')), 8000)
-          )
-        ]);
-        
-        // Merge Google data with extracted data, prioritizing Google for missing/invalid fields
-        if (googleData.business_address) {
-          businessData.business_address = googleData.business_address;
-        }
-        if (!businessData.business_phone && googleData.business_phone) {
-          businessData.business_phone = googleData.business_phone;
-        }
-        if ((!businessData.business_hours || businessData.business_hours.includes('font-')) && googleData.business_hours) {
-          businessData.business_hours = googleData.business_hours;
-        }
-      } catch (error) {
-        console.error('Google search failed or timed out:', error.message);
-      }
+    if (pricing.length > 0) {
+      businessData.pricing_structure = pricing.slice(0, 3).join('; ')
     }
 
-    // Search for additional services and pricing from review sites (with timeout)
-    if (businessData.business_name && businessData.business_address) {
-      try {
-        console.log('Searching for additional services and pricing information...');
-        const additionalData = await Promise.race([
-          searchForAdditionalBusinessInfo(businessData.business_name, businessData.business_address),
-          new Promise<Partial<BusinessData>>((_, reject) => 
-            setTimeout(() => reject(new Error('Timeout')), 8000)
-          )
-        ]);
-        
-        // Enhance services if we found more detailed information
-        if (additionalData.services_offered && (!businessData.services_offered || businessData.services_offered.length < 50)) {
-          businessData.services_offered = additionalData.services_offered;
-        }
-        
-        // Add pricing information if found
-        if (additionalData.pricing_structure && !businessData.pricing_structure) {
-          businessData.pricing_structure = additionalData.pricing_structure;
-        }
-      } catch (error) {
-        console.error('Additional search timed out or failed:', error.message);
-      }
+    // Extract basic description
+    const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i)
+    if (descMatch) {
+      businessData.business_description = descMatch[1].trim()
     }
 
-    // Generate AI-enhanced business description (with timeout)
+    console.log('Basic description:', businessData.business_description)
+
+    // Generate AI description
     try {
-      console.log('Generating AI-enhanced business description...');
-      const enhancedDescription = await Promise.race([
-        generateBusinessDescription(businessData),
+      const aiDescription = await Promise.race([
+        generateDescription(businessData),
         new Promise<string>((_, reject) => 
-          setTimeout(() => reject(new Error('AI generation timeout')), 5000)
+          setTimeout(() => reject(new Error('AI timeout')), 4000)
         )
       ]);
       
-      if (enhancedDescription && enhancedDescription.length > 20) {
-        businessData.business_description = enhancedDescription;
+      if (aiDescription && aiDescription.length > 20) {
+        businessData.business_description = aiDescription;
       }
     } catch (error) {
-      console.error('AI description generation failed or timed out:', error.message);
+      console.error('AI description failed:', error.message);
     }
 
-    console.log('Final extracted business data:', businessData)
+    console.log('=== Final business data ===')
+    console.log(JSON.stringify(businessData, null, 2))
 
     return new Response(
       JSON.stringify({ 
@@ -636,15 +335,15 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Error extracting business data:', error)
-    console.error('Error stack:', error.stack)
+    console.error('=== ERROR ===')
+    console.error('Error:', error.message)
+    console.error('Stack:', error.stack)
     
     return new Response(
       JSON.stringify({ 
         success: false,
         error: 'Failed to extract business data',
-        details: error.message,
-        stack: error.stack
+        details: error.message
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
