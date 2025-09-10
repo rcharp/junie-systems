@@ -415,7 +415,7 @@ serve(async (req) => {
       console.error('Failed to fetch webpage:', response.status, response.statusText)
       
       // Provide specific error messages for different status codes
-      let errorMessage = `Failed to fetch webpage (${response.status})`;
+      let errorMessage = 'Failed to fetch webpage (' + response.status + ')';
       if (response.status === 403) {
         errorMessage = isSocialMedia 
           ? 'Access denied. Social media pages often restrict automated access. Try using the business website instead.'
