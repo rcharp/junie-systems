@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe } from "lucide-react";
+import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Zap } from "lucide-react";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
@@ -68,6 +68,7 @@ const Settings = () => {
   const [commonQuestions, setCommonQuestions] = useState("");
   const [appointmentBooking, setAppointmentBooking] = useState(false);
   const [leadCapture, setLeadCapture] = useState(true);
+  const [generatingDescription, setGeneratingDescription] = useState(false);
 
   // Notification Settings State
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -189,6 +190,54 @@ const Settings = () => {
     }
     
     setServices(newServices);
+  };
+
+  const generateBusinessDescription = async () => {
+    if (!businessName || !businessType) {
+      toast({
+        title: "Missing Information", 
+        description: "Please fill in business name and type first to generate a description.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingDescription(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-business-description', {
+        body: {
+          businessName,
+          businessType,
+          services: services.filter(s => s.name.trim()),
+          address: addressData.street && addressData.city ? 
+            `${addressData.street}, ${addressData.city}, ${addressData.state}` : 
+            businessAddress,
+          phone: businessPhone
+        }
+      });
+
+      if (error) {
+        console.error('Error generating description:', error);
+        throw new Error(error.message || 'Failed to generate description');
+      }
+
+      if (data?.description) {
+        setBusinessDescription(data.description);
+        toast({
+          title: "Description Generated!",
+          description: "AI has generated a compelling business description for you.",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating business description:', error);
+      toast({
+        title: "Generation Failed",
+        description: "Unable to generate description. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingDescription(false);
+    }
   };
 
   const updateBusinessHours = (id: number, field: keyof typeof businessHours[0], value: string | boolean) => {
@@ -779,6 +828,17 @@ const Settings = () => {
                       rows={4}
                       className={validationErrors.businessDescription ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                     />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={generateBusinessDescription}
+                      disabled={generatingDescription}
+                      className="mt-2 text-sm"
+                    >
+                      <Zap className={`w-4 h-4 mr-2 ${generatingDescription ? 'animate-pulse' : ''}`} />
+                      {generatingDescription ? 'Generating...' : 'Generate with AI'}
+                    </Button>
                   </div>
 
                   <div className="space-y-2">
