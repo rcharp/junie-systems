@@ -208,17 +208,17 @@ function extractPricing(html: string): string[] {
   return [...new Set(pricing)];
 }
 
-// Generate AI description with business context
+// Generate AI description with business context using Perplexity
 async function generateDescription(businessData: BusinessData): Promise<string> {
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+  const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
   
-  if (!openAIApiKey) {
-    console.log('No OpenAI key available for AI description');
+  if (!perplexityApiKey) {
+    console.log('No Perplexity API key available for AI description');
     return businessData.business_description || '';
   }
 
   try {
-    console.log('Calling OpenAI API for description generation...');
+    console.log('Calling Perplexity API for description generation...');
     
     const prompt = `Create a compelling, professional business description (2-3 sentences) for:
 
@@ -229,46 +229,49 @@ Business Type: ${businessData.business_type || 'Service business'}
 
 Make it customer-focused, highlight unique value, and sound professional. Focus on benefits to customers.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'llama-3.1-sonar-small-128k-online',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a professional marketing copywriter who creates compelling business descriptions that attract customers. Write in a clear, engaging style that highlights what makes the business special.' 
+            content: 'You are a professional marketing copywriter who creates compelling business descriptions that attract customers. Write in a clear, engaging style that highlights what makes the business special. Keep responses concise and professional.' 
           },
           { role: 'user', content: prompt }
         ],
         max_tokens: 200,
-        temperature: 0.7
+        temperature: 0.2,
+        top_p: 0.9,
+        frequency_penalty: 1,
+        presence_penalty: 0
       }),
     });
 
-    console.log('OpenAI API response status:', response.status);
+    console.log('Perplexity API response status:', response.status);
 
     if (response.ok) {
       const data = await response.json();
       const description = data.choices[0]?.message?.content?.trim();
       
       if (description && description.length > 20) {
-        console.log('Generated AI description:', description);
+        console.log('Generated AI description with Perplexity:', description);
         return description;
       } else {
-        console.log('AI response too short or empty');
+        console.log('Perplexity response too short or empty');
       }
     } else {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('Perplexity API error:', response.status, errorText);
     }
     
     return businessData.business_description || '';
   } catch (error) {
-    console.error('AI description generation error:', error);
+    console.error('Perplexity AI description generation error:', error);
     return businessData.business_description || '';
   }
 }
@@ -574,10 +577,10 @@ serve(async (req) => {
     console.log('Basic description:', businessData.business_description)
 
     // Generate AI-powered description with better error handling
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (businessData.business_name && openAIApiKey) {
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    if (businessData.business_name && perplexityApiKey) {
       try {
-        console.log('Generating AI description with OpenAI...');
+        console.log('Generating AI description with Perplexity...');
         const aiDescription = await Promise.race([
           generateDescription(businessData),
           new Promise<string>((_, reject) => 
@@ -596,7 +599,7 @@ serve(async (req) => {
         // Keep the basic description if AI fails
       }
     } else {
-      console.log('Skipping AI description - missing business name or OpenAI key');
+      console.log('Skipping AI description - missing business name or Perplexity key');
     }
 
     console.log('=== Final enhanced business data ===')
