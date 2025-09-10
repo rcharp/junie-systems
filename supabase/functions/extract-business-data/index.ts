@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
@@ -14,6 +15,157 @@ interface BusinessData {
   services_offered?: string
   pricing_structure?: string
   business_description?: string
+}
+
+async function generateBusinessDescription(businessData: BusinessData): Promise<string> {
+  const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+  
+  if (!openAIApiKey) {
+    console.log('OpenAI API key not found, using original description');
+    return businessData.business_description || '';
+  }
+
+  try {
+    const prompt = `Based on the following business information, write a compelling and professional business description (2-3 sentences):
+
+Business Name: ${businessData.business_name}
+Services: ${businessData.services_offered}
+Location: ${businessData.business_address}
+Hours: ${businessData.business_hours}
+Phone: ${businessData.business_phone}
+Current Description: ${businessData.business_description}
+
+Write a compelling business description that highlights their strengths and appeals to potential customers. Keep it professional, concise, and engaging.`;
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a professional marketing copywriter who creates compelling business descriptions.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 200,
+        temperature: 0.7
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('OpenAI API error:', response.status, await response.text());
+      return businessData.business_description || '';
+    }
+
+    const data = await response.json();
+    const generatedDescription = data.choices[0].message.content.trim();
+    
+    console.log('Generated business description:', generatedDescription);
+    return generatedDescription;
+  } catch (error) {
+    console.error('Error generating business description:', error);
+    return businessData.business_description || '';
+  }
+}
+
+async function searchForAdditionalBusinessInfo(businessName: string, address: string): Promise<Partial<BusinessData>> {
+  console.log(`Searching for additional business info: ${businessName}`);
+  
+  try {
+    // Search for business reviews and additional info
+    const searchQueries = [
+      `"${businessName}" ${address} services pricing yelp`,
+      `"${businessName}" reviews google business`,
+      `"${businessName}" rates prices costs`
+    ];
+    
+    const extractedData: Partial<BusinessData> = {};
+    let services: string[] = [];
+    let pricing: string[] = [];
+    
+    for (const searchQuery of searchQueries) {
+      try {
+        const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+        
+        const response = await fetch(searchUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+          }
+        });
+        
+        if (!response.ok) continue;
+        
+        const html = await response.text();
+        
+        // Enhanced service patterns
+        const servicePatterns = [
+          /((?:services?|offers?|specializes? in)[^<\n]{20,400})/gi,
+          /((?:residential|commercial|emergency)[^<\n]{10,250}(?:service|repair|installation|maintenance|cleaning))/gi,
+          /((?:hvac|plumbing|electrical|roofing|landscaping|cleaning|construction)[^<\n]{10,200})/gi,
+          /((?:we\s+(?:provide|offer|specialize|handle|install|repair))[^<\n]{20,300})/gi
+        ];
+        
+        // Enhanced pricing patterns
+        const pricingPatterns = [
+          /((?:prices?|pricing|costs?|rates?|fees?)[^<\n]{20,250})/gi,
+          /((?:\$\d+[^<\n]{5,150}))/gi,
+          /((?:starting\s+(?:at|from))[^<\n]{10,150})/gi,
+          /((?:free\s+(?:estimate|quote|consultation|inspection))[^<\n]{5,100})/gi,
+          /((?:\d+\s*(?:dollars?|USD|per|hour|each))[^<\n]{5,100})/gi
+        ];
+        
+        // Extract services
+        for (const pattern of servicePatterns) {
+          const matches = html.match(pattern);
+          if (matches) {
+            matches.forEach(match => {
+              const clean = match.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+              if (clean.length > 15 && clean.length < 400 && !services.some(s => s.includes(clean.substring(0, 20)))) {
+                services.push(clean);
+              }
+            });
+          }
+        }
+        
+        // Extract pricing
+        for (const pattern of pricingPatterns) {
+          const matches = html.match(pattern);
+          if (matches) {
+            matches.forEach(match => {
+              const clean = match.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+              if (clean.length > 5 && clean.length < 200 && !pricing.some(p => p.includes(clean.substring(0, 15)))) {
+                pricing.push(clean);
+              }
+            });
+          }
+        }
+        
+        // Limit to avoid too much data
+        if (services.length >= 5 && pricing.length >= 3) break;
+        
+      } catch (searchError) {
+        console.error('Error in search query:', searchError);
+        continue;
+      }
+    }
+    
+    if (services.length > 0) {
+      extractedData.services_offered = services.slice(0, 5).join('; ');
+      console.log('Found services from search:', extractedData.services_offered);
+    }
+    
+    if (pricing.length > 0) {
+      extractedData.pricing_structure = pricing.slice(0, 3).join('; ');
+      console.log('Found pricing from search:', extractedData.pricing_structure);
+    }
+    
+    return extractedData;
+  } catch (error) {
+    console.error('Error searching for additional business info:', error);
+    return {};
+  }
 }
 
 async function searchGoogleForBusiness(businessName: string, website: string): Promise<Partial<BusinessData>> {
@@ -300,7 +452,7 @@ serve(async (req) => {
       }
     }
 
-    // Extract services with structured data priority
+    // Extract services with structured data priority and enhanced patterns
     if (structuredData?.hasOfferCatalog || structuredData?.makesOffer) {
       const services = structuredData.hasOfferCatalog || structuredData.makesOffer
       if (Array.isArray(services)) {
@@ -310,9 +462,11 @@ serve(async (req) => {
       }
     } else {
       const servicePatterns = [
-        /(?:services?|what we do|we offer|we provide)[^<]{20,400}/gi,
-        /(?:specializ|expert|professional)[^<]{20,300}/gi,
-        /<h[1-6][^>]*>([^<]*(?:service|repair|install|maintenance|consultation)[^<]*)<\/h[1-6]>/gi
+        /(?:services?|what we do|we offer|we provide|specializing in)[^<]{20,500}/gi,
+        /(?:specializ|expert|professional)[^<]{20,400}/gi,
+        /<h[1-6][^>]*>([^<]*(?:service|repair|install|maintenance|consultation|cleaning|hvac|plumbing|electrical|roofing)[^<]*)<\/h[1-6]>/gi,
+        /(?:residential|commercial|emergency)[^<]{10,200}(?:service|repair|installation)/gi,
+        /(?:we\s+(?:provide|offer|specialize|handle))[^<]{20,300}/gi
       ]
 
       let bestMatch = ''
@@ -328,6 +482,31 @@ serve(async (req) => {
       if (bestMatch) {
         businessData.services_offered = bestMatch
       }
+    }
+
+    // Extract pricing information
+    const pricingPatterns = [
+      /(?:pricing|rates?|costs?|fees?)[^<]{20,300}/gi,
+      /(?:\$\d+[^<\n]{5,100})/gi,
+      /(?:starting\s+(?:at|from))[^<]{10,100}/gi,
+      /(?:free\s+(?:estimate|quote|consultation))[^<]{5,50}/gi
+    ]
+
+    let pricingInfo = []
+    for (const pattern of pricingPatterns) {
+      const matches = html.match(pattern)
+      if (matches) {
+        matches.forEach(match => {
+          const clean = match.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim()
+          if (clean.length > 5 && clean.length < 200 && !pricingInfo.includes(clean)) {
+            pricingInfo.push(clean)
+          }
+        })
+      }
+    }
+
+    if (pricingInfo.length > 0) {
+      businessData.pricing_structure = pricingInfo.slice(0, 3).join('; ')
     }
 
     // Extract description with structured data priority
@@ -391,6 +570,29 @@ serve(async (req) => {
       if ((!businessData.business_hours || businessData.business_hours.includes('font-')) && googleData.business_hours) {
         businessData.business_hours = googleData.business_hours;
       }
+    }
+
+    // Search for additional services and pricing from review sites
+    if (businessData.business_name && businessData.business_address) {
+      console.log('Searching for additional services and pricing information...');
+      const additionalData = await searchForAdditionalBusinessInfo(businessData.business_name, businessData.business_address);
+      
+      // Enhance services if we found more detailed information
+      if (additionalData.services_offered && (!businessData.services_offered || businessData.services_offered.length < 50)) {
+        businessData.services_offered = additionalData.services_offered;
+      }
+      
+      // Add pricing information if found
+      if (additionalData.pricing_structure && !businessData.pricing_structure) {
+        businessData.pricing_structure = additionalData.pricing_structure;
+      }
+    }
+
+    // Generate AI-enhanced business description
+    console.log('Generating AI-enhanced business description...');
+    const enhancedDescription = await generateBusinessDescription(businessData);
+    if (enhancedDescription && enhancedDescription.length > 20) {
+      businessData.business_description = enhancedDescription;
     }
 
     console.log('Final extracted business data:', businessData)
