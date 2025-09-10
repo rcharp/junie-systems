@@ -605,29 +605,43 @@ const Settings = () => {
                       <Label htmlFor="businessType">
                         Business Type <span className="text-red-500">*</span>
                       </Label>
-                      <Select value={businessType} onValueChange={(value) => {
-                        console.log("Business type changed to:", value);
-                        setBusinessType(value);
-                      }}>
-                        <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
-                          <SelectValue placeholder="Select business type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">-- Select business type --</SelectItem>
-                          <SelectItem value="electric">Electric Services</SelectItem>
+                      <div className="flex gap-2">
+                        <Select value={businessType} onValueChange={(value) => {
+                          console.log("Business type changed to:", value);
+                          setBusinessType(value);
+                        }}>
+                          <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
+                            <SelectValue placeholder="Select business type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="electric">Electric Services</SelectItem>
+                            <SelectItem value="garage-door">Garage Door Services</SelectItem>
+                            <SelectItem value="handyman">Handyman Services</SelectItem>
+                            <SelectItem value="hvac">HVAC & Air Conditioning</SelectItem>
                           <SelectItem value="garage-door">Garage Door Services</SelectItem>
                           <SelectItem value="handyman">Handyman Services</SelectItem>
                           <SelectItem value="hvac">HVAC & Air Conditioning</SelectItem>
                           <SelectItem value="landscaping">Landscaping</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                          <SelectItem value="pest-control">Pest Control</SelectItem>
-                          <SelectItem value="plumbing">Plumbing</SelectItem>
-                          <SelectItem value="pool-spa">Pool & Spa Services</SelectItem>
-                          <SelectItem value="cleaning">Professional Cleaning</SelectItem>
-                          <SelectItem value="roofing">Roofing</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                           <SelectItem value="other">Other</SelectItem>
+                           <SelectItem value="pest-control">Pest Control</SelectItem>
+                           <SelectItem value="plumbing">Plumbing</SelectItem>
+                           <SelectItem value="pool-spa">Pool & Spa Services</SelectItem>
+                           <SelectItem value="cleaning">Professional Cleaning</SelectItem>
+                           <SelectItem value="roofing">Roofing</SelectItem>
+                         </SelectContent>
+                       </Select>
+                       {businessType && (
+                         <Button
+                           type="button"
+                           variant="outline"
+                           size="sm"
+                           onClick={() => setBusinessType("")}
+                           className="px-3"
+                         >
+                           Clear
+                         </Button>
+                       )}
+                     </div>
                   </div>
 
                   <div className="space-y-2">
