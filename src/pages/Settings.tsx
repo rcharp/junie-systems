@@ -75,6 +75,16 @@ const Settings = () => {
   const [pushNotifications, setPushNotifications] = useState(true);
   const [instantAlerts, setInstantAlerts] = useState(true);
 
+  // Validation error states for visual feedback
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: boolean}>({
+    businessName: false,
+    businessType: false,
+    businessPhone: false,
+    businessDescription: false,
+    businessAddress: false,
+    services: false
+  });
+
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
@@ -241,11 +251,22 @@ const Settings = () => {
           businessDescription: businessDescription?.trim()
         };
 
+        const newValidationErrors = {
+          businessName: !requiredFields.businessName,
+          businessType: !requiredFields.businessType,
+          businessPhone: !requiredFields.businessPhone,
+          businessDescription: !requiredFields.businessDescription,
+          businessAddress: false,
+          services: false
+        };
+
         const missingFields = Object.entries(requiredFields)
           .filter(([key, value]) => !value || value.length === 0)
           .map(([key]) => key);
 
         if (missingFields.length > 0) {
+          setValidationErrors(newValidationErrors);
+          
           const fieldNames = missingFields.map(field => {
             switch(field) {
               case 'businessName': return 'Business Name';
@@ -258,7 +279,7 @@ const Settings = () => {
           
           toast({
             title: "Missing Required Fields",
-            description: `Please fill in all required fields: ${fieldNames.join(', ')}`,
+            description: `Please fill in all required fields highlighted in red: ${fieldNames.join(', ')}`,
             variant: "destructive",
             duration: 5000,
           });
@@ -271,9 +292,11 @@ const Settings = () => {
         const invalidServices = validServices.filter(s => !s.price.trim());
         
         if (invalidServices.length > 0) {
+          setValidationErrors(prev => ({...prev, services: true}));
+          
           toast({
             title: "Service Pricing Required",
-            description: `All services must have prices. ${invalidServices.length} service(s) are missing prices.`,
+            description: `All services must have prices. ${invalidServices.length} service(s) are missing prices and highlighted in red.`,
             variant: "destructive",
             duration: 5000,
           });
@@ -282,6 +305,8 @@ const Settings = () => {
         }
 
         if (validServices.length === 0) {
+          setValidationErrors(prev => ({...prev, services: true}));
+          
           toast({
             title: "Services Required",
             description: "Please add at least one service with pricing.",
@@ -301,15 +326,27 @@ const Settings = () => {
         ].filter(Boolean).join(', ');
 
         if (!fullAddress.trim()) {
+          setValidationErrors(prev => ({...prev, businessAddress: true}));
+          
           toast({
             title: "Address Required",
-            description: "Please provide a complete business address.",
+            description: "Please provide a complete business address highlighted in red.",
             variant: "destructive",
             duration: 5000,
           });
           setSaving(false);
           return;
         }
+
+        // Clear validation errors if we reach here
+        setValidationErrors({
+          businessName: false,
+          businessType: false,
+          businessPhone: false,
+          businessDescription: false,
+          businessAddress: false,
+          services: false
+        });
 
         updateData = {
           business_name: businessName,
@@ -520,18 +557,23 @@ const Settings = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="businessName">Business Name</Label>
+                      <Label htmlFor="businessName">
+                        Business Name <span className="text-red-500">*</span>
+                      </Label>
                       <Input
                         id="businessName"
                         value={businessName}
                         onChange={(e) => setBusinessName(e.target.value)}
                         placeholder="Your Business Name"
+                        className={validationErrors.businessName ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="businessType">Business Type</Label>
+                      <Label htmlFor="businessType">
+                        Business Type <span className="text-red-500">*</span>
+                      </Label>
                       <Select value={businessType} onValueChange={setBusinessType}>
-                        <SelectTrigger>
+                        <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}>
                           <SelectValue placeholder="Select business type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -552,20 +594,26 @@ const Settings = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="businessPhone">Business Phone Number</Label>
+                    <Label htmlFor="businessPhone">
+                      Business Phone Number <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="businessPhone"
                       value={businessPhone}
                       onChange={(e) => setBusinessPhone(e.target.value)}
                       placeholder="+1 (555) 123-4567"
+                      className={validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                     />
                   </div>
 
-                  <AddressInput
-                    value={addressData}
-                    onChange={setAddressData}
-                    label="Business Address"
-                  />
+                  <div className="space-y-2">
+                    <AddressInput
+                      value={addressData}
+                      onChange={setAddressData}
+                      label="Business Address *"
+                      className={validationErrors.businessAddress ? "border-red-500" : ""}
+                    />
+                  </div>
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -667,13 +715,16 @@ const Settings = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="businessDescription">Business Description</Label>
+                    <Label htmlFor="businessDescription">
+                      Business Description <span className="text-red-500">*</span>
+                    </Label>
                     <Textarea
                       id="businessDescription"
                       value={businessDescription}
                       onChange={(e) => setBusinessDescription(e.target.value)}
                       placeholder="Brief description of your business and services..."
                       rows={4}
+                      className={validationErrors.businessDescription ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                     />
                   </div>
 
@@ -689,7 +740,9 @@ const Settings = () => {
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <Label>Services & Pricing</Label>
+                      <Label>
+                        Services & Pricing <span className="text-red-500">*</span>
+                      </Label>
                       <Button
                         type="button"
                         variant="outline"
@@ -702,36 +755,41 @@ const Settings = () => {
                     </div>
                     
                     <div className="space-y-3">
-                      {services.map((service, index) => (
-                        <div key={index} className="flex gap-2 items-center">
-                          <div className="flex-1">
-                            <Input
-                              placeholder="Service name (e.g., Consultation)"
-                              value={service.name}
-                              onChange={(e) => updateService(index, 'name', e.target.value)}
-                            />
+                      {services.map((service, index) => {
+                        const hasNameButNoPrice = service.name.trim() && !service.price.trim();
+                        const priceErrorClass = (validationErrors.services && hasNameButNoPrice) ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "";
+                        
+                        return (
+                          <div key={index} className="flex gap-2 items-center">
+                            <div className="flex-1">
+                              <Input
+                                placeholder="Service name (e.g., Consultation)"
+                                value={service.name}
+                                onChange={(e) => updateService(index, 'name', e.target.value)}
+                              />
+                            </div>
+                            <div className="w-32 relative">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                              <Input
+                                placeholder="0.00"
+                                value={service.price}
+                                onChange={(e) => updateService(index, 'price', e.target.value)}
+                                className={`pl-6 ${priceErrorClass}`}
+                              />
+                            </div>
+                            {services.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeService(index)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </div>
-                           <div className="w-32 relative">
-                             <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
-                             <Input
-                               placeholder="0.00"
-                               value={service.price}
-                               onChange={(e) => updateService(index, 'price', e.target.value)}
-                               className="pl-6"
-                             />
-                           </div>
-                          {services.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeService(index)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Add your services and their corresponding prices that can be shared with potential clients
