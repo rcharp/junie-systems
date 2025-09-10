@@ -1,7 +1,7 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,8 +19,8 @@ serve(async (req) => {
     
     console.log('Generating business description for:', { businessName, businessType, services });
 
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    if (!perplexityApiKey) {
+      throw new Error('Perplexity API key not configured');
     }
 
     // Build context for the AI
@@ -46,14 +46,14 @@ Requirements:
 
 Generate only the description text, no extra formatting or quotes.`;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'llama-3.1-sonar-small-128k-online',
         messages: [
           { 
             role: 'system', 
@@ -61,14 +61,20 @@ Generate only the description text, no extra formatting or quotes.`;
           },
           { role: 'user', content: prompt }
         ],
-        max_completion_tokens: 150,
+        temperature: 0.2,
+        top_p: 0.9,
+        max_tokens: 150,
+        return_images: false,
+        return_related_questions: false,
+        frequency_penalty: 1,
+        presence_penalty: 0
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('OpenAI API error:', response.status, errorData);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('Perplexity API error:', response.status, errorData);
+      throw new Error(`Perplexity API error: ${response.status}`);
     }
 
     const data = await response.json();
