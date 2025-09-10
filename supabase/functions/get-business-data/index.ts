@@ -115,10 +115,7 @@ serve(async (req) => {
     console.log('Successfully retrieved business data for user:', userId);
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        data: businessData 
-      }),
+      JSON.stringify(businessData),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
