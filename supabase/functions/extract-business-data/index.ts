@@ -391,7 +391,7 @@ serve(async (req) => {
                 business_name: urlBusinessName,
                 business_address: searchResults.address,
                 business_phone: searchResults.phone,
-                business_description: `${urlBusinessName} - Professional services provider`,
+                business_description: urlBusinessName + ' - Professional services provider',
                 business_website: url
               },
               url: url,
