@@ -71,12 +71,13 @@ function validateAddress(address: string): boolean {
 }
 
 // Search for business data using web search
-async function searchBusinessData(businessName: string, domain: string): Promise<{ address?: string; services?: string; phone?: string; pricing?: string }> {
+async function searchBusinessData(businessName: string, domain: string): Promise<{ address?: string; services?: string; phone?: string; pricing?: string; businessType?: string }> {
   const results = { 
     address: undefined as string | undefined, 
     services: undefined as string | undefined, 
     phone: undefined as string | undefined,
-    pricing: undefined as string | undefined
+    pricing: undefined as string | undefined,
+    businessType: undefined as string | undefined
   };
   
   try {
@@ -85,8 +86,9 @@ async function searchBusinessData(businessName: string, domain: string): Promise
     // Search for business information with more specific queries
     const queries = [
       '"' + businessName + '" address phone contact location',
-      '"' + businessName + '" services pricing rates cost',
-      '"' + businessName + '" hours reviews contact info'
+      '"' + businessName + '" services pricing rates cost type industry',
+      '"' + businessName + '" hours reviews contact info what do they do',
+      '"' + businessName + '" hvac plumbing electrical contractor restaurant business type'
     ];
     
     for (const searchQuery of queries) {
@@ -182,8 +184,36 @@ async function searchBusinessData(businessName: string, domain: string): Promise
           }
         }
         
+        // Extract business type information
+        if (!results.businessType) {
+          const businessTypeKeywords = {
+            'HVAC': /hvac|heating|cooling|air conditioning|ac repair|furnace|ductwork|air handler|heat pump/gi,
+            'Construction': /construction|contractor|building|remodeling|renovation|general contractor/gi,
+            'Plumbing': /plumber|plumbing|pipe|drain|water heater|sewer|plumbing contractor/gi,
+            'Electrical': /electrician|electrical|wiring|electric|power|electrical contractor/gi,
+            'Restaurant': /restaurant|food|dining|menu|eat|cuisine|food service/gi,
+            'Retail': /store|shop|buy|sell|retail|merchandise|shopping/gi,
+            'Automotive': /auto|car|vehicle|mechanic|tire|brake|transmission|auto repair/gi,
+            'Healthcare': /medical|health|doctor|clinic|dental|physician|healthcare/gi,
+            'Professional': /law|legal|accounting|consulting|professional services/gi,
+            'Real Estate': /real estate|property|homes|realtor|mortgage|real estate agent/gi,
+            'Beauty': /salon|spa|beauty|hair|nail|massage|beauty salon/gi,
+            'Fitness': /gym|fitness|workout|personal training|yoga|fitness center/gi,
+            'Education': /school|education|training|classes|tutoring|educational/gi,
+            'Service': /service|repair|maintenance|cleaning|service provider/gi
+          };
+          
+          for (const [type, pattern] of Object.entries(businessTypeKeywords)) {
+            if (pattern.test(html)) {
+              results.businessType = type;
+              console.log('Found business type from search:', type);
+              break;
+            }
+          }
+        }
+        
         // Break if we have all the info we need
-        if (results.address && results.phone && results.services && results.pricing) {
+        if (results.address && results.phone && results.services && results.pricing && results.businessType) {
           break;
         }
         
@@ -662,7 +692,7 @@ serve(async (req) => {
 
     // Try to search for additional business data if we have a business name but missing key info
     const domain = new URL(url).hostname;
-    if (businessData.business_name && (!businessData.business_address || !businessData.business_phone || !businessData.services_offered || !businessData.pricing_structure)) {
+    if (businessData.business_name && (!businessData.business_address || !businessData.business_phone || !businessData.services_offered || !businessData.pricing_structure || !businessData.business_type)) {
       console.log('Searching for additional business data...');
       const searchResults = await searchBusinessData(businessData.business_name, domain);
       
@@ -677,6 +707,9 @@ serve(async (req) => {
       }
       if (!businessData.pricing_structure && searchResults.pricing) {
         businessData.pricing_structure = searchResults.pricing;
+      }
+      if (!businessData.business_type && searchResults.businessType) {
+        businessData.business_type = searchResults.businessType;
       }
     }
 
@@ -720,10 +753,65 @@ serve(async (req) => {
     console.log('=== FINAL BUSINESS DATA ===');
     console.log(JSON.stringify(businessData, null, 2));
 
+    // Validate required fields
+    const requiredFields = {
+      business_name: businessData.business_name,
+      business_type: businessData.business_type,
+      business_address: businessData.business_address,
+      business_website: url,
+      services_offered: businessData.services_offered,
+      pricing_structure: businessData.pricing_structure
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value || (typeof value === 'string' && value.trim().length === 0))
+      .map(([key]) => key);
+
+    if (missingFields.length > 0) {
+      console.log('Missing required fields:', missingFields);
+      
+      // Provide fallback values for missing fields
+      if (!businessData.business_name) {
+        businessData.business_name = 'Business Name Not Found';
+      }
+      if (!businessData.business_type) {
+        businessData.business_type = 'Local Business';
+      }
+      if (!businessData.business_address) {
+        businessData.business_address = 'Address Not Available';
+      }
+      if (!businessData.services_offered) {
+        businessData.services_offered = 'Professional Services';
+      }
+      if (!businessData.pricing_structure) {
+        businessData.pricing_structure = 'Contact for Pricing';
+      }
+
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          data: {
+            ...businessData,
+            business_website: url
+          },
+          warnings: [
+            'Some required business information could not be automatically extracted: ' + missingFields.join(', '),
+            'Please verify and update the business information manually for best results.'
+          ],
+          missingFields: missingFields,
+          url: url
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
-        data: businessData,
+        data: {
+          ...businessData,
+          business_website: url
+        },
         url: url
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
