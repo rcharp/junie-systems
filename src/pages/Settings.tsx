@@ -518,12 +518,15 @@ const Settings = () => {
     return { street: addressString, city: '', state: '', zip: '' };
   };
 
-  const handleWebsiteDataExtracted = (extractedData: any) => {
+  const handleWebsiteDataExtracted = async (extractedData: any) => {
     if (extractedData.business_name) setBusinessName(extractedData.business_name);
     if (extractedData.business_phone) setBusinessPhone(extractedData.business_phone);
     if (extractedData.business_address) setBusinessAddress(extractedData.business_address);
     if (extractedData.business_description) setBusinessDescription(extractedData.business_description);
     if (extractedData.business_website) setBusinessWebsite(extractedData.business_website);
+
+    // Always clear business type on import so user starts fresh
+    setBusinessType("");
 
     if (extractedData.address) {
       setAddressData(extractedData.address);
@@ -544,6 +547,36 @@ const Settings = () => {
       if (servicesList.length > 0) {
         setServices(servicesList.slice(0, 5).map(service => ({ name: service, price: "" })));
       }
+    }
+
+    // Auto-generate description after import if we have enough data
+    if (extractedData.business_name && extractedData.business_type) {
+      setTimeout(async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-business-description', {
+            body: {
+              businessName: extractedData.business_name,
+              businessType: extractedData.business_type,
+              services: extractedData.services_offered ? 
+                extractedData.services_offered.split(/[,\n]/).map(s => s.trim()).filter(s => s).map(name => ({ name })) : 
+                [],
+              address: extractedData.business_address,
+              phone: extractedData.business_phone
+            }
+          });
+
+          if (data?.description && !error) {
+            setBusinessDescription(data.description);
+            toast({
+              title: "AI Description Generated",
+              description: "A compelling business description has been auto-generated for you.",
+            });
+          }
+        } catch (error) {
+          console.error('Auto-generation failed:', error);
+          // Silently fail - don't show error to user
+        }
+      }, 1000); // Small delay to let other data populate first
     }
   };
 
