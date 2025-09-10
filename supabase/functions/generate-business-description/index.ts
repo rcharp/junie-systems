@@ -46,6 +46,8 @@ Requirements:
 
 Generate only the description text, no extra formatting or quotes.`;
 
+    console.log('Making request to Perplexity API...');
+
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -61,23 +63,22 @@ Generate only the description text, no extra formatting or quotes.`;
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.2,
-        top_p: 0.9,
         max_tokens: 150,
-        return_images: false,
-        return_related_questions: false,
-        frequency_penalty: 1,
-        presence_penalty: 0
+        temperature: 0.2
       }),
     });
+
+    console.log('Perplexity API response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.text();
       console.error('Perplexity API error:', response.status, errorData);
-      throw new Error(`Perplexity API error: ${response.status}`);
+      throw new Error(`Perplexity API error: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
+    console.log('Perplexity API response:', data);
+    
     const generatedDescription = data.choices[0].message.content.trim();
     
     console.log('Generated description:', generatedDescription);
