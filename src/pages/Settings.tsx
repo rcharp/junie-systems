@@ -613,6 +613,7 @@ const Settings = () => {
                           <SelectValue placeholder="Select business type" />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="">-- Select business type --</SelectItem>
                           <SelectItem value="electric">Electric Services</SelectItem>
                           <SelectItem value="garage-door">Garage Door Services</SelectItem>
                           <SelectItem value="handyman">Handyman Services</SelectItem>
