@@ -31,6 +31,7 @@ const Settings = () => {
   console.log("Settings state:", { user: user?.email, loading });
 
   // Business Info State
+  const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState("");
   const [businessType, setBusinessType] = useState("");
   const [businessPhone, setBusinessPhone] = useState("");
@@ -44,7 +45,7 @@ const Settings = () => {
     { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
     { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
   ]);
-  const [services, setServices] = useState<{name: string, price: string}[]>([
+  const [services, setServices] = useState<{id?: string, name: string, price: string, description?: string}[]>([
     { name: "", price: "" }
   ]);
 
@@ -69,6 +70,7 @@ const Settings = () => {
   const [appointmentBooking, setAppointmentBooking] = useState(false);
   const [leadCapture, setLeadCapture] = useState(true);
   const [generatingDescription, setGeneratingDescription] = useState(false);
+  const [descriptionUpdateTimeout, setDescriptionUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Notification Settings State
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -108,6 +110,7 @@ const Settings = () => {
       }
 
       if (data) {
+        setBusinessSettingsId(data.id);
         setBusinessName(data.business_name || "");
         setBusinessType(data.business_type || "");
         setBusinessPhone(data.business_phone || "");
@@ -146,20 +149,39 @@ const Settings = () => {
         setPushNotifications(data.push_notifications !== false);
         setInstantAlerts(data.instant_alerts !== false);
         
-        // Parse services from pricing_structure and services_offered
-        if (data.services_offered) {
-          try {
-            const servicesData = JSON.parse(data.services_offered);
-            if (Array.isArray(servicesData)) {
-              setServices(servicesData.length > 0 ? servicesData : [{ name: "", price: "" }]);
-            }
-          } catch (e) {
-            setServices([{ name: "", price: "" }]);
-          }
-        }
+        // Load services from the new services table
+        await loadServices(data.id);
       }
     } catch (error) {
       console.error('Error loading user settings:', error);
+    }
+  };
+
+  const loadServices = async (businessId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('business_id', businessId)
+        .order('display_order', { ascending: true });
+
+      if (error) {
+        console.error('Error loading services:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        setServices(data.map(service => ({
+          id: service.id,
+          name: service.name,
+          price: service.price || "",
+          description: service.description || ""
+        })));
+      } else {
+        setServices([{ name: "", price: "" }]);
+      }
+    } catch (error) {
+      console.error('Error loading services:', error);
     }
   };
 
@@ -167,13 +189,27 @@ const Settings = () => {
     setServices([...services, { name: "", price: "" }]);
   };
 
-  const removeService = (index: number) => {
+  const removeService = async (index: number) => {
     if (services.length > 1) {
+      const serviceToRemove = services[index];
+      
+      // If service has an ID, delete from database
+      if (serviceToRemove.id && businessSettingsId) {
+        try {
+          await supabase
+            .from('services')
+            .delete()
+            .eq('id', serviceToRemove.id);
+        } catch (error) {
+          console.error('Error deleting service:', error);
+        }
+      }
+      
       setServices(services.filter((_, i) => i !== index));
     }
   };
 
-  const updateService = (index: number, field: 'name' | 'price', value: string) => {
+  const updateService = (index: number, field: 'name' | 'price' | 'description', value: string) => {
     const newServices = [...services];
     
     // Validate price input to allow only numbers and decimal points
@@ -240,6 +276,34 @@ const Settings = () => {
     }
   };
 
+  const autoUpdateDescription = async (newBusinessName: string) => {
+    if (!newBusinessName || !businessType || !businessSettingsId) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-business-description', {
+        body: {
+          businessName: newBusinessName,
+          businessType,
+          services: services.filter(s => s.name.trim()),
+          address: addressData.street && addressData.city ? 
+            `${addressData.street}, ${addressData.city}, ${addressData.state}` : 
+            businessAddress,
+          phone: businessPhone
+        }
+      });
+
+      if (data?.description && !error) {
+        setBusinessDescription(data.description);
+        toast({
+          title: "Description Auto-Updated",
+          description: "Business description updated with new business name.",
+        });
+      }
+    } catch (error) {
+      console.error('Auto-update description failed:', error);
+    }
+  };
+
   const updateBusinessHours = (id: number, field: keyof typeof businessHours[0], value: string | boolean) => {
     const newHours = businessHours.map(hour => 
       hour.id === id ? { ...hour, [field]: value } : hour
@@ -285,6 +349,41 @@ const Settings = () => {
       return "Invalid time range";
     }
     return null;
+  };
+
+  const saveServices = async (businessId: string) => {
+    try {
+      // Delete existing services first
+      await supabase
+        .from('services')
+        .delete()
+        .eq('business_id', businessId);
+
+      // Insert new services
+      const servicesToSave = services
+        .filter(service => service.name.trim())
+        .map((service, index) => ({
+          business_id: businessId,
+          name: service.name.trim(),
+          price: service.price || null,
+          description: service.description || null,
+          display_order: index
+        }));
+
+      if (servicesToSave.length > 0) {
+        const { error } = await supabase
+          .from('services')
+          .insert(servicesToSave);
+
+        if (error) {
+          console.error('Error saving services:', error);
+          throw error;
+        }
+      }
+    } catch (error) {
+      console.error('Error saving services:', error);
+      throw error;
+    }
   };
 
   const dayNames = {
@@ -480,6 +579,12 @@ const Settings = () => {
 
       if (error) {
         throw error;
+      }
+
+      // Save services to the new services table if this is Business section
+      if (section === "Business" && data?.id) {
+        await saveServices(data.id);
+        setBusinessSettingsId(data.id);
       }
       
       toast({
@@ -678,7 +783,20 @@ const Settings = () => {
                       <Input
                         id="businessName"
                         value={businessName}
-                        onChange={(e) => setBusinessName(e.target.value)}
+                        onChange={(e) => {
+                          const newName = e.target.value;
+                          setBusinessName(newName);
+                          // Auto-update description when business name changes (with debounce)
+                          if (newName && businessType && businessSettingsId) {
+                            if (descriptionUpdateTimeout) {
+                              clearTimeout(descriptionUpdateTimeout);
+                            }
+                            const timeout = setTimeout(() => {
+                              autoUpdateDescription(newName);
+                            }, 2000);
+                            setDescriptionUpdateTimeout(timeout);
+                          }
+                        }}
                         placeholder="Your Business Name"
                         className={validationErrors.businessName ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                       />
