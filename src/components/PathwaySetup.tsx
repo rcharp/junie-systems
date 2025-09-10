@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Phone, Loader2, Settings, CheckCircle } from 'lucide-react';
 import { WebsiteImporter } from '@/components/WebsiteImporter';
-import { AddressAutocomplete } from '@/components/AddressAutocomplete';
+import { AddressInput } from '@/components/AddressAutocomplete';
 
 export const PathwaySetup = () => {
   const { toast } = useToast();
@@ -36,6 +36,13 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
     forwarding_number: '',
   });
 
+  const [addressData, setAddressData] = useState({
+    street: '',
+    city: '',
+    state: '',
+    zip: ''
+  });
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -51,10 +58,14 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
       common_questions: extractedData.services_offered ? 
         `Q: What services do you offer?\nA: ${extractedData.services_offered}\n\n${prev.common_questions}` : 
         prev.common_questions
-    }));
-  };
+     }));
 
-  const handleCreatePathway = async () => {
+     if (extractedData.address) {
+       setAddressData(extractedData.address);
+     }
+   };
+
+   const handleCreatePathway = async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-home-service-pathway', {
@@ -198,12 +209,10 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
           </div>
         </div>
 
-        <AddressAutocomplete
+        <AddressInput
+          value={addressData}
+          onChange={setAddressData}
           label="Business Address/Service Area"
-          value={formData.business_address}
-          onChange={(value) => handleInputChange('business_address', value)}
-          placeholder="Enter your business address"
-          id="business_address"
         />
 
         <div className="space-y-2">

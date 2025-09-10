@@ -7,6 +7,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Globe, Loader2, Download } from 'lucide-react';
 
+interface AddressData {
+  street: string;
+  city: string;
+  state: string;
+  zip: string;
+}
+
 interface ExtractedData {
   business_name?: string;
   business_phone?: string;
@@ -16,14 +23,18 @@ interface ExtractedData {
   services_offered?: string;
   pricing_structure?: string;
   business_description?: string;
+  business_type?: string;
+  business_website?: string;
+  address?: AddressData;
 }
 
 interface WebsiteImporterProps {
   onDataExtracted: (data: ExtractedData) => void;
+  autoSave?: boolean;
   className?: string;
 }
 
-export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterProps) => {
+export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }: WebsiteImporterProps) => {
   const { toast } = useToast();
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -60,11 +71,25 @@ export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterP
       if (data.success && data.data) {
         console.log('Extracted data:', data.data);
         
-        onDataExtracted(data.data);
+        // Parse address into separate fields
+        const parsedData = {
+          ...data.data,
+          business_website: url,
+          address: parseAddress(data.data.business_address || '')
+        };
+        
+        onDataExtracted(parsedData);
+        
+        // Auto-save if enabled
+        if (autoSave) {
+          await saveBusinessData(parsedData);
+        }
         
         toast({
           title: "Success",
-          description: "Business data extracted successfully! Please review and correct any information as needed.",
+          description: autoSave 
+            ? "Business data extracted and saved successfully!" 
+            : "Business data extracted successfully! Please review and correct any information as needed.",
         });
         
         setWebsiteUrl('');
@@ -80,6 +105,58 @@ export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterP
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const parseAddress = (addressString: string): AddressData => {
+    if (!addressString) return { street: '', city: '', state: '', zip: '' };
+    
+    // Simple address parsing - this could be improved with more sophisticated regex
+    const parts = addressString.split(',').map(part => part.trim());
+    
+    if (parts.length >= 3) {
+      const street = parts[0] || '';
+      const city = parts[1] || '';
+      const stateZip = parts[2] || '';
+      
+      // Extract state and ZIP from the last part
+      const stateZipMatch = stateZip.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
+      const state = stateZipMatch ? stateZipMatch[1] : stateZip;
+      const zip = stateZipMatch ? stateZipMatch[2] : '';
+      
+      return { street, city, state, zip };
+    }
+    
+    return { street: addressString, city: '', state: '', zip: '' };
+  };
+
+  const saveBusinessData = async (extractedData: ExtractedData) => {
+    try {
+      const { error } = await supabase
+        .from('business_settings')
+        .upsert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          business_name: extractedData.business_name,
+          business_phone: extractedData.business_phone,
+          business_address: extractedData.business_address,
+          business_hours: extractedData.business_hours,
+          services_offered: extractedData.services_offered,
+          pricing_structure: extractedData.pricing_structure,
+          business_description: extractedData.business_description,
+          business_type: extractedData.business_type,
+          business_website: extractedData.business_website,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error saving business data:', error);
+      toast({
+        title: "Warning",
+        description: "Data extracted but failed to auto-save. Please save manually.",
+        variant: "destructive",
+      });
     }
   };
 

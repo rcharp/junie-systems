@@ -18,7 +18,7 @@ import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
-import { AddressAutocomplete } from "@/components/AddressAutocomplete";
+import { AddressInput } from "@/components/AddressAutocomplete";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -47,6 +47,13 @@ const Settings = () => {
   const [services, setServices] = useState<{name: string, price: string}[]>([
     { name: "", price: "" }
   ]);
+
+  const [addressData, setAddressData] = useState({
+    street: '',
+    city: '',
+    state: '',
+    zip: ''
+  });
 
   // Call Settings State
   const [forwardingNumber, setForwardingNumber] = useState("");
@@ -94,6 +101,12 @@ const Settings = () => {
         setBusinessType(data.business_type || "");
         setBusinessPhone(data.business_phone || "");
         setBusinessAddress(data.business_address || "");
+
+        // Parse existing address
+        if (data.business_address) {
+          const parsedAddress = parseAddress(data.business_address);
+          setAddressData(parsedAddress);
+        }
         // Parse business hours
         if (data.business_hours) {
           try {
@@ -220,11 +233,19 @@ const Settings = () => {
       let updateData: any = {};
 
       if (section === "Business") {
+        // Combine address fields into a single address string
+        const fullAddress = [
+          addressData.street,
+          addressData.city,
+          addressData.state,
+          addressData.zip
+        ].filter(Boolean).join(', ');
+
         updateData = {
           business_name: businessName,
           business_type: businessType,
           business_phone: businessPhone,
-          business_address: businessAddress,
+          business_address: fullAddress,
           business_hours: JSON.stringify(businessHours),
           business_description: businessDescription,
           business_website: businessWebsite,
@@ -288,12 +309,36 @@ const Settings = () => {
     }
   };
 
+  const parseAddress = (addressString: string) => {
+    if (!addressString) return { street: '', city: '', state: '', zip: '' };
+    
+    const parts = addressString.split(',').map(part => part.trim());
+    
+    if (parts.length >= 3) {
+      const street = parts[0] || '';
+      const city = parts[1] || '';
+      const stateZip = parts[2] || '';
+      
+      const stateZipMatch = stateZip.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
+      const state = stateZipMatch ? stateZipMatch[1] : stateZip;
+      const zip = stateZipMatch ? stateZipMatch[2] : '';
+      
+      return { street, city, state, zip };
+    }
+    
+    return { street: addressString, city: '', state: '', zip: '' };
+  };
+
   const handleWebsiteDataExtracted = (extractedData: any) => {
     if (extractedData.business_name) setBusinessName(extractedData.business_name);
     if (extractedData.business_phone) setBusinessPhone(extractedData.business_phone);
     if (extractedData.business_address) setBusinessAddress(extractedData.business_address);
     if (extractedData.business_description) setBusinessDescription(extractedData.business_description);
     if (extractedData.business_website) setBusinessWebsite(extractedData.business_website);
+
+    if (extractedData.address) {
+      setAddressData(extractedData.address);
+    }
     if (extractedData.business_hours) {
       // Try to parse the hours into structured format
       setBusinessHours(prev => [...prev, {
@@ -397,10 +442,11 @@ const Settings = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <WebsiteImporter 
-                    onDataExtracted={handleWebsiteDataExtracted}
-                    className="mb-6"
-                  />
+                <WebsiteImporter 
+                  onDataExtracted={handleWebsiteDataExtracted}
+                  autoSave={true}
+                  className="mb-6"
+                />
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -445,12 +491,10 @@ const Settings = () => {
                     />
                   </div>
 
-                  <AddressAutocomplete
+                  <AddressInput
+                    value={addressData}
+                    onChange={setAddressData}
                     label="Business Address"
-                    value={businessAddress}
-                    onChange={setBusinessAddress}
-                    placeholder="Enter your business address"
-                    id="businessAddress"
                   />
 
                   <div className="space-y-4">
