@@ -525,6 +525,14 @@ const Settings = () => {
           return;
         }
 
+        // Debug: Log address data before constructing fullAddress
+        console.log('=== ADDRESS DEBUG ===');
+        console.log('addressData:', addressData);
+        console.log('addressData.street:', addressData.street);
+        console.log('addressData.city:', addressData.city);
+        console.log('addressData.state:', addressData.state);
+        console.log('addressData.zip:', addressData.zip);
+
         // Combine address fields into a single address string
         const fullAddress = [
           addressData.street,
@@ -532,6 +540,8 @@ const Settings = () => {
           addressData.state,
           addressData.zip
         ].filter(Boolean).join(', ');
+
+        console.log('fullAddress constructed:', fullAddress);
 
         // Get the full state name for storage
         const stateMap = {
@@ -572,6 +582,11 @@ const Settings = () => {
           services_offered: JSON.stringify(validServices),
           pricing_structure: validServices.map(s => `${s.name}: ${s.price}`).join(', ')
         };
+
+        console.log('=== API SAVE DEBUG ===');
+        console.log('updateData being sent:', updateData);
+        console.log('business_address:', updateData.business_address);
+        console.log('business_address_state_full:', updateData.business_address_state_full);
       } else if (section === "Call") {
         updateData = {
           forwarding_number: forwardingNumber,
