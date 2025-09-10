@@ -174,7 +174,20 @@ const Settings = () => {
 
   const updateService = (index: number, field: 'name' | 'price', value: string) => {
     const newServices = [...services];
-    newServices[index][field] = value;
+    
+    // Validate price input to allow only numbers and decimal points
+    if (field === 'price') {
+      const numericValue = value.replace(/[^\d.]/g, '');
+      // Prevent multiple decimal points
+      const parts = numericValue.split('.');
+      if (parts.length > 2) {
+        return; // Don't update if multiple decimal points
+      }
+      newServices[index][field] = numericValue;
+    } else {
+      newServices[index][field] = value;
+    }
+    
     setServices(newServices);
   };
 
@@ -250,11 +263,15 @@ const Settings = () => {
           businessPhone: businessPhone?.trim(),
           businessDescription: businessDescription?.trim()
         };
+        
+        // Additional phone number validation
+        const phoneRegex = /^[\d\s\-\(\)\+]+$/;
+        const isValidPhone = !requiredFields.businessPhone || phoneRegex.test(requiredFields.businessPhone);
 
         const newValidationErrors = {
           businessName: !requiredFields.businessName,
           businessType: !requiredFields.businessType,
-          businessPhone: !requiredFields.businessPhone,
+          businessPhone: !requiredFields.businessPhone || !isValidPhone,
           businessDescription: !requiredFields.businessDescription,
           businessAddress: false,
           services: false
@@ -263,6 +280,11 @@ const Settings = () => {
         const missingFields = Object.entries(requiredFields)
           .filter(([key, value]) => !value || value.length === 0)
           .map(([key]) => key);
+          
+        // Add phone validation error
+        if (!isValidPhone && requiredFields.businessPhone) {
+          missingFields.push('businessPhone');
+        }
 
         if (missingFields.length > 0) {
           setValidationErrors(newValidationErrors);
@@ -271,7 +293,7 @@ const Settings = () => {
             switch(field) {
               case 'businessName': return 'Business Name';
               case 'businessType': return 'Business Type';
-              case 'businessPhone': return 'Phone Number';
+              case 'businessPhone': return requiredFields.businessPhone && !isValidPhone ? 'Phone Number (invalid format)' : 'Phone Number';
               case 'businessDescription': return 'Business Description';
               default: return field;
             }
@@ -289,14 +311,17 @@ const Settings = () => {
 
         // Validate services - each service must have both name and price
         const validServices = services.filter(s => s.name.trim() !== "");
-        const invalidServices = validServices.filter(s => !s.price.trim());
+        const invalidServices = validServices.filter(s => {
+          const priceValue = s.price.trim();
+          return !priceValue || isNaN(parseFloat(priceValue)) || parseFloat(priceValue) <= 0;
+        });
         
         if (invalidServices.length > 0) {
           setValidationErrors(prev => ({...prev, services: true}));
           
           toast({
             title: "Service Pricing Required",
-            description: `All services must have prices. ${invalidServices.length} service(s) are missing prices and highlighted in red.`,
+            description: `All services must have valid prices greater than 0. ${invalidServices.length} service(s) have invalid prices and are highlighted in red.`,
             variant: "destructive",
             duration: 5000,
           });
@@ -600,7 +625,11 @@ const Settings = () => {
                     <Input
                       id="businessPhone"
                       value={businessPhone}
-                      onChange={(e) => setBusinessPhone(e.target.value)}
+                      onChange={(e) => {
+                        // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
+                        const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, '');
+                        setBusinessPhone(phoneValue);
+                      }}
                       placeholder="+1 (555) 123-4567"
                       className={validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                     />
@@ -756,8 +785,8 @@ const Settings = () => {
                     
                     <div className="space-y-3">
                       {services.map((service, index) => {
-                        const hasNameButNoPrice = service.name.trim() && !service.price.trim();
-                        const priceErrorClass = (validationErrors.services && hasNameButNoPrice) ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "";
+                        const hasNameButInvalidPrice = service.name.trim() && (!service.price.trim() || isNaN(parseFloat(service.price.trim())) || parseFloat(service.price.trim()) <= 0);
+                        const priceErrorClass = (validationErrors.services && hasNameButInvalidPrice) ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "";
                         
                         return (
                           <div key={index} className="flex gap-2 items-center">
