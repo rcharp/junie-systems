@@ -110,6 +110,68 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
     }
   };
 
+  const normalizeStreetTypes = (street: string): string => {
+    const streetTypes = {
+      'St.': 'Street', 'St': 'Street',
+      'Ave.': 'Avenue', 'Ave': 'Avenue',
+      'Blvd.': 'Boulevard', 'Blvd': 'Boulevard',
+      'Dr.': 'Drive', 'Dr': 'Drive',
+      'Rd.': 'Road', 'Rd': 'Road',
+      'Ln.': 'Lane', 'Ln': 'Lane',
+      'Ct.': 'Court', 'Ct': 'Court',
+      'Pl.': 'Place', 'Pl': 'Place',
+      'Pkwy.': 'Parkway', 'Pkwy': 'Parkway',
+      'Cir.': 'Circle', 'Cir': 'Circle',
+      'Ter.': 'Terrace', 'Ter': 'Terrace',
+      'Way.': 'Way', 'Wy': 'Way'
+    };
+
+    const directions = {
+      'N.': 'North', 'N': 'North',
+      'S.': 'South', 'S': 'South',
+      'E.': 'East', 'E': 'East',
+      'W.': 'West', 'W': 'West',
+      'NE.': 'Northeast', 'NE': 'Northeast',
+      'NW.': 'Northwest', 'NW': 'Northwest',
+      'SE.': 'Southeast', 'SE': 'Southeast',
+      'SW.': 'Southwest', 'SW': 'Southwest'
+    };
+
+    let normalized = street;
+    
+    // Replace street types (with word boundaries)
+    Object.entries(streetTypes).forEach(([abbrev, full]) => {
+      const regex = new RegExp(`\\b${abbrev.replace('.', '\\.')}\\b`, 'gi');
+      normalized = normalized.replace(regex, full);
+    });
+
+    // Replace directions (with word boundaries)
+    Object.entries(directions).forEach(([abbrev, full]) => {
+      const regex = new RegExp(`\\b${abbrev.replace('.', '\\.')}\\b`, 'gi');
+      normalized = normalized.replace(regex, full);
+    });
+
+    return normalized;
+  };
+
+  const normalizeState = (state: string): string => {
+    const stateMap = {
+      'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+      'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+      'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+      'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+      'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+      'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+      'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+      'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+      'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+      'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+      'DC': 'District of Columbia'
+    };
+
+    return stateMap[state.toUpperCase()] || state;
+  };
+
   const parseAddress = (addressString: string): AddressData => {
     if (!addressString) return { street: '', city: '', state: '', zip: '' };
     
@@ -117,19 +179,19 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
     const parts = addressString.split(',').map(part => part.trim());
     
     if (parts.length >= 3) {
-      const street = parts[0] || '';
+      const street = normalizeStreetTypes(parts[0] || '');
       const city = parts[1] || '';
       const stateZip = parts[2] || '';
       
       // Extract state and ZIP from the last part
       const stateZipMatch = stateZip.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
-      const state = stateZipMatch ? stateZipMatch[1] : stateZip;
+      const state = stateZipMatch ? normalizeState(stateZipMatch[1]) : normalizeState(stateZip);
       const zip = stateZipMatch ? stateZipMatch[2] : '';
       
       return { street, city, state, zip };
     }
     
-    return { street: addressString, city: '', state: '', zip: '' };
+    return { street: normalizeStreetTypes(addressString), city: '', state: '', zip: '' };
   };
 
   const saveBusinessData = async (extractedData: ExtractedData) => {
