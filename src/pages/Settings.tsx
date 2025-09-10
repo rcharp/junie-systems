@@ -257,6 +257,8 @@ const Settings = () => {
 
       if (section === "Business") {
         // Validate required business fields BEFORE processing
+        console.log("Validating business fields:", { businessName, businessType, businessPhone, businessDescription });
+        
         const requiredFields = {
           businessName: businessName?.trim(),
           businessType: businessType?.trim() || (!businessType ? "" : businessType), 
@@ -264,15 +266,17 @@ const Settings = () => {
           businessDescription: businessDescription?.trim()
         };
         
+        console.log("Required fields after processing:", requiredFields);
+        
         // Additional phone number validation
         const phoneRegex = /^[\d\s\-\(\)\+]+$/;
         const isValidPhone = !requiredFields.businessPhone || phoneRegex.test(requiredFields.businessPhone);
 
         const newValidationErrors = {
-          businessName: !requiredFields.businessName,
+          businessName: !requiredFields.businessName || requiredFields.businessName === "",
           businessType: !requiredFields.businessType || requiredFields.businessType === "",
-          businessPhone: !requiredFields.businessPhone || !isValidPhone,
-          businessDescription: !requiredFields.businessDescription,
+          businessPhone: !requiredFields.businessPhone || requiredFields.businessPhone === "" || !isValidPhone,
+          businessDescription: !requiredFields.businessDescription || requiredFields.businessDescription === "",
           businessAddress: false,
           services: false
         };
