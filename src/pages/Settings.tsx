@@ -618,30 +618,28 @@ const Settings = () => {
                             <SelectItem value="garage-door">Garage Door Services</SelectItem>
                             <SelectItem value="handyman">Handyman Services</SelectItem>
                             <SelectItem value="hvac">HVAC & Air Conditioning</SelectItem>
-                          <SelectItem value="garage-door">Garage Door Services</SelectItem>
-                          <SelectItem value="handyman">Handyman Services</SelectItem>
-                          <SelectItem value="hvac">HVAC & Air Conditioning</SelectItem>
-                          <SelectItem value="landscaping">Landscaping</SelectItem>
-                           <SelectItem value="other">Other</SelectItem>
-                           <SelectItem value="pest-control">Pest Control</SelectItem>
-                           <SelectItem value="plumbing">Plumbing</SelectItem>
-                           <SelectItem value="pool-spa">Pool & Spa Services</SelectItem>
-                           <SelectItem value="cleaning">Professional Cleaning</SelectItem>
-                           <SelectItem value="roofing">Roofing</SelectItem>
-                         </SelectContent>
-                       </Select>
-                       {businessType && (
-                         <Button
-                           type="button"
-                           variant="outline"
-                           size="sm"
-                           onClick={() => setBusinessType("")}
-                           className="px-3"
-                         >
-                           Clear
-                         </Button>
-                       )}
-                     </div>
+                            <SelectItem value="landscaping">Landscaping</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                            <SelectItem value="pest-control">Pest Control</SelectItem>
+                            <SelectItem value="plumbing">Plumbing</SelectItem>
+                            <SelectItem value="pool-spa">Pool & Spa Services</SelectItem>
+                            <SelectItem value="cleaning">Professional Cleaning</SelectItem>
+                            <SelectItem value="roofing">Roofing</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {businessType && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setBusinessType("")}
+                            className="px-3"
+                          >
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
