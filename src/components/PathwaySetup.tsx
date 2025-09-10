@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Phone, Loader2, Settings, CheckCircle } from 'lucide-react';
 import { WebsiteImporter } from '@/components/WebsiteImporter';
+import { AddressAutocomplete } from '@/components/AddressAutocomplete';
 
 export const PathwaySetup = () => {
   const { toast } = useToast();
@@ -197,15 +198,13 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="business_address">Business Address/Service Area</Label>
-          <Input
-            id="business_address"
-            placeholder="Available Nationwide"
-            value={formData.business_address}
-            onChange={(e) => handleInputChange('business_address', e.target.value)}
-          />
-        </div>
+        <AddressAutocomplete
+          label="Business Address/Service Area"
+          value={formData.business_address}
+          onChange={(value) => handleInputChange('business_address', value)}
+          placeholder="Enter your business address"
+          id="business_address"
+        />
 
         <div className="space-y-2">
           <Label htmlFor="custom_greeting">Custom Greeting (Optional)</Label>

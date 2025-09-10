@@ -18,6 +18,7 @@ import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
+import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -444,16 +445,13 @@ const Settings = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="businessAddress">Business Address</Label>
-                    <Textarea
-                      id="businessAddress"
-                      value={businessAddress}
-                      onChange={(e) => setBusinessAddress(e.target.value)}
-                      placeholder="123 Main St, City, State 12345"
-                      rows={2}
-                    />
-                  </div>
+                  <AddressAutocomplete
+                    label="Business Address"
+                    value={businessAddress}
+                    onChange={setBusinessAddress}
+                    placeholder="Enter your business address"
+                    id="businessAddress"
+                  />
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
