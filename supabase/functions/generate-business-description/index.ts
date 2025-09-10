@@ -1,8 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -18,10 +16,6 @@ serve(async (req) => {
     const { businessName, businessType, services, address, phone } = await req.json();
     
     console.log('Generating business description for:', { businessName, businessType, services });
-
-    if (!perplexityApiKey) {
-      throw new Error('Perplexity API key not configured');
-    }
 
     // Build context for the AI
     const servicesText = services && services.length > 0 
@@ -46,40 +40,39 @@ Requirements:
 
 Generate only the description text, no extra formatting or quotes.`;
 
-    console.log('Making request to Perplexity API...');
+    console.log('Making request to Claude API...');
 
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
+        'x-api-key': Deno.env.get('ANTHROPIC_API_KEY'),
+        'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 150,
         messages: [
           { 
-            role: 'system', 
-            content: 'You are a professional copywriter specializing in creating compelling business descriptions. Write concise, authentic descriptions that build trust and clearly communicate value.'
-          },
-          { role: 'user', content: prompt }
-        ],
-        max_tokens: 150,
-        temperature: 0.2
+            role: 'user', 
+            content: prompt 
+          }
+        ]
       }),
     });
 
-    console.log('Perplexity API response status:', response.status);
+    console.log('Claude API response status:', response.status);
 
     if (!response.ok) {
       const errorData = await response.text();
-      console.error('Perplexity API error:', response.status, errorData);
-      throw new Error(`Perplexity API error: ${response.status} - ${errorData}`);
+      console.error('Claude API error:', response.status, errorData);
+      throw new Error(`Claude API error: ${response.status} - ${errorData}`);
     }
 
     const data = await response.json();
-    console.log('Perplexity API response:', data);
+    console.log('Claude API response:', data);
     
-    const generatedDescription = data.choices[0].message.content.trim();
+    const generatedDescription = data.content[0].text.trim();
     
     console.log('Generated description:', generatedDescription);
 
