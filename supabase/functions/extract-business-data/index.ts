@@ -288,7 +288,7 @@ Example good descriptions:
           // Create a better fallback description
           const businessType = businessData.business_type || 'service';
           const location = businessData.business_address?.split(',')[1]?.trim() || 'local area';
-          return `Professional ${businessType} specialists serving ${location} with reliable, expert service and customer satisfaction guaranteed.`;
+          return 'Professional ' + businessType + ' specialists serving ' + location + ' with reliable, expert service and customer satisfaction guaranteed.';
         }
       } else {
         console.log('Perplexity response too short or empty:', description);
