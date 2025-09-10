@@ -643,13 +643,21 @@ const Settings = () => {
     if (parts.length >= 3) {
       const street = parts[0] || '';
       const city = parts[1] || '';
-      const stateZip = parts[2] || '';
       
-      const stateZipMatch = stateZip.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
-      const state = stateZipMatch ? stateZipMatch[1] : stateZip;
-      const zip = stateZipMatch ? stateZipMatch[2] : '';
-      
-      return { street, city, state, zip };
+      // Handle both 3-part and 4-part addresses
+      if (parts.length === 3) {
+        // Format: Street, City, State ZIP
+        const stateZip = parts[2] || '';
+        const stateZipMatch = stateZip.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
+        const state = stateZipMatch ? stateZipMatch[1] : stateZip;
+        const zip = stateZipMatch ? stateZipMatch[2] : '';
+        return { street, city, state, zip };
+      } else if (parts.length >= 4) {
+        // Format: Street, City, State, ZIP
+        const state = parts[2] || '';
+        const zip = parts[3] || '';
+        return { street, city, state, zip };
+      }
     }
     
     return { street: addressString, city: '', state: '', zip: '' };
