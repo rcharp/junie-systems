@@ -16,6 +16,83 @@ interface BusinessData {
   business_description?: string
 }
 
+async function searchGoogleForBusiness(businessName: string, website: string): Promise<Partial<BusinessData>> {
+  console.log(`Searching Google for: ${businessName}`);
+  
+  try {
+    // Create search query combining business name and website domain
+    const domain = new URL(website).hostname.replace('www.', '');
+    const searchQuery = `"${businessName}" ${domain} address phone hours`;
+    const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+    
+    const response = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    
+    if (!response.ok) {
+      console.log('Google search failed, trying alternative approach');
+      return {};
+    }
+    
+    const html = await response.text();
+    
+    // Extract data from Google search results
+    const extractedData: Partial<BusinessData> = {};
+    
+    // Look for address patterns in Google results
+    const addressPatterns = [
+      /(\d+[^,\n]*(?:Street|St|Avenue|Ave|Road|Rd|Drive|Dr|Lane|Ln|Boulevard|Blvd|Way|Circle|Cir|Court|Ct|Plaza|Pkwy|Parkway)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/gi,
+      /(\d+[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/gi
+    ];
+    
+    for (const pattern of addressPatterns) {
+      const addressMatch = html.match(pattern);
+      if (addressMatch && addressMatch[0]) {
+        const address = addressMatch[0].trim();
+        // Validate it's not HTML or CSS
+        if (!address.includes('<') && !address.includes('font-') && address.length < 200) {
+          extractedData.business_address = address;
+          console.log('Found address from Google:', extractedData.business_address);
+          break;
+        }
+      }
+    }
+    
+    // Look for phone numbers
+    const phonePattern = /(\(\d{3}\)\s*\d{3}-\d{4}|\d{3}-\d{3}-\d{4}|\(\d{3}\)\d{3}-\d{4})/g;
+    const phoneMatch = html.match(phonePattern);
+    if (phoneMatch && phoneMatch[0]) {
+      extractedData.business_phone = phoneMatch[0].trim();
+      console.log('Found phone from Google:', extractedData.business_phone);
+    }
+    
+    // Look for hours patterns
+    const hoursPatterns = [
+      /((?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)[^<\n]*(?:\d{1,2}:\d{2}\s*(?:AM|PM|am|pm)|\d{1,2}\s*(?:AM|PM|am|pm))[^<\n]*)/gi,
+      /(Hours[^<\n]*(?:\d{1,2}:\d{2}|\d{1,2}\s*(?:AM|PM))[^<\n]*)/gi
+    ];
+    
+    for (const pattern of hoursPatterns) {
+      const hoursMatch = html.match(pattern);
+      if (hoursMatch && hoursMatch[0]) {
+        const hours = hoursMatch[0].trim().substring(0, 200);
+        if (!hours.includes('font-') && !hours.includes('<')) {
+          extractedData.business_hours = hours;
+          console.log('Found hours from Google:', extractedData.business_hours);
+          break;
+        }
+      }
+    }
+    
+    return extractedData;
+  } catch (error) {
+    console.error('Error searching Google:', error);
+    return {};
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -286,7 +363,37 @@ serve(async (req) => {
       }
     })
 
-    console.log('Extracted business data:', businessData)
+    console.log('Initial extracted data:', businessData)
+
+    // Check if we need to search Google for missing/invalid address
+    const hasValidAddress = businessData.business_address && 
+                           businessData.business_address.length > 10 && 
+                           businessData.business_address.length < 200 &&
+                           /\d+.*[A-Za-z]/.test(businessData.business_address) && // Has number and letters
+                           !businessData.business_address.includes('font-') && // Not CSS
+                           !businessData.business_address.includes('color:') && // Not CSS
+                           !businessData.business_address.includes('<') && // Not HTML
+                           !businessData.business_address.includes('applet') && // Not HTML tags
+                           !businessData.business_address.includes('body') && // Not CSS/HTML
+                           !businessData.business_address.includes('div'); // Not HTML
+
+    if (!hasValidAddress && businessData.business_name) {
+      console.log('Address not found or invalid, searching Google for business info...');
+      const googleData = await searchGoogleForBusiness(businessData.business_name, url);
+      
+      // Merge Google data with extracted data, prioritizing Google for missing/invalid fields
+      if (googleData.business_address) {
+        businessData.business_address = googleData.business_address;
+      }
+      if (!businessData.business_phone && googleData.business_phone) {
+        businessData.business_phone = googleData.business_phone;
+      }
+      if ((!businessData.business_hours || businessData.business_hours.includes('font-')) && googleData.business_hours) {
+        businessData.business_hours = googleData.business_hours;
+      }
+    }
+
+    console.log('Final extracted business data:', businessData)
 
     return new Response(
       JSON.stringify({ 
