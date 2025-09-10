@@ -746,9 +746,7 @@ serve(async (req) => {
       }
     }
 
-    if (!businessData.business_type) {
-      businessData.business_type = 'Local Business';
-    }
+    // Don't set automatic fallback - let validation handle missing business type
 
     console.log('=== FINAL BUSINESS DATA ===');
     console.log(JSON.stringify(businessData, null, 2));
@@ -768,7 +766,10 @@ serve(async (req) => {
     // Check for missing or empty required fields
     const missingFields = Object.entries(requiredFields)
       .filter(([key, value]) => {
-        if (!value) return true;
+        if (!value) {
+          console.log(`Missing field: ${key} - value is ${value}`);
+          return true;
+        }
         if (typeof value === 'string') {
           const trimmed = value.trim();
           // Check for placeholder/fallback values that shouldn't be considered valid
@@ -779,21 +780,45 @@ serve(async (req) => {
             'Professional Services',
             'Local Business'
           ];
-          return trimmed.length === 0 || invalidValues.includes(trimmed);
+          if (trimmed.length === 0) {
+            console.log(`Empty field: ${key} - value is empty string`);
+            return true;
+          }
+          if (invalidValues.includes(trimmed)) {
+            console.log(`Invalid placeholder field: ${key} - value is "${trimmed}"`);
+            return true;
+          }
         }
         return false;
       })
       .map(([key]) => key);
 
     if (missingFields.length > 0) {
-      console.log('Missing required fields - cannot save:', missingFields);
+      console.log('❌ Missing required fields - cannot save:', missingFields);
+      
+      // Special handling for business type
+      let businessTypeMessage = '';
+      if (missingFields.includes('business_type')) {
+        businessTypeMessage = ' Business type could not be automatically detected from the website content or search results. This may indicate the website lacks clear information about what type of business this is.';
+      }
       
       return new Response(
         JSON.stringify({ 
           success: false,
           error: 'Incomplete business data - missing required fields',
-          message: 'All business information must be complete before saving. Please ensure all required fields are filled.',
+          message: `All business information must be complete before saving. Please ensure all required fields are filled.${businessTypeMessage}`,
           missingFields: missingFields,
+          detailedErrors: missingFields.map(field => {
+            switch(field) {
+              case 'business_type': return 'Business type could not be determined from website or search results';
+              case 'business_phone': return 'Phone number not found on website or in search results'; 
+              case 'business_address': return 'Complete business address not found';
+              case 'business_description': return 'Business description not found or too short';
+              case 'services_offered': return 'Services offered could not be identified';
+              case 'pricing_structure': return 'Pricing information not available';
+              default: return `${field} is missing or invalid`;
+            }
+          }),
           requiredFields: [
             'Business Name',
             'Phone Number', 
@@ -807,6 +832,7 @@ serve(async (req) => {
           suggestions: [
             'Try using the business\'s main website instead of social media pages',
             'Check if the website has a contact or about page with complete information',
+            'Look for a "Services" or "What We Do" page for business type and services',
             'Search for the business on Google to find missing details',
             'Manually enter any missing information after import'
           ],
