@@ -80,16 +80,18 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
         
         onDataExtracted(parsedData);
         
-        // Auto-save if enabled
-        if (autoSave) {
+        // Always auto-save the extracted data
+        try {
           await saveBusinessData(parsedData);
+          console.log('Data auto-saved to database');
+        } catch (saveError) {
+          console.error('Auto-save failed:', saveError);
+          // Don't show error for auto-save failure, just log it
         }
         
         toast({
           title: "Success",
-          description: autoSave 
-            ? "Business data extracted and saved successfully!" 
-            : "Business data extracted successfully! Please review and correct any information as needed.",
+          description: "Business data extracted and saved successfully! Please review and correct any information as needed.",
         });
         
         setWebsiteUrl('');
