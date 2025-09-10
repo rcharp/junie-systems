@@ -404,7 +404,7 @@ serve(async (req) => {
       
       return new Response(
         JSON.stringify({ 
-          error: `Unable to access webpage. ${isSocialMedia ? 'Social media pages often restrict automated access. Try using the business website instead.' : 'Please check the URL and try again.'}`,
+          error: 'Unable to access webpage. ' + (isSocialMedia ? 'Social media pages often restrict automated access. Try using the business website instead.' : 'Please check the URL and try again.'),
           details: fetchError.message 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
