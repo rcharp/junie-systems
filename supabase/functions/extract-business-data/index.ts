@@ -220,14 +220,24 @@ async function generateDescription(businessData: BusinessData): Promise<string> 
   try {
     console.log('Calling Perplexity API for description generation...');
     
-    const prompt = `Create a compelling, professional business description (2-3 sentences) for:
+    const prompt = `Write a compelling, professional 2-3 sentence business description for this company. Make it sound appealing to potential customers and highlight their unique value:
 
-Business Name: ${businessData.business_name || 'Local Business'}
-Services: ${businessData.services_offered || 'Professional services'}
+Business: ${businessData.business_name || 'Local Business'}
+Services: ${businessData.services_offered || 'Professional services'}  
 Location: ${businessData.business_address || 'Local area'}
-Business Type: ${businessData.business_type || 'Service business'}
+Industry: ${businessData.business_type || 'Service business'}
 
-Make it customer-focused, highlight unique value, and sound professional. Focus on benefits to customers.`;
+Requirements:
+- Make it customer-focused and benefit-driven
+- Highlight expertise and reliability
+- Sound professional but approachable
+- Don't just repeat the business name
+- Focus on what makes them special
+- Use action words and value propositions
+
+Example good descriptions:
+- "Premier HVAC specialists serving Palmetto with 24/7 emergency repairs, expert installations, and guaranteed customer satisfaction for over 15 years."
+- "Trusted local plumbing experts providing fast, reliable service with upfront pricing and a 100% satisfaction guarantee."
 
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -240,15 +250,15 @@ Make it customer-focused, highlight unique value, and sound professional. Focus 
         messages: [
           { 
             role: 'system', 
-            content: 'You are a professional marketing copywriter who creates compelling business descriptions that attract customers. Write in a clear, engaging style that highlights what makes the business special. Keep responses concise and professional. Focus on unique value propositions and customer benefits.' 
+            content: 'You are an expert marketing copywriter specializing in local business descriptions. Create compelling, unique descriptions that make businesses stand out from competitors. Never just repeat business names or generic phrases. Focus on specific benefits, expertise, and what makes the business special.' 
           },
           { role: 'user', content: prompt }
         ],
-        max_tokens: 150,
-        temperature: 0.3,
+        max_tokens: 180,
+        temperature: 0.4,
         top_p: 0.9,
-        frequency_penalty: 1,
-        presence_penalty: 0,
+        frequency_penalty: 1.2,
+        presence_penalty: 0.1,
         return_images: false,
         return_related_questions: false,
         search_recency_filter: 'month'
@@ -261,11 +271,27 @@ Make it customer-focused, highlight unique value, and sound professional. Focus 
       const data = await response.json();
       const description = data.choices[0]?.message?.content?.trim();
       
-      if (description && description.length > 20) {
-        console.log('Generated AI description with Perplexity:', description);
-        return description;
+      console.log('Raw Perplexity response:', description);
+      
+      if (description && description.length > 30) {
+        // Check if the generated description is actually different and better
+        const originalDesc = businessData.business_description || '';
+        const isGeneric = description.toLowerCase().includes('ac repair') && 
+                         description.toLowerCase().includes('hvac services') &&
+                         description.split(' ').length < 10;
+        
+        if (!isGeneric && description !== originalDesc) {
+          console.log('Generated compelling AI description with Perplexity:', description);
+          return description;
+        } else {
+          console.log('Generated description was too generic, creating fallback');
+          // Create a better fallback description
+          const businessType = businessData.business_type || 'service';
+          const location = businessData.business_address?.split(',')[1]?.trim() || 'local area';
+          return `Professional ${businessType} specialists serving ${location} with reliable, expert service and customer satisfaction guaranteed.`;
+        }
       } else {
-        console.log('Perplexity response too short or empty');
+        console.log('Perplexity response too short or empty:', description);
       }
     } else {
       const errorText = await response.text();
