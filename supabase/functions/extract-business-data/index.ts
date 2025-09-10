@@ -173,55 +173,62 @@ async function generateDescription(businessData: BusinessData): Promise<string> 
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
   
   if (!openAIApiKey) {
-    console.log('No OpenAI key, using basic description');
+    console.log('No OpenAI key available for AI description');
     return businessData.business_description || '';
   }
 
   try {
-    console.log('Generating AI description...');
+    console.log('Calling OpenAI API for description generation...');
     
-    const prompt = `Create a compelling 2-3 sentence business description for:
+    const prompt = `Create a compelling, professional business description (2-3 sentences) for:
+
 Business Name: ${businessData.business_name || 'Local Business'}
 Services: ${businessData.services_offered || 'Professional services'}
 Location: ${businessData.business_address || 'Local area'}
-Type: ${businessData.business_type || 'Service business'}
+Business Type: ${businessData.business_type || 'Service business'}
 
-Make it professional, customer-focused, and highlight what makes them unique. Focus on benefits to customers.`;
+Make it customer-focused, highlight unique value, and sound professional. Focus on benefits to customers.`;
 
-    const response = await Promise.race([
-      fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: 'You are a professional marketing copywriter who creates compelling business descriptions.' },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 200,
-          temperature: 0.7
-        }),
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are a professional marketing copywriter who creates compelling business descriptions that attract customers. Write in a clear, engaging style that highlights what makes the business special.' 
+          },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 200,
+        temperature: 0.7
       }),
-      new Promise<Response>((_, reject) => 
-        setTimeout(() => reject(new Error('AI timeout')), 5000)
-      )
-    ]);
+    });
+
+    console.log('OpenAI API response status:', response.status);
 
     if (response.ok) {
       const data = await response.json();
       const description = data.choices[0]?.message?.content?.trim();
+      
       if (description && description.length > 20) {
         console.log('Generated AI description:', description);
         return description;
+      } else {
+        console.log('AI response too short or empty');
       }
+    } else {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
     }
     
     return businessData.business_description || '';
   } catch (error) {
-    console.error('AI description error:', error);
+    console.error('AI description generation error:', error);
     return businessData.business_description || '';
   }
 }
@@ -302,12 +309,14 @@ serve(async (req) => {
       businessName = h1Match[1];
     }
     
-    // Clean business name
+    // Enhanced business name cleaning
     if (businessName) {
       businessData.business_name = businessName
-        .replace(/\s*[-|–]\s*(Home|About|Contact|Services|Welcome).*$/i, '')
+        .replace(/\s*[-|–]\s*(Home|About|Contact|Services|Welcome|HVAC Services).*$/i, '')
         .replace(/\s*\|\s*.*$/, '')
-        .replace(/\s*-\s*.*$/, '')
+        .replace(/\s*-\s*.*HVAC.*$/i, '')
+        .replace(/\s*-\s*.*Services.*$/i, '')
+        .replace(/AC Repair\s+([A-Z][a-z]+\s+[A-Z]{2})\s*-.*/, 'AC Repair $1')
         .trim();
     }
 
@@ -371,7 +380,15 @@ serve(async (req) => {
       const matches = html.match(pattern);
       if (matches) {
         for (const match of matches) {
-          const address = match.replace(/<[^>]*>/g, '').replace(/.*?(\d+.*)/, '$1').trim();
+          let address = match.replace(/<[^>]*>/g, '').replace(/.*?(\d+.*)/, '$1').trim();
+          
+          // Clean up common prefixes and formatting issues
+          address = address
+            .replace(/^ADDRESS\s*\n?\s*/i, '')
+            .replace(/^address\s*[:\-]?\s*/i, '')
+            .replace(/^\s*\n\s*/, '')
+            .trim();
+          
           if (validateAddress(address) && address.length < 200) {
             businessData.business_address = address;
             console.log('Found address on website:', address);
@@ -445,18 +462,29 @@ serve(async (req) => {
 
     console.log('Basic description:', businessData.business_description)
 
-    // Generate AI-powered description
-    if (businessData.business_name) {
+    // Generate AI-powered description with better error handling
+    if (businessData.business_name && openAIApiKey) {
       try {
-        console.log('Generating AI description...');
-        const aiDescription = await generateDescription(businessData);
-        if (aiDescription && aiDescription.length > 20) {
+        console.log('Generating AI description with OpenAI...');
+        const aiDescription = await Promise.race([
+          generateDescription(businessData),
+          new Promise<string>((_, reject) => 
+            setTimeout(() => reject(new Error('AI timeout')), 8000)
+          )
+        ]);
+        
+        if (aiDescription && aiDescription.length > 20 && aiDescription !== businessData.business_description) {
           businessData.business_description = aiDescription;
-          console.log('AI description generated successfully');
+          console.log('AI description generated successfully:', aiDescription);
+        } else {
+          console.log('AI description not improved, keeping original');
         }
       } catch (error) {
         console.error('AI description failed:', error);
+        // Keep the basic description if AI fails
       }
+    } else {
+      console.log('Skipping AI description - missing business name or OpenAI key');
     }
 
     console.log('=== Final enhanced business data ===')

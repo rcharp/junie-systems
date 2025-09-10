@@ -134,10 +134,15 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
 
   const saveBusinessData = async (extractedData: ExtractedData) => {
     try {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const { error } = await supabase
         .from('business_settings')
         .upsert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.data.user.id,
           business_name: extractedData.business_name,
           business_phone: extractedData.business_phone,
           business_address: extractedData.business_address,
@@ -151,14 +156,15 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
           onConflict: 'user_id'
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database save error:', error);
+        throw error;
+      }
+      
+      console.log('Business data saved successfully to database');
     } catch (error) {
       console.error('Error saving business data:', error);
-      toast({
-        title: "Warning",
-        description: "Data extracted but failed to auto-save. Please save manually.",
-        variant: "destructive",
-      });
+      throw error;
     }
   };
 
