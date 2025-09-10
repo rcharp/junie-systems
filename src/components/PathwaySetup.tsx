@@ -213,6 +213,8 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
           value={addressData}
           onChange={setAddressData}
           label="Business Address/Service Area"
+          required={true}
+          showValidation={false}
         />
 
         <div className="space-y-2">

@@ -883,6 +883,8 @@ const Settings = () => {
                       onChange={setAddressData}
                       label="Business Address *"
                       className={validationErrors.businessAddress ? "border-red-500" : ""}
+                      required={true}
+                      showValidation={!!validationErrors.businessAddress}
                     />
                   </div>
 
