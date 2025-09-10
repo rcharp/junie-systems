@@ -27,6 +27,11 @@ export const AddressInput = ({
   showValidation = false
 }: AddressInputProps) => {
   const handleFieldChange = (field: keyof AddressData, fieldValue: string) => {
+    // For zip code, only allow numeric characters and hyphens
+    if (field === 'zip') {
+      fieldValue = fieldValue.replace(/[^\d-]/g, '');
+    }
+    
     onChange({
       ...value,
       [field]: fieldValue
