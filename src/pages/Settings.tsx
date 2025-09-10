@@ -257,6 +257,10 @@ const Settings = () => {
 
       if (section === "Business") {
         // Validate required business fields BEFORE processing
+        console.log("=== VALIDATION DEBUG ===");
+        console.log("Raw businessType value:", JSON.stringify(businessType));
+        console.log("businessType type:", typeof businessType);
+        console.log("businessType length:", businessType?.length);
         console.log("Validating business fields:", { businessName, businessType, businessPhone, businessDescription });
         
         const requiredFields = {
@@ -601,7 +605,10 @@ const Settings = () => {
                       <Label htmlFor="businessType">
                         Business Type <span className="text-red-500">*</span>
                       </Label>
-                      <Select value={businessType} onValueChange={setBusinessType}>
+                      <Select value={businessType} onValueChange={(value) => {
+                        console.log("Business type changed to:", value);
+                        setBusinessType(value);
+                      }}>
                         <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
                           <SelectValue placeholder="Select business type" />
                         </SelectTrigger>
