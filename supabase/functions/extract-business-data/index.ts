@@ -71,58 +71,126 @@ function validateAddress(address: string): boolean {
 }
 
 // Search for business data using web search
-async function searchBusinessData(businessName: string, domain: string): Promise<{ address?: string; services?: string; phone?: string }> {
-  const results = { address: undefined as string | undefined, services: undefined as string | undefined, phone: undefined as string | undefined };
+async function searchBusinessData(businessName: string, domain: string): Promise<{ address?: string; services?: string; phone?: string; pricing?: string }> {
+  const results = { 
+    address: undefined as string | undefined, 
+    services: undefined as string | undefined, 
+    phone: undefined as string | undefined,
+    pricing: undefined as string | undefined
+  };
   
   try {
     console.log('Searching for business data: ' + businessName);
     
-    // Search for business information
-    const searchQuery = '"' + businessName + '" address phone hours services -site:' + domain;
-    const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(searchQuery);
-    
-    const response = await Promise.race([
-      fetch(searchUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-      }),
-      new Promise<Response>((_, reject) => 
-        setTimeout(() => reject(new Error('Search timeout')), 8000)
-      )
-    ]);
-    
-    if (!response.ok) return results;
-    
-    const html = await response.text();
-    
-    // Look for addresses
-    const addressPatterns = [
-      /(\d+\s+[A-Za-z0-9\s,.-]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way|Court|Ct\.?|Place|Pl\.?)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/ig,
-      /(\d+[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/ig,
-      /([A-Za-z0-9\s,.-]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2})/ig
+    // Search for business information with more specific queries
+    const queries = [
+      '"' + businessName + '" address phone contact location',
+      '"' + businessName + '" services pricing rates cost',
+      '"' + businessName + '" hours reviews contact info'
     ];
     
-    for (const pattern of addressPatterns) {
-      const matches = html.match(pattern);
-      if (matches) {
-        for (const match of matches) {
-          const cleanAddress = match.replace(/<[^>]*>/g, '').trim();
-          if (validateAddress(cleanAddress) && cleanAddress.length < 200) {
-            results.address = cleanAddress;
-            console.log('Found valid address:', cleanAddress);
-            break;
+    for (const searchQuery of queries) {
+      const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(searchQuery + ' -site:' + domain);
+      
+      try {
+        const response = await Promise.race([
+          fetch(searchUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+          }),
+          new Promise<Response>((_, reject) => 
+            setTimeout(() => reject(new Error('Search timeout')), 8000)
+          )
+        ]);
+        
+        if (!response.ok) continue;
+        
+        const html = await response.text();
+        
+        // Extract addresses if not found yet
+        if (!results.address) {
+          const addressPatterns = [
+            /(\d+\s+[A-Za-z0-9\s,.-]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way|Court|Ct\.?|Place|Pl\.?)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/ig,
+            /(\d+[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/ig,
+            /([A-Za-z0-9\s,.-]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2})/ig
+          ];
+          
+          for (const pattern of addressPatterns) {
+            const matches = html.match(pattern);
+            if (matches) {
+              for (const match of matches) {
+                const cleanAddress = match.replace(/<[^>]*>/g, '').trim();
+                if (validateAddress(cleanAddress) && cleanAddress.length < 200) {
+                  results.address = cleanAddress;
+                  console.log('Found valid address from search:', cleanAddress);
+                  break;
+                }
+              }
+              if (results.address) break;
+            }
           }
         }
-        if (results.address) break;
+        
+        // Extract phone numbers if not found yet
+        if (!results.phone) {
+          const phonePattern = /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
+          const phoneMatches = html.match(phonePattern);
+          if (phoneMatches && phoneMatches.length > 0) {
+            results.phone = phoneMatches[0];
+            console.log('Found phone from search:', results.phone);
+          }
+        }
+        
+        // Extract services information
+        if (!results.services) {
+          const serviceKeywords = [
+            /(?:services?|specializ[es]|offer[s]?|provide[s]?)[\s\S]{0,200}?(?:hvac|heating|cooling|air conditioning|ac repair|furnace|ductwork|plumbing|electrical|roofing|construction|repair|maintenance|installation)/gi,
+            /(?:hvac|heating|cooling|air conditioning|ac repair|furnace|ductwork|plumbing|electrical|roofing|construction|repair|maintenance|installation)[\s\S]{0,100}?(?:services?|work|solutions)/gi
+          ];
+          
+          for (const pattern of serviceKeywords) {
+            const serviceMatches = html.match(pattern);
+            if (serviceMatches && serviceMatches.length > 0) {
+              const servicesText = serviceMatches.slice(0, 3).join(', ').replace(/<[^>]*>/g, '').trim();
+              if (servicesText.length > 10 && servicesText.length < 300) {
+                results.services = servicesText;
+                console.log('Found services from search:', results.services);
+                break;
+              }
+            }
+          }
+        }
+        
+        // Extract pricing information
+        if (!results.pricing) {
+          const pricingPatterns = [
+            /(?:pricing|rates?|cost[s]?|price[s]?|fee[s]?)[\s\S]{0,200}?(?:\$\d+|\d+\s*dollars?|free|starting|consultation|estimate)/gi,
+            /(?:\$\d+|\d+\s*dollars?|free consultation|free estimate|starting at|from \$)/gi
+          ];
+          
+          for (const pattern of pricingPatterns) {
+            const pricingMatches = html.match(pattern);
+            if (pricingMatches && pricingMatches.length > 0) {
+              const pricingText = pricingMatches.slice(0, 2).join(', ').replace(/<[^>]*>/g, '').trim();
+              if (pricingText.length > 5 && pricingText.length < 200) {
+                results.pricing = pricingText;
+                console.log('Found pricing from search:', results.pricing);
+                break;
+              }
+            }
+          }
+        }
+        
+        // Break if we have all the info we need
+        if (results.address && results.phone && results.services && results.pricing) {
+          break;
+        }
+        
+      } catch (searchError) {
+        console.error('Error in individual search:', searchError);
+        continue;
       }
-    }
-    
-    // Look for phone numbers
-    const phonePattern = /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
-    const phoneMatches = html.match(phonePattern);
-    if (phoneMatches && phoneMatches.length > 0) {
-      results.phone = phoneMatches[0];
     }
     
     return results;
@@ -199,18 +267,45 @@ async function generateAIDescription(businessData: BusinessData, websiteContent:
       return businessData.business_description || '';
     }
     
-    console.log('Generating AI description using Perplexity...');
+    console.log('Generating dynamic AI description using Perplexity...');
     
-    // Create a comprehensive prompt for the AI
+    // Create a comprehensive and dynamic prompt for the AI
     const businessName = businessData.business_name || 'Business';
     const services = businessData.services_offered || 'various services';
     const location = businessData.business_address || 'local area';
+    const businessType = businessData.business_type || 'business';
+    const pricing = businessData.pricing_structure || 'competitive rates';
     
-    const prompt = 'Based on the following business information, write a professional 2-3 sentence business description for ' + businessName + 
-      '. Services: ' + services + 
-      '. Location: ' + location + 
-      '. Website content snippet: ' + websiteContent.substring(0, 500) + 
-      '. Make it sound professional and engaging for potential customers. Focus on what makes this business unique and trustworthy.';
+    // Extract key content snippets from website for context
+    const contentSnippet = websiteContent
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .substring(0, 800)
+      .trim();
+    
+    const prompt = `Write a compelling, professional, and dynamic business description for ${businessName}, a ${businessType.toLowerCase()} business. 
+
+Key Details:
+- Business Name: ${businessName}
+- Services: ${services}
+- Location: ${location}
+- Pricing: ${pricing}
+- Business Type: ${businessType}
+
+Website Content Context: ${contentSnippet}
+
+Requirements:
+- Write 2-3 engaging sentences that highlight what makes this business unique
+- Focus on customer benefits and value proposition
+- Include specific services and specialties
+- Make it sound trustworthy and professional
+- Avoid generic language - be specific and compelling
+- Include location context if available
+- Mention competitive advantages or unique selling points
+- Make it SEO-friendly with relevant keywords naturally integrated
+- Sound human and authentic, not robotic
+
+Create a description that would convince potential customers to choose this business over competitors.`;
     
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
@@ -223,15 +318,15 @@ async function generateAIDescription(businessData: BusinessData, websiteContent:
         messages: [
           {
             role: 'system',
-            content: 'You are a professional business description writer. Write concise, compelling descriptions that highlight key services and build trust.'
+            content: 'You are an expert business copywriter specializing in creating compelling, authentic business descriptions that convert visitors into customers. Write descriptions that are professional yet engaging, specific yet accessible.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.3,
-        max_tokens: 200,
+        temperature: 0.7,
+        max_tokens: 300,
         top_p: 0.9,
         return_images: false,
         return_related_questions: false,
@@ -249,7 +344,7 @@ async function generateAIDescription(businessData: BusinessData, websiteContent:
     
     if (result.choices && result.choices[0] && result.choices[0].message && result.choices[0].message.content) {
       const aiDescription = result.choices[0].message.content.trim();
-      console.log('Generated AI description:', aiDescription);
+      console.log('Generated dynamic AI description:', aiDescription);
       return aiDescription;
     }
     
@@ -524,6 +619,29 @@ serve(async (req) => {
       businessData.services_offered = services.join(', ');
     }
 
+    // Extract pricing information from website content
+    const pricingPatterns = [
+      /(?:pricing|rates?|cost[s]?|price[s]?|fee[s]?)[\s\S]{0,300}?(?:\$\d+|\d+\s*dollars?|free|starting|consultation|estimate|affordable|competitive)/gi,
+      /(?:\$\d+|\d+\s*dollars?|free consultation|free estimate|starting at|from \$|competitive rates|affordable pricing)/gi,
+      /<[^>]*(?:price|cost|rate|fee)[^>]*>([^<]*(?:\$|\d+|free|estimate)[^<]*)<\/[^>]*>/gi
+    ];
+
+    for (const pattern of pricingPatterns) {
+      const pricingMatches = websiteContent.match(pattern);
+      if (pricingMatches && pricingMatches.length > 0) {
+        const cleanPricing = pricingMatches.slice(0, 2).join(', ')
+          .replace(/<[^>]*>/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        if (cleanPricing.length > 5 && cleanPricing.length < 200) {
+          businessData.pricing_structure = cleanPricing;
+          console.log('Found pricing from website:', cleanPricing);
+          break;
+        }
+      }
+    }
+
     // Extract business description
     const descriptionPatterns = [
       /<meta[^>]*name="description"[^>]*content="([^"]+)"/i,
@@ -544,7 +662,7 @@ serve(async (req) => {
 
     // Try to search for additional business data if we have a business name but missing key info
     const domain = new URL(url).hostname;
-    if (businessData.business_name && (!businessData.business_address || !businessData.business_phone)) {
+    if (businessData.business_name && (!businessData.business_address || !businessData.business_phone || !businessData.services_offered || !businessData.pricing_structure)) {
       console.log('Searching for additional business data...');
       const searchResults = await searchBusinessData(businessData.business_name, domain);
       
@@ -556,6 +674,9 @@ serve(async (req) => {
       }
       if (!businessData.services_offered && searchResults.services) {
         businessData.services_offered = searchResults.services;
+      }
+      if (!businessData.pricing_structure && searchResults.pricing) {
+        businessData.pricing_structure = searchResults.pricing;
       }
     }
 
