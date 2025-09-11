@@ -415,10 +415,22 @@ async function getValidAccessToken(supabase: any, calendarSettings: any, userId:
   
   if (calendarSettings.encrypted_access_token) {
     try {
-      console.log('Raw encrypted access token:', calendarSettings.encrypted_access_token)
+      console.log('Raw encrypted access token type:', typeof calendarSettings.encrypted_access_token)
       
-      // Check if it's already a JSON object with data property
+      // Handle the encrypted token format properly
       let tokenToDecrypt = calendarSettings.encrypted_access_token
+      
+      // If it's an object, extract the data property
+      if (typeof tokenToDecrypt === 'object' && tokenToDecrypt !== null) {
+        if (tokenToDecrypt.data) {
+          tokenToDecrypt = tokenToDecrypt.data
+        } else {
+          console.error('Token object missing data property:', tokenToDecrypt)
+          return null
+        }
+      }
+      
+      // If it's a string that contains JSON, parse it
       if (typeof tokenToDecrypt === 'string') {
         try {
           const parsed = JSON.parse(tokenToDecrypt)
@@ -426,11 +438,11 @@ async function getValidAccessToken(supabase: any, calendarSettings: any, userId:
             tokenToDecrypt = parsed.data
           }
         } catch (e) {
-          // Keep original if not JSON
+          // Not JSON, use as is
         }
-      } else if (tokenToDecrypt.data) {
-        tokenToDecrypt = tokenToDecrypt.data
       }
+      
+      console.log('Token to decrypt:', tokenToDecrypt ? 'present' : 'missing')
       
       const { data: decryptedAccess, error: decryptError } = await supabase.rpc('decrypt_token', { 
         encrypted_token: tokenToDecrypt
@@ -451,10 +463,21 @@ async function getValidAccessToken(supabase: any, calendarSettings: any, userId:
   
   if (calendarSettings.encrypted_refresh_token) {
     try {
-      console.log('Raw encrypted refresh token:', calendarSettings.encrypted_refresh_token)
+      console.log('Raw encrypted refresh token type:', typeof calendarSettings.encrypted_refresh_token)
       
-      // Check if it's already a JSON object with data property
+      // Handle the encrypted token format properly
       let tokenToDecrypt = calendarSettings.encrypted_refresh_token
+      
+      // If it's an object, extract the data property
+      if (typeof tokenToDecrypt === 'object' && tokenToDecrypt !== null) {
+        if (tokenToDecrypt.data) {
+          tokenToDecrypt = tokenToDecrypt.data
+        } else {
+          console.error('Refresh token object missing data property:', tokenToDecrypt)
+        }
+      }
+      
+      // If it's a string that contains JSON, parse it
       if (typeof tokenToDecrypt === 'string') {
         try {
           const parsed = JSON.parse(tokenToDecrypt)
@@ -462,21 +485,21 @@ async function getValidAccessToken(supabase: any, calendarSettings: any, userId:
             tokenToDecrypt = parsed.data
           }
         } catch (e) {
-          // Keep original if not JSON
+          // Not JSON, use as is
         }
-      } else if (tokenToDecrypt.data) {
-        tokenToDecrypt = tokenToDecrypt.data
       }
       
-      const { data: decryptedRefresh, error: decryptError } = await supabase.rpc('decrypt_token', { 
-        encrypted_token: tokenToDecrypt
-      })
-      
-      if (decryptError) {
-        console.error('Error decrypting refresh token:', decryptError)
-      } else {
-        refreshToken = decryptedRefresh
-        console.log('Successfully decrypted refresh token:', !!refreshToken)
+      if (tokenToDecrypt) {
+        const { data: decryptedRefresh, error: decryptError } = await supabase.rpc('decrypt_token', { 
+          encrypted_token: tokenToDecrypt
+        })
+        
+        if (decryptError) {
+          console.error('Error decrypting refresh token:', decryptError)
+        } else {
+          refreshToken = decryptedRefresh
+          console.log('Successfully decrypted refresh token:', !!refreshToken)
+        }
       }
     } catch (error) {
       console.error('Exception decrypting refresh token:', error)
