@@ -1,0 +1,264 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// Address normalization functions
+const normalizeStreetTypes = (street: string): string => {
+  const streetTypes = {
+    'St.': 'Street', 'St': 'Street',
+    'Ave.': 'Avenue', 'Ave': 'Avenue',
+    'Blvd.': 'Boulevard', 'Blvd': 'Boulevard',
+    'Dr.': 'Drive', 'Dr': 'Drive',
+    'Rd.': 'Road', 'Rd': 'Road',
+    'Ln.': 'Lane', 'Ln': 'Lane',
+    'Ct.': 'Court', 'Ct': 'Court',
+    'Pl.': 'Place', 'Pl': 'Place',
+    'Pkwy.': 'Parkway', 'Pkwy': 'Parkway',
+    'Cir.': 'Circle', 'Cir': 'Circle',
+    'Ter.': 'Terrace', 'Ter': 'Terrace',
+    'Way.': 'Way', 'Wy': 'Way'
+  };
+
+  const directions = {
+    'N.': 'North', 'N': 'North',
+    'S.': 'South', 'S': 'South',
+    'E.': 'East', 'E': 'East',
+    'W.': 'West', 'W': 'West',
+    'NE.': 'Northeast', 'NE': 'Northeast',
+    'NW.': 'Northwest', 'NW': 'Northwest',
+    'SE.': 'Southeast', 'SE': 'Southeast',
+    'SW.': 'Southwest', 'SW': 'Southwest'
+  };
+
+  let normalized = street;
+  
+  // Replace street types (with word boundaries)
+  Object.entries(streetTypes).forEach(([abbrev, full]) => {
+    const regex = new RegExp(`\\b${abbrev.replace('.', '\\.')}\\b`, 'gi');
+    normalized = normalized.replace(regex, full);
+  });
+
+  // Replace directions (with word boundaries)
+  Object.entries(directions).forEach(([abbrev, full]) => {
+    const regex = new RegExp(`\\b${abbrev.replace('.', '\\.')}\\b`, 'gi');
+    normalized = normalized.replace(regex, full);
+  });
+
+  return normalized;
+};
+
+const normalizeState = (state: string): string => {
+  const stateMap = {
+    'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+    'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+    'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+    'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+    'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+    'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+    'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+    'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+    'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+    'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+    'DC': 'District of Columbia'
+  };
+
+  return stateMap[state.toUpperCase()] || state;
+};
+
+const normalizeAddressWithFullState = (address: string, fullStateName?: string): string => {
+  if (!address) return address;
+  
+  // Split address by commas to identify parts
+  const parts = address.split(',').map(part => part.trim());
+  
+  if (parts.length >= 3) {
+    // Normalize street (first part)
+    parts[0] = normalizeStreetTypes(parts[0]);
+    
+    // Use full state name if available, otherwise normalize state abbreviation
+    const lastPart = parts[parts.length - 1];
+    const stateZipMatch = lastPart.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
+    
+    if (stateZipMatch) {
+      // If we have a full state name stored, use it; otherwise normalize the abbreviation
+      const stateToUse = fullStateName || normalizeState(stateZipMatch[1]);
+      parts[parts.length - 1] = `${stateToUse} ${stateZipMatch[2]}`;
+    } else {
+      // Just state without ZIP - use full state name if available
+      parts[parts.length - 1] = fullStateName || normalizeState(lastPart);
+    }
+  } else {
+    // For simpler addresses, just normalize street types
+    parts[0] = normalizeStreetTypes(parts[0] || '');
+  }
+  
+  return parts.join(', ');
+};
+
+// Keep the original function for backward compatibility
+const normalizeAddress = (address: string): string => {
+  return normalizeAddressWithFullState(address);
+};
+
+serve(async (req) => {
+  console.log('business-data function called with method:', req.method);
+  console.log('Request URL:', req.url);
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    console.log('Environment check - SUPABASE_URL exists:', !!supabaseUrl);
+    console.log('Environment check - SERVICE_ROLE_KEY exists:', !!supabaseKey);
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing environment variables');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    // Create Supabase client with service role key for server-side access
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get user_id from URL path parameters
+    const url = new URL(req.url);
+    const pathParts = url.pathname.split('/');
+    const userId = pathParts[pathParts.length - 1]; // Get the last part of the path
+
+    console.log('URL path parts:', pathParts);
+    console.log('Fetching business data for user:', userId);
+
+    if (!userId || userId === 'business-data') {
+      return new Response(
+        JSON.stringify({ error: 'User ID is required in the URL path' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Validate that userId is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(userId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid user ID format' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Fetch business settings for the user
+    const { data: businessData, error } = await supabase
+      .from('business_settings')
+      .select(`
+        business_name,
+        business_type,
+        business_phone,
+        business_address,
+        business_hours,
+        business_description,
+        business_website,
+        services_offered,
+        pricing_structure,
+        custom_greeting,
+        common_questions,
+        ai_personality,
+        appointment_booking,
+        lead_capture
+      `)
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Database error:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch business data' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    if (!businessData) {
+      return new Response(
+        JSON.stringify({ error: 'No business data found for this user' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Check if Google Calendar is connected for availability
+    const { data: calendarSettings } = await supabase
+      .from('google_calendar_settings')
+      .select('is_connected, timezone, appointment_duration')
+      .eq('user_id', userId)
+      .single();
+
+    let calendarAvailability = null;
+    if (calendarSettings?.is_connected) {
+      try {
+        const availabilityResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-availability/${userId}`);
+        if (availabilityResponse.ok) {
+          calendarAvailability = await availabilityResponse.json();
+        }
+      } catch (error) {
+        console.error('Error fetching calendar availability:', error);
+      }
+    }
+
+    console.log('Successfully retrieved business data for user:', userId);
+
+    // Normalize the business address and parse JSON fields before sending
+    const normalizedData = {
+      ...businessData,
+      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
+      services_offered: businessData.services_offered ? JSON.parse(businessData.services_offered).map(service => ({
+        name: service.name,
+        price: service.price,
+        description: service.description
+      })) : [],
+      business_hours: businessData.business_hours ? JSON.parse(businessData.business_hours) : [],
+      calendar_availability: calendarAvailability
+    };
+
+    return new Response(
+      JSON.stringify(normalizedData),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+
+  } catch (error) {
+    console.error('Error in business-data function:', error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+});
