@@ -174,7 +174,7 @@ const GoogleCalendarConnect = () => {
             {/* Embedded Google Calendar */}
             <div className="w-full">
               <iframe
-                src="https://calendar.google.com/calendar/embed?showTitle=0&showDate=1&showPrint=0&showCalendars=0&mode=WEEK&height=600&wkst=1&bgcolor=%23ffffff"
+                src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarSettings.calendar_id || 'primary')}&ctz=${encodeURIComponent(calendarSettings.timezone || 'America/New_York')}&showTitle=0&showDate=1&showPrint=0&showCalendars=0&mode=WEEK&height=600&wkst=1&bgcolor=%23ffffff`}
                 style={{ border: 0 }}
                 width="100%"
                 height="500"
