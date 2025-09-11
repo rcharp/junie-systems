@@ -404,65 +404,144 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
 }
 
 async function getValidAccessToken(supabase: any, calendarSettings: any, userId: string): Promise<string | null> {
+  console.log('Getting valid access token for user:', userId)
+  console.log('Calendar settings exist:', !!calendarSettings)
+  console.log('Has encrypted access token:', !!calendarSettings.encrypted_access_token)
+  console.log('Has encrypted refresh token:', !!calendarSettings.encrypted_refresh_token)
+  
   // Decrypt tokens
   let accessToken = null
   let refreshToken = null
   
   if (calendarSettings.encrypted_access_token) {
-    const { data: decryptedAccess } = await supabase.rpc('decrypt_token', { 
-      encrypted_token: calendarSettings.encrypted_access_token 
-    })
-    accessToken = decryptedAccess
+    try {
+      console.log('Raw encrypted access token:', calendarSettings.encrypted_access_token)
+      
+      // Check if it's already a JSON object with data property
+      let tokenToDecrypt = calendarSettings.encrypted_access_token
+      if (typeof tokenToDecrypt === 'string') {
+        try {
+          const parsed = JSON.parse(tokenToDecrypt)
+          if (parsed.data) {
+            tokenToDecrypt = parsed.data
+          }
+        } catch (e) {
+          // Keep original if not JSON
+        }
+      } else if (tokenToDecrypt.data) {
+        tokenToDecrypt = tokenToDecrypt.data
+      }
+      
+      const { data: decryptedAccess, error: decryptError } = await supabase.rpc('decrypt_token', { 
+        encrypted_token: tokenToDecrypt
+      })
+      
+      if (decryptError) {
+        console.error('Error decrypting access token:', decryptError)
+        return null
+      }
+      
+      accessToken = decryptedAccess
+      console.log('Successfully decrypted access token:', !!accessToken)
+    } catch (error) {
+      console.error('Exception decrypting access token:', error)
+      return null
+    }
   }
   
   if (calendarSettings.encrypted_refresh_token) {
-    const { data: decryptedRefresh } = await supabase.rpc('decrypt_token', { 
-      encrypted_token: calendarSettings.encrypted_refresh_token 
-    })
-    refreshToken = decryptedRefresh
+    try {
+      console.log('Raw encrypted refresh token:', calendarSettings.encrypted_refresh_token)
+      
+      // Check if it's already a JSON object with data property
+      let tokenToDecrypt = calendarSettings.encrypted_refresh_token
+      if (typeof tokenToDecrypt === 'string') {
+        try {
+          const parsed = JSON.parse(tokenToDecrypt)
+          if (parsed.data) {
+            tokenToDecrypt = parsed.data
+          }
+        } catch (e) {
+          // Keep original if not JSON
+        }
+      } else if (tokenToDecrypt.data) {
+        tokenToDecrypt = tokenToDecrypt.data
+      }
+      
+      const { data: decryptedRefresh, error: decryptError } = await supabase.rpc('decrypt_token', { 
+        encrypted_token: tokenToDecrypt
+      })
+      
+      if (decryptError) {
+        console.error('Error decrypting refresh token:', decryptError)
+      } else {
+        refreshToken = decryptedRefresh
+        console.log('Successfully decrypted refresh token:', !!refreshToken)
+      }
+    } catch (error) {
+      console.error('Exception decrypting refresh token:', error)
+    }
   }
 
   if (!accessToken) {
+    console.error('No access token available after decryption')
     return null
   }
 
   // Check if token needs refresh
   const expiresAt = new Date(calendarSettings.expires_at)
   const now = new Date()
+  
+  console.log('Token expires at:', expiresAt)
+  console.log('Current time:', now)
+  console.log('Token expired:', now >= expiresAt)
 
   if (now >= expiresAt && refreshToken) {
     console.log('Access token expired, refreshing...')
     
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: googleClientId,
-        client_secret: googleClientSecret,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
-      }),
-    })
-
-    const tokenData = await tokenResponse.json()
-    
-    if (tokenResponse.ok) {
-      accessToken = tokenData.access_token
-      const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
-      
-      // Update the stored token using secure function
-      await supabase.rpc('update_google_calendar_tokens', {
-        p_user_id: userId,
-        p_access_token: accessToken,
-        p_expires_at: newExpiresAt,
+    try {
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: googleClientId,
+          client_secret: googleClientSecret,
+          refresh_token: refreshToken,
+          grant_type: 'refresh_token',
+        }),
       })
-    } else {
-      console.error('Token refresh failed:', tokenData)
+
+      const tokenData = await tokenResponse.json()
+      console.log('Token refresh response status:', tokenResponse.status)
+      
+      if (tokenResponse.ok) {
+        accessToken = tokenData.access_token
+        const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
+        
+        console.log('Token refreshed successfully, new expires at:', newExpiresAt)
+        
+        // Update the stored token using secure function
+        const { error: updateError } = await supabase.rpc('update_google_calendar_tokens', {
+          p_user_id: userId,
+          p_access_token: accessToken,
+          p_expires_at: newExpiresAt,
+        })
+        
+        if (updateError) {
+          console.error('Error updating tokens:', updateError)
+        }
+      } else {
+        console.error('Token refresh failed:', tokenData)
+        return null
+      }
+    } catch (error) {
+      console.error('Exception during token refresh:', error)
       return null
     }
   }
 
+  console.log('Returning access token:', !!accessToken)
   return accessToken
 }
