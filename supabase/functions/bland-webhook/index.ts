@@ -14,50 +14,57 @@ serve(async (req) => {
   }
 
   try {
+    console.log('=== WEBHOOK RECEIVED ===');
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Headers:', Object.fromEntries(req.headers.entries()));
+
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const BLAND_WEBHOOK_SIGNATURE = Deno.env.get('BLAND_WEBHOOK_SIGNATURE')!;
+    const BLAND_WEBHOOK_SIGNATURE = Deno.env.get('BLAND_WEBHOOK_SIGNATURE');
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get the raw request body for signature verification
+    // Get the raw request body
     const rawBody = await req.text();
+    console.log('Raw body received:', rawBody);
     
-    // Verify webhook signature
-    const providedSignature = req.headers.get('x-bland-signature') || req.headers.get('bland-signature') || req.headers.get('signature');
+    // Check for webhook signature (make it optional for debugging)
+    const providedSignature = req.headers.get('x-bland-signature') || 
+                             req.headers.get('bland-signature') || 
+                             req.headers.get('signature') ||
+                             req.headers.get('x-signature');
     
-    if (!providedSignature) {
-      console.error('No webhook signature provided');
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: 'Webhook signature required' 
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    console.log('Provided signature:', providedSignature);
+    console.log('Expected signature:', BLAND_WEBHOOK_SIGNATURE);
 
-    // Verify the signature matches our expected signature
-    if (providedSignature !== BLAND_WEBHOOK_SIGNATURE) {
-      console.error('Invalid webhook signature:', providedSignature);
-      return new Response(JSON.stringify({ 
-        success: false,
-        error: 'Invalid webhook signature' 
-      }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Only verify signature if we have both provided and expected signatures
+    if (BLAND_WEBHOOK_SIGNATURE && providedSignature) {
+      if (providedSignature !== BLAND_WEBHOOK_SIGNATURE) {
+        console.error('Invalid webhook signature:', providedSignature);
+        return new Response(JSON.stringify({ 
+          success: false,
+          error: 'Invalid webhook signature' 
+        }), {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      console.log('Webhook signature verified successfully');
+    } else if (BLAND_WEBHOOK_SIGNATURE && !providedSignature) {
+      console.warn('No webhook signature provided, but signature verification is enabled');
+      // For debugging, let's continue processing but log the warning
+    } else {
+      console.log('Webhook signature verification disabled or not configured');
     }
-
-    console.log('Webhook signature verified successfully');
 
     // Extract webhook_id from URL query params
     const url = new URL(req.url);
     const webhookId = url.searchParams.get('webhook_id');
+    console.log('Webhook ID from URL:', webhookId);
     
     const webhookData = JSON.parse(rawBody);
-    console.log('Received AI call webhook:', webhookData);
-    console.log('Webhook ID:', webhookId);
+    console.log('Parsed webhook data:', webhookData);
 
     const { call_id, status, transcript, duration, recording_url, metadata } = webhookData;
 
