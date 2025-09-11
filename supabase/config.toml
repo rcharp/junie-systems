@@ -99,6 +99,17 @@ verify_jwt = false
 [functions.get-business-data]
 verify_jwt = false
 
+[functions.business-data]
+verify_jwt = false
+entrypoint = "supabase/functions/get-business-data/index.ts"
+
+[functions.calendar]
+verify_jwt = false
+entrypoint = "supabase/functions/bland-calendar-integration/index.ts"
+
+[functions.bland-calendar-integration]
+verify_jwt = false
+
 [functions.extract-business-data]
 verify_jwt = false
 
