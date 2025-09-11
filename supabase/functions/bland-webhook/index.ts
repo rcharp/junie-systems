@@ -8,8 +8,14 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('=== WEBHOOK FUNCTION CALLED ===');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Method:', req.method);
+  console.log('URL:', req.url);
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request');
     return new Response(null, { headers: corsHeaders });
   }
 
@@ -228,9 +234,12 @@ serve(async (req) => {
       }
     }
 
+    console.log('=== WEBHOOK PROCESSING COMPLETED SUCCESSFULLY ===');
     return new Response(JSON.stringify({ 
       success: true,
-      message: "Webhook processed successfully" 
+      message: "Webhook processed successfully",
+      timestamp: new Date().toISOString(),
+      webhookId: webhookId
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
