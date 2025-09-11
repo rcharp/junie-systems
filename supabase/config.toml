@@ -116,3 +116,6 @@ verify_jwt = false
 
 [functions.google-calendar-book]
 verify_jwt = false
+
+[functions.bland-webhook]
+verify_jwt = false
