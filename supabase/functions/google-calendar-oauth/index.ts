@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
       const calendarData = await calendarResponse.json()
       console.log('Calendar data:', calendarData)
 
-      // Store calendar settings
+      // Store calendar settings using secure function
       const expiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
       
       const { error: upsertError } = await supabase
@@ -102,8 +102,8 @@ Deno.serve(async (req) => {
         .upsert({
           user_id: user.id,
           is_connected: true,
-          access_token: tokenData.access_token,
-          refresh_token: tokenData.refresh_token,
+          encrypted_access_token: await supabase.rpc('encrypt_token', { token: tokenData.access_token }),
+          encrypted_refresh_token: await supabase.rpc('encrypt_token', { token: tokenData.refresh_token }),
           expires_at: expiresAt,
           calendar_id: calendarData.id,
           timezone: calendarData.timeZone || 'America/New_York',

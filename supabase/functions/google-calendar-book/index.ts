@@ -46,12 +46,33 @@ Deno.serve(async (req) => {
       throw new Error('Google Calendar not connected for this user')
     }
 
+    // Decrypt tokens
+    let accessToken = null
+    let refreshToken = null
+    
+    if (calendarSettings.encrypted_access_token) {
+      const { data: decryptedAccess } = await supabase.rpc('decrypt_token', { 
+        encrypted_token: calendarSettings.encrypted_access_token 
+      })
+      accessToken = decryptedAccess
+    }
+    
+    if (calendarSettings.encrypted_refresh_token) {
+      const { data: decryptedRefresh } = await supabase.rpc('decrypt_token', { 
+        encrypted_token: calendarSettings.encrypted_refresh_token 
+      })
+      refreshToken = decryptedRefresh
+    }
+
+    if (!accessToken) {
+      throw new Error('Failed to decrypt access token')
+    }
+
     // Check if token needs refresh
-    let accessToken = calendarSettings.access_token
     const expiresAt = new Date(calendarSettings.expires_at)
     const now = new Date()
 
-    if (now >= expiresAt && calendarSettings.refresh_token) {
+    if (now >= expiresAt && refreshToken) {
       console.log('Access token expired, refreshing...')
       
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -62,7 +83,7 @@ Deno.serve(async (req) => {
         body: new URLSearchParams({
           client_id: googleClientId,
           client_secret: googleClientSecret,
-          refresh_token: calendarSettings.refresh_token,
+          refresh_token: refreshToken,
           grant_type: 'refresh_token',
         }),
       })
@@ -73,14 +94,12 @@ Deno.serve(async (req) => {
         accessToken = tokenData.access_token
         const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
         
-        // Update the stored token
-        await supabase
-          .from('google_calendar_settings')
-          .update({
-            access_token: accessToken,
-            expires_at: newExpiresAt,
-          })
-          .eq('user_id', userId)
+        // Update the stored token using secure function
+        await supabase.rpc('update_google_calendar_tokens', {
+          p_user_id: userId,
+          p_access_token: accessToken,
+          p_expires_at: newExpiresAt,
+        })
       } else {
         console.error('Token refresh failed:', tokenData)
         throw new Error('Failed to refresh access token')
