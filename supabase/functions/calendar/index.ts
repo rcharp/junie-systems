@@ -194,14 +194,15 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
           availableSlots.push({
             start: slotStart.toISOString(),
             end: slotEnd.toISOString(),
-            display: slotStart.toLocaleString('en-US', {
+            display: new Intl.DateTimeFormat('en-US', {
               weekday: 'long',
               month: 'short',
               day: 'numeric',
               hour: 'numeric',
               minute: '2-digit',
               timeZone: calendarSettings.timezone,
-            }),
+              hour12: true
+            }).format(slotStart),
           })
         }
 
