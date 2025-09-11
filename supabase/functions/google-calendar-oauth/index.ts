@@ -36,7 +36,8 @@ Deno.serve(async (req) => {
 
     if (req.method === 'GET') {
       // Generate OAuth URL
-      const redirectUri = `${supabaseUrl.replace('.supabase.co', '')}/functions/v1/google-calendar-oauth`
+      const url = new URL(req.url)
+      const redirectUri = `${url.origin}/google_auth`
       const scope = 'https://www.googleapis.com/auth/calendar'
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${googleClientId}&` +
@@ -60,7 +61,8 @@ Deno.serve(async (req) => {
       }
 
       // Exchange code for tokens
-      const redirectUri = `${supabaseUrl.replace('.supabase.co', '')}/functions/v1/google-calendar-oauth`
+      const url = new URL(req.url)
+      const redirectUri = `${url.origin}/google_auth`
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
