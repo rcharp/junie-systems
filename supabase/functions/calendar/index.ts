@@ -206,7 +206,6 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
     slots: availableSlots.slice(0, 20), // Return first 20 slots
     timezone: calendarSettings.timezone,
     duration: appointmentDuration,
-    business_hours: businessHours,
   }
 
   // Send availability to Bland's API
