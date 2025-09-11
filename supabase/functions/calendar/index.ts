@@ -163,16 +163,18 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
     if (dayBusinessHours) {
       console.log('Found business hours for', dayName, ':', dayBusinessHours)
       
-      // Create start time for this day in the correct timezone
-      const dayDate = new Date(current)
-      dayDate.setHours(0, 0, 0, 0) // Reset to start of day
-      
+      // Create start and end times in the user's timezone
       const [startHour, startMinute] = dayBusinessHours.openTime.split(':').map(Number)
       const [endHour, endMinute] = dayBusinessHours.closeTime.split(':').map(Number)
       
-      // Create times in the user's timezone
-      const startTime = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), startHour, startMinute, 0, 0)
-      const endTime = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), endHour, endMinute, 0, 0)
+      // Create a date string in the user's timezone for this day
+      const dateStr = current.toLocaleDateString('en-CA') // YYYY-MM-DD format
+      const startTimeStr = `${dateStr}T${dayBusinessHours.openTime}:00`
+      const endTimeStr = `${dateStr}T${dayBusinessHours.closeTime}:00`
+      
+      // Parse these as local times in the user's timezone
+      const startTime = new Date(startTimeStr)
+      const endTime = new Date(endTimeStr)
 
       console.log('Business hours for', dayName, 'from', startTime.toISOString(), 'to', endTime.toISOString())
 
@@ -190,9 +192,6 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
 
         // Only include slots that are in the future and don't conflict
         if (!hasConflict && slotStart > new Date()) {
-          // Create a proper date for display that accounts for timezone
-          const displayTime = new Date(slotStart.toLocaleString("en-US", {timeZone: calendarSettings.timezone}))
-          
           availableSlots.push({
             start: slotStart.toISOString(),
             end: slotEnd.toISOString(),
@@ -202,7 +201,6 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
               day: 'numeric',
               hour: 'numeric',
               minute: '2-digit',
-              timeZone: calendarSettings.timezone,
               hour12: true
             }),
           })
