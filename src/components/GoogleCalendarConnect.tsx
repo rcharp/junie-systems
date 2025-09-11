@@ -171,14 +171,18 @@ const GoogleCalendarConnect = () => {
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">How it works:</h4>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Your AI assistant will check your calendar for available time slots</li>
-                <li>• When customers request appointments, the AI will suggest available times</li>
-                <li>• Confirmed appointments are automatically added to your Google Calendar</li>
-                <li>• You'll receive calendar notifications for upcoming appointments</li>
-              </ul>
+            {/* Embedded Google Calendar */}
+            <div className="w-full">
+              <iframe
+                src="https://calendar.google.com/calendar/embed?showTitle=0&showDate=1&showPrint=0&showCalendars=0&mode=WEEK&height=600&wkst=1&bgcolor=%23ffffff"
+                style={{ border: 0 }}
+                width="100%"
+                height="500"
+                frameBorder="0"
+                scrolling="no"
+                title="Google Calendar"
+                className="rounded-lg border"
+              />
             </div>
 
             <div className="flex gap-2">
