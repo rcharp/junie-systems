@@ -144,6 +144,9 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
   const busyTimes = freeBusyData.calendars[calendarSettings.calendar_id]?.busy || []
   const appointmentDuration = calendarSettings.appointment_duration || 60 // minutes
 
+  console.log('Using appointment duration:', appointmentDuration, 'minutes')
+  console.log('Business hours available:', businessHours.length)
+
   // Generate available time slots based on business hours
   const availableSlots = []
   const current = new Date(startDate)
@@ -151,20 +154,30 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
   while (current <= endDate) {
     const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
     
+    console.log('Checking day:', dayName)
+    
     // Find business hours for this day
     const dayBusinessHours = businessHours.find((bh: any) => 
-      bh.day.toLowerCase() === dayName && bh.isOpen)
+      bh.day.toLowerCase() === dayName && bh.isOpen === true)
     
     if (dayBusinessHours) {
-      const startTime = new Date(current)
+      console.log('Found business hours for', dayName, ':', dayBusinessHours)
+      
+      // Create start time for this day
+      const dayDate = new Date(current)
+      dayDate.setHours(0, 0, 0, 0) // Reset to start of day
+      
       const [startHour, startMinute] = dayBusinessHours.openTime.split(':').map(Number)
+      const startTime = new Date(dayDate)
       startTime.setHours(startHour, startMinute, 0, 0)
 
-      const endTime = new Date(current)
       const [endHour, endMinute] = dayBusinessHours.closeTime.split(':').map(Number)
+      const endTime = new Date(dayDate)
       endTime.setHours(endHour, endMinute, 0, 0)
 
-      // Generate slots for this day
+      console.log('Business hours for', dayName, 'from', startTime.toISOString(), 'to', endTime.toISOString())
+
+      // Generate slots for this day using appointment duration
       const slotStart = new Date(startTime)
       while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= endTime.getTime()) {
         const slotEnd = new Date(slotStart.getTime() + (appointmentDuration * 60 * 1000))
@@ -176,6 +189,7 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
           return (slotStart < busyEnd && slotEnd > busyStart)
         })
 
+        // Only include slots that are in the future and don't conflict
         if (!hasConflict && slotStart > new Date()) {
           availableSlots.push({
             start: slotStart.toISOString(),
@@ -191,10 +205,14 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
           })
         }
 
-        slotStart.setTime(slotStart.getTime() + (30 * 60 * 1000)) // 30-minute intervals
+        // Move to next slot (use appointment duration as the interval)
+        slotStart.setTime(slotStart.getTime() + (appointmentDuration * 60 * 1000))
       }
+    } else {
+      console.log('No business hours found for', dayName)
     }
 
+    // Move to next day
     current.setDate(current.getDate() + 1)
   }
 
