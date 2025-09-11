@@ -10,6 +10,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import CallDetails from "./pages/CallDetails";
 import Settings from "./pages/Settings";
+import GoogleAuth from "./pages/GoogleAuth";
 import SetupGuide from "./pages/SetupGuide";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
@@ -30,6 +31,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/call/:callId" element={<CallDetails />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/google_auth" element={<GoogleAuth />} />
             <Route path="/setup-guide" element={<SetupGuide />} />
             <Route path="/admin" element={<AdminDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
