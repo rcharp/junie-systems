@@ -178,7 +178,7 @@ const Settings = () => {
           description: service.description || ""
         })));
       } else {
-        setServices([{ name: "", price: "" }]);
+        setServices([{ name: "", price: "", description: "" }]);
       }
     } catch (error) {
       console.error('Error loading services:', error);
@@ -188,7 +188,7 @@ const Settings = () => {
   const serviceInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const addService = () => {
-    setServices([...services, { name: "", price: "" }]);
+    setServices([...services, { name: "", price: "", description: "" }]);
     // Focus on the new service input after state update
     setTimeout(() => {
       const newIndex = services.length;
@@ -1059,34 +1059,59 @@ const Settings = () => {
                         const priceErrorClass = (validationErrors.services && hasNameButInvalidPrice) ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "";
                         
                         return (
-                          <div key={index} className="flex gap-2 items-center">
-                            <div className="flex-1">
+                          <div key={index} className="space-y-3 p-4 border rounded-lg">
+                            <div className="flex gap-2 items-start">
+                              <div className="flex-1">
+                                <Label htmlFor={`service-name-${index}`} className="text-sm font-medium">
+                                  Service Name *
+                                </Label>
+                                <Input
+                                  id={`service-name-${index}`}
+                                  ref={(el) => serviceInputRefs.current[index] = el}
+                                  placeholder="Service name (e.g., Consultation)"
+                                  value={service.name}
+                                  onChange={(e) => updateService(index, 'name', e.target.value)}
+                                  className={service.name.trim() === '' && validationErrors.services ? "border-red-500" : ""}
+                                />
+                              </div>
+                              <div className="w-32">
+                                <Label htmlFor={`service-price-${index}`} className="text-sm font-medium">
+                                  Price *
+                                </Label>
+                                <div className="relative">
+                                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                                  <Input
+                                    id={`service-price-${index}`}
+                                    placeholder="0.00"
+                                    value={service.price}
+                                    onChange={(e) => updateService(index, 'price', e.target.value)}
+                                    className={`pl-6 ${priceErrorClass}`}
+                                  />
+                                </div>
+                              </div>
+                              {services.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeService(index)}
+                                  className="mt-6"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                            <div>
+                              <Label htmlFor={`service-description-${index}`} className="text-sm font-medium">
+                                Description (Optional)
+                              </Label>
                               <Input
-                                ref={(el) => serviceInputRefs.current[index] = el}
-                                placeholder="Service name (e.g., Consultation)"
-                                value={service.name}
-                                onChange={(e) => updateService(index, 'name', e.target.value)}
+                                id={`service-description-${index}`}
+                                placeholder="Brief description of the service"
+                                value={service.description || ""}
+                                onChange={(e) => updateService(index, 'description', e.target.value)}
                               />
                             </div>
-                            <div className="w-32 relative">
-                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
-                              <Input
-                                placeholder="0.00"
-                                value={service.price}
-                                onChange={(e) => updateService(index, 'price', e.target.value)}
-                                className={`pl-6 ${priceErrorClass}`}
-                              />
-                            </div>
-                            {services.length > 1 && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeService(index)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            )}
                           </div>
                         );
                       })}
