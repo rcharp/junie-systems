@@ -65,28 +65,13 @@ const AdminDashboard = () => {
         .select('user_id', { count: 'exact', head: true })
         .gte('created_at', thirtyDaysAgo.toISOString());
 
-      // Fetch users with webhook IDs and emails for admin view
-      const { data: usersData } = await supabase
-        .from('user_profiles')
-        .select(`
-          id, 
-          webhook_id, 
-          full_name, 
-          company_name, 
-          created_at
-        `)
-        .order('created_at', { ascending: false });
+      // Fetch users with webhook IDs and emails for admin view using secure function
+      const { data: usersData, error: usersError } = await supabase
+        .rpc('get_users_with_emails_for_admin');
 
-      // Fetch emails from auth.users for each user
-      const usersWithEmails = [];
-      if (usersData) {
-        for (const user of usersData) {
-          const { data: authUser } = await supabase.auth.admin.getUserById(user.id);
-          usersWithEmails.push({
-            ...user,
-            email: authUser?.user?.email || 'No email'
-          });
-        }
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+        throw usersError;
       }
 
       setStats({
@@ -96,7 +81,7 @@ const AdminDashboard = () => {
         activeUsers: activeUserCount || 0,
       });
       
-      setUsers(usersWithEmails || []);
+      setUsers(usersData || []);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }

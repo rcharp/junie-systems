@@ -814,6 +814,17 @@ export type Database = {
         Args: { _webhook_id: string }
         Returns: string
       }
+      get_users_with_emails_for_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          company_name: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          webhook_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
