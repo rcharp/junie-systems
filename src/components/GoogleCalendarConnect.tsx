@@ -144,14 +144,16 @@ const GoogleCalendarConnect = () => {
     }
   };
 
-  // Generate appointment duration options (15 min intervals from 15 min to 2 hours)
-  const durationOptions = [];
-  for (let i = 15; i <= 120; i += 15) {
-    durationOptions.push({
-      value: i.toString(),
-      label: i < 60 ? `${i} minutes` : `${i / 60} hour${i > 60 ? 's' : ''}`
-    });
-  }
+  // Appointment duration options as specified
+  const durationOptions = [
+    { value: "15", label: "15 minutes" },
+    { value: "30", label: "30 minutes" },
+    { value: "45", label: "45 minutes" },
+    { value: "60", label: "1 hour" },
+    { value: "90", label: "1.5 hours" },
+    { value: "120", label: "2 hours" },
+    { value: "180", label: "3 hours" }
+  ];
 
   if (loading) {
     return (
