@@ -216,7 +216,10 @@ serve(async (req) => {
     const normalizedData = {
       ...businessData,
       business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
-      services_offered: businessData.services_offered ? JSON.parse(businessData.services_offered) : [],
+      services_offered: businessData.services_offered ? JSON.parse(businessData.services_offered).map(service => ({
+        name: service.name,
+        price: service.price
+      })) : [],
       business_hours: businessData.business_hours ? JSON.parse(businessData.business_hours) : []
     };
 
