@@ -65,11 +65,29 @@ const AdminDashboard = () => {
         .select('user_id', { count: 'exact', head: true })
         .gte('created_at', thirtyDaysAgo.toISOString());
 
-      // Fetch users with webhook IDs for admin view
+      // Fetch users with webhook IDs and emails for admin view
       const { data: usersData } = await supabase
         .from('user_profiles')
-        .select('id, webhook_id, full_name, company_name, created_at')
+        .select(`
+          id, 
+          webhook_id, 
+          full_name, 
+          company_name, 
+          created_at
+        `)
         .order('created_at', { ascending: false });
+
+      // Fetch emails from auth.users for each user
+      const usersWithEmails = [];
+      if (usersData) {
+        for (const user of usersData) {
+          const { data: authUser } = await supabase.auth.admin.getUserById(user.id);
+          usersWithEmails.push({
+            ...user,
+            email: authUser?.user?.email || 'No email'
+          });
+        }
+      }
 
       setStats({
         totalUsers: userCount || 0,
@@ -78,7 +96,7 @@ const AdminDashboard = () => {
         activeUsers: activeUserCount || 0,
       });
       
-      setUsers(usersData || []);
+      setUsers(usersWithEmails || []);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -234,10 +252,7 @@ const AdminDashboard = () => {
                     <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="space-y-1">
                         <p className="font-medium">
-                          {user.full_name || user.company_name || 'Unnamed User'}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          User ID: {user.id}
+                          {user.email}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
