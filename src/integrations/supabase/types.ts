@@ -757,51 +757,7 @@ export type Database = {
       }
     }
     Views: {
-      google_calendar_tokens_view: {
-        Row: {
-          access_token: string | null
-          appointment_duration: number | null
-          availability_hours: Json | null
-          calendar_id: string | null
-          created_at: string | null
-          expires_at: string | null
-          id: string | null
-          is_connected: boolean | null
-          refresh_token: string | null
-          timezone: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          access_token?: never
-          appointment_duration?: number | null
-          availability_hours?: Json | null
-          calendar_id?: string | null
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string | null
-          is_connected?: boolean | null
-          refresh_token?: never
-          timezone?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          access_token?: never
-          appointment_duration?: number | null
-          availability_hours?: Json | null
-          calendar_id?: string | null
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string | null
-          is_connected?: boolean | null
-          refresh_token?: never
-          timezone?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       decrypt_token: {
@@ -811,6 +767,23 @@ export type Database = {
       encrypt_token: {
         Args: { token: string }
         Returns: string
+      }
+      get_google_calendar_tokens: {
+        Args: { p_user_id: string }
+        Returns: {
+          access_token: string
+          appointment_duration: number
+          availability_hours: Json
+          calendar_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_connected: boolean
+          refresh_token: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }[]
       }
       get_tiktok_tokens: {
         Args: { account_id: string }
