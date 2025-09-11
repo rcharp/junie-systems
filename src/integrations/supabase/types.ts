@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       appointments: {
         Row: {
+          calendar_event_id: string | null
           caller_name: string
           created_at: string
           email: string | null
@@ -30,6 +31,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          calendar_event_id?: string | null
           caller_name: string
           created_at?: string
           email?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          calendar_event_id?: string | null
           caller_name?: string
           created_at?: string
           email?: string | null
@@ -315,6 +318,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      google_calendar_settings: {
+        Row: {
+          access_token: string | null
+          appointment_duration: number | null
+          availability_hours: Json | null
+          calendar_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          is_connected: boolean
+          refresh_token: string | null
+          timezone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          appointment_duration?: number | null
+          availability_hours?: Json | null
+          calendar_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_connected?: boolean
+          refresh_token?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          appointment_duration?: number | null
+          availability_hours?: Json | null
+          calendar_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          is_connected?: boolean
+          refresh_token?: string | null
+          timezone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {

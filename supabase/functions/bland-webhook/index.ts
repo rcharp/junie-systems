@@ -179,7 +179,41 @@ serve(async (req) => {
           if (messageError) {
             console.error('Error saving message:', messageError);
           } else {
-            console.log('Successfully saved call message for user:', callLog.user_id);
+            console.log('Successfully saved call message for user:', userId);
+          }
+
+          // Check if this is an appointment request and schedule it if Google Calendar is connected
+          if (callerInfo.call_type === 'appointment' && callerInfo.appointmentDateTime) {
+            console.log('Attempting to schedule appointment via Google Calendar...');
+            
+            try {
+              const bookingResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-book`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  userId: userId,
+                  startTime: callerInfo.appointmentDateTime,
+                  endTime: new Date(new Date(callerInfo.appointmentDateTime).getTime() + 60 * 60 * 1000).toISOString(), // 1 hour appointment
+                  callerName: callerInfo.caller_name || 'Unknown Caller',
+                  phoneNumber: callerInfo.phone_number || 'Unknown',
+                  email: callerInfo.email,
+                  serviceType: callerInfo.serviceType || 'Consultation',
+                  notes: callerInfo.message,
+                }),
+              });
+
+              const bookingResult = await bookingResponse.json();
+              
+              if (bookingResult.success) {
+                console.log('Successfully scheduled appointment:', bookingResult.appointment);
+              } else {
+                console.log('Failed to schedule appointment:', bookingResult.error);
+              }
+            } catch (bookingError) {
+              console.error('Error scheduling appointment:', bookingError);
+            }
           }
         }
       } catch (extractError) {
@@ -215,7 +249,9 @@ function extractCallerInfo(transcript: string) {
     message: transcript,
     urgency_level: 'medium' as string,
     best_time_to_call: null as string | null,
-    call_type: 'inquiry' as string
+    call_type: 'inquiry' as string,
+    appointmentDateTime: null as string | null,
+    serviceType: null as string | null
   };
 
   // Enhanced regex patterns for better extraction
@@ -282,6 +318,72 @@ function extractCallerInfo(transcript: string) {
   // Enhanced call type detection
   if (/appointment|schedule|book|meeting|consultation|visit/i.test(transcript)) {
     info.call_type = 'appointment';
+    
+    // Try to extract appointment date/time
+    const dateTimePatterns = [
+      /(?:appointment|meeting|visit)\s+(?:on|for)\s+([a-zA-Z]+\s+[a-zA-Z]+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?)?)/i,
+      /(?:schedule|book)\s+(?:for|on)\s+([a-zA-Z]+\s+\d{1,2}(?:st|nd|rd|th)?(?:\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?)?)/i,
+      /(?:next|this)\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:\s+at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?))?/i,
+      /(\d{1,2}\/\d{1,2}\/?\d{0,4})(?:\s+at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?))?/i
+    ];
+
+    for (const pattern of dateTimePatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        try {
+          // This is a simplified extraction - in production you'd want more robust date parsing
+          const dateStr = match[1];
+          const timeStr = match[2] || '10:00 AM'; // Default time if not specified
+          
+          // Try to parse the date (this is basic - you'd want to use a proper date parsing library)
+          const today = new Date();
+          let appointmentDate = new Date();
+          
+          // Simple parsing for common formats
+          if (dateStr.toLowerCase().includes('monday')) {
+            appointmentDate = getNextWeekday(today, 1);
+          } else if (dateStr.toLowerCase().includes('tuesday')) {
+            appointmentDate = getNextWeekday(today, 2);
+          } else if (dateStr.toLowerCase().includes('wednesday')) {
+            appointmentDate = getNextWeekday(today, 3);
+          } else if (dateStr.toLowerCase().includes('thursday')) {
+            appointmentDate = getNextWeekday(today, 4);
+          } else if (dateStr.toLowerCase().includes('friday')) {
+            appointmentDate = getNextWeekday(today, 5);
+          }
+          
+          // Set time (simplified)
+          if (timeStr.toLowerCase().includes('pm') && !timeStr.includes('12')) {
+            const hour = parseInt(timeStr) + 12;
+            appointmentDate.setHours(hour, 0, 0, 0);
+          } else if (timeStr.toLowerCase().includes('am')) {
+            const hour = parseInt(timeStr);
+            appointmentDate.setHours(hour === 12 ? 0 : hour, 0, 0, 0);
+          } else {
+            appointmentDate.setHours(10, 0, 0, 0); // Default to 10 AM
+          }
+          
+          info.appointmentDateTime = appointmentDate.toISOString();
+          break;
+        } catch (parseError) {
+          console.error('Error parsing appointment date/time:', parseError);
+        }
+      }
+    }
+    
+    // Try to extract service type
+    const servicePatterns = [
+      /(?:for|need|want)\s+(hvac|air conditioning|ac|repair|maintenance|cleaning|inspection|installation)/i,
+      /(?:service|work)\s+(?:on|for)\s+(hvac|air conditioning|ac|heating|cooling)/i
+    ];
+    
+    for (const pattern of servicePatterns) {
+      const match = transcript.match(pattern);
+      if (match) {
+        info.serviceType = match[1];
+        break;
+      }
+    }
   } else if (/complaint|problem|issue|wrong|dissatisfied|unhappy|bad|terrible/i.test(transcript)) {
     info.call_type = 'complaint';
   } else if (/support|help|assistance|technical|fix|repair|troubleshoot/i.test(transcript)) {
@@ -293,4 +395,13 @@ function extractCallerInfo(transcript: string) {
   }
 
   return info;
+}
+
+// Helper function to get next occurrence of a weekday
+function getNextWeekday(date: Date, targetDay: number): Date {
+  const currentDay = date.getDay();
+  const daysUntilTarget = (targetDay - currentDay + 7) % 7;
+  const result = new Date(date);
+  result.setDate(date.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget));
+  return result;
 }

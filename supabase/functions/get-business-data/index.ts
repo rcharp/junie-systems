@@ -210,6 +210,25 @@ serve(async (req) => {
       );
     }
 
+    // Check if Google Calendar is connected for availability
+    const { data: calendarSettings } = await supabase
+      .from('google_calendar_settings')
+      .select('is_connected, timezone, appointment_duration')
+      .eq('user_id', userId)
+      .single();
+
+    let calendarAvailability = null;
+    if (calendarSettings?.is_connected) {
+      try {
+        const availabilityResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-availability/${userId}`);
+        if (availabilityResponse.ok) {
+          calendarAvailability = await availabilityResponse.json();
+        }
+      } catch (error) {
+        console.error('Error fetching calendar availability:', error);
+      }
+    }
+
     console.log('Successfully retrieved business data for user:', userId);
 
     // Normalize the business address and parse JSON fields before sending
@@ -221,7 +240,8 @@ serve(async (req) => {
         price: service.price,
         description: service.description
       })) : [],
-      business_hours: businessData.business_hours ? JSON.parse(businessData.business_hours) : []
+      business_hours: businessData.business_hours ? JSON.parse(businessData.business_hours) : [],
+      calendar_availability: calendarAvailability
     };
 
     return new Response(

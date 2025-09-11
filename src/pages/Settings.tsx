@@ -19,6 +19,7 @@ import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
 import { AddressInput } from "@/components/AddressAutocomplete";
+import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -1309,17 +1310,21 @@ const Settings = () => {
 
             {/* AI Setup */}
             <TabsContent value="ai-setup">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Bot className="h-5 w-5" />
-                    AI Answering Service Setup
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <WebhookInfo />
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bot className="h-5 w-5" />
+                      AI Answering Service Setup
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <WebhookInfo />
+                  </CardContent>
+                </Card>
+
+                <GoogleCalendarConnect />
+              </div>
             </TabsContent>
 
             {/* Notifications */}
