@@ -163,17 +163,16 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
     if (dayBusinessHours) {
       console.log('Found business hours for', dayName, ':', dayBusinessHours)
       
-      // Create start time for this day
+      // Create start time for this day in the correct timezone
       const dayDate = new Date(current)
       dayDate.setHours(0, 0, 0, 0) // Reset to start of day
       
       const [startHour, startMinute] = dayBusinessHours.openTime.split(':').map(Number)
-      const startTime = new Date(dayDate)
-      startTime.setHours(startHour, startMinute, 0, 0)
-
       const [endHour, endMinute] = dayBusinessHours.closeTime.split(':').map(Number)
-      const endTime = new Date(dayDate)
-      endTime.setHours(endHour, endMinute, 0, 0)
+      
+      // Create times in the user's timezone
+      const startTime = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), startHour, startMinute, 0, 0)
+      const endTime = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), endHour, endMinute, 0, 0)
 
       console.log('Business hours for', dayName, 'from', startTime.toISOString(), 'to', endTime.toISOString())
 
@@ -191,10 +190,13 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
 
         // Only include slots that are in the future and don't conflict
         if (!hasConflict && slotStart > new Date()) {
+          // Create a proper date for display that accounts for timezone
+          const displayTime = new Date(slotStart.toLocaleString("en-US", {timeZone: calendarSettings.timezone}))
+          
           availableSlots.push({
             start: slotStart.toISOString(),
             end: slotEnd.toISOString(),
-            display: new Intl.DateTimeFormat('en-US', {
+            display: slotStart.toLocaleString('en-US', {
               weekday: 'long',
               month: 'short',
               day: 'numeric',
@@ -202,7 +204,7 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
               minute: '2-digit',
               timeZone: calendarSettings.timezone,
               hour12: true
-            }).format(slotStart),
+            }),
           })
         }
 
