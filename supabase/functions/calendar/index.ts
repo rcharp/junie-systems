@@ -135,7 +135,7 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
   const current = new Date(startDate)
 
   while (current <= endDate) {
-    const dayName = current.toLocaleLowerCase('en-US', { weekday: 'long' })
+    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
     
     // Find business hours for this day
     const dayBusinessHours = businessHours.find((bh: any) => bh.day === dayName && bh.isOpen)
