@@ -158,6 +158,12 @@ const GoogleCalendarConnect = () => {
             
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span className="text-sm">
+                  <strong>Connected Account:</strong> {calendarSettings.calendar_id || 'Not set'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
                 <span className="text-sm">
                   <strong>Timezone:</strong> {calendarSettings.timezone || 'Not set'}
