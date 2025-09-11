@@ -759,7 +759,7 @@ const Settings = () => {
           </div>
 
           <Tabs defaultValue="business" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="business" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 <span className="hidden sm:inline">Business</span>
@@ -771,6 +771,10 @@ const Settings = () => {
               <TabsTrigger value="ai" className="flex items-center gap-2">
                 <Bot className="w-4 h-4" />
                 <span className="hidden sm:inline">AI</span>
+              </TabsTrigger>
+              <TabsTrigger value="ai-setup" className="flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                <span className="hidden sm:inline">Setup</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2">
                 <Bell className="w-4 h-4" />
