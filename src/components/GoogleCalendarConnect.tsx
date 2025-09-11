@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Calendar, Clock, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,6 +120,39 @@ const GoogleCalendarConnect = () => {
     }
   };
 
+  const handleDurationChange = async (duration: string) => {
+    try {
+      const { error } = await supabase
+        .from('google_calendar_settings')
+        .update({ appointment_duration: parseInt(duration) })
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setCalendarSettings(prev => prev ? { ...prev, appointment_duration: parseInt(duration) } : null);
+      toast({
+        title: "Settings Updated",
+        description: `Appointment duration set to ${duration} minutes.`,
+      });
+    } catch (error) {
+      console.error('Error updating appointment duration:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update appointment duration. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Generate appointment duration options (15 min intervals from 15 min to 2 hours)
+  const durationOptions = [];
+  for (let i = 15; i <= 120; i += 15) {
+    durationOptions.push({
+      value: i.toString(),
+      label: i < 60 ? `${i} minutes` : `${i / 60} hour${i > 60 ? 's' : ''}`
+    });
+  }
+
   if (loading) {
     return (
       <Card>
@@ -175,6 +210,28 @@ const GoogleCalendarConnect = () => {
                   <strong>Appointment Duration:</strong> {calendarSettings.appointment_duration || 60} minutes
                 </span>
               </div>
+            </div>
+
+            {/* Appointment Duration Settings */}
+            <div className="space-y-3">
+              <Label htmlFor="appointment-duration" className="text-sm font-medium">
+                Default Appointment Duration
+              </Label>
+              <Select
+                value={calendarSettings.appointment_duration?.toString() || "60"}
+                onValueChange={handleDurationChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select appointment duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  {durationOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Embedded Google Calendar */}

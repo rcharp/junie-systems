@@ -97,19 +97,21 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
     throw new Error('Failed to get valid access token')
   }
 
-  // Parse business hours from either business_settings or calendar settings
+  // Use business hours from business_settings as the primary source
   let businessHours = []
   if (businessSettings.business_hours) {
     businessHours = JSON.parse(businessSettings.business_hours)
-  } else if (calendarSettings.availability_hours) {
-    // Convert availability_hours format to business_hours format
-    const availability = calendarSettings.availability_hours
-    businessHours = Object.keys(availability).map(day => ({
-      day: day,
-      isOpen: availability[day].enabled,
-      openTime: availability[day].start,
-      closeTime: availability[day].end
-    }))
+  }
+
+  // If no business hours found, return unavailable
+  if (!businessHours || businessHours.length === 0) {
+    console.log('No business hours configured for user:', userId)
+    return new Response(JSON.stringify({ 
+      available: false, 
+      message: 'Business hours not configured' 
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
   }
   
   // Get the next 7 days for availability checking
