@@ -41,10 +41,16 @@ const GoogleAuth = () => {
 
         setStatus('success');
         
-        // Redirect to settings after a short delay
-        setTimeout(() => {
-          navigate('/settings', { replace: true });
-        }, 2000);
+        // Close popup and refresh parent window
+        if (window.opener) {
+          window.opener.postMessage({ type: 'google-calendar-connected' }, '*');
+          window.close();
+        } else {
+          // Fallback for non-popup case
+          setTimeout(() => {
+            navigate('/settings', { replace: true });
+          }, 2000);
+        }
 
       } catch (err) {
         console.error('Google auth callback error:', err);

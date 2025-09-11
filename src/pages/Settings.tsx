@@ -95,6 +95,17 @@ const Settings = () => {
     } else if (user) {
       loadUserSettings(user.id);
     }
+    
+    // Listen for Google Calendar connection completion
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'google-calendar-connected') {
+        // Refresh the page to show updated connection status
+        window.location.reload();
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, [loading, user, navigate]);
 
   const loadUserSettings = async (userId: string) => {
@@ -759,7 +770,7 @@ const Settings = () => {
           </div>
 
           <Tabs defaultValue="business" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="business" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 <span className="hidden sm:inline">Business</span>
@@ -768,21 +779,13 @@ const Settings = () => {
                 <Phone className="w-4 h-4" />
                 <span className="hidden sm:inline">Calls</span>
               </TabsTrigger>
-              <TabsTrigger value="ai" className="flex items-center gap-2">
-                <Bot className="w-4 h-4" />
-                <span className="hidden sm:inline">AI</span>
-              </TabsTrigger>
-              <TabsTrigger value="ai-setup" className="flex items-center gap-2">
+              <TabsTrigger value="setup" className="flex items-center gap-2">
                 <Zap className="w-4 h-4" />
                 <span className="hidden sm:inline">Setup</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2">
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Notifications</span>
-              </TabsTrigger>
-              <TabsTrigger value="account" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">Account</span>
               </TabsTrigger>
             </TabsList>
 
@@ -1224,106 +1227,49 @@ const Settings = () => {
               </Card>
             </TabsContent>
 
-            {/* AI Assistant */}
-            <TabsContent value="ai">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Bot className="w-5 h-5 mr-2" />
-                    AI Assistant Configuration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="aiPersonality">AI Personality</Label>
-                    <Select value={aiPersonality} onValueChange={setAiPersonality}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="professional">Professional & Formal</SelectItem>
-                        <SelectItem value="friendly">Friendly & Warm</SelectItem>
-                        <SelectItem value="casual">Casual & Relaxed</SelectItem>
-                        <SelectItem value="energetic">Energetic & Enthusiastic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="customGreeting">Custom Greeting</Label>
-                    <Textarea
-                      id="customGreeting"
-                      value={customGreeting}
-                      onChange={(e) => setCustomGreeting(e.target.value)}
-                      placeholder="Thank you for calling [Business Name]. This is Availabee, your AI assistant. How can I help you today?"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="commonQuestions">Common Questions & Answers</Label>
-                    <Textarea
-                      id="commonQuestions"
-                      value={commonQuestions}
-                      onChange={(e) => setCommonQuestions(e.target.value)}
-                      placeholder="Q: What are your hours? A: We're open Monday-Friday 9AM-5PM..."
-                      rows={6}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Format: Q: Question? A: Answer. One per line.
-                    </p>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Enable Appointment Booking</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Allow AI to schedule appointments directly
-                        </p>
-                      </div>
-                      <Switch
-                        checked={appointmentBooking}
-                        onCheckedChange={setAppointmentBooking}
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Lead Capture</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Collect contact information from callers
-                        </p>
-                      </div>
-                      <Switch
-                        checked={leadCapture}
-                        onCheckedChange={setLeadCapture}
-                      />
-                    </div>
-                  </div>
-
-                  <Button onClick={() => saveSettings("AI")} disabled={saving}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {saving ? "Saving..." : "Save AI Settings"}
-                  </Button>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* AI Setup */}
-            <TabsContent value="ai-setup">
+            {/* Setup */}
+            <TabsContent value="setup">
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Bot className="h-5 w-5" />
-                      AI Answering Service Setup
+                      <Zap className="h-5 w-5" />
+                      System Setup
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <WebhookInfo />
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Enable Appointment Booking</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Allow AI to schedule appointments directly
+                          </p>
+                        </div>
+                        <Switch
+                          checked={appointmentBooking}
+                          onCheckedChange={setAppointmentBooking}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Lead Capture</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Collect contact information from callers
+                          </p>
+                        </div>
+                        <Switch
+                          checked={leadCapture}
+                          onCheckedChange={setLeadCapture}
+                        />
+                      </div>
+                    </div>
+                    
+                    <Button onClick={() => saveSettings("AI")} disabled={saving}>
+                      <Save className="w-4 h-4 mr-2" />
+                      {saving ? "Saving..." : "Save Setup Settings"}
+                    </Button>
                   </CardContent>
                 </Card>
 
@@ -1336,75 +1282,6 @@ const Settings = () => {
               <NotificationSettings />
             </TabsContent>
 
-            {/* Account */}
-            <TabsContent value="account">
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <User className="w-5 h-5 mr-2" />
-                      Account Information
-                    </CardTitle>
-                  </CardHeader>
-                   <CardContent className="space-y-4">
-                     <div className="space-y-2">
-                       <Label>User ID</Label>
-                       <div className="flex items-center space-x-2">
-                         <Input value={user?.id || ""} disabled className="font-mono text-sm" />
-                         <Button
-                           variant="outline"
-                           size="sm"
-                           onClick={() => {
-                             if (user?.id) {
-                               navigator.clipboard.writeText(user.id);
-                               toast({
-                                 title: "Copied!",
-                                 description: "User ID copied to clipboard",
-                               });
-                             }
-                           }}
-                         >
-                           Copy
-                         </Button>
-                       </div>
-                     </div>
-                     
-                     <div className="space-y-2">
-                       <Label>Email Address</Label>
-                       <Input value={user?.email || ""} disabled />
-                     </div>
-                     <div className="space-y-2">
-                       <Label>Account Status</Label>
-                       <Badge variant="secondary">Active</Badge>
-                     </div>
-                     <div className="space-y-2">
-                       <Label>Plan</Label>
-                       <Badge variant="outline">Professional</Badge>
-                     </div>
-                   </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-destructive">
-                      <Shield className="w-5 h-5 mr-2" />
-                      Danger Zone
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-destructive">Delete Account</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Once you delete your account, there is no going back. Please be certain.
-                      </p>
-                      <Button variant="destructive" disabled>
-                        Delete Account
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
           </Tabs>
         </div>
       </main>

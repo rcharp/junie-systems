@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/hooks/use-toast';
 import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft } from 'lucide-react';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { useNavigate } from 'react-router-dom';
@@ -24,6 +25,7 @@ const AdminDashboard = () => {
     totalAppointments: 0,
     activeUsers: 0,
   });
+  const [users, setUsers] = useState<any[]>([]);
   
 
   useEffect(() => {
@@ -63,12 +65,20 @@ const AdminDashboard = () => {
         .select('user_id', { count: 'exact', head: true })
         .gte('created_at', thirtyDaysAgo.toISOString());
 
+      // Fetch users with webhook IDs for admin view
+      const { data: usersData } = await supabase
+        .from('user_profiles')
+        .select('id, webhook_id, full_name, company_name, created_at')
+        .order('created_at', { ascending: false });
+
       setStats({
         totalUsers: userCount || 0,
         totalCalls: callCount || 0,
         totalAppointments: appointmentCount || 0,
         activeUsers: activeUserCount || 0,
       });
+      
+      setUsers(usersData || []);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -207,6 +217,58 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* User Webhook IDs */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>User Webhook IDs</CardTitle>
+            <CardDescription>
+              Webhook IDs for each user to configure their AI answering service
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {users.length > 0 ? (
+                <div className="grid gap-4">
+                  {users.map((user) => (
+                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="space-y-1">
+                        <p className="font-medium">
+                          {user.full_name || user.company_name || 'Unnamed User'}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          User ID: {user.id}
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
+                          {user.webhook_id || 'No webhook ID'}
+                        </span>
+                        {user.webhook_id && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(user.webhook_id);
+                              toast({
+                                title: "Copied!",
+                                description: "Webhook ID copied to clipboard",
+                              });
+                            }}
+                          >
+                            Copy
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No users found</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Webhook Monitor */}
         <WebhookMonitor />
