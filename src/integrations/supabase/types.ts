@@ -760,6 +760,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      authorize_admin_customer_data_access: {
+        Args: { justification: string; target_appointment_id?: string }
+        Returns: boolean
+      }
       decrypt_token: {
         Args: { encrypted_token: string }
         Returns: string
@@ -767,6 +771,19 @@ export type Database = {
       encrypt_token: {
         Args: { token: string }
         Returns: string
+      }
+      get_appointments_summary: {
+        Args: { target_user_id?: string }
+        Returns: {
+          caller_name_masked: string
+          contact_masked: string
+          created_at: string
+          id: string
+          preferred_date: string
+          preferred_time: string
+          service_type: string
+          status: string
+        }[]
       }
       get_google_calendar_tokens: {
         Args: { p_user_id: string }
