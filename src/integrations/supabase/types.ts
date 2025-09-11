@@ -321,43 +321,43 @@ export type Database = {
       }
       google_calendar_settings: {
         Row: {
-          access_token: string | null
           appointment_duration: number | null
           availability_hours: Json | null
           calendar_id: string | null
           created_at: string
+          encrypted_access_token: string | null
+          encrypted_refresh_token: string | null
           expires_at: string | null
           id: string
           is_connected: boolean
-          refresh_token: string | null
           timezone: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
-          access_token?: string | null
           appointment_duration?: number | null
           availability_hours?: Json | null
           calendar_id?: string | null
           created_at?: string
+          encrypted_access_token?: string | null
+          encrypted_refresh_token?: string | null
           expires_at?: string | null
           id?: string
           is_connected?: boolean
-          refresh_token?: string | null
           timezone?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
-          access_token?: string | null
           appointment_duration?: number | null
           availability_hours?: Json | null
           calendar_id?: string | null
           created_at?: string
+          encrypted_access_token?: string | null
+          encrypted_refresh_token?: string | null
           expires_at?: string | null
           id?: string
           is_connected?: boolean
-          refresh_token?: string | null
           timezone?: string | null
           updated_at?: string
           user_id?: string
@@ -757,9 +757,61 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      google_calendar_tokens_view: {
+        Row: {
+          access_token: string | null
+          appointment_duration: number | null
+          availability_hours: Json | null
+          calendar_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string | null
+          is_connected: boolean | null
+          refresh_token: string | null
+          timezone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          access_token?: never
+          appointment_duration?: number | null
+          availability_hours?: Json | null
+          calendar_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          is_connected?: boolean | null
+          refresh_token?: never
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          access_token?: never
+          appointment_duration?: number | null
+          availability_hours?: Json | null
+          calendar_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string | null
+          is_connected?: boolean | null
+          refresh_token?: never
+          timezone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      decrypt_token: {
+        Args: { encrypted_token: string }
+        Returns: string
+      }
+      encrypt_token: {
+        Args: { token: string }
+        Returns: string
+      }
       get_tiktok_tokens: {
         Args: { account_id: string }
         Returns: Json
@@ -790,6 +842,15 @@ export type Database = {
           refresh_token: string
         }
         Returns: string
+      }
+      update_google_calendar_tokens: {
+        Args: {
+          p_access_token?: string
+          p_expires_at?: string
+          p_refresh_token?: string
+          p_user_id: string
+        }
+        Returns: boolean
       }
       update_tiktok_tokens: {
         Args: {
