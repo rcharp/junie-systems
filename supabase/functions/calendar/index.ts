@@ -415,94 +415,81 @@ async function getValidAccessToken(supabase: any, calendarSettings: any, userId:
   
   if (calendarSettings.encrypted_access_token) {
     try {
-      console.log('Raw encrypted access token type:', typeof calendarSettings.encrypted_access_token)
+      let encryptedData = calendarSettings.encrypted_access_token
       
-      // Handle the encrypted token format properly
-      let tokenToDecrypt = calendarSettings.encrypted_access_token
-      
-      // If it's an object, extract the data property
-      if (typeof tokenToDecrypt === 'object' && tokenToDecrypt !== null) {
-        if (tokenToDecrypt.data) {
-          tokenToDecrypt = tokenToDecrypt.data
-        } else {
-          console.error('Token object missing data property:', tokenToDecrypt)
-          return null
-        }
-      }
-      
-      // If it's a string that contains JSON, parse it
-      if (typeof tokenToDecrypt === 'string') {
+      // Handle the specific JSON format from Supabase encryption
+      if (typeof encryptedData === 'string') {
         try {
-          const parsed = JSON.parse(tokenToDecrypt)
+          const parsed = JSON.parse(encryptedData)
           if (parsed.data) {
-            tokenToDecrypt = parsed.data
+            encryptedData = parsed.data
           }
         } catch (e) {
-          // Not JSON, use as is
+          // If not JSON, use the string as is
         }
+      } else if (typeof encryptedData === 'object' && encryptedData?.data) {
+        encryptedData = encryptedData.data
       }
       
-      console.log('Token to decrypt:', tokenToDecrypt ? 'present' : 'missing')
+      console.log('Attempting to decrypt access token...')
       
       const { data: decryptedAccess, error: decryptError } = await supabase.rpc('decrypt_token', { 
-        encrypted_token: tokenToDecrypt
+        encrypted_token: encryptedData
       })
       
       if (decryptError) {
-        console.error('Error decrypting access token:', decryptError)
+        console.error('Decryption error:', decryptError)
+        return null
+      }
+      
+      if (!decryptedAccess) {
+        console.error('Decryption returned null/empty')
         return null
       }
       
       accessToken = decryptedAccess
-      console.log('Successfully decrypted access token:', !!accessToken)
+      console.log('Access token decrypted successfully')
     } catch (error) {
-      console.error('Exception decrypting access token:', error)
+      console.error('Exception during access token decryption:', error)
       return null
     }
+  } else {
+    console.error('No encrypted access token found')
+    return null
   }
   
   if (calendarSettings.encrypted_refresh_token) {
     try {
-      console.log('Raw encrypted refresh token type:', typeof calendarSettings.encrypted_refresh_token)
+      let encryptedData = calendarSettings.encrypted_refresh_token
       
-      // Handle the encrypted token format properly
-      let tokenToDecrypt = calendarSettings.encrypted_refresh_token
-      
-      // If it's an object, extract the data property
-      if (typeof tokenToDecrypt === 'object' && tokenToDecrypt !== null) {
-        if (tokenToDecrypt.data) {
-          tokenToDecrypt = tokenToDecrypt.data
-        } else {
-          console.error('Refresh token object missing data property:', tokenToDecrypt)
-        }
-      }
-      
-      // If it's a string that contains JSON, parse it
-      if (typeof tokenToDecrypt === 'string') {
+      // Handle the specific JSON format from Supabase encryption
+      if (typeof encryptedData === 'string') {
         try {
-          const parsed = JSON.parse(tokenToDecrypt)
+          const parsed = JSON.parse(encryptedData)
           if (parsed.data) {
-            tokenToDecrypt = parsed.data
+            encryptedData = parsed.data
           }
         } catch (e) {
-          // Not JSON, use as is
+          // If not JSON, use the string as is
         }
+      } else if (typeof encryptedData === 'object' && encryptedData?.data) {
+        encryptedData = encryptedData.data
       }
       
-      if (tokenToDecrypt) {
-        const { data: decryptedRefresh, error: decryptError } = await supabase.rpc('decrypt_token', { 
-          encrypted_token: tokenToDecrypt
-        })
-        
-        if (decryptError) {
-          console.error('Error decrypting refresh token:', decryptError)
-        } else {
-          refreshToken = decryptedRefresh
-          console.log('Successfully decrypted refresh token:', !!refreshToken)
-        }
+      console.log('Attempting to decrypt refresh token...')
+      
+      const { data: decryptedRefresh, error: decryptError } = await supabase.rpc('decrypt_token', { 
+        encrypted_token: encryptedData
+      })
+      
+      if (decryptError) {
+        console.error('Refresh token decryption error:', decryptError)
+      } else if (decryptedRefresh) {
+        refreshToken = decryptedRefresh
+        console.log('Refresh token decrypted successfully')
       }
     } catch (error) {
-      console.error('Exception decrypting refresh token:', error)
+      console.error('Exception during refresh token decryption:', error)
     }
   }
 
