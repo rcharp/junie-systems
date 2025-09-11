@@ -97,8 +97,20 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
     throw new Error('Failed to get valid access token')
   }
 
-  // Parse business hours
-  const businessHours = businessSettings.business_hours ? JSON.parse(businessSettings.business_hours) : []
+  // Parse business hours from either business_settings or calendar settings
+  let businessHours = []
+  if (businessSettings.business_hours) {
+    businessHours = JSON.parse(businessSettings.business_hours)
+  } else if (calendarSettings.availability_hours) {
+    // Convert availability_hours format to business_hours format
+    const availability = calendarSettings.availability_hours
+    businessHours = Object.keys(availability).map(day => ({
+      day: day,
+      isOpen: availability[day].enabled,
+      openTime: availability[day].start,
+      closeTime: availability[day].end
+    }))
+  }
   
   // Get the next 7 days for availability checking
   const startDate = new Date()
@@ -138,7 +150,8 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
     const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
     
     // Find business hours for this day
-    const dayBusinessHours = businessHours.find((bh: any) => bh.day === dayName && bh.isOpen)
+    const dayBusinessHours = businessHours.find((bh: any) => 
+      bh.day.toLowerCase() === dayName && bh.isOpen)
     
     if (dayBusinessHours) {
       const startTime = new Date(current)
