@@ -80,16 +80,18 @@ export const WebhookMonitor = () => {
             .replace(/\n{3,}/g, '\n\n') // Remove excess line breaks
           : 'No transcript available';
 
-        // Create a simple call summary in plain English
+        // Create a structured call summary
         const createCallSummary = (log: any, metadata: any) => {
-          const callerName = log.caller_name || 'Unknown caller';
+          const callerName = log.caller_name || 'N/A';
+          const phoneNumber = log.phone_number || 'N/A';
+          const address = metadata.caller_address || 'N/A';
           const appointmentScheduled = metadata.appointment_scheduled;
-          const serviceRequested = metadata.service_requested || log.business_type || 'general inquiry';
+          const serviceRequested = metadata.service_requested || log.business_type || 'N/A';
           const appointmentDetails = metadata.appointment_details;
           
           // Format appointment date/time if available
           const formatAppointmentDateTime = (appointmentDetails: string) => {
-            if (!appointmentDetails || appointmentDetails === 'Not scheduled') return '';
+            if (!appointmentDetails || appointmentDetails === 'Not scheduled') return 'N/A';
             
             // Try to parse various date/time formats that might be in the appointment details
             const dateTimePatterns = [
@@ -129,33 +131,15 @@ export const WebhookMonitor = () => {
             return appointmentDetails;
           };
           
-          let summary = `${callerName} called `;
+          const formattedAppointmentDateTime = appointmentScheduled ? 
+            formatAppointmentDateTime(appointmentDetails) : 'N/A';
           
-          // Add what they called about
-          if (serviceRequested && serviceRequested !== 'N/A') {
-            summary += `for ${serviceRequested} service. `;
-          } else {
-            summary += `with a general inquiry. `;
-          }
-          
-          // Add appointment status with details
-          if (appointmentScheduled) {
-            summary += `An appointment was scheduled`;
-            if (appointmentDetails && appointmentDetails !== 'Not scheduled') {
-              const formattedDateTime = formatAppointmentDateTime(appointmentDetails);
-              if (formattedDateTime) {
-                summary += ` for ${formattedDateTime}`;
-              }
-            }
-            if (serviceRequested && serviceRequested !== 'N/A' && serviceRequested !== 'general inquiry') {
-              summary += ` for ${serviceRequested} service`;
-            }
-            summary += '.';
-          } else {
-            summary += `No appointment was scheduled.`;
-          }
-          
-          return summary;
+          return `Name: ${callerName}
+Address: ${address}
+Phone Number: ${phoneNumber}
+Service: ${serviceRequested}
+Appointment?: ${appointmentScheduled ? 'Yes' : 'No'}
+Appointment Date/Time: ${formattedAppointmentDateTime}`;
         };
         
         const cleanSummary = createCallSummary(log, metadata);
