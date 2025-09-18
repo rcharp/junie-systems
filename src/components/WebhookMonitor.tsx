@@ -363,14 +363,6 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
                     <h4 className="text-sm font-medium text-muted-foreground">Caller Name</h4>
                     <p className="text-sm">{data.caller_name}</p>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">First Name</h4>
-                    <p className="text-sm">{data.first_name}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Last Name</h4>
-                    <p className="text-sm">{data.last_name}</p>
-                  </div>
                 </div>
                 
                 <div className="space-y-2">
