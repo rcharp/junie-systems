@@ -114,7 +114,7 @@ serve(async (req) => {
       }
     }
 
-    // Extract caller info from transcript first
+    // Extract caller info - prioritize variables data from webhook
     let callerInfo = {
       caller_name: 'Unknown Caller',
       phone_number: 'Unknown',
@@ -124,7 +124,33 @@ serve(async (req) => {
       call_type: 'other'
     };
 
-    if (fullTranscript) {
+    // Parse caller data from variables if available (this contains the actual caller data)
+    if (webhookData.variables) {
+      const vars = webhookData.variables;
+      
+      // Extract caller details from variables
+      callerInfo.caller_name = vars.name || `${vars.first_name || ''} ${vars.last_name || ''}`.trim() || 'Unknown Caller';
+      callerInfo.phone_number = vars.phone_number ? String(vars.phone_number) : 'Unknown';
+      callerInfo.email = vars.email || null;
+      
+      // Create a clean message from the conversation
+      if (fullTranscript) {
+        const lines = fullTranscript.split('\n');
+        const callerLines = lines.filter(line => 
+          line.toLowerCase().includes('caller:')
+        ).map(line => line.replace(/^Caller:\s*/i, '').trim()).join(' ');
+        
+        callerInfo.message = callerLines.substring(0, 500) || vars.notes || 'Customer called for service';
+      }
+      
+      // Determine call type
+      if (vars.appointment_scheduled || vars.appointment_details) {
+        callerInfo.call_type = 'appointment';
+      } else {
+        callerInfo.call_type = 'inquiry';
+      }
+    } else if (fullTranscript) {
+      // Fallback to transcript parsing
       const extracted = extractCallerInfo(fullTranscript);
       callerInfo = {
         caller_name: extracted.caller_name || 'Unknown Caller',
@@ -135,6 +161,8 @@ serve(async (req) => {
         call_type: extracted.call_type
       };
     }
+
+    console.log('Extracted caller info:', callerInfo);
 
     // Insert or update call log with extracted data
     const { error: upsertError } = await supabase
@@ -153,9 +181,16 @@ serve(async (req) => {
         urgency_level: callerInfo.urgency_level,
         call_type: callerInfo.call_type,
         ended_at: new Date().toISOString(),
+        business_name: webhookData.variables?.business_name || '',
+        business_type: webhookData.variables?.business_type || '',
         metadata: {
           ...metadata,
           webhook_received_at: new Date().toISOString(),
+          caller_address: webhookData.variables?.address || '',
+          caller_zip: webhookData.variables?.zip_code || '',
+          appointment_scheduled: webhookData.variables?.appointment_scheduled || false,
+          appointment_details: webhookData.variables?.appointment_details || null,
+          service_requested: webhookData.variables?.service_requested || '',
           raw_webhook_data: webhookData
         }
       }, {
