@@ -239,39 +239,39 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
     fetchWebhookData();
   };
 
-  const handleClearAll = async () => {
-    // First confirmation
-    if (!confirm('⚠️ WARNING: This will permanently delete ALL webhook data from the database. Are you absolutely sure?')) {
+  const handleDeleteSingle = async (callLogId: string) => {
+    // Double confirmation for single deletion
+    if (!confirm('⚠️ WARNING: This will permanently delete this call log. Are you sure?')) {
       return;
     }
 
-    // Second confirmation
-    if (!confirm('💣 FINAL WARNING: This action cannot be undone! All call logs, transcripts, and customer data will be lost forever. Continue?')) {
+    if (!confirm('💣 FINAL WARNING: This action cannot be undone! Continue?')) {
       return;
     }
 
     try {
       setLoading(true);
       
-      // Delete all rows from call_logs table
       const { error } = await supabase
         .from('call_logs')
         .delete()
-        .gte('created_at', '1900-01-01'); // This will match all rows since all dates are after 1900
+        .eq('id', callLogId);
 
       if (error) throw error;
 
-      setWebhookData([]);
+      // Remove the deleted item from local state
+      setWebhookData(prev => prev.filter(item => item.id !== callLogId));
+      
       toast({
-        title: "💥 Complete Destruction",
-        description: "All webhook data has been permanently deleted from the database"
+        title: "🗑️ Call Log Deleted",
+        description: "Call log has been permanently deleted"
       });
     } catch (error) {
-      console.error('Error clearing webhook data:', error);
+      console.error('Error deleting call log:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete webhook data"
+        description: "Failed to delete call log"
       });
     } finally {
       setLoading(false);
@@ -322,26 +322,26 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleClearAll}
-              disabled={loading}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              💣 DELETE ALL
-            </Button>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4 max-h-[1200px] overflow-y-auto">
           {webhookData.map((data) => (
-            <div key={data.id} className="p-4 border rounded-lg bg-muted/30">
+            <div key={data.id} className="p-4 border rounded-lg bg-muted/30 relative">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
                 </div>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleDeleteSingle(data.id)}
+                  disabled={loading}
+                  className="absolute top-3 right-3"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
               
               <div className="grid grid-cols-2 gap-4 mb-4">
