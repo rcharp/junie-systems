@@ -84,6 +84,7 @@ export const WebhookMonitor = () => {
           const callerName = log.caller_name || 'Unknown caller';
           const appointmentScheduled = metadata.appointment_scheduled;
           const serviceRequested = metadata.service_requested || log.business_type || 'general inquiry';
+          const appointmentDetails = metadata.appointment_details;
           
           let summary = `${callerName} called `;
           
@@ -94,9 +95,16 @@ export const WebhookMonitor = () => {
             summary += `with a general inquiry. `;
           }
           
-          // Add appointment status
+          // Add appointment status with details
           if (appointmentScheduled) {
-            summary += `An appointment was scheduled.`;
+            summary += `An appointment was scheduled`;
+            if (appointmentDetails && appointmentDetails !== 'Not scheduled') {
+              summary += ` for ${appointmentDetails}`;
+            }
+            if (serviceRequested && serviceRequested !== 'N/A' && serviceRequested !== 'general inquiry') {
+              summary += ` for ${serviceRequested} service`;
+            }
+            summary += '.';
           } else {
             summary += `No appointment was scheduled.`;
           }
