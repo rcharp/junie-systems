@@ -64,11 +64,11 @@ export const WebhookMonitor = () => {
               !line.includes('available_times')
             )
             .map(line => {
-              // Format speaker lines
+              // Format speaker lines with better spacing
               if (line.includes('Assistant:')) {
-                return `**Assistant:** ${line.replace('Assistant:', '').trim()}`;
+                return `🤖 Assistant:\n   ${line.replace('Assistant:', '').trim()}\n`;
               } else if (line.includes('Caller:')) {
-                return `**Caller:** ${line.replace('Caller:', '').trim()}`;
+                return `👤 Caller:\n   ${line.replace('Caller:', '').trim()}\n`;
               }
               return line;
             })
@@ -76,8 +76,12 @@ export const WebhookMonitor = () => {
             .replace(/\n{3,}/g, '\n\n') // Remove excess line breaks
           : 'No transcript available';
 
-        // Create a cleaner call summary
-        const cleanSummary = log.message || 'Customer inquiry';
+        // Create a cleaner call summary with better formatting
+        const cleanSummary = log.message ? 
+          log.message
+            .replace(/\. /g, '.\n\n') // Add line breaks after sentences
+            .replace(/: /g, ':\n  ') // Add indentation after colons
+          : 'Customer inquiry';
         
         // Parse name parts
         const nameParts = (log.caller_name || '').split(' ');
@@ -267,13 +271,17 @@ export const WebhookMonitor = () => {
               
               <div className="space-y-3">
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Call Summary</h4>
-                  <p className="text-sm bg-background p-2 rounded border">{data.call_summary}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Call Summary</h4>
+                  <div className="text-sm bg-background p-4 rounded border leading-relaxed whitespace-pre-wrap">
+                    {data.call_summary}
+                  </div>
                 </div>
                 
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Full Transcript</h4>
-                  <p className="text-sm bg-background p-2 rounded border max-h-32 overflow-y-auto">{data.transcript}</p>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Full Transcript</h4>
+                  <div className="text-sm bg-background p-4 rounded border max-h-64 overflow-y-auto leading-relaxed whitespace-pre-wrap font-mono">
+                    {data.transcript}
+                  </div>
                 </div>
               </div>
             </div>
