@@ -250,7 +250,7 @@ export const WebhookMonitor = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 max-h-[600px] overflow-y-auto">
+        <div className="space-y-4 max-h-[1200px] overflow-y-auto">
           {webhookData.map((data) => (
             <div key={data.id} className="p-4 border rounded-lg bg-muted/30">
               <div className="flex items-center justify-between mb-3">
