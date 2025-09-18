@@ -246,23 +246,18 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
     }
 
     // Second confirmation
-    if (!confirm('💣 SECOND WARNING: This action cannot be undone! All call logs, transcripts, and customer data will be lost forever. Continue?')) {
-      return;
-    }
-
-    // Third confirmation - make them type DELETE
-    const confirmText = prompt('🔥 FINAL WARNING: Type "DELETE" in capital letters to confirm you want to permanently destroy all webhook data:');
-    if (confirmText !== 'DELETE') {
-      alert('Deletion cancelled. You must type "DELETE" exactly to proceed.');
+    if (!confirm('💣 FINAL WARNING: This action cannot be undone! All call logs, transcripts, and customer data will be lost forever. Continue?')) {
       return;
     }
 
     try {
       setLoading(true);
+      
+      // Delete all rows from call_logs table
       const { error } = await supabase
         .from('call_logs')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+        .gte('created_at', '1900-01-01'); // This will match all rows since all dates are after 1900
 
       if (error) throw error;
 
