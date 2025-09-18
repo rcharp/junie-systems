@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Webhook, Activity, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format, parse, isValid } from 'date-fns';
+import { format, parse, isValid, parseISO } from 'date-fns';
 
 interface WebhookData {
   id: string;
@@ -96,7 +96,19 @@ export const WebhookMonitor = () => {
             
             console.log('Raw appointment details:', appointmentDetails); // Debug log
             
-            // Try to parse various date/time formats that might be in the appointment details
+            // First try to parse as ISO 8601 format (which is what we're getting)
+            try {
+              const isoDate = parseISO(appointmentDetails);
+              if (isValid(isoDate)) {
+                const formatted = format(isoDate, 'EEEE, MMMM do, yyyy \'at\' h:mma');
+                console.log('Formatted ISO date:', formatted); // Debug log
+                return formatted;
+              }
+            } catch (error) {
+              console.warn('Error parsing ISO date:', error);
+            }
+            
+            // Try to parse various other date/time formats that might be in the appointment details
             const dateTimePatterns = [
               /(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})/,  // 2025-11-05 09:30
               /(\d{4}-\d{2}-\d{2})\s+at\s+(\d{1,2}:\d{2})/i,  // 2025-11-05 at 09:30
