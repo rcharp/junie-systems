@@ -250,7 +250,7 @@ export const WebhookMonitor = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-4 max-h-[600px] overflow-y-auto">
           {webhookData.map((data) => (
             <div key={data.id} className="p-4 border rounded-lg bg-muted/30">
               <div className="flex items-center justify-between mb-3">
@@ -317,7 +317,7 @@ export const WebhookMonitor = () => {
                 
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Full Transcript</h4>
-                  <div className="text-sm bg-background p-4 rounded border max-h-64 overflow-y-auto leading-relaxed whitespace-pre-wrap font-mono">
+                  <div className="text-sm bg-background p-4 rounded border max-h-80 overflow-y-auto leading-relaxed whitespace-pre-wrap font-mono">
                     {data.transcript}
                   </div>
                 </div>
