@@ -167,7 +167,7 @@ serve(async (req) => {
       );
     }
 
-    // Fetch business settings for the user
+    // Fetch business settings and webhook_id for the user
     const { data: businessData, error } = await supabase
       .from('business_settings')
       .select(`
@@ -188,6 +188,13 @@ serve(async (req) => {
       `)
       .eq('user_id', userId)
       .maybeSingle();
+
+    // Fetch webhook_id from user_profiles
+    const { data: profileData } = await supabase
+      .from('user_profiles')
+      .select('webhook_id')
+      .eq('id', userId)
+      .single();
 
     if (error) {
       console.error('Database error:', error);
@@ -234,6 +241,7 @@ serve(async (req) => {
     // Normalize the business address and parse JSON fields before sending
     const normalizedData = {
       ...businessData,
+      webhook_id: profileData?.webhook_id,
       business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
       services_offered: businessData.services_offered ? JSON.parse(businessData.services_offered).map(service => ({
         name: service.name,
