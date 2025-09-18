@@ -25,7 +25,7 @@ export const WebhookMonitor = () => {
 
   const fetchWebhookData = async () => {
     try {
-      // Fetch recent call logs to show incoming webhook data
+      // Fetch recent call logs to show incoming webhook data (show all for admin)
       const { data: logs, error: logsError } = await supabase
         .from('call_logs')
         .select('*')
