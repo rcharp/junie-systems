@@ -350,7 +350,7 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
               </div>
               
               <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground">Business ID</h4>
                     <p className="text-sm">{data.business_id}</p>
@@ -363,13 +363,13 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
                     <h4 className="text-sm font-medium text-muted-foreground">Caller Name</h4>
                     <p className="text-sm">{data.caller_name}</p>
                   </div>
-                </div>
-                
-                <div className="space-y-2">
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground">Phone Number</h4>
                     <p className="text-sm">{data.phone_number}</p>
                   </div>
+                </div>
+                
+                <div className="space-y-3">
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground">Email Address</h4>
                     <p className="text-sm">{data.email}</p>
