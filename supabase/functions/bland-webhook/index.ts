@@ -69,8 +69,24 @@ serve(async (req) => {
     const webhookId = url.searchParams.get('webhook_id');
     console.log('Webhook ID from URL:', webhookId);
     
-    const webhookData = JSON.parse(rawBody);
-    console.log('Parsed webhook data:', webhookData);
+    // Parse JSON with better error handling
+    let webhookData;
+    try {
+      webhookData = JSON.parse(rawBody);
+      console.log('Parsed webhook data:', webhookData);
+    } catch (parseError) {
+      console.error('Failed to parse webhook JSON:', parseError);
+      console.error('Raw body was:', rawBody);
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: 'Invalid JSON in webhook body',
+        details: parseError.message,
+        received_body: rawBody
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const { call_id, status, transcript, duration, recording_url, metadata } = webhookData;
 
