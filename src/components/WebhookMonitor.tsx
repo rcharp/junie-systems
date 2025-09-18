@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { RefreshCw, Webhook, Activity, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { format, parse, isValid } from 'date-fns';
 
 interface WebhookData {
   id: string;
@@ -86,6 +87,48 @@ export const WebhookMonitor = () => {
           const serviceRequested = metadata.service_requested || log.business_type || 'general inquiry';
           const appointmentDetails = metadata.appointment_details;
           
+          // Format appointment date/time if available
+          const formatAppointmentDateTime = (appointmentDetails: string) => {
+            if (!appointmentDetails || appointmentDetails === 'Not scheduled') return '';
+            
+            // Try to parse various date/time formats that might be in the appointment details
+            const dateTimePatterns = [
+              /(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})/,  // 2025-11-05 09:30
+              /(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d{1,2}:\d{2})/,  // 11/5/2025 9:30
+              /(\w+,?\s+\w+\s+\d{1,2},?\s+\d{4})\s+at\s+(\d{1,2}:\d{2})/i  // Tuesday, November 5, 2025 at 9:30
+            ];
+            
+            for (const pattern of dateTimePatterns) {
+              const match = appointmentDetails.match(pattern);
+              if (match) {
+                try {
+                  let dateStr = match[1];
+                  let timeStr = match[2];
+                  
+                  // Parse the date
+                  let parsedDate;
+                  if (dateStr.includes('-')) {
+                    parsedDate = parse(`${dateStr} ${timeStr}`, 'yyyy-MM-dd HH:mm', new Date());
+                  } else if (dateStr.includes('/')) {
+                    parsedDate = parse(`${dateStr} ${timeStr}`, 'M/d/yyyy H:mm', new Date());
+                  } else {
+                    // Try parsing as a more natural format
+                    parsedDate = new Date(`${dateStr} ${timeStr}`);
+                  }
+                  
+                  if (isValid(parsedDate)) {
+                    return format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' h:mmaaa');
+                  }
+                } catch (error) {
+                  console.warn('Error parsing appointment date:', error);
+                }
+              }
+            }
+            
+            // If no pattern matches, return the original string
+            return appointmentDetails;
+          };
+          
           let summary = `${callerName} called `;
           
           // Add what they called about
@@ -99,7 +142,10 @@ export const WebhookMonitor = () => {
           if (appointmentScheduled) {
             summary += `An appointment was scheduled`;
             if (appointmentDetails && appointmentDetails !== 'Not scheduled') {
-              summary += ` for ${appointmentDetails}`;
+              const formattedDateTime = formatAppointmentDateTime(appointmentDetails);
+              if (formattedDateTime) {
+                summary += ` for ${formattedDateTime}`;
+              }
             }
             if (serviceRequested && serviceRequested !== 'N/A' && serviceRequested !== 'general inquiry') {
               summary += ` for ${serviceRequested} service`;
