@@ -88,7 +88,19 @@ serve(async (req) => {
       });
     }
 
-    const { call_id, status, transcript, duration, recording_url, metadata } = webhookData;
+    const { call_id, status, transcript, duration, recording_url, metadata, transcripts } = webhookData;
+
+    // Handle both transcript (single) and transcripts (array) formats
+    let fullTranscript = '';
+    if (transcript) {
+      fullTranscript = transcript;
+    } else if (transcripts && Array.isArray(transcripts)) {
+      // Combine all transcript entries into a single string
+      fullTranscript = transcripts
+        .map(t => `${t.user === 'user' ? 'Caller' : 'Assistant'}: ${t.text}`)
+        .join('\n');
+      console.log('Processed transcripts into full transcript:', fullTranscript);
+    }
 
     // Get user_id from webhook_id if provided
     let userId = null;
@@ -112,13 +124,13 @@ serve(async (req) => {
       call_type: 'other'
     };
 
-    if (transcript) {
-      const extracted = extractCallerInfo(transcript);
+    if (fullTranscript) {
+      const extracted = extractCallerInfo(fullTranscript);
       callerInfo = {
         caller_name: extracted.caller_name || 'Unknown Caller',
         phone_number: extracted.phone_number || 'Unknown',
         email: extracted.email,
-        message: extracted.message ? extracted.message.substring(0, 500) : transcript.substring(0, 500),
+        message: extracted.message ? extracted.message.substring(0, 500) : fullTranscript.substring(0, 500),
         urgency_level: extracted.urgency_level,
         call_type: extracted.call_type
       };
@@ -135,7 +147,7 @@ serve(async (req) => {
         email: callerInfo.email,
         call_status: status || 'completed',
         call_duration: duration || 0,
-        transcript: transcript || '',
+        transcript: fullTranscript || '',
         recording_url: recording_url || '',
         message: callerInfo.message,
         urgency_level: callerInfo.urgency_level,
@@ -156,7 +168,7 @@ serve(async (req) => {
     }
 
     // Extract message information from transcript if call was completed
-    if (status === 'completed' && transcript) {
+    if (status === 'completed' && fullTranscript) {
       try {
         // Enhanced extraction logic with better parsing
         const callerInfo = extractCallerInfo(transcript);
@@ -198,7 +210,7 @@ serve(async (req) => {
               caller_name: callerInfo.caller_name || 'Unknown Caller',
               phone_number: callerInfo.phone_number || 'Unknown',
               email: callerInfo.email,
-              message: callerInfo.message || transcript.substring(0, 500),
+              message: callerInfo.message || fullTranscript.substring(0, 500),
               urgency_level: callerInfo.urgency_level,
               best_time_to_call: callerInfo.best_time_to_call,
               call_type: callerInfo.call_type,
