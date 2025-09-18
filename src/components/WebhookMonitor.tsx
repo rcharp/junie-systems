@@ -119,7 +119,7 @@ export const WebhookMonitor = () => {
                   }
                   
                   if (isValid(parsedDate)) {
-                    return format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' h:mmaaa');
+                    return format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' h:mmaaaa');
                   }
                 } catch (error) {
                   console.warn('Error parsing appointment date:', error);
@@ -134,11 +134,17 @@ export const WebhookMonitor = () => {
           const formattedAppointmentDateTime = appointmentScheduled ? 
             formatAppointmentDateTime(appointmentDetails) : 'N/A';
           
-          return `Name: ${callerName}
+          // Create introductory sentence
+          const appointmentStatus = appointmentScheduled ? 'and scheduled an appointment' : 'but did not schedule an appointment';
+          const introSentence = `${callerName} called asking about ${serviceRequested} ${appointmentStatus}.`;
+          
+          return `${introSentence}
+
+Name: ${callerName}
 Address: ${address}
 Phone Number: ${phoneNumber}
 Service: ${serviceRequested}
-Appointment?: ${appointmentScheduled ? 'Yes' : 'No'}
+Appointment scheduled?: ${appointmentScheduled ? 'Yes' : 'No'}
 Appointment Date/Time: ${formattedAppointmentDateTime}`;
         };
         
