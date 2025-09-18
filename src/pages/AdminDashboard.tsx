@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft } from 'lucide-react';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
+import { UserWebhookList } from '@/components/UserWebhookList';
 import { useNavigate } from 'react-router-dom';
 
 interface Stats {
@@ -221,57 +222,13 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* User Webhook IDs */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>User Webhook IDs</CardTitle>
-            <CardDescription>
-              Webhook IDs for each user to configure their AI answering service
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {users.length > 0 ? (
-                <div className="grid gap-4">
-                  {users.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="space-y-1">
-                        <p className="font-medium">
-                          {user.email}
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-mono text-sm bg-muted px-2 py-1 rounded">
-                          {user.webhook_id || 'No webhook ID'}
-                        </span>
-                        {user.webhook_id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              navigator.clipboard.writeText(user.webhook_id);
-                              toast({
-                                title: "Copied!",
-                                description: "Webhook ID copied to clipboard",
-                              });
-                            }}
-                          >
-                            Copy
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No users found</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Webhook Monitor */}
         <WebhookMonitor />
+
+        {/* User Webhook IDs - Paginated */}
+        <div className="mt-8">
+          <UserWebhookList />
+        </div>
 
         {/* Availabee Info */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
