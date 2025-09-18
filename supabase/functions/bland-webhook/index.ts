@@ -128,10 +128,18 @@ serve(async (req) => {
     if (webhookData.variables) {
       const vars = webhookData.variables;
       
-      // Extract caller details from variables
+      console.log('Variables found:', vars);
+      
+      // Extract caller details from variables - this is the REAL caller data
       callerInfo.caller_name = vars.name || `${vars.first_name || ''} ${vars.last_name || ''}`.trim() || 'Unknown Caller';
       callerInfo.phone_number = vars.phone_number ? String(vars.phone_number) : 'Unknown';
       callerInfo.email = vars.email || null;
+      
+      // Clean up the last_name if it has comma-separated characters
+      if (vars.last_name && vars.last_name.includes(',')) {
+        const lastName = vars.last_name.split(',').join('');
+        callerInfo.caller_name = `${vars.first_name || ''} ${lastName}`.trim();
+      }
       
       // Create a clean message from the conversation
       if (fullTranscript) {
@@ -149,8 +157,11 @@ serve(async (req) => {
       } else {
         callerInfo.call_type = 'inquiry';
       }
+      
+      console.log('Caller info extracted from variables:', callerInfo);
     } else if (fullTranscript) {
-      // Fallback to transcript parsing
+      // Only use transcript parsing as fallback if no variables are available
+      console.log('No variables found, falling back to transcript parsing');
       const extracted = extractCallerInfo(fullTranscript);
       callerInfo = {
         caller_name: extracted.caller_name || 'Unknown Caller',
