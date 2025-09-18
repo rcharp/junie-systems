@@ -94,11 +94,18 @@ export const WebhookMonitor = () => {
           const formatAppointmentDateTime = (appointmentDetails: string) => {
             if (!appointmentDetails || appointmentDetails === 'Not scheduled') return 'N/A';
             
+            console.log('Raw appointment details:', appointmentDetails); // Debug log
+            
             // Try to parse various date/time formats that might be in the appointment details
             const dateTimePatterns = [
               /(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})/,  // 2025-11-05 09:30
+              /(\d{4}-\d{2}-\d{2})\s+at\s+(\d{1,2}:\d{2})/i,  // 2025-11-05 at 09:30
               /(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d{1,2}:\d{2})/,  // 11/5/2025 9:30
-              /(\w+,?\s+\w+\s+\d{1,2},?\s+\d{4})\s+at\s+(\d{1,2}:\d{2})/i  // Tuesday, November 5, 2025 at 9:30
+              /(\d{1,2}\/\d{1,2}\/\d{4})\s+at\s+(\d{1,2}:\d{2})/i,  // 11/5/2025 at 9:30
+              /(\w+,?\s+\w+\s+\d{1,2},?\s+\d{4})\s+at\s+(\d{1,2}:\d{2})/i,  // Tuesday, November 5, 2025 at 9:30
+              /(\w+\s+\d{1,2},?\s+\d{4})\s+at\s+(\d{1,2}:\d{2})/i,  // November 5, 2025 at 9:30
+              /(\d{1,2}:\d{2})\s+on\s+(\d{4}-\d{2}-\d{2})/i,  // 9:30 on 2025-11-05
+              /(\d{1,2}:\d{2})\s+on\s+(\w+,?\s+\w+\s+\d{1,2},?\s+\d{4})/i  // 9:30 on Tuesday, November 5, 2025
             ];
             
             for (const pattern of dateTimePatterns) {
@@ -108,10 +115,17 @@ export const WebhookMonitor = () => {
                   let dateStr = match[1];
                   let timeStr = match[2];
                   
+                  // Handle reversed patterns (time first, then date)
+                  if (pattern.source.includes('on')) {
+                    [timeStr, dateStr] = [match[1], match[2]];
+                  }
+                  
+                  console.log('Matched date:', dateStr, 'time:', timeStr); // Debug log
+                  
                   // Parse the date
                   let parsedDate;
                   if (dateStr.includes('-')) {
-                    parsedDate = parse(`${dateStr} ${timeStr}`, 'yyyy-MM-dd HH:mm', new Date());
+                    parsedDate = parse(`${dateStr} ${timeStr}`, 'yyyy-MM-dd H:mm', new Date());
                   } else if (dateStr.includes('/')) {
                     parsedDate = parse(`${dateStr} ${timeStr}`, 'M/d/yyyy H:mm', new Date());
                   } else {
@@ -119,8 +133,12 @@ export const WebhookMonitor = () => {
                     parsedDate = new Date(`${dateStr} ${timeStr}`);
                   }
                   
+                  console.log('Parsed date:', parsedDate); // Debug log
+                  
                   if (isValid(parsedDate)) {
-                    return format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' h:mma');
+                    const formatted = format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' h:mma');
+                    console.log('Formatted date:', formatted); // Debug log
+                    return formatted;
                   }
                 } catch (error) {
                   console.warn('Error parsing appointment date:', error);
@@ -129,6 +147,7 @@ export const WebhookMonitor = () => {
             }
             
             // If no pattern matches, return the original string
+            console.log('No pattern matched, returning original:', appointmentDetails);
             return appointmentDetails;
           };
           
