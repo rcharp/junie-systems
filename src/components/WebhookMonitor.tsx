@@ -42,25 +42,70 @@ export const WebhookMonitor = () => {
 
       // Transform call logs to webhook data format
       const transformedData: WebhookData[] = (logs || []).map(log => {
-        const nameParts = (log.caller_name || '').split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
+        // Parse metadata to get business_id and other info
+        const metadata = log.metadata || {};
+        const businessId = (metadata as any)?.business_id || log.user_id || 'N/A';
+        
+        // Try to parse variables from transcript or metadata
+        const variables: any = {};
+        try {
+          // The variables might be in the transcript or metadata
+          if (typeof log.transcript === 'string' && log.transcript.includes('business_name')) {
+            // Extract variables from transcript if it contains structured data
+            const lines = log.transcript.split('\n');
+            for (const line of lines) {
+              if (line.includes('business_name') && line.includes(':')) {
+                const match = line.match(/business_name\s*:\s*"([^"]+)"/);
+                if (match) variables.business_name = match[1];
+              }
+              if (line.includes('first_name') && line.includes(':')) {
+                const match = line.match(/first_name\s*:\s*"([^"]+)"/);
+                if (match) variables.first_name = match[1];
+              }
+              if (line.includes('last_name') && line.includes(':')) {
+                const match = line.match(/last_name\s*:\s*"([^"]+)"/);
+                if (match) variables.last_name = match[1];
+              }
+              if (line.includes('email') && line.includes(':')) {
+                const match = line.match(/email\s*:\s*"([^"]+)"/);
+                if (match) variables.email = match[1];
+              }
+              if (line.includes('address') && line.includes(':')) {
+                const match = line.match(/address\s*:\s*"([^"]+)"/);
+                if (match) variables.address = match[1];
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error parsing variables:', e);
+        }
+        
+        // Use extracted variables or fallback to direct fields
+        const businessName = variables.business_name || log.business_name || 'N/A';
+        const firstName = variables.first_name || '';
+        const lastName = variables.last_name || '';
+        const callerName = firstName && lastName ? `${firstName} ${lastName}` : log.caller_name || 'N/A';
+        const email = variables.email || log.email || 'N/A';
+        const address = variables.address || 'N/A';
+        
+        // Extract service info from business_type or other fields
+        const serviceInfo = log.business_type || 'N/A';
         
         return {
           id: log.id,
-          business_id: log.user_id || 'N/A',
-          company_name: log.business_name || 'N/A',
+          business_id: businessId,
+          company_name: businessName,
           call_summary: log.message || 'No summary available',
           transcript: log.transcript || 'No transcript available',
-          caller_name: log.caller_name || 'N/A',
+          caller_name: callerName,
           phone_number: log.phone_number || 'N/A',
-          address: 'N/A', // Not available in current schema
-          email: log.email || 'N/A',
-          service_info: 'N/A', // Not available in current schema
-          appointment_datetime: 'N/A', // Not available in current schema
+          address: address,
+          email: email,
+          service_info: serviceInfo,
+          appointment_datetime: 'N/A', // Would need to parse from transcript
           call_datetime: new Date(log.created_at).toLocaleString(),
-          first_name: firstName,
-          last_name: lastName
+          first_name: firstName || 'N/A',
+          last_name: lastName || 'N/A'
         };
       });
 
