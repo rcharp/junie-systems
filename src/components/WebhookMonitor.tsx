@@ -61,7 +61,10 @@ export const WebhookMonitor = () => {
               !line.includes('services :') &&
               !line.includes('business_address') &&
               !line.includes('business_hours') &&
-              !line.includes('available_times')
+              !line.includes('available_times') &&
+              !line.includes('service_names :') &&
+              !line.includes('service_prices :') &&
+              !line.includes('business_id :')
             )
             .map(line => {
               // Format speaker lines with clean labels
