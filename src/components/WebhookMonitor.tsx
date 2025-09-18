@@ -148,7 +148,20 @@ export const WebhookMonitor = () => {
   };
 
   const handleClearAll = async () => {
-    if (!confirm('Are you sure you want to clear all webhook data? This action cannot be undone.')) {
+    // First confirmation
+    if (!confirm('⚠️ WARNING: This will permanently delete ALL webhook data from the database. Are you absolutely sure?')) {
+      return;
+    }
+
+    // Second confirmation
+    if (!confirm('💣 SECOND WARNING: This action cannot be undone! All call logs, transcripts, and customer data will be lost forever. Continue?')) {
+      return;
+    }
+
+    // Third confirmation - make them type DELETE
+    const confirmText = prompt('🔥 FINAL WARNING: Type "DELETE" in capital letters to confirm you want to permanently destroy all webhook data:');
+    if (confirmText !== 'DELETE') {
+      alert('Deletion cancelled. You must type "DELETE" exactly to proceed.');
       return;
     }
 
@@ -163,15 +176,15 @@ export const WebhookMonitor = () => {
 
       setWebhookData([]);
       toast({
-        title: "Success",
-        description: "All webhook data has been cleared"
+        title: "💥 Complete Destruction",
+        description: "All webhook data has been permanently deleted from the database"
       });
     } catch (error) {
       console.error('Error clearing webhook data:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to clear webhook data"
+        description: "Failed to delete webhook data"
       });
     } finally {
       setLoading(false);
@@ -228,8 +241,8 @@ export const WebhookMonitor = () => {
               onClick={handleClearAll}
               disabled={loading}
             >
-              <Trash2 className="h-4 w-4" />
-              Clear All
+              <Trash2 className="h-4 w-4 mr-1" />
+              💣 DELETE ALL
             </Button>
           </div>
         </div>
