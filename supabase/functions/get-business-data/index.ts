@@ -241,7 +241,7 @@ serve(async (req) => {
     // Normalize the business address and parse JSON fields before sending
     const normalizedData = {
       ...businessData,
-      webhook_id: profileData?.webhook_id,
+      business_id: profileData?.webhook_id,
       business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
       services_offered: businessData.services_offered ? JSON.parse(businessData.services_offered).map(service => ({
         name: service.name,
