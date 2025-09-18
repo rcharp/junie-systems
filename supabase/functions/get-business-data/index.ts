@@ -190,11 +190,14 @@ serve(async (req) => {
       .maybeSingle();
 
     // Fetch webhook_id from user_profiles
-    const { data: profileData } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from('user_profiles')
       .select('webhook_id')
       .eq('id', userId)
       .single();
+
+    console.log('Profile data:', profileData);
+    console.log('Profile error:', profileError);
 
     if (error) {
       console.error('Database error:', error);
@@ -251,6 +254,9 @@ serve(async (req) => {
       business_hours: businessData.business_hours ? JSON.parse(businessData.business_hours) : [],
       calendar_availability: calendarAvailability
     };
+
+    console.log('Final normalized data business_id:', normalizedData.business_id);
+    console.log('Final response:', JSON.stringify(normalizedData, null, 2));
 
     return new Response(
       JSON.stringify(normalizedData),
