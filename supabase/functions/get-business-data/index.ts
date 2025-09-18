@@ -194,7 +194,7 @@ serve(async (req) => {
       .from('user_profiles')
       .select('webhook_id')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     console.log('Profile data:', profileData);
     console.log('Profile error:', profileError);
