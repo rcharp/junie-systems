@@ -182,6 +182,22 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
         
         const cleanSummary = createCallSummary(log, metadata);
         
+        // Format appointment datetime for display in the top section
+        const formatDisplayDateTime = (appointmentDetails: string) => {
+          if (!appointmentDetails || appointmentDetails === 'Not scheduled') return 'Not scheduled';
+          
+          try {
+            const isoDate = parseISO(appointmentDetails);
+            if (isValid(isoDate)) {
+              return format(isoDate, 'EEEE, MMMM do, yyyy \'at\' h:mma');
+            }
+          } catch (error) {
+            console.warn('Error parsing ISO date for display:', error);
+          }
+          
+          return appointmentDetails;
+        };
+        
         // Parse name parts
         const nameParts = (log.caller_name || '').split(' ');
         const firstName = nameParts[0] || 'N/A';
@@ -198,7 +214,7 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
           address: callerAddress,
           email: log.email || 'N/A',
           service_info: serviceRequested,
-          appointment_datetime: appointmentDetails,
+          appointment_datetime: formatDisplayDateTime(appointmentDetails),
           call_datetime: new Date(log.created_at).toLocaleString(),
           first_name: firstName,
           last_name: lastName
