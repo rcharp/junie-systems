@@ -120,7 +120,7 @@ export const WebhookMonitor = () => {
                   }
                   
                   if (isValid(parsedDate)) {
-                    return format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' h:mmaa');
+                    return format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' h:mma');
                   }
                 } catch (error) {
                   console.warn('Error parsing appointment date:', error);
