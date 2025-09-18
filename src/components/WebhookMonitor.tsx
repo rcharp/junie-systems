@@ -86,7 +86,8 @@ export const WebhookMonitor = () => {
           const phoneNumber = log.phone_number || 'N/A';
           const address = metadata.caller_address || 'N/A';
           const appointmentScheduled = metadata.appointment_scheduled;
-          const serviceRequested = metadata.service_requested || log.business_type || 'N/A';
+          const serviceRequested = metadata.service_requested || log.business_type || 'general inquiry';
+          const displayService = serviceRequested === 'N/A' ? 'general inquiry' : serviceRequested;
           const appointmentDetails = metadata.appointment_details;
           
           // Format appointment date/time if available
@@ -136,14 +137,14 @@ export const WebhookMonitor = () => {
           
           // Create introductory sentence
           const appointmentStatus = appointmentScheduled ? 'and scheduled an appointment' : 'but did not schedule an appointment';
-          const introSentence = `${callerName} called asking about ${serviceRequested} ${appointmentStatus}.`;
+          const introSentence = `${callerName} called asking about ${displayService} ${appointmentStatus}.`;
           
           return `${introSentence}
 
 Name: ${callerName}
 Address: ${address}
 Phone Number: ${phoneNumber}
-Service: ${serviceRequested}
+Service: ${displayService}
 Appointment scheduled?: ${appointmentScheduled ? 'Yes' : 'No'}
 Appointment Date/Time: ${formattedAppointmentDateTime}`;
         };
