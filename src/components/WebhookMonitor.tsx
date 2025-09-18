@@ -240,12 +240,8 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
   };
 
   const handleDeleteSingle = async (callLogId: string) => {
-    // Double confirmation for single deletion
-    if (!confirm('⚠️ WARNING: This will permanently delete this call log. Are you sure?')) {
-      return;
-    }
-
-    if (!confirm('💣 FINAL WARNING: This action cannot be undone! Continue?')) {
+    // Single confirmation for deletion
+    if (!confirm('Are you sure you want to delete this call log? This action cannot be undone.')) {
       return;
     }
 
@@ -259,11 +255,11 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
 
       if (error) throw error;
 
-      // Remove the deleted item from local state
+      // Remove the deleted item from local state immediately
       setWebhookData(prev => prev.filter(item => item.id !== callLogId));
       
       toast({
-        title: "🗑️ Call Log Deleted",
+        title: "Call Log Deleted",
         description: "Call log has been permanently deleted"
       });
     } catch (error) {
