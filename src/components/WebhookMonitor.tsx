@@ -76,12 +76,50 @@ export const WebhookMonitor = () => {
             .replace(/\n{3,}/g, '\n\n') // Remove excess line breaks
           : 'No transcript available';
 
-        // Create a cleaner call summary with better formatting
-        const cleanSummary = log.message ? 
-          log.message
-            .replace(/\. /g, '.\n\n') // Add line breaks after sentences
-            .replace(/: /g, ':\n  ') // Add indentation after colons
-          : 'Customer inquiry';
+        // Create a comprehensive call summary in plain English
+        const createCallSummary = (log: any, metadata: any) => {
+          const callerName = log.caller_name || 'Unknown caller';
+          const phoneNumber = log.phone_number || 'no phone provided';
+          const email = log.email || 'no email provided';
+          const address = metadata.caller_address || 'no address provided';
+          const appointmentScheduled = metadata.appointment_scheduled;
+          const serviceRequested = metadata.service_requested || log.business_type || 'general inquiry';
+          
+          let summary = `${callerName} called `;
+          
+          // Add what they called about
+          if (serviceRequested && serviceRequested !== 'N/A') {
+            summary += `requesting ${serviceRequested} service. `;
+          } else {
+            summary += `with a general inquiry. `;
+          }
+          
+          // Add contact information provided
+          summary += `They provided their contact information: phone ${phoneNumber}`;
+          if (email && email !== 'N/A') {
+            summary += `, email ${email}`;
+          }
+          if (address && address !== 'N/A') {
+            summary += `, and address at ${address}`;
+          }
+          summary += '. ';
+          
+          // Add appointment status
+          if (appointmentScheduled) {
+            summary += `An appointment was successfully scheduled. `;
+          } else {
+            summary += `No appointment was scheduled during this call. `;
+          }
+          
+          // Add any additional context from the original message
+          if (log.message && log.message !== 'Customer inquiry' && log.message.length > 20) {
+            summary += `Additional details: ${log.message.substring(0, 200)}`;
+          }
+          
+          return summary;
+        };
+        
+        const cleanSummary = createCallSummary(log, metadata);
         
         // Parse name parts
         const nameParts = (log.caller_name || '').split(' ');
