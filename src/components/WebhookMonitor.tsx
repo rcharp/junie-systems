@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Webhook, Activity } from 'lucide-react';
+import { RefreshCw, Webhook, Activity, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface WebhookData {
@@ -82,6 +82,37 @@ export const WebhookMonitor = () => {
     fetchWebhookData();
   };
 
+  const handleClearAll = async () => {
+    if (!confirm('Are you sure you want to clear all webhook data? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { error } = await supabase
+        .from('call_logs')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
+
+      if (error) throw error;
+
+      setWebhookData([]);
+      toast({
+        title: "Success",
+        description: "All webhook data has been cleared"
+      });
+    } catch (error) {
+      console.error('Error clearing webhook data:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to clear webhook data"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchWebhookData();
 
@@ -125,6 +156,15 @@ export const WebhookMonitor = () => {
               disabled={loading}
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleClearAll}
+              disabled={loading}
+            >
+              <Trash2 className="h-4 w-4" />
+              Clear All
             </Button>
           </div>
         </div>
