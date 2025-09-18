@@ -8,13 +8,19 @@ import { useToast } from '@/hooks/use-toast';
 
 interface WebhookData {
   id: string;
-  call_id: string;
-  status: string;
+  business_id: string;
+  company_name: string;
+  call_summary: string;
   transcript: string;
-  duration: number;
-  recording_url: string;
-  metadata: any;
-  received_at: string;
+  caller_name: string;
+  phone_number: string;
+  address: string;
+  email: string;
+  service_info: string;
+  appointment_datetime: string;
+  call_datetime: string;
+  first_name: string;
+  last_name: string;
 }
 
 export const WebhookMonitor = () => {
@@ -35,16 +41,28 @@ export const WebhookMonitor = () => {
       if (logsError) throw logsError;
 
       // Transform call logs to webhook data format
-      const transformedData: WebhookData[] = (logs || []).map(log => ({
-        id: log.id,
-        call_id: log.call_id || 'N/A',
-        status: log.call_status || 'unknown',
-        transcript: log.transcript || '',
-        duration: log.call_duration || 0,
-        recording_url: log.recording_url || '',
-        metadata: log.metadata || {},
-        received_at: log.created_at
-      }));
+      const transformedData: WebhookData[] = (logs || []).map(log => {
+        const nameParts = (log.caller_name || '').split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
+        return {
+          id: log.id,
+          business_id: log.user_id || 'N/A',
+          company_name: log.business_name || 'N/A',
+          call_summary: log.message || 'No summary available',
+          transcript: log.transcript || 'No transcript available',
+          caller_name: log.caller_name || 'N/A',
+          phone_number: log.phone_number || 'N/A',
+          address: 'N/A', // Not available in current schema
+          email: log.email || 'N/A',
+          service_info: 'N/A', // Not available in current schema
+          appointment_datetime: 'N/A', // Not available in current schema
+          call_datetime: new Date(log.created_at).toLocaleString(),
+          first_name: firstName,
+          last_name: lastName
+        };
+      });
 
       setWebhookData(transformedData);
     } catch (error) {
@@ -78,25 +96,6 @@ export const WebhookMonitor = () => {
     };
   }, [autoRefresh]);
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'completed':
-        return 'default';
-      case 'failed':
-        return 'destructive';
-      case 'in_progress':
-        return 'secondary';
-      default:
-        return 'outline';
-    }
-  };
-
-  const formatDuration = (seconds: number) => {
-    if (seconds === 0) return 'N/A';
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   return (
     <Card>
@@ -136,56 +135,68 @@ export const WebhookMonitor = () => {
             <div key={data.id} className="p-4 border rounded-lg bg-muted/30">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <Badge variant={getStatusColor(data.status)}>
-                    {data.status}
-                  </Badge>
-                  <Badge variant="outline">
-                    Call ID: {data.call_id}
-                  </Badge>
-                  {data.duration > 0 && (
-                    <Badge variant="secondary">
-                      {formatDuration(data.duration)}
-                    </Badge>
-                  )}
+                  <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
                 </div>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(data.received_at).toLocaleString()}
-                </span>
               </div>
               
-              <div className="space-y-2">
-                {data.transcript && (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="space-y-2">
                   <div>
-                    <h4 className="text-sm font-medium mb-1">Transcript:</h4>
-                    <p className="text-sm bg-background p-2 rounded border">
-                      {data.transcript.substring(0, 200)}
-                      {data.transcript.length > 200 && '...'}
-                    </p>
+                    <h4 className="text-sm font-medium text-muted-foreground">Business ID</h4>
+                    <p className="text-sm">{data.business_id}</p>
                   </div>
-                )}
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">Company Name</h4>
+                    <p className="text-sm">{data.company_name}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">Caller Name</h4>
+                    <p className="text-sm">{data.caller_name}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">First Name</h4>
+                    <p className="text-sm">{data.first_name}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">Last Name</h4>
+                    <p className="text-sm">{data.last_name}</p>
+                  </div>
+                </div>
                 
-                {data.recording_url && (
+                <div className="space-y-2">
                   <div>
-                    <h4 className="text-sm font-medium mb-1">Recording:</h4>
-                    <a 
-                      href={data.recording_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-xs text-primary hover:underline"
-                    >
-                      {data.recording_url}
-                    </a>
+                    <h4 className="text-sm font-medium text-muted-foreground">Phone Number</h4>
+                    <p className="text-sm">{data.phone_number}</p>
                   </div>
-                )}
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">Email Address</h4>
+                    <p className="text-sm">{data.email}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">Address</h4>
+                    <p className="text-sm">{data.address}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">Service Information</h4>
+                    <p className="text-sm">{data.service_info}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">Appointment Date/Time</h4>
+                    <p className="text-sm">{data.appointment_datetime}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Call Summary</h4>
+                  <p className="text-sm bg-background p-2 rounded border">{data.call_summary}</p>
+                </div>
                 
-                {data.metadata && Object.keys(data.metadata).length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium mb-1">Metadata:</h4>
-                    <pre className="text-xs bg-background p-2 rounded border overflow-x-auto">
-                      {JSON.stringify(data.metadata, null, 2)}
-                    </pre>
-                  </div>
-                )}
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Full Transcript</h4>
+                  <p className="text-sm bg-background p-2 rounded border max-h-32 overflow-y-auto">{data.transcript}</p>
+                </div>
               </div>
             </div>
           ))}
