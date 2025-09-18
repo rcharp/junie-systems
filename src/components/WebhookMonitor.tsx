@@ -64,15 +64,15 @@ export const WebhookMonitor = () => {
               !line.includes('available_times')
             )
             .map(line => {
-              // Format speaker lines with better spacing
+              // Format speaker lines with clean labels
               if (line.includes('Assistant:')) {
-                return `🤖 Assistant:\n   ${line.replace('Assistant:', '').trim()}\n`;
+                return `AI assistant: ${line.replace('Assistant:', '').trim()}`;
               } else if (line.includes('Caller:')) {
-                return `👤 Caller:\n   ${line.replace('Caller:', '').trim()}\n`;
+                return `Caller: ${line.replace('Caller:', '').trim()}`;
               }
               return line;
             })
-            .join('\n')
+            .join('\n\n') // Add spacing between exchanges
             .replace(/\n{3,}/g, '\n\n') // Remove excess line breaks
           : 'No transcript available';
 
