@@ -9,10 +9,15 @@ import { toast } from '@/hooks/use-toast';
 interface BusinessDataRequest {
   id: string;
   business_id: string;
-  company_name: string;
-  request_time: string;
-  status: string;
-  response_data?: any;
+  request_type: string;
+  request_source: string;
+  request_data: any;
+  response_status: number;
+  response_data: any;
+  user_agent: string | null;
+  ip_address: string | null;
+  created_at: string;
+  company_name?: string;
 }
 
 export const BusinessDataMonitor: React.FC = () => {
@@ -23,9 +28,41 @@ export const BusinessDataMonitor: React.FC = () => {
   const fetchBusinessDataRequests = async () => {
     setLoading(true);
     try {
-      // In a real implementation, you would track business data requests in a separate table
-      // For now, this component will show empty state until actual POST requests are tracked
-      setRequestData([]);
+      const { data, error } = await supabase
+        .from('business_data_requests')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      // Get business names for each request
+      const businessIds = [...new Set(data?.map(item => item.business_id))];
+      const { data: businessData } = await supabase
+        .from('business_settings')
+        .select('id, business_name')
+        .in('id', businessIds);
+
+      const businessMap = businessData?.reduce((acc, business) => {
+        acc[business.id] = business.business_name || 'Unknown';
+        return acc;
+      }, {} as Record<string, string>) || {};
+
+      const formattedData: BusinessDataRequest[] = data?.map(item => ({
+        id: item.id,
+        business_id: item.business_id,
+        request_type: item.request_type,
+        request_source: item.request_source,
+        request_data: item.request_data,
+        response_status: item.response_status,
+        response_data: item.response_data,
+        user_agent: item.user_agent,
+        ip_address: item.ip_address as string | null,
+        created_at: item.created_at,
+        company_name: businessMap[item.business_id] || 'Unknown'
+      })) || [];
+
+      setRequestData(formattedData);
     } catch (error) {
       console.error('Error fetching business data requests:', error);
       toast({
@@ -132,16 +169,16 @@ export const BusinessDataMonitor: React.FC = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">POST</Badge>
-                        <span className="text-sm font-medium">/business-data</span>
+                        <Badge variant="outline">{request.request_source.toUpperCase()}</Badge>
+                        <span className="text-sm font-medium">{request.request_type}</span>
                         <Badge 
-                          variant={request.status === 'success' ? 'default' : 'destructive'}
+                          variant={request.response_status === 200 ? 'default' : 'destructive'}
                         >
-                          {request.status}
+                          {request.response_status}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {formatTime(request.request_time)}
+                        {formatTime(request.created_at)}
                       </p>
                     </div>
                     <Button

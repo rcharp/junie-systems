@@ -62,6 +62,48 @@ export type Database = {
         }
         Relationships: []
       }
+      business_data_requests: {
+        Row: {
+          business_id: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          request_data: Json | null
+          request_source: string
+          request_type: string
+          response_data: Json | null
+          response_status: number
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          request_data?: Json | null
+          request_source?: string
+          request_type?: string
+          response_data?: Json | null
+          response_status?: number
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          request_data?: Json | null
+          request_source?: string
+          request_type?: string
+          response_data?: Json | null
+          response_status?: number
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       business_settings: {
         Row: {
           ai_personality: string | null

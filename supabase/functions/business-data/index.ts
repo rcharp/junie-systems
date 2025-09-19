@@ -148,6 +148,26 @@ serve(async (req) => {
     // Create Supabase client with service role key for server-side access
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Helper function to log business data requests
+    const logBusinessDataRequest = async (businessId: string, requestType: string, requestSource: string, requestData: any, responseStatus: number, responseData: any) => {
+      try {
+        await supabase
+          .from('business_data_requests')
+          .insert({
+            business_id: businessId,
+            request_type: requestType,
+            request_source: requestSource,
+            request_data: requestData,
+            response_status: responseStatus,
+            response_data: responseData,
+            user_agent: req.headers.get('user-agent'),
+            ip_address: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for')
+          });
+      } catch (error) {
+        console.error('Error logging business data request:', error);
+      }
+    };
+
     let businessId: string | undefined;
     let isElevenLabsRequest = false;
     
@@ -320,6 +340,16 @@ serve(async (req) => {
 
       console.log('ElevenLabs response being sent:', JSON.stringify(elevenLabsResponse, null, 2));
       
+      // Log the ElevenLabs request
+      await logBusinessDataRequest(
+        businessId,
+        'conversation_initiation',
+        'elevenlabs',
+        { caller_id: req.headers.get('caller_id'), agent_id: req.headers.get('agent_id') },
+        200,
+        elevenLabsResponse
+      );
+      
       return new Response(
         JSON.stringify(elevenLabsResponse),
         { 
@@ -352,6 +382,16 @@ serve(async (req) => {
     };
 
     console.log('Regular response being sent:', JSON.stringify(wrappedResponse, null, 2));
+
+    // Log the regular business data request
+    await logBusinessDataRequest(
+      businessId,
+      'business_data',
+      req.method.toLowerCase(),
+      { source: 'api_call' },
+      200,
+      wrappedResponse
+    );
 
     return new Response(
       JSON.stringify(wrappedResponse),
