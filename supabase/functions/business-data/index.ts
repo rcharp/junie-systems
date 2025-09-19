@@ -289,7 +289,16 @@ serve(async (req) => {
 
     const wrappedResponse = {
       type: "conversation_initiation_client_data",
-      dynamic_variables: normalizedData
+      dynamic_variables: {
+        user_id: normalizedData.user_id,
+        business_name: normalizedData.business_name || "Unknown Business",
+        business_phone: normalizedData.business_phone || "",
+        business_address: normalizedData.business_address || "",
+        business_type: normalizedData.business_type || "",
+        services_offered: Array.isArray(normalizedData.services_offered) ? normalizedData.services_offered : [],
+        business_hours: Array.isArray(normalizedData.business_hours) ? normalizedData.business_hours : [],
+        calendar_availability: normalizedData.calendar_availability || null
+      }
     };
 
     console.log('Final response being sent:', JSON.stringify(wrappedResponse, null, 2));
