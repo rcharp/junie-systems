@@ -169,23 +169,16 @@ serve(async (req) => {
     };
 
     let businessId: string | undefined;
-    let isElevenLabsRequest = false;
     
     if (req.method === 'POST') {
-      // Get business_id from POST body
+      // Get business_id from POST body or headers for ElevenLabs requests
       const body = await req.json();
       console.log('Request body:', body);
       
-      // Check if this is an ElevenLabs conversation initiation request
-      if (body.caller_id || body.agent_id || body.called_number) {
-        console.log('ElevenLabs conversation initiation request detected');
-        isElevenLabsRequest = true;
-        // For ElevenLabs requests, get business_id from headers
-        businessId = req.headers.get('business_id');
-        console.log('business_id from headers for ElevenLabs request:', businessId);
-      } else {
-        businessId = body.business_id;
-      }
+      console.log('ElevenLabs conversation initiation request detected');
+      // Get business_id from headers for ElevenLabs requests
+      businessId = req.headers.get('business_id');
+      console.log('business_id from headers for ElevenLabs request:', businessId);
     } else {
       // Get business_id from GET query parameters
       const url = new URL(req.url);
@@ -193,12 +186,6 @@ serve(async (req) => {
       console.log('Query parameters:', Object.fromEntries(url.searchParams));
     }
 
-    // Also check headers for business_id (fallback for other webhook formats)
-    if (!businessId && !isElevenLabsRequest) {
-      businessId = req.headers.get('business_id');
-      console.log('business_id from headers (fallback):', businessId);
-    }
-    
     console.log('Fetching business data for business_id:', businessId);
 
     if (!businessId) {
@@ -324,85 +311,38 @@ serve(async (req) => {
       return `Monday-Friday ${openTime}-${closeTime}`;
     };
 
-    // If this is an ElevenLabs conversation initiation request, return the specific format they expect
-    if (isElevenLabsRequest) {
-      const elevenLabsResponse = {
-        type: "conversation_initiation_client_data",
-        dynamic_variables: {
-          business_name: businessData.business_name || "Our Business",
-          business_phone: businessData.business_phone || "",
-          business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : "",
-          business_type: businessData.business_type || "",
-          available_hours: formatBusinessHours(businessHours),
-          services: businessData.pricing_structure || JSON.stringify(servicesOffered),
-          business_description: businessData.business_description || ""
-        }
-      };
-
-      console.log('ElevenLabs response being sent:', JSON.stringify(elevenLabsResponse, null, 2));
-      
-      // Log the ElevenLabs request
-      await logBusinessDataRequest(
-        businessId,
-        'conversation_initiation',
-        'elevenlabs',
-        { 
-          caller_id: req.headers.get('caller_id'), 
-          agent_id: req.headers.get('agent_id'),
-          business_type: businessData.business_type 
-        },
-        200,
-        elevenLabsResponse
-      );
-      
-      return new Response(
-        JSON.stringify(elevenLabsResponse),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // For regular business data requests (not ElevenLabs), return the full normalized data
-    const normalizedData = {
-      ...businessData,
-      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
-      services_offered: servicesOffered,
-      business_hours: businessHours,
-      calendar_availability: calendarAvailability
-    };
-
-    const wrappedResponse = {
+    // Return ElevenLabs conversation initiation format
+    const elevenLabsResponse = {
       type: "conversation_initiation_client_data",
       dynamic_variables: {
-        user_id: normalizedData.user_id,
-        business_name: normalizedData.business_name || "Unknown Business",
-        business_phone: normalizedData.business_phone || "",
-        business_address: normalizedData.business_address || "",
-        business_type: normalizedData.business_type || "",
-        services_offered: Array.isArray(normalizedData.services_offered) ? normalizedData.services_offered : [],
-        business_hours: Array.isArray(normalizedData.business_hours) ? normalizedData.business_hours : [],
-        calendar_availability: normalizedData.calendar_availability || null
+        business_name: businessData.business_name || "Our Business",
+        business_phone: businessData.business_phone || "",
+        business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : "",
+        business_type: businessData.business_type || "",
+        available_hours: formatBusinessHours(businessHours),
+        services: businessData.pricing_structure || JSON.stringify(servicesOffered),
+        business_description: businessData.business_description || ""
       }
     };
 
-    console.log('Regular response being sent:', JSON.stringify(wrappedResponse, null, 2));
-
-    // Log the regular business data request
+    console.log('ElevenLabs response being sent:', JSON.stringify(elevenLabsResponse, null, 2));
+    
+    // Log the ElevenLabs request
     await logBusinessDataRequest(
       businessId,
-      'business_data',
-      req.method.toLowerCase(),
+      'conversation_initiation',
+      'elevenlabs',
       { 
-        source: 'api_call',
+        caller_id: req.headers.get('caller_id'), 
+        agent_id: req.headers.get('agent_id'),
         business_type: businessData.business_type 
       },
       200,
-      wrappedResponse
+      elevenLabsResponse
     );
-
+    
     return new Response(
-      JSON.stringify(wrappedResponse),
+      JSON.stringify(elevenLabsResponse),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
