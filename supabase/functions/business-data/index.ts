@@ -152,7 +152,7 @@ serve(async (req) => {
     const body = await req.json();
     const businessId = body.business_id;
 
-    console.log('Query parameters:', Object.fromEntries(url.searchParams));
+    console.log('Request body:', body);
     console.log('Fetching business data for business_id:', businessId);
 
     if (!businessId) {
