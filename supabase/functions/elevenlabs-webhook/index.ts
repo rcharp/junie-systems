@@ -27,7 +27,7 @@ serve(async (req) => {
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const BLAND_WEBHOOK_SIGNATURE = Deno.env.get('BLAND_WEBHOOK_SIGNATURE');
+    const ELEVENLABS_WEBHOOK_SIGNATURE = Deno.env.get('ELEVENLABS_WEBHOOK_SIGNATURE');
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -36,17 +36,17 @@ serve(async (req) => {
     console.log('Raw body received:', rawBody);
     
     // Check for webhook signature (make it optional for debugging)
-    const providedSignature = req.headers.get('x-bland-signature') || 
-                             req.headers.get('bland-signature') || 
+    const providedSignature = req.headers.get('x-elevenlabs-signature') || 
+                             req.headers.get('elevenlabs-signature') || 
                              req.headers.get('signature') ||
                              req.headers.get('x-signature');
     
     console.log('Provided signature:', providedSignature);
-    console.log('Expected signature:', BLAND_WEBHOOK_SIGNATURE);
+    console.log('Expected signature:', ELEVENLABS_WEBHOOK_SIGNATURE);
 
     // Only verify signature if we have both provided and expected signatures
-    if (BLAND_WEBHOOK_SIGNATURE && providedSignature) {
-      if (providedSignature !== BLAND_WEBHOOK_SIGNATURE) {
+    if (ELEVENLABS_WEBHOOK_SIGNATURE && providedSignature) {
+      if (providedSignature !== ELEVENLABS_WEBHOOK_SIGNATURE) {
         console.error('Invalid webhook signature:', providedSignature);
         return new Response(JSON.stringify({ 
           success: false,
@@ -57,7 +57,7 @@ serve(async (req) => {
         });
       }
       console.log('Webhook signature verified successfully');
-    } else if (BLAND_WEBHOOK_SIGNATURE && !providedSignature) {
+    } else if (ELEVENLABS_WEBHOOK_SIGNATURE && !providedSignature) {
       console.warn('No webhook signature provided, but signature verification is enabled');
       // For debugging, let's continue processing but log the warning
     } else {

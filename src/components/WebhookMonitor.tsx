@@ -299,7 +299,7 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
               Incoming Webhook Data
             </CardTitle>
             <CardDescription>
-              Real-time display of POST data received from Bland AI webhook
+              Real-time display of POST data received from ElevenLabs webhook
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -406,7 +406,7 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
                 Waiting for POST requests to the webhook endpoint...
               </p>
               <p className="text-xs text-muted-foreground">
-                Data will appear here when calls are processed through your Bland AI pathway
+                Data will appear here when calls are processed through your ElevenLabs conversational AI
               </p>
             </div>
           )}
