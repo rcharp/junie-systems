@@ -264,8 +264,13 @@ serve(async (req) => {
       calendar_availability: calendarAvailability
     };
 
+    const wrappedResponse = {
+      type: "conversation_initiation_client_data",
+      dynamic_variables: normalizedData
+    };
+
     return new Response(
-      JSON.stringify(normalizedData),
+      JSON.stringify(wrappedResponse),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
