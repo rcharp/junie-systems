@@ -160,8 +160,9 @@ serve(async (req) => {
       if (body.caller_id || body.agent_id || body.called_number) {
         console.log('ElevenLabs conversation initiation request detected');
         isElevenLabsRequest = true;
-        // Use the hardcoded business_id for ElevenLabs requests
-        businessId = "5a8a338e-d401-4a14-a109-6974859ce5b8";
+        // For ElevenLabs requests, get business_id from headers
+        businessId = req.headers.get('business_id');
+        console.log('business_id from headers for ElevenLabs request:', businessId);
       } else {
         businessId = body.business_id;
       }
@@ -175,7 +176,7 @@ serve(async (req) => {
     // Also check headers for business_id (fallback for other webhook formats)
     if (!businessId && !isElevenLabsRequest) {
       businessId = req.headers.get('business_id');
-      console.log('business_id from headers:', businessId);
+      console.log('business_id from headers (fallback):', businessId);
     }
     
     console.log('Fetching business data for business_id:', businessId);
