@@ -258,15 +258,32 @@ serve(async (req) => {
     console.log('Successfully retrieved business data for business_id:', businessId);
 
     // Normalize the business address and parse JSON fields before sending
-    const normalizedData = {
-      ...businessData,
-      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
-      services_offered: businessData.services_offered ? JSON.parse(businessData.services_offered).map(service => ({
+    let servicesOffered = [];
+    let businessHours = [];
+    
+    try {
+      servicesOffered = businessData.services_offered ? JSON.parse(businessData.services_offered).map(service => ({
         name: service.name,
         price: service.price,
         description: service.description
-      })) : [],
-      business_hours: businessData.business_hours ? JSON.parse(businessData.business_hours) : [],
+      })) : [];
+    } catch (error) {
+      console.error('Error parsing services_offered:', error, businessData.services_offered);
+      servicesOffered = [];
+    }
+    
+    try {
+      businessHours = businessData.business_hours ? JSON.parse(businessData.business_hours) : [];
+    } catch (error) {
+      console.error('Error parsing business_hours:', error, businessData.business_hours);
+      businessHours = [];
+    }
+
+    const normalizedData = {
+      ...businessData,
+      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
+      services_offered: servicesOffered,
+      business_hours: businessHours,
       calendar_availability: calendarAvailability
     };
 
@@ -274,6 +291,8 @@ serve(async (req) => {
       type: "conversation_initiation_client_data",
       dynamic_variables: normalizedData
     };
+
+    console.log('Final response being sent:', JSON.stringify(wrappedResponse, null, 2));
 
     return new Response(
       JSON.stringify(wrappedResponse),
