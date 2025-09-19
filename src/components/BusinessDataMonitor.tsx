@@ -23,28 +23,9 @@ export const BusinessDataMonitor: React.FC = () => {
   const fetchBusinessDataRequests = async () => {
     setLoading(true);
     try {
-      // For demo purposes, we'll create mock data since we don't have a dedicated table for tracking these requests
-      // In a real implementation, you would track these in a separate table
-      const mockData: BusinessDataRequest[] = [
-        {
-          id: '1',
-          business_id: 'bs_123',
-          company_name: 'Acme Corp',
-          request_time: new Date().toISOString(),
-          status: 'success',
-          response_data: { services: 3, settings: 'configured' }
-        },
-        {
-          id: '2',
-          business_id: 'bs_456',
-          company_name: 'Tech Solutions Inc',
-          request_time: new Date(Date.now() - 300000).toISOString(),
-          status: 'success',
-          response_data: { services: 1, settings: 'configured' }
-        }
-      ];
-      
-      setRequestData(mockData);
+      // In a real implementation, you would track business data requests in a separate table
+      // For now, this component will show empty state until actual POST requests are tracked
+      setRequestData([]);
     } catch (error) {
       console.error('Error fetching business data requests:', error);
       toast({
@@ -141,8 +122,8 @@ export const BusinessDataMonitor: React.FC = () => {
           {requestData.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Database className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No business data requests yet</p>
-              <p className="text-sm">POST requests to /business-data will appear here</p>
+              <p>No business data requests received yet</p>
+              <p className="text-sm">Real POST requests to /functions/v1/business-data will appear here</p>
             </div>
           ) : (
             requestData.map((request) => (
