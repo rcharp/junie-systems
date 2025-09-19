@@ -332,6 +332,7 @@ serve(async (req) => {
           business_name: businessData.business_name || "Our Business",
           business_phone: businessData.business_phone || "",
           business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : "",
+          business_type: businessData.business_type || "",
           available_hours: formatBusinessHours(businessHours),
           services: businessData.pricing_structure || JSON.stringify(servicesOffered),
           business_description: businessData.business_description || ""
