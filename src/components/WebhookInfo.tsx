@@ -15,7 +15,7 @@ export const WebhookInfo = () => {
   const [regenerating, setRegenerating] = useState(false);
 
   const webhookUrl = webhookId 
-    ? `https://urkoxlolimjjadbdckco.supabase.co/functions/v1/bland-webhook?webhook_id=${webhookId}`
+    ? `https://urkoxlolimjjadbdckco.supabase.co/functions/v1/elevenlabs-webhook?webhook_id=${webhookId}`
     : '';
 
   const fetchWebhookId = async () => {
@@ -108,7 +108,7 @@ export const WebhookInfo = () => {
       <CardHeader>
         <CardTitle>Your Webhook URL</CardTitle>
         <CardDescription>
-          Use this unique URL in your Bland AI pathway to send call data to your account
+          Use this unique URL in your ElevenLabs conversational AI to send call data to your account
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -155,7 +155,7 @@ export const WebhookInfo = () => {
           <h4 className="font-medium mb-2">Configuration Instructions:</h4>
           <ol className="text-sm text-muted-foreground space-y-1">
             <li>1. Copy the webhook URL above</li>
-            <li>2. In your Bland AI pathway, add a webhook node</li>
+            <li>2. In your ElevenLabs conversational AI agent, configure the webhook</li>
             <li>3. Set the URL to the copied webhook URL</li>
             <li>4. Set method to POST</li>
             <li>5. Include call data in the payload (call_id, status, transcript, etc.)</li>
