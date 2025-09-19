@@ -27,9 +27,9 @@ export const UserWebhookList = () => {
     try {
       setLoading(true);
       
-      // Get all users first to count them
+      // Get all users with business IDs first to count them
       const { data: allUsers, error: countError } = await supabase
-        .rpc('get_users_with_emails_for_admin');
+        .rpc('get_users_with_business_ids_for_admin');
 
       if (countError) {
         console.error('Error fetching user count:', countError);
@@ -49,7 +49,7 @@ export const UserWebhookList = () => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to fetch user webhook IDs"
+        description: "Failed to fetch user business IDs"
       });
     } finally {
       setLoading(false);
@@ -62,11 +62,11 @@ export const UserWebhookList = () => {
 
   const totalPages = Math.ceil(totalUsers / usersPerPage);
 
-  const handleCopyWebhookId = (webhookId: string) => {
-    navigator.clipboard.writeText(webhookId);
+  const handleCopyBusinessId = (businessId: string) => {
+    navigator.clipboard.writeText(businessId);
     toast({
       title: "Copied!",
-      description: "Webhook ID copied to clipboard",
+      description: "Business ID copied to clipboard",
     });
   };
 
@@ -87,10 +87,10 @@ export const UserWebhookList = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          User Webhook IDs
+          User Business IDs
         </CardTitle>
         <CardDescription>
-          Paginated list of webhook IDs for each user to configure their AI answering service
+          Paginated list of business IDs for each user's business settings
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -122,13 +122,13 @@ export const UserWebhookList = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="font-mono text-sm bg-background px-3 py-1 rounded border">
-                        {user.webhook_id || 'No webhook ID'}
+                        {user.business_id || 'No business ID'}
                       </span>
-                      {user.webhook_id && (
+                      {user.business_id && (
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleCopyWebhookId(user.webhook_id)}
+                          onClick={() => handleCopyBusinessId(user.business_id)}
                         >
                           <Copy className="h-4 w-4 mr-1" />
                           Copy

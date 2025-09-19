@@ -66,9 +66,9 @@ const AdminDashboard = () => {
         .select('user_id', { count: 'exact', head: true })
         .gte('created_at', thirtyDaysAgo.toISOString());
 
-      // Fetch users with webhook IDs and emails for admin view using secure function
+      // Fetch users with business IDs and emails for admin view using secure function
       const { data: usersData, error: usersError } = await supabase
-        .rpc('get_users_with_emails_for_admin');
+        .rpc('get_users_with_business_ids_for_admin');
 
       if (usersError) {
         console.error('Error fetching users:', usersError);
@@ -225,7 +225,7 @@ const AdminDashboard = () => {
         {/* Webhook Monitor */}
         <WebhookMonitor />
 
-        {/* User Webhook IDs - Paginated */}
+        {/* User Business IDs - Paginated */}
         <div className="mt-8">
           <UserWebhookList />
         </div>
