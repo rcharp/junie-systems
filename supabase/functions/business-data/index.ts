@@ -137,17 +137,16 @@ serve(async (req) => {
     // Create Supabase client with service role key for server-side access
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user_id from URL path parameters
+    // Get business_id from URL query parameters
     const url = new URL(req.url);
-    const pathParts = url.pathname.split('/');
-    const userId = pathParts[pathParts.length - 1]; // Get the last part of the path
+    const businessId = url.searchParams.get('business_id');
 
-    console.log('URL path parts:', pathParts);
-    console.log('Fetching business data for user:', userId);
+    console.log('Query parameters:', Object.fromEntries(url.searchParams));
+    console.log('Fetching business data for business_id:', businessId);
 
-    if (!userId || userId === 'business-data') {
+    if (!businessId) {
       return new Response(
-        JSON.stringify({ error: 'User ID is required in the URL path' }),
+        JSON.stringify({ error: 'business_id parameter is required' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -155,11 +154,11 @@ serve(async (req) => {
       );
     }
 
-    // Validate that userId is a valid UUID
+    // Validate that businessId is a valid UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(userId)) {
+    if (!uuidRegex.test(businessId)) {
       return new Response(
-        JSON.stringify({ error: 'Invalid user ID format' }),
+        JSON.stringify({ error: 'Invalid business_id format' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -167,10 +166,11 @@ serve(async (req) => {
       );
     }
 
-    // Fetch business settings for the user
+    // Fetch business settings using business_id (which is the primary key)
     const { data: businessData, error } = await supabase
       .from('business_settings')
       .select(`
+        user_id,
         business_name,
         business_type,
         business_phone,
@@ -186,7 +186,7 @@ serve(async (req) => {
         appointment_booking,
         lead_capture
       `)
-      .eq('user_id', userId)
+      .eq('id', businessId)
       .maybeSingle();
 
     if (error) {
@@ -202,7 +202,7 @@ serve(async (req) => {
 
     if (!businessData) {
       return new Response(
-        JSON.stringify({ error: 'No business data found for this user' }),
+        JSON.stringify({ error: 'No business data found for this business_id' }),
         { 
           status: 404, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -214,13 +214,13 @@ serve(async (req) => {
     const { data: calendarSettings } = await supabase
       .from('google_calendar_settings')
       .select('is_connected, timezone, appointment_duration')
-      .eq('user_id', userId)
+      .eq('user_id', businessData.user_id)
       .single();
 
     let calendarAvailability = null;
     if (calendarSettings?.is_connected) {
       try {
-        const availabilityResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-availability/${userId}`);
+        const availabilityResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-availability/${businessData.user_id}`);
         if (availabilityResponse.ok) {
           calendarAvailability = await availabilityResponse.json();
         }
@@ -229,7 +229,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('Successfully retrieved business data for user:', userId);
+    console.log('Successfully retrieved business data for business_id:', businessId);
 
     // Normalize the business address and parse JSON fields before sending
     const normalizedData = {
