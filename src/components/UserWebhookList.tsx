@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 interface User {
   id: string;
   email: string;
-  webhook_id: string;
+  business_id: string;
   full_name: string;
   company_name: string;
   created_at: string;
