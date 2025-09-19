@@ -345,7 +345,11 @@ serve(async (req) => {
         businessId,
         'conversation_initiation',
         'elevenlabs',
-        { caller_id: req.headers.get('caller_id'), agent_id: req.headers.get('agent_id') },
+        { 
+          caller_id: req.headers.get('caller_id'), 
+          agent_id: req.headers.get('agent_id'),
+          business_type: businessData.business_type 
+        },
         200,
         elevenLabsResponse
       );
@@ -388,7 +392,10 @@ serve(async (req) => {
       businessId,
       'business_data',
       req.method.toLowerCase(),
-      { source: 'api_call' },
+      { 
+        source: 'api_call',
+        business_type: businessData.business_type 
+      },
       200,
       wrappedResponse
     );
