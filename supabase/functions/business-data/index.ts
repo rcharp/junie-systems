@@ -161,6 +161,12 @@ serve(async (req) => {
       businessId = url.searchParams.get('business_id');
       console.log('Query parameters:', Object.fromEntries(url.searchParams));
     }
+
+    // Also check headers for business_id (ElevenLabs might send it there)
+    if (!businessId) {
+      businessId = req.headers.get('business_id');
+      console.log('business_id from headers:', businessId);
+    }
     
     console.log('Fetching business data for business_id:', businessId);
 
