@@ -116,10 +116,10 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Only allow POST requests
-  if (req.method !== 'POST') {
+  // Allow both GET and POST requests
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return new Response(
-      JSON.stringify({ error: 'Method not allowed. Use POST.' }),
+      JSON.stringify({ error: 'Method not allowed. Use POST or GET.' }),
       { 
         status: 405, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -148,11 +148,20 @@ serve(async (req) => {
     // Create Supabase client with service role key for server-side access
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get business_id from POST body
-    const body = await req.json();
-    const businessId = body.business_id;
-
-    console.log('Request body:', body);
+    let businessId: string | undefined;
+    
+    if (req.method === 'POST') {
+      // Get business_id from POST body
+      const body = await req.json();
+      businessId = body.business_id;
+      console.log('Request body:', body);
+    } else {
+      // Get business_id from GET query parameters
+      const url = new URL(req.url);
+      businessId = url.searchParams.get('business_id');
+      console.log('Query parameters:', Object.fromEntries(url.searchParams));
+    }
+    
     console.log('Fetching business data for business_id:', businessId);
 
     if (!businessId) {
