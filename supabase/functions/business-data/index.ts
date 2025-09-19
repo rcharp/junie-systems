@@ -149,12 +149,22 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     let businessId: string | undefined;
+    let isElevenLabsRequest = false;
     
     if (req.method === 'POST') {
       // Get business_id from POST body
       const body = await req.json();
-      businessId = body.business_id;
       console.log('Request body:', body);
+      
+      // Check if this is an ElevenLabs conversation initiation request
+      if (body.caller_id || body.agent_id || body.called_number) {
+        console.log('ElevenLabs conversation initiation request detected');
+        isElevenLabsRequest = true;
+        // Use the hardcoded business_id for ElevenLabs requests
+        businessId = "5a8a338e-d401-4a14-a109-6974859ce5b8";
+      } else {
+        businessId = body.business_id;
+      }
     } else {
       // Get business_id from GET query parameters
       const url = new URL(req.url);
@@ -162,8 +172,8 @@ serve(async (req) => {
       console.log('Query parameters:', Object.fromEntries(url.searchParams));
     }
 
-    // Also check headers for business_id (ElevenLabs might send it there)
-    if (!businessId) {
+    // Also check headers for business_id (fallback for other webhook formats)
+    if (!businessId && !isElevenLabsRequest) {
       businessId = req.headers.get('business_id');
       console.log('business_id from headers:', businessId);
     }
@@ -279,6 +289,45 @@ serve(async (req) => {
       businessHours = [];
     }
 
+    // Helper function to format business hours for ElevenLabs
+    const formatBusinessHours = (hours: any[]) => {
+      if (!Array.isArray(hours) || hours.length === 0) return "Contact us for hours";
+      
+      const openDays = hours.filter(day => day.isOpen || day.enabled);
+      if (openDays.length === 0) return "Closed";
+      
+      const firstDay = openDays[0];
+      const openTime = firstDay.openTime || firstDay.start;
+      const closeTime = firstDay.closeTime || firstDay.end;
+      
+      return `Monday-Friday ${openTime}-${closeTime}`;
+    };
+
+    // If this is an ElevenLabs conversation initiation request, return the specific format they expect
+    if (isElevenLabsRequest) {
+      const elevenLabsResponse = {
+        type: "conversation_initiation_client_data",
+        dynamic_variables: {
+          business_name: businessData.business_name || "Our Business",
+          business_phone: businessData.business_phone || "",
+          business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : "",
+          available_hours: formatBusinessHours(businessHours),
+          services: businessData.pricing_structure || JSON.stringify(servicesOffered),
+          business_description: businessData.business_description || ""
+        }
+      };
+
+      console.log('ElevenLabs response being sent:', JSON.stringify(elevenLabsResponse, null, 2));
+      
+      return new Response(
+        JSON.stringify(elevenLabsResponse),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // For regular business data requests (not ElevenLabs), return the full normalized data
     const normalizedData = {
       ...businessData,
       business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
@@ -301,7 +350,7 @@ serve(async (req) => {
       }
     };
 
-    console.log('Final response being sent:', JSON.stringify(wrappedResponse, null, 2));
+    console.log('Regular response being sent:', JSON.stringify(wrappedResponse, null, 2));
 
     return new Response(
       JSON.stringify(wrappedResponse),
