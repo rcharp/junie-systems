@@ -116,6 +116,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed. Only POST requests are accepted.' }),
+      { 
+        status: 405, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -137,17 +148,16 @@ serve(async (req) => {
     // Create Supabase client with service role key for server-side access
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user_id from URL path parameters
-    const url = new URL(req.url);
-    const pathParts = url.pathname.split('/');
-    const userId = pathParts[pathParts.length - 1]; // Get the last part of the path
+    // Parse request body to get user_id
+    const requestBody = await req.json();
+    const userId = requestBody.user_id;
 
-    console.log('URL path parts:', pathParts);
+    console.log('Request body:', requestBody);
     console.log('Fetching business data for user:', userId);
 
-    if (!userId || userId === 'get-business-data') {
+    if (!userId) {
       return new Response(
-        JSON.stringify({ error: 'User ID is required in the URL path' }),
+        JSON.stringify({ error: 'user_id is required in the request body' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
