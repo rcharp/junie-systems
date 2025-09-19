@@ -116,6 +116,17 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed. Use POST.' }),
+      { 
+        status: 405, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -137,9 +148,9 @@ serve(async (req) => {
     // Create Supabase client with service role key for server-side access
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get business_id from URL query parameters
-    const url = new URL(req.url);
-    const businessId = url.searchParams.get('business_id');
+    // Get business_id from POST body
+    const body = await req.json();
+    const businessId = body.business_id;
 
     console.log('Query parameters:', Object.fromEntries(url.searchParams));
     console.log('Fetching business data for business_id:', businessId);
