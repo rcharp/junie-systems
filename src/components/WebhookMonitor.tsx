@@ -296,10 +296,10 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
           <div>
             <CardTitle className="flex items-center gap-2">
               <Webhook className="h-5 w-5" />
-              Incoming Webhook Data
+              Post-Call Data
             </CardTitle>
             <CardDescription>
-              Real-time display of POST data received from ElevenLabs webhook
+              Real-time monitoring of completed call summaries and transcripts
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">

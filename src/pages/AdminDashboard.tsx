@@ -8,6 +8,7 @@ import { toast } from '@/hooks/use-toast';
 import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft } from 'lucide-react';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { UserWebhookList } from '@/components/UserWebhookList';
+import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { useNavigate } from 'react-router-dom';
 
 interface Stats {
@@ -222,12 +223,17 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Webhook Monitor */}
-        <WebhookMonitor />
-
         {/* User Business IDs - Paginated */}
+        <UserWebhookList />
+
+        {/* Post-Call Data */}
         <div className="mt-8">
-          <UserWebhookList />
+          <WebhookMonitor />
+        </div>
+
+        {/* Business Data Requests */}
+        <div className="mt-8">
+          <BusinessDataMonitor />
         </div>
 
         {/* Availabee Info */}
