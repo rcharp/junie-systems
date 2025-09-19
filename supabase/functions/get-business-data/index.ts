@@ -241,25 +241,40 @@ serve(async (req) => {
 
     console.log('Successfully retrieved business data for user:', userId);
 
-    // Normalize the business address and parse JSON fields before sending
-    const normalizedData = {
-      ...businessData,
-      business_id: profileData?.webhook_id,
-      business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : businessData.business_address,
-      services_offered: businessData.services_offered ? JSON.parse(businessData.services_offered).map(service => ({
-        name: service.name,
-        price: service.price,
-        description: service.description
-      })) : [],
-      business_hours: businessData.business_hours ? JSON.parse(businessData.business_hours) : [],
-      calendar_availability: calendarAvailability
+    // Format business hours into a readable string
+    let availableHours = '';
+    if (businessData.business_hours) {
+      try {
+        const hours = JSON.parse(businessData.business_hours);
+        if (Array.isArray(hours) && hours.length > 0) {
+          availableHours = hours.join(', ');
+        } else if (typeof hours === 'object') {
+          // Handle object format like {"monday": "9AM-5PM", ...}
+          const hoursArray = Object.entries(hours)
+            .filter(([day, time]) => time && time !== 'Closed')
+            .map(([day, time]) => `${day.charAt(0).toUpperCase() + day.slice(1)} ${time}`);
+          availableHours = hoursArray.join(', ');
+        }
+      } catch (e) {
+        availableHours = businessData.business_hours || '';
+      }
+    }
+
+    // Format response according to the required structure
+    const responseData = {
+      type: "conversation_initiation_client_data",
+      dynamic_variables: {
+        business_name: businessData.business_name || '',
+        business_phone: businessData.business_phone || '',
+        business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : '',
+        available_hours: availableHours
+      }
     };
 
-    console.log('Final normalized data business_id:', normalizedData.business_id);
-    console.log('Final response:', JSON.stringify(normalizedData, null, 2));
+    console.log('Final response:', JSON.stringify(responseData, null, 2));
 
     return new Response(
-      JSON.stringify(normalizedData),
+      JSON.stringify(responseData),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
