@@ -24,6 +24,15 @@ interface WebhookData {
   first_name: string;
   last_name: string;
   raw_webhook_data: any;
+  customer_info: {
+    name: string;
+    phone: string;
+    email: string;
+    service_address: string;
+    appointment_scheduled: boolean;
+    appointment_date_time: string;
+    service_notes: string;
+  };
 }
 
 export const WebhookMonitor = () => {
@@ -49,6 +58,64 @@ export const WebhookMonitor = () => {
         // Get business_id from metadata
         const metadata = log.metadata || {};
         const businessId = (metadata as any)?.business_id || log.user_id || 'N/A';
+        
+        // Extract raw webhook data for detailed customer info
+        const rawWebhookData = (metadata as any)?.raw_webhook_data;
+        
+        // Extract customer information from multiple sources
+        const extractCustomerInfo = () => {
+          let customerName = log.caller_name || 'N/A';
+          let customerPhone = log.phone_number || 'N/A';
+          let customerEmail = log.email || 'N/A';
+          let serviceAddress = (metadata as any)?.caller_address || 'N/A';
+          let appointmentScheduled = (metadata as any)?.appointment_scheduled || false;
+          let appointmentDateTime = (metadata as any)?.appointment_details || 'Not scheduled';
+          let serviceNotes = log.message || 'N/A';
+
+          // If we have raw webhook data, try to extract more detailed info
+          if (rawWebhookData && rawWebhookData.variables) {
+            const vars = rawWebhookData.variables;
+            
+            // Extract name (prefer full name, fallback to first/last)
+            if (vars.name) {
+              customerName = vars.name;
+            } else if (vars.first_name || vars.last_name) {
+              customerName = `${vars.first_name || ''} ${vars.last_name || ''}`.trim();
+            }
+            
+            // Extract contact info
+            if (vars.phone_number) customerPhone = String(vars.phone_number);
+            if (vars.email) customerEmail = vars.email;
+            if (vars.address) serviceAddress = vars.address;
+            
+            // Extract appointment info
+            if (vars.appointment_scheduled !== undefined) {
+              appointmentScheduled = vars.appointment_scheduled;
+            }
+            if (vars.appointment_details) {
+              appointmentDateTime = vars.appointment_details;
+            }
+            
+            // Extract service notes/requirements
+            if (vars.service_requested) {
+              serviceNotes = vars.service_requested;
+            } else if (vars.notes) {
+              serviceNotes = vars.notes;
+            }
+          }
+
+          return {
+            name: customerName,
+            phone: customerPhone,
+            email: customerEmail,
+            service_address: serviceAddress,
+            appointment_scheduled: appointmentScheduled,
+            appointment_date_time: appointmentDateTime,
+            service_notes: serviceNotes
+          };
+        };
+        
+        const customerInfo = extractCustomerInfo();
         
         // Extract caller address from metadata
         const callerAddress = (metadata as any)?.caller_address || 'N/A';
@@ -221,7 +288,8 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
           call_datetime: new Date(log.created_at).toLocaleString(),
           first_name: firstName,
           last_name: lastName,
-          raw_webhook_data: (metadata as any)?.raw_webhook_data || null
+          raw_webhook_data: (metadata as any)?.raw_webhook_data || null,
+          customer_info: customerInfo
         };
       });
 
@@ -381,6 +449,64 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
                     <h4 className="text-sm font-medium text-muted-foreground">Appointment Date/Time</h4>
                     <p className="text-sm">{data.appointment_datetime}</p>
                   </div>
+                </div>
+              </div>
+              
+              {/* Customer Information Section */}
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Customer Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Full Name</span>
+                      <p className="text-sm font-medium">{data.customer_info.name}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Phone Number</span>
+                      <p className="text-sm font-medium">{data.customer_info.phone}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Email Address</span>
+                      <p className="text-sm font-medium">{data.customer_info.email}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Service Address</span>
+                      <p className="text-sm font-medium">{data.customer_info.service_address}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Appointment Scheduled</span>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant={data.customer_info.appointment_scheduled ? "default" : "secondary"}
+                          className={data.customer_info.appointment_scheduled ? "bg-green-500" : ""}
+                        >
+                          {data.customer_info.appointment_scheduled ? 'Yes' : 'No'}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">Appointment Date & Time</span>
+                      <p className="text-sm font-medium">
+                        {data.customer_info.appointment_scheduled 
+                          ? data.customer_info.appointment_date_time 
+                          : 'Not scheduled'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-800">
+                  <span className="text-xs font-medium text-muted-foreground">Service Notes / Requirements</span>
+                  <p className="text-sm mt-1 p-2 bg-white dark:bg-slate-800 rounded border">
+                    {data.customer_info.service_notes}
+                  </p>
                 </div>
               </div>
               
