@@ -284,26 +284,49 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
     try {
       setLoading(true);
       
-      const { error } = await supabase
+      // Temporarily disable auto-refresh during deletion
+      const wasAutoRefreshOn = autoRefresh;
+      if (autoRefresh) {
+        setAutoRefresh(false);
+      }
+      
+      const { error, count } = await supabase
         .from('call_logs')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', callLogId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+
+      console.log('Delete result:', { count, callLogId });
 
       // Remove the deleted item from local state immediately
       setWebhookData(prev => prev.filter(item => item.id !== callLogId));
       
       toast({
         title: "Call Log Deleted",
-        description: "Call log has been permanently deleted"
+        description: `Call log has been permanently deleted (${count} row${count !== 1 ? 's' : ''} affected)`
       });
+
+      // Re-enable auto-refresh after a delay to prevent immediate re-fetch
+      setTimeout(() => {
+        if (wasAutoRefreshOn) {
+          setAutoRefresh(true);
+        }
+      }, 3000);
+
     } catch (error) {
       console.error('Error deleting call log:', error);
+      
+      // Show detailed error information
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to delete call log"
+        description: `Failed to delete call log: ${errorMessage}`
       });
     } finally {
       setLoading(false);
@@ -319,8 +342,36 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
       interval = setInterval(fetchWebhookData, 10000);
     }
 
+    // Set up real-time subscription for call_logs
+    const channel = supabase
+      .channel('call-logs-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'call_logs'
+        },
+        (payload) => {
+          console.log('Real-time update:', payload);
+          
+          if (payload.eventType === 'INSERT') {
+            // Refresh data when new calls come in
+            fetchWebhookData();
+          } else if (payload.eventType === 'DELETE') {
+            // Remove deleted item from local state
+            const deletedId = payload.old?.id;
+            if (deletedId) {
+              setWebhookData(prev => prev.filter(item => item.id !== deletedId));
+            }
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       if (interval) clearInterval(interval);
+      supabase.removeChannel(channel);
     };
   }, [autoRefresh]);
 
