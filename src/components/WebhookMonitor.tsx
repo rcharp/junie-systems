@@ -53,16 +53,68 @@ export const WebhookMonitor = () => {
         // Extract raw webhook data for detailed customer info
         const rawWebhookData = (metadata as any)?.raw_webhook_data;
         
-        // Extract customer information from raw webhook data with fallbacks
+        // Extract customer information from the new nested data structure
         let customerName = log.caller_name || 'N/A';
         let customerPhone = log.phone_number || 'N/A';
         let customerEmail = log.email || 'N/A';
-        let serviceAddress = (metadata as any)?.caller_address || 'N/A';
-        let appointmentDetails = (metadata as any)?.appointment_details || 'Not scheduled';
-        let serviceRequested = (metadata as any)?.service_requested || log.business_type || log.message || 'N/A';
+        let serviceAddress = 'N/A';
+        let appointmentDetails = 'Not scheduled';
+        let serviceRequested = log.message || 'N/A';
+        let appointmentScheduled = 'No';
 
-        // If we have raw webhook data, extract more detailed info
-        if (rawWebhookData && rawWebhookData.variables) {
+        // Extract data from the new nested structure: data.analysis.data_collection_results
+        if (rawWebhookData && rawWebhookData.data && rawWebhookData.data.analysis) {
+          const analysis = rawWebhookData.data.analysis;
+          
+          // Use transcript_summary for the call summary
+          if (analysis.transcript_summary) {
+            serviceRequested = analysis.transcript_summary;
+          }
+          
+          // Extract from data_collection_results if available
+          if (analysis.data_collection_results) {
+            const results = analysis.data_collection_results;
+            
+            // Extract customer name
+            if (results.customer_name && results.customer_name.value) {
+              customerName = results.customer_name.value;
+            }
+            
+            // Extract phone number
+            if (results.phone_number && results.phone_number.value) {
+              customerPhone = String(results.phone_number.value);
+            }
+            
+            // Extract email
+            if (results.email && results.email.value) {
+              customerEmail = results.email.value;
+            }
+            
+            // Extract service address
+            if (results.service_address && results.service_address.value) {
+              serviceAddress = results.service_address.value;
+            }
+            
+            // Extract service type
+            if (results.service_type && results.service_type.value) {
+              serviceRequested = results.service_type.value;
+            }
+            
+            // Extract appointment time and format it
+            if (results.appointment_time && results.appointment_time.value) {
+              appointmentDetails = results.appointment_time.value;
+            }
+            
+            // Extract appointment scheduled status
+            if (results.appointment_scheduled && results.appointment_scheduled.value) {
+              appointmentScheduled = results.appointment_scheduled.value.toString().toLowerCase() === 'true' || 
+                                   results.appointment_scheduled.value.toString().toLowerCase() === 'yes' ? 'Yes' : 'No';
+            }
+          }
+        }
+
+        // Fallback to old variable structure if new structure is not available
+        if (rawWebhookData && rawWebhookData.variables && (!rawWebhookData.data || !rawWebhookData.data.analysis)) {
           const vars = rawWebhookData.variables;
           
           // Extract name (prefer full name, fallback to first/last)
@@ -121,9 +173,7 @@ export const WebhookMonitor = () => {
         // Create a structured call summary
         const createCallSummary = () => {
           const displayService = serviceRequested === 'N/A' ? 'general inquiry' : serviceRequested;
-          const appointmentScheduled = rawWebhookData?.variables?.appointment_scheduled || 
-                                     (metadata as any)?.appointment_scheduled || 
-                                     appointmentDetails !== 'Not scheduled';
+          const isAppointmentScheduled = appointmentScheduled === 'Yes';
           
           // Format appointment date/time if available
           const formatAppointmentDateTime = (appointmentDetails: string) => {
@@ -198,11 +248,11 @@ export const WebhookMonitor = () => {
             return appointmentDetails;
           };
           
-          const formattedAppointmentDateTime = appointmentScheduled ? 
+          const formattedAppointmentDateTime = isAppointmentScheduled ? 
             formatAppointmentDateTime(appointmentDetails) : 'N/A';
           
           // Create introductory sentence
-          const appointmentStatus = appointmentScheduled ? 'and scheduled an appointment' : 'but did not schedule an appointment';
+          const appointmentStatus = isAppointmentScheduled ? 'and scheduled an appointment' : 'but did not schedule an appointment';
           const introSentence = `${customerName} called asking about ${displayService} ${appointmentStatus}.`;
           
           return `${introSentence}
@@ -210,8 +260,9 @@ export const WebhookMonitor = () => {
 Name: ${customerName}
 Address: ${serviceAddress}
 Phone Number: ${customerPhone}
+Email: ${customerEmail}
 Service: ${displayService}
-Appointment scheduled?: ${appointmentScheduled ? 'Yes' : 'No'}
+Appointment scheduled?: ${appointmentScheduled}
 Appointment Date/Time: ${formattedAppointmentDateTime}`;
         };
         
