@@ -119,3 +119,6 @@ verify_jwt = false
 
 [functions.bland-webhook]
 verify_jwt = false
+
+[functions.elevenlabs-webhook]
+verify_jwt = false
