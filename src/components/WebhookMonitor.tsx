@@ -150,33 +150,76 @@ export const WebhookMonitor = () => {
           }
         }
         
-        // Clean up the transcript for display
-        const cleanTranscript = log.transcript ? 
-          log.transcript
-            .split('\n')
-            .filter(line => 
-              line.trim() && 
-              !line.includes('business_name') && 
-              !line.includes('services :') &&
-              !line.includes('business_address') &&
-              !line.includes('business_hours') &&
-              !line.includes('available_times') &&
-              !line.includes('service_names :') &&
-              !line.includes('service_prices :') &&
-              !line.includes('business_id :')
-            )
-            .map(line => {
-              // Format speaker lines with clean labels
-              if (line.includes('Assistant:')) {
-                return `AI assistant: ${line.replace('Assistant:', '').trim()}`;
-              } else if (line.includes('Caller:')) {
-                return `Caller: ${line.replace('Caller:', '').trim()}`;
+        // Format transcript for display
+        const formatTranscript = (rawData: any) => {
+          // First try to get transcript from analysis
+          if (rawData?.data?.analysis?.transcript) {
+            return formatTranscriptText(rawData.data.analysis.transcript);
+          }
+          
+          // Fallback to raw transcript if available
+          if (rawData?.transcript) {
+            return formatTranscriptText(rawData.transcript);
+          }
+          
+          // Fallback to log transcript
+          if (log.transcript) {
+            return formatTranscriptText(log.transcript);
+          }
+          
+          return "No transcript available";
+        };
+
+        const formatTranscriptText = (transcript: string) => {
+          if (!transcript) return "No transcript available";
+          
+          // Split by speaker changes and format properly
+          const lines = transcript.split('\n').filter(line => line.trim());
+          return lines.map(line => {
+            const trimmedLine = line.trim();
+            
+            // Skip lines with metadata or business info
+            if (trimmedLine.includes('business_name') || 
+                trimmedLine.includes('services :') ||
+                trimmedLine.includes('business_address') ||
+                trimmedLine.includes('business_hours') ||
+                trimmedLine.includes('available_times') ||
+                trimmedLine.includes('service_names :') ||
+                trimmedLine.includes('service_prices :') ||
+                trimmedLine.includes('business_id :')) {
+              return '';
+            }
+            
+            // If line already has proper speaker format (Agent:, Caller:, etc.), return as-is
+            if (trimmedLine.match(/^(Agent|Caller|Customer|User):/i)) {
+              return trimmedLine;
+            }
+            
+            // If line has speaker indicator, format it properly
+            if (trimmedLine.includes(':')) {
+              const [speaker, ...messageParts] = trimmedLine.split(':');
+              const message = messageParts.join(':').trim();
+              
+              // Normalize speaker names
+              const normalizedSpeaker = speaker.trim().toLowerCase();
+              if (normalizedSpeaker.includes('agent') || normalizedSpeaker.includes('assistant') || normalizedSpeaker.includes('ai')) {
+                return `Agent: ${message}`;
+              } else if (normalizedSpeaker.includes('caller') || normalizedSpeaker.includes('customer') || normalizedSpeaker.includes('user')) {
+                return `Caller: ${message}`;
+              } else {
+                // Use the speaker name if it appears to be a name (capitalize first letter)
+                const capitalizedSpeaker = speaker.charAt(0).toUpperCase() + speaker.slice(1).toLowerCase();
+                return `${capitalizedSpeaker}: ${message}`;
               }
-              return line;
-            })
-            .join('\n\n') // Add spacing between exchanges
-            .replace(/\n{3,}/g, '\n\n') // Remove excess line breaks
-          : 'No transcript available';
+            }
+            
+            // If no speaker indicator, skip empty lines or add generic label for content
+            if (!trimmedLine) return '';
+            return `Speaker: ${trimmedLine}`;
+          }).filter(line => line.trim()).join('\n\n');
+        };
+
+        const cleanTranscript = formatTranscript(rawWebhookData);
 
         // Create a structured call summary
         const createCallSummary = () => {
