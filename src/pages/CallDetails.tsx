@@ -226,6 +226,13 @@ const CallDetails = () => {
                   <span className="font-medium">Phone:</span>
                   <span>{callDetail.phone_number}</span>
                 </div>
+                {callDetail.metadata?.caller_id && (
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span className="font-medium">Caller ID:</span>
+                    <span>{callDetail.metadata.caller_id}</span>
+                  </div>
+                )}
                 {callDetail.email && (
                   <div className="flex items-center space-x-2">
                     <Mail className="w-4 h-4 text-muted-foreground" />

@@ -316,6 +316,7 @@ serve(async (req) => {
     const elevenLabsResponse = {
       type: "conversation_initiation_client_data",
       dynamic_variables: {
+        business_id: businessId,
         business_name: businessData.business_name || "Our Business",
         business_phone: businessData.business_phone || "",
         business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : "",
