@@ -152,16 +152,27 @@ export const WebhookMonitor = () => {
         
         // Format transcript for display
         const formatTranscript = (rawData: any) => {
+          console.log('Raw webhook data for transcript:', rawData); // Debug log
+          
           // Get transcript from data.transcript
           if (rawData?.data?.transcript) {
+            console.log('Found transcript in data.transcript:', rawData.data.transcript);
             return formatTranscriptText(rawData.data.transcript);
+          }
+          
+          // Check for transcript at root level
+          if (rawData?.transcript) {
+            console.log('Found transcript at root level:', rawData.transcript);
+            return formatTranscriptText(rawData.transcript);
           }
           
           // Fallback to log transcript
           if (log.transcript) {
+            console.log('Using log transcript:', log.transcript);
             return formatTranscriptText(log.transcript);
           }
           
+          console.log('No transcript found anywhere');
           return "No transcript available";
         };
 
