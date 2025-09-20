@@ -181,6 +181,7 @@ serve(async (req) => {
     const { data: businessData, error } = await supabase
       .from('business_settings')
       .select(`
+        id,
         business_name,
         business_type,
         business_phone,
@@ -274,6 +275,7 @@ serve(async (req) => {
     const responseData = {
       type: "conversation_initiation_client_data",
       dynamic_variables: {
+        business_id: businessData.id || '',
         business_name: businessData.business_name || '',
         business_phone: businessData.business_phone || '',
         business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : '',
