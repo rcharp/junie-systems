@@ -234,7 +234,7 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
         };
         
         // Parse name parts
-        const nameParts = (log.caller_name || '').split(' ');
+        const nameParts = (customerName || '').split(' ');
         const firstName = nameParts[0] || 'N/A';
         const lastName = nameParts.slice(1).join(' ') || 'N/A';
         
