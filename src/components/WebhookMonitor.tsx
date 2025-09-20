@@ -75,9 +75,11 @@ export const WebhookMonitor = () => {
           if (analysis.data_collection_results) {
             const results = analysis.data_collection_results;
             
-            // Extract customer name
+            // Extract customer name and capitalize it
             if (results.customer_name && results.customer_name.value) {
-              customerName = results.customer_name.value;
+              customerName = results.customer_name.value.split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ');
             }
             
             // Extract phone number
@@ -95,9 +97,9 @@ export const WebhookMonitor = () => {
               serviceAddress = results.service_address.value;
             }
             
-            // Extract service type
+            // Extract service type (simplified - just the service name)
             if (results.service_type && results.service_type.value) {
-              serviceRequested = results.service_type.value;
+              serviceRequested = results.service_type.value.toLowerCase();
             }
             
             // Extract appointment time and format it
@@ -117,11 +119,17 @@ export const WebhookMonitor = () => {
         if (rawWebhookData && rawWebhookData.variables && (!rawWebhookData.data || !rawWebhookData.data.analysis)) {
           const vars = rawWebhookData.variables;
           
-          // Extract name (prefer full name, fallback to first/last)
+          // Extract name (prefer full name, fallback to first/last) and capitalize
           if (vars.name) {
-            customerName = vars.name;
+            customerName = vars.name.split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+              .join(' ');
           } else if (vars.first_name || vars.last_name) {
-            customerName = `${vars.first_name || ''} ${vars.last_name || ''}`.trim();
+            const firstName = vars.first_name ? 
+              vars.first_name.charAt(0).toUpperCase() + vars.first_name.slice(1).toLowerCase() : '';
+            const lastName = vars.last_name ? 
+              vars.last_name.charAt(0).toUpperCase() + vars.last_name.slice(1).toLowerCase() : '';
+            customerName = `${firstName} ${lastName}`.trim();
           }
           
           // Extract contact info
@@ -185,7 +193,7 @@ export const WebhookMonitor = () => {
             try {
               const isoDate = parseISO(appointmentDetails);
               if (isValid(isoDate)) {
-                const formatted = format(isoDate, 'EEEE, MMMM do, yyyy \'at\' h:mma');
+                const formatted = format(isoDate, 'EEEE, MMMM do, yyyy \'at\' haaa');
                 console.log('Formatted ISO date:', formatted); // Debug log
                 return formatted;
               }
@@ -233,7 +241,7 @@ export const WebhookMonitor = () => {
                   console.log('Parsed date:', parsedDate); // Debug log
                   
                   if (isValid(parsedDate)) {
-                    const formatted = format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' h:mma');
+                    const formatted = format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' haaa');
                     console.log('Formatted date:', formatted); // Debug log
                     return formatted;
                   }
@@ -275,7 +283,7 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
           try {
             const isoDate = parseISO(appointmentDetails);
             if (isValid(isoDate)) {
-              return format(isoDate, 'EEEE, MMMM do, yyyy \'at\' h:mma');
+              return format(isoDate, 'EEEE, MMMM do, yyyy \'at\' haaa');
             }
           } catch (error) {
             console.warn('Error parsing ISO date for display:', error);
