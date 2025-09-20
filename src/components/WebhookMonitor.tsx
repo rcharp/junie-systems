@@ -152,14 +152,9 @@ export const WebhookMonitor = () => {
         
         // Format transcript for display
         const formatTranscript = (rawData: any) => {
-          // First try to get transcript from analysis
-          if (rawData?.data?.analysis?.transcript) {
-            return formatTranscriptText(rawData.data.analysis.transcript);
-          }
-          
-          // Fallback to raw transcript if available
-          if (rawData?.transcript) {
-            return formatTranscriptText(rawData.transcript);
+          // Get transcript from data.transcript
+          if (rawData?.data?.transcript) {
+            return formatTranscriptText(rawData.data.transcript);
           }
           
           // Fallback to log transcript
