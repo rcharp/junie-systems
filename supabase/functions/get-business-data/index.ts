@@ -234,16 +234,19 @@ serve(async (req) => {
     // Check if Google Calendar is connected for availability
     const { data: calendarSettings } = await supabase
       .from('google_calendar_settings')
-      .select('is_connected, timezone, appointment_duration')
+      .select('is_connected, timezone, appointment_duration, availability_hours')
       .eq('user_id', userId)
-      .single();
+      .maybeSingle();
 
     let calendarAvailability = null;
     if (calendarSettings?.is_connected) {
       try {
-        const availabilityResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-availability/${userId}`);
-        if (availabilityResponse.ok) {
-          calendarAvailability = await availabilityResponse.json();
+        const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke('google-calendar-availability', {
+          body: { user_id: userId }
+        });
+        
+        if (!availabilityError && availabilityData) {
+          calendarAvailability = availabilityData;
         }
       } catch (error) {
         console.error('Error fetching calendar availability:', error);
@@ -252,9 +255,39 @@ serve(async (req) => {
 
     console.log('Successfully retrieved business data for user:', userId);
 
-    // Format business hours into a readable string
+    // Format available hours - prioritize Google Calendar availability
     let availableHours = '';
-    if (businessData.business_hours) {
+    
+    if (calendarAvailability && calendarAvailability.availability) {
+      // Use Google Calendar availability if connected and data is available
+      try {
+        const timeSlots = calendarAvailability.availability.map(slot => ({
+          start: slot.start,
+          end: slot.end
+        }));
+        availableHours = JSON.stringify(timeSlots);
+      } catch (e) {
+        console.error('Error formatting calendar availability:', e);
+      }
+    } else if (calendarSettings?.availability_hours) {
+      // Use calendar settings availability hours as fallback
+      try {
+        const availabilityHours = calendarSettings.availability_hours;
+        const timeSlots = Object.entries(availabilityHours)
+          .filter(([day, settings]) => settings.enabled)
+          .map(([day, settings]) => ({
+            day: day,
+            start: settings.start,
+            end: settings.end
+          }));
+        availableHours = JSON.stringify(timeSlots);
+      } catch (e) {
+        console.error('Error formatting availability hours:', e);
+      }
+    }
+    
+    // Fallback to business_hours if no calendar data
+    if (!availableHours && businessData.business_hours) {
       try {
         const hours = JSON.parse(businessData.business_hours);
         if (Array.isArray(hours) && hours.length > 0) {
