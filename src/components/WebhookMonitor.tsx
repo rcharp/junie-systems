@@ -35,6 +35,9 @@ export const WebhookMonitor = () => {
 
   const fetchWebhookData = async () => {
     try {
+      setLoading(true);
+      console.log('Starting webhook data fetch...'); // Debug log
+      
       // Fetch recent call logs to show incoming webhook data (show all for admin)
       const { data: logs, error: logsError } = await supabase
         .from('call_logs')
@@ -42,7 +45,12 @@ export const WebhookMonitor = () => {
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (logsError) throw logsError;
+      if (logsError) {
+        console.error('Supabase error:', logsError);
+        throw logsError;
+      }
+
+      console.log('Successfully fetched logs:', logs?.length || 0, 'records'); // Debug log
 
       // Transform call logs to webhook data format
       const transformedData: WebhookData[] = (logs || []).map(log => {
@@ -154,16 +162,16 @@ export const WebhookMonitor = () => {
         const formatTranscript = (rawData: any) => {
           console.log('Raw webhook data for transcript:', rawData); // Debug log
           
-          // Get transcript from data.transcript
-          if (rawData?.data?.transcript) {
-            console.log('Found transcript in data.transcript:', rawData.data.transcript);
-            return formatTranscriptText(rawData.data.transcript);
+          // Get transcript from data.transcript (it's an array of conversation objects)
+          if (rawData?.data?.transcript && Array.isArray(rawData.data.transcript)) {
+            console.log('Found transcript array in data.transcript:', rawData.data.transcript);
+            return formatTranscriptArray(rawData.data.transcript);
           }
           
           // Check for transcript at root level
-          if (rawData?.transcript) {
-            console.log('Found transcript at root level:', rawData.transcript);
-            return formatTranscriptText(rawData.transcript);
+          if (rawData?.transcript && Array.isArray(rawData.transcript)) {
+            console.log('Found transcript array at root level:', rawData.transcript);
+            return formatTranscriptArray(rawData.transcript);
           }
           
           // Fallback to log transcript
@@ -174,6 +182,27 @@ export const WebhookMonitor = () => {
           
           console.log('No transcript found anywhere');
           return "No transcript available";
+        };
+
+        const formatTranscriptArray = (transcriptArray: any[]) => {
+          if (!transcriptArray || !Array.isArray(transcriptArray)) return "No transcript available";
+          
+          return transcriptArray.map(item => {
+            if (item.role && item.message) {
+              const role = item.role === 'agent' ? 'Agent' : 
+                          item.role === 'user' ? 'Caller' : 
+                          item.role.charAt(0).toUpperCase() + item.role.slice(1);
+              
+              // Clean up the message (remove quotes if present)
+              let message = item.message || '';
+              if (typeof message === 'string') {
+                message = message.replace(/^["']|["']$/g, ''); // Remove surrounding quotes
+              }
+              
+              return `${role}: ${message}`;
+            }
+            return '';
+          }).filter(line => line.trim()).join('\n\n');
         };
 
         const formatTranscriptText = (transcript: string) => {
