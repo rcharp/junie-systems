@@ -20,6 +20,7 @@ interface WebhookData {
   email: string;
   service_info: string;
   appointment_datetime: string;
+  appointment_scheduled: string;
   call_datetime: string;
   first_name: string;
   last_name: string;
@@ -69,12 +70,13 @@ export const WebhookMonitor = () => {
         let appointmentDetails = 'Not scheduled';
         let serviceRequested = log.message || 'N/A';
         let appointmentScheduled = 'No';
+        let businessName = log.business_name || 'N/A';
 
         // Extract data from the new nested structure: data.analysis.data_collection_results
         if (rawWebhookData && rawWebhookData.data && rawWebhookData.data.analysis) {
           const analysis = rawWebhookData.data.analysis;
           
-          // Use transcript_summary for the call summary
+          // Use transcript_summary for the call summary (keep it short)
           if (analysis.transcript_summary) {
             serviceRequested = analysis.transcript_summary;
           }
@@ -82,6 +84,11 @@ export const WebhookMonitor = () => {
           // Extract from data_collection_results if available
           if (analysis.data_collection_results) {
             const results = analysis.data_collection_results;
+            
+            // Extract business name
+            if (results.business_name && results.business_name.value) {
+              businessName = results.business_name.value;
+            }
             
             // Extract customer name and capitalize it
             if (results.customer_name && results.customer_name.value) {
@@ -256,100 +263,16 @@ export const WebhookMonitor = () => {
 
         const cleanTranscript = formatTranscript(rawWebhookData);
 
-        // Create a structured call summary
+        // Create a structured call summary (keep it short)
         const createCallSummary = () => {
+          // Just return the transcript summary from the analysis
+          if (rawWebhookData?.data?.analysis?.transcript_summary) {
+            return rawWebhookData.data.analysis.transcript_summary.trim();
+          }
+          
+          // Fallback to a simple summary if no transcript summary available
           const displayService = serviceRequested === 'N/A' ? 'general inquiry' : serviceRequested;
-          const isAppointmentScheduled = appointmentScheduled === 'Yes';
-          
-          // Format appointment date/time if available
-          const formatAppointmentDateTime = (appointmentDetails: string) => {
-            if (!appointmentDetails || appointmentDetails === 'Not scheduled') return 'N/A';
-            
-            console.log('Raw appointment details:', appointmentDetails); // Debug log
-            
-            // First try to parse as ISO 8601 format (which is what we're getting)
-            try {
-              const isoDate = parseISO(appointmentDetails);
-              if (isValid(isoDate)) {
-                const formatted = format(isoDate, 'EEEE, MMMM do, yyyy \'at\' haaa');
-                console.log('Formatted ISO date:', formatted); // Debug log
-                return formatted;
-              }
-            } catch (error) {
-              console.warn('Error parsing ISO date:', error);
-            }
-            
-            // Try to parse various other date/time formats that might be in the appointment details
-            const dateTimePatterns = [
-              /(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})/,  // 2025-11-05 09:30
-              /(\d{4}-\d{2}-\d{2})\s+at\s+(\d{1,2}:\d{2})/i,  // 2025-11-05 at 09:30
-              /(\d{1,2}\/\d{1,2}\/\d{4})\s+(\d{1,2}:\d{2})/,  // 11/5/2025 9:30
-              /(\d{1,2}\/\d{1,2}\/\d{4})\s+at\s+(\d{1,2}:\d{2})/i,  // 11/5/2025 at 9:30
-              /(\w+,?\s+\w+\s+\d{1,2},?\s+\d{4})\s+at\s+(\d{1,2}:\d{2})/i,  // Tuesday, November 5, 2025 at 9:30
-              /(\w+\s+\d{1,2},?\s+\d{4})\s+at\s+(\d{1,2}:\d{2})/i,  // November 5, 2025 at 9:30
-              /(\d{1,2}:\d{2})\s+on\s+(\d{4}-\d{2}-\d{2})/i,  // 9:30 on 2025-11-05
-              /(\d{1,2}:\d{2})\s+on\s+(\w+,?\s+\w+\s+\d{1,2},?\s+\d{4})/i  // 9:30 on Tuesday, November 5, 2025
-            ];
-            
-            for (const pattern of dateTimePatterns) {
-              const match = appointmentDetails.match(pattern);
-              if (match) {
-                try {
-                  let dateStr = match[1];
-                  let timeStr = match[2];
-                  
-                  // Handle reversed patterns (time first, then date)
-                  if (pattern.source.includes('on')) {
-                    [timeStr, dateStr] = [match[1], match[2]];
-                  }
-                  
-                  console.log('Matched date:', dateStr, 'time:', timeStr); // Debug log
-                  
-                  // Parse the date
-                  let parsedDate;
-                  if (dateStr.includes('-')) {
-                    parsedDate = parse(`${dateStr} ${timeStr}`, 'yyyy-MM-dd H:mm', new Date());
-                  } else if (dateStr.includes('/')) {
-                    parsedDate = parse(`${dateStr} ${timeStr}`, 'M/d/yyyy H:mm', new Date());
-                  } else {
-                    // Try parsing as a more natural format
-                    parsedDate = new Date(`${dateStr} ${timeStr}`);
-                  }
-                  
-                  console.log('Parsed date:', parsedDate); // Debug log
-                  
-                  if (isValid(parsedDate)) {
-                    const formatted = format(parsedDate, 'EEEE, MMMM do, yyyy \'at\' haaa');
-                    console.log('Formatted date:', formatted); // Debug log
-                    return formatted;
-                  }
-                } catch (error) {
-                  console.warn('Error parsing appointment date:', error);
-                }
-              }
-            }
-            
-            // If no pattern matches, return the original string
-            console.log('No pattern matched, returning original:', appointmentDetails);
-            return appointmentDetails;
-          };
-          
-          const formattedAppointmentDateTime = isAppointmentScheduled ? 
-            formatAppointmentDateTime(appointmentDetails) : 'N/A';
-          
-          // Create introductory sentence
-          const appointmentStatus = isAppointmentScheduled ? 'and scheduled an appointment' : 'but did not schedule an appointment';
-          const introSentence = `${customerName} called asking about ${displayService} ${appointmentStatus}.`;
-          
-          return `${introSentence}
-
-Name: ${customerName}
-Address: ${serviceAddress}
-Phone Number: ${customerPhone}
-Email: ${customerEmail}
-Service: ${displayService}
-Appointment scheduled?: ${appointmentScheduled}
-Appointment Date/Time: ${formattedAppointmentDateTime}`;
+          return `Customer called regarding ${displayService}.`;
         };
         
         const cleanSummary = createCallSummary();
@@ -378,7 +301,7 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
         return {
           id: log.id,
           business_id: businessId,
-          company_name: log.business_name || 'N/A',
+          company_name: businessName,
           call_summary: cleanSummary,
           transcript: cleanTranscript,
           caller_name: customerName,
@@ -387,6 +310,7 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
           email: customerEmail,
           service_info: serviceRequested,
           appointment_datetime: formatDisplayDateTime(appointmentDetails),
+          appointment_scheduled: appointmentScheduled,
           call_datetime: new Date(log.created_at).toLocaleString(),
           first_name: firstName,
           last_name: lastName,
@@ -594,8 +518,12 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
                     <p className="text-sm">{data.address}</p>
                   </div>
                   <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Service Information</h4>
+                    <h4 className="text-sm font-medium text-muted-foreground">Call Details</h4>
                     <p className="text-sm">{data.service_info}</p>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-muted-foreground">Appointment Scheduled</h4>
+                    <p className="text-sm">{data.appointment_scheduled}</p>
                   </div>
                   <div>
                     <h4 className="text-sm font-medium text-muted-foreground">Appointment Date/Time</h4>
