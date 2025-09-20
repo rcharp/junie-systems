@@ -488,47 +488,54 @@ export const WebhookMonitor = () => {
                 </Button>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Business ID</h4>
-                    <p className="text-sm">{data.business_id}</p>
+              
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Call Details</h3>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">Business ID</h4>
+                      <p className="text-sm">{data.business_id}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">Company Name</h4>
+                      <p className="text-sm">{data.company_name}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">Caller Name</h4>
+                      <p className="text-sm">{data.caller_name}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">Phone Number</h4>
+                      <p className="text-sm">{data.phone_number}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Company Name</h4>
-                    <p className="text-sm">{data.company_name}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Caller Name</h4>
-                    <p className="text-sm">{data.caller_name}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Phone Number</h4>
-                    <p className="text-sm">{data.phone_number}</p>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">Email Address</h4>
+                      <p className="text-sm">{data.email}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">Address</h4>
+                      <p className="text-sm">{data.address}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">Appointment Scheduled</h4>
+                      <p className="text-sm">{data.appointment_scheduled}</p>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground">Appointment Date/Time</h4>
+                      <p className="text-sm">{data.appointment_datetime}</p>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Email Address</h4>
-                    <p className="text-sm">{data.email}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Address</h4>
-                    <p className="text-sm">{data.address}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Call Details</h4>
-                    <p className="text-sm">{data.service_info}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Appointment Scheduled</h4>
-                    <p className="text-sm">{data.appointment_scheduled}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground">Appointment Date/Time</h4>
-                    <p className="text-sm">{data.appointment_datetime}</p>
-                  </div>
+              </div>
+              
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Service Information</h4>
+                <div className="text-sm bg-background p-3 rounded border">
+                  {data.service_info}
                 </div>
               </div>
               
