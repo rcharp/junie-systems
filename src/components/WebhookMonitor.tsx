@@ -53,8 +53,48 @@ export const WebhookMonitor = () => {
 
       console.log('Successfully fetched logs:', logs?.length || 0, 'records'); // Debug log
 
-      // Transform call logs to webhook data format
-      const transformedData: WebhookData[] = (logs || []).map(log => {
+      // Filter out logs that don't have meaningful call data before processing
+      const filteredLogs = (logs || []).filter(log => {
+        // Type-safe metadata access
+        const metadata = log.metadata as any;
+        const rawWebhookData = metadata?.raw_webhook_data;
+        
+        // Check if the log has any meaningful call data
+        const hasCallData = (
+          (log.transcript && log.transcript.trim() !== '') ||
+          (log.caller_name && log.caller_name.trim() !== '' && log.caller_name !== 'N/A') ||
+          (log.phone_number && log.phone_number.trim() !== '' && log.phone_number !== 'N/A') ||
+          (log.message && log.message.trim() !== '') ||
+          (rawWebhookData && 
+           (rawWebhookData.data?.analysis?.transcript_summary ||
+            rawWebhookData.data?.analysis?.data_collection_results ||
+            rawWebhookData.variables))
+        );
+        
+        // If no meaningful data, mark for deletion
+        if (!hasCallData) {
+          console.log('Filtering out empty webhook log:', log.id);
+          // Delete empty webhook logs asynchronously
+          supabase
+            .from('call_logs')
+            .delete()
+            .eq('id', log.id)
+            .then(({ error }) => {
+              if (error) {
+                console.error('Error deleting empty webhook log:', error);
+              } else {
+                console.log('Deleted empty webhook log:', log.id);
+              }
+            });
+        }
+        
+        return hasCallData;
+      });
+
+      console.log('Filtered logs:', filteredLogs?.length || 0, 'records with meaningful data');
+
+      // Transform filtered call logs to webhook data format
+      const transformedData: WebhookData[] = filteredLogs.map(log => {
         // Get business_id from metadata
         const metadata = log.metadata || {};
         const businessId = (metadata as any)?.business_id || log.user_id || 'N/A';
