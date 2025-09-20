@@ -517,7 +517,7 @@ export const WebhookMonitor = () => {
                       <p className="text-sm">{data.email}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground">Address</h4>
+                      <h4 className="text-sm font-medium text-muted-foreground">Service Address</h4>
                       <p className="text-sm">{data.address}</p>
                     </div>
                     <div>
