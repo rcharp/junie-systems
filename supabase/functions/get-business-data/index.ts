@@ -255,20 +255,58 @@ serve(async (req) => {
 
     console.log('Successfully retrieved business data for user:', userId);
 
-    // Format available hours - prioritize Google Calendar availability
+    // Helper function to check if a time falls within business hours
+    const isWithinBusinessHours = (dateTime: string, businessHours: any) => {
+      const date = new Date(dateTime);
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      
+      if (typeof businessHours === 'object' && businessHours[dayName]) {
+        const dayHours = businessHours[dayName];
+        if (dayHours === 'Closed' || !dayHours) return false;
+        
+        // Parse business hours (e.g., "9AM-5PM")
+        const hoursMatch = dayHours.match(/(\d{1,2})(AM|PM)-(\d{1,2})(AM|PM)/i);
+        if (!hoursMatch) return true; // If can't parse, allow it
+        
+        const startHour = parseInt(hoursMatch[1]) + (hoursMatch[2].toUpperCase() === 'PM' && hoursMatch[1] !== '12' ? 12 : 0);
+        const endHour = parseInt(hoursMatch[3]) + (hoursMatch[4].toUpperCase() === 'PM' && hoursMatch[3] !== '12' ? 12 : 0);
+        
+        const currentHour = date.getHours();
+        return currentHour >= startHour && currentHour < endHour;
+      }
+      
+      return true; // If no business hours defined, allow all times
+    };
+
+    // Format available hours - use Google Calendar availability filtered by business hours
     let availableHours = '';
     
-    if (calendarAvailability && calendarAvailability.availability) {
-      // Use Google Calendar availability if connected and data is available
-      try {
-        const timeSlots = calendarAvailability.availability.map(slot => ({
-          start: slot.start,
-          end: slot.end
-        }));
-        availableHours = JSON.stringify(timeSlots);
-      } catch (e) {
-        console.error('Error formatting calendar availability:', e);
+    if (calendarAvailability && calendarAvailability.slots) {
+      // Parse business hours for filtering
+      let businessHours = null;
+      if (businessData.business_hours) {
+        try {
+          businessHours = JSON.parse(businessData.business_hours);
+        } catch (e) {
+          console.error('Error parsing business hours:', e);
+        }
       }
+      
+      // Filter calendar slots to only include those within business hours
+      const filteredSlots = businessHours 
+        ? calendarAvailability.slots.filter(slot => 
+            isWithinBusinessHours(slot.start, businessHours) && 
+            isWithinBusinessHours(slot.end, businessHours)
+          )
+        : calendarAvailability.slots;
+      
+      // Format as start/end time pairs
+      const timeSlots = filteredSlots.map(slot => ({
+        start: slot.start,
+        end: slot.end
+      }));
+      
+      availableHours = JSON.stringify(timeSlots);
     } else if (calendarSettings?.availability_hours) {
       // Use calendar settings availability hours as fallback
       try {
