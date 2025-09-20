@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RefreshCw, Webhook, Activity, Trash2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { RefreshCw, Webhook, Activity, Trash2, ChevronDown, ChevronRight, Code } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parse, isValid, parseISO } from 'date-fns';
 
@@ -22,6 +23,7 @@ interface WebhookData {
   call_datetime: string;
   first_name: string;
   last_name: string;
+  raw_webhook_data: any;
 }
 
 export const WebhookMonitor = () => {
@@ -29,6 +31,7 @@ export const WebhookMonitor = () => {
   const [webhookData, setWebhookData] = useState<WebhookData[]>([]);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [expandedRawData, setExpandedRawData] = useState<Record<string, boolean>>({});
 
   const fetchWebhookData = async () => {
     try {
@@ -217,7 +220,8 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
           appointment_datetime: formatDisplayDateTime(appointmentDetails),
           call_datetime: new Date(log.created_at).toLocaleString(),
           first_name: firstName,
-          last_name: lastName
+          last_name: lastName,
+          raw_webhook_data: (metadata as any)?.raw_webhook_data || null
         };
       });
 
@@ -394,6 +398,39 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
                     {data.transcript}
                   </div>
                 </div>
+
+                {data.raw_webhook_data && (
+                  <Collapsible 
+                    open={expandedRawData[data.id]} 
+                    onOpenChange={(open) => 
+                      setExpandedRawData(prev => ({ ...prev, [data.id]: open }))
+                    }
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start p-0 h-auto"
+                      >
+                        <div className="flex items-center gap-2">
+                          {expandedRawData[data.id] ? (
+                            <ChevronDown className="h-4 w-4" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4" />
+                          )}
+                          <Code className="h-4 w-4" />
+                          <h4 className="text-sm font-medium text-muted-foreground">Raw Webhook Data</h4>
+                        </div>
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="mt-2">
+                      <div className="text-xs bg-slate-900 text-green-400 p-4 rounded border max-h-80 overflow-y-auto font-mono">
+                        <pre className="whitespace-pre-wrap">
+                          {JSON.stringify(data.raw_webhook_data, null, 2)}
+                        </pre>
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
               </div>
             </div>
           ))}
@@ -405,8 +442,11 @@ Appointment Date/Time: ${formattedAppointmentDateTime}`;
               <p className="text-muted-foreground mb-4">
                 Waiting for POST requests to the webhook endpoint...
               </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground mb-2">
                 Data will appear here when calls are processed through your ElevenLabs conversational AI
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Each call will include processed data plus raw webhook payload for debugging
               </p>
             </div>
           )}
