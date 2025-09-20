@@ -532,13 +532,6 @@ export const WebhookMonitor = () => {
                 </div>
               </div>
               
-              <div className="mb-4">
-                <h4 className="text-sm font-medium text-muted-foreground mb-2">Service Information</h4>
-                <div className="text-sm bg-background p-3 rounded border">
-                  {data.service_info}
-                </div>
-              </div>
-              
               
               <div className="space-y-3">
                 <div>
