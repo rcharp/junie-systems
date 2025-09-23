@@ -99,6 +99,8 @@ serve(async (req) => {
         businessId = body.conversation_initiation_client_data.dynamic_variables.business_id;
         requestSource = 'elevenlabs_transcription';
         console.log('ElevenLabs transcription business_id:', businessId);
+      } else if (body && body.business_id) {
+        // Manual request with business_id in body
         businessId = body.business_id;
         requestSource = 'manual';
         console.log('MANUAL request detected - business_id from request body:', businessId);
