@@ -4,11 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut } from 'lucide-react';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { UserWebhookList } from '@/components/UserWebhookList';
 import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
+import { TodoChecklist } from '@/components/TodoChecklist';
 import { useNavigate } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -178,124 +180,133 @@ const AdminDashboard = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-foreground mb-2">
-            System Overview
+            Admin Dashboard
           </h2>
           <p className="text-muted-foreground">
-            Monitor platform performance and user activity
+            Monitor platform performance and manage development tasks
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
-              <p className="text-xs text-muted-foreground">
-                Registered users on platform
-              </p>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="overview">System Overview</TabsTrigger>
+            <TabsTrigger value="todos">Development Todos</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="overview" className="space-y-8">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Registered users on platform
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Calls</CardTitle>
-              <Phone className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCalls}</div>
-              <p className="text-xs text-muted-foreground">
-                Calls handled by AI
-              </p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Calls</CardTitle>
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalCalls}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Calls handled by AI
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Appointments</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalAppointments}</div>
-              <p className="text-xs text-muted-foreground">
-                Appointments booked
-              </p>
-            </CardContent>
-          </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Appointments</CardTitle>
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.totalAppointments}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Appointments booked
+                  </p>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.activeUsers}</div>
-              <p className="text-xs text-muted-foreground">
-                Active in last 30 days
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{stats.activeUsers}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Active in last 30 days
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-        {/* User Business IDs - Paginated */}
-        <UserWebhookList />
+            {/* User Business IDs - Paginated */}
+            <UserWebhookList />
 
-        {/* Post-Call Data */}
-        <div className="mt-8">
-          <WebhookMonitor />
-        </div>
+            {/* Post-Call Data */}
+            <WebhookMonitor />
 
-        {/* Business Data Requests */}
-        <div className="mt-8">
-          <BusinessDataMonitor />
-        </div>
+            {/* Business Data Requests */}
+            <BusinessDataMonitor />
 
-        {/* Availabee Info */}
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>About Availabee</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <p className="text-sm">
-                  <strong>Mission:</strong> Never miss a call with our AI-powered answering service
-                </p>
-                <p className="text-sm">
-                  <strong>Features:</strong> 24/7 availability, appointment booking, lead capture, smart call routing
-                </p>
-                <p className="text-sm">
-                  <strong>Technology:</strong> Advanced AI with natural language processing, integrated with business systems
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Availabee Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>About Availabee</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm">
+                      <strong>Mission:</strong> Never miss a call with our AI-powered answering service
+                    </p>
+                    <p className="text-sm">
+                      <strong>Features:</strong> 24/7 availability, appointment booking, lead capture, smart call routing
+                    </p>
+                    <p className="text-sm">
+                      <strong>Technology:</strong> Advanced AI with natural language processing, integrated with business systems
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>System Health</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">API Status</span>
-                  <Badge variant="default">Operational</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Database</span>
-                  <Badge variant="default">Healthy</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">AI Services</span>
-                  <Badge variant="default">Online</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Health</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">API Status</span>
+                      <Badge variant="default">Operational</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Database</span>
+                      <Badge variant="default">Healthy</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">AI Services</span>
+                      <Badge variant="default">Online</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="todos">
+            <TodoChecklist />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
