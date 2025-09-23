@@ -647,9 +647,22 @@ export const WebhookMonitor = () => {
                                        data.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || 
                                        data.raw_webhook_data?.caller_id || 
                                        data.phone_number;
+                    
+                    // Format phone number as xxx-xxx-xxxx
+                    const formatPhoneNumber = (phone: string) => {
+                      if (!phone) return phone;
+                      // Remove +1 prefix and any non-digits
+                      const cleaned = phone.replace(/^\+1/, '').replace(/\D/g, '');
+                      // Format as xxx-xxx-xxxx
+                      if (cleaned.length === 10) {
+                        return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+                      }
+                      return phone; // Return original if not 10 digits
+                    };
+                    
                     return (
                       <div className="text-2xl font-bold text-foreground">
-                        Incoming - {incomingCall}
+                        Incoming - {formatPhoneNumber(incomingCall)}
                       </div>
                     );
                   })()}
