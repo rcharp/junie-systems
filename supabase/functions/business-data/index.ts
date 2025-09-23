@@ -82,6 +82,34 @@ serve(async (req) => {
           }
         };
         
+        // Log the ElevenLabs conversation initiation request
+        try {
+          const requestHeaders = Object.fromEntries(req.headers.entries());
+          
+          await supabase
+            .from('business_data_requests')
+            .insert({
+              business_id: conversationBusinessId,
+              request_type: 'conversation_initiation',
+              request_source: 'elevenlabs',
+              request_data: {
+                url: req.url,
+                method: req.method,
+                headers: requestHeaders,
+                ...body
+              },
+              response_status: 200,
+              response_data: conversationInitData,
+              user_agent: req.headers.get('user-agent') || '',
+              ip_address: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || ''
+            });
+          
+          console.log('Successfully logged ElevenLabs conversation initiation request');
+        } catch (logError) {
+          console.error('Error logging ElevenLabs request:', logError);
+          // Don't fail the main response if logging fails
+        }
+        
         return new Response(
           JSON.stringify(conversationInitData),
           { 
@@ -241,6 +269,35 @@ serve(async (req) => {
       available_times: availableTimes,
       error: null
     };
+
+    // Log the request to business_data_requests table
+    try {
+      const requestData = req.method === 'POST' ? await req.json() : {};
+      const requestHeaders = Object.fromEntries(req.headers.entries());
+      
+      await supabase
+        .from('business_data_requests')
+        .insert({
+          business_id: businessId,
+          request_type: requestSource === 'elevenlabs' ? 'conversation_initiation' : 'data_request',
+          request_source: requestSource,
+          request_data: {
+            url: req.url,
+            method: req.method,
+            headers: requestHeaders,
+            ...requestData
+          },
+          response_status: 200,
+          response_data: responseData,
+          user_agent: req.headers.get('user-agent') || '',
+          ip_address: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || ''
+        });
+      
+      console.log('Successfully logged request to business_data_requests table');
+    } catch (logError) {
+      console.error('Error logging request to business_data_requests table:', logError);
+      // Don't fail the main response if logging fails
+    }
 
     return new Response(
       JSON.stringify(responseData),
