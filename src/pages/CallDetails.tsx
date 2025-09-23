@@ -261,13 +261,20 @@ const CallDetails = () => {
                   }
                   return null;
                 })()}
-                {callDetail.email && (
-                  <div className="flex items-center space-x-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">Email:</span>
-                    <span>{callDetail.email}</span>
-                  </div>
-                )}
+                {/* Show email if available */}
+                {(() => {
+                  const email = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.email?.value || callDetail.email;
+                  if (email) {
+                    return (
+                      <div className="flex items-center space-x-2">
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">Email:</span>
+                        <span>{email}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 {callDetail.call_duration && (
                   <div className="flex items-center space-x-2">
                     <Clock className="w-4 h-4 text-muted-foreground" />
