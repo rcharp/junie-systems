@@ -151,6 +151,9 @@ export const WebhookMonitor = () => {
             // Extract email
             if (results.email && results.email.value) {
               customerEmail = results.email.value;
+              console.log('Found email in data_collection_results:', customerEmail);
+            } else {
+              console.log('No email found in data_collection_results. Available fields:', Object.keys(results));
             }
             
             // Extract service address
@@ -195,7 +198,12 @@ export const WebhookMonitor = () => {
           
           // Extract contact info
           if (vars.phone_number) customerPhone = String(vars.phone_number);
-          if (vars.email) customerEmail = vars.email;
+          if (vars.email) {
+            customerEmail = vars.email;
+            console.log('Found email in variables:', customerEmail);
+          } else {
+            console.log('No email found in variables. Available variables:', Object.keys(vars));
+          }
           if (vars.address) serviceAddress = vars.address;
           
           // Extract appointment info
@@ -344,6 +352,17 @@ export const WebhookMonitor = () => {
         const firstName = nameParts[0] || 'N/A';
         const lastName = nameParts.slice(1).join(' ') || 'N/A';
         
+        console.log('Final extracted customer data:', {
+          customerName,
+          customerPhone,
+          customerEmail,
+          serviceAddress,
+          appointmentDetails,
+          serviceRequested,
+          appointmentScheduled,
+          businessName
+        });
+        
         return {
           id: log.id,
           business_id: businessId,
@@ -353,7 +372,7 @@ export const WebhookMonitor = () => {
           caller_name: customerName,
           phone_number: customerPhone,
           address: serviceAddress,
-          email: customerEmail,
+          email: customerEmail || log.email || 'N/A',
           service_info: serviceRequested,
           appointment_datetime: formatDisplayDateTime(appointmentDetails),
           appointment_scheduled: appointmentScheduled,
