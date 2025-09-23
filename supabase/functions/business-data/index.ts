@@ -67,13 +67,6 @@ serve(async (req) => {
         console.log('ElevenLabs business_id from headers:', req.headers.get('business_id'));
         console.log('ElevenLabs business_id from body:', body?.business_id);
         console.log('Final business_id used:', conversationBusinessId);
-      
-      // Check if this is an ElevenLabs post-call transcription with nested business_id
-      } else if (body?.conversation_initiation_client_data?.dynamic_variables?.business_id) {
-        console.log('ElevenLabs post-call transcription request detected');
-        businessId = body.conversation_initiation_client_data.dynamic_variables.business_id;
-        requestSource = 'elevenlabs_transcription';
-        console.log('ElevenLabs transcription business_id:', businessId);
         
         // Return the conversation initiation format that ElevenLabs expects
         const conversationInitData = {
@@ -98,7 +91,14 @@ serve(async (req) => {
             }
           }
         );
-      } else if (body && body.business_id) {
+      }
+      
+      // Check if this is an ElevenLabs post-call transcription with nested business_id
+      if (body?.conversation_initiation_client_data?.dynamic_variables?.business_id) {
+        console.log('ElevenLabs post-call transcription request detected');
+        businessId = body.conversation_initiation_client_data.dynamic_variables.business_id;
+        requestSource = 'elevenlabs_transcription';
+        console.log('ElevenLabs transcription business_id:', businessId);
         businessId = body.business_id;
         requestSource = 'manual';
         console.log('MANUAL request detected - business_id from request body:', businessId);
