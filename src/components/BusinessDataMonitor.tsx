@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, RefreshCw, Database, Pause, Play } from 'lucide-react';
+import { Trash2, RefreshCw, Database, Pause, Play, Minimize2, Maximize2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -24,6 +24,7 @@ export const BusinessDataMonitor: React.FC = () => {
   const [requestData, setRequestData] = useState<BusinessDataRequest[]>([]);
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const fetchBusinessDataRequests = async () => {
     setLoading(true);
@@ -126,6 +127,24 @@ export const BusinessDataMonitor: React.FC = () => {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="flex items-center gap-2"
+            >
+              {isMinimized ? (
+                <>
+                  <Maximize2 className="h-4 w-4" />
+                  Expand
+                </>
+              ) : (
+                <>
+                  <Minimize2 className="h-4 w-4" />
+                  Minimize
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setAutoRefresh(!autoRefresh)}
               className="flex items-center gap-2"
             >
@@ -154,6 +173,7 @@ export const BusinessDataMonitor: React.FC = () => {
           </div>
         </div>
       </CardHeader>
+      {!isMinimized && (
       <CardContent>
         <div className="space-y-4">
           {requestData.length === 0 ? (
@@ -218,6 +238,7 @@ export const BusinessDataMonitor: React.FC = () => {
           )}
         </div>
       </CardContent>
+      )}
     </Card>
   );
 };

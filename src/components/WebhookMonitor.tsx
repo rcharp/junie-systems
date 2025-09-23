@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { RefreshCw, Webhook, Activity, Trash2, ChevronDown, ChevronRight, Code } from 'lucide-react';
+import { RefreshCw, Webhook, Activity, Trash2, ChevronDown, ChevronRight, Code, Minimize2, Maximize2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parse, isValid, parseISO } from 'date-fns';
 
@@ -33,6 +33,7 @@ export const WebhookMonitor = () => {
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [expandedRawData, setExpandedRawData] = useState<Record<string, boolean>>({});
+  const [isMinimized, setIsMinimized] = useState(false);
 
   const fetchWebhookData = async () => {
     try {
@@ -509,6 +510,7 @@ export const WebhookMonitor = () => {
           </div>
         </div>
       </CardHeader>
+      {!isMinimized && (
       <CardContent>
         <div className="space-y-4 max-h-[1200px] overflow-y-auto">
           {webhookData.map((data) => (
@@ -641,6 +643,7 @@ export const WebhookMonitor = () => {
           )}
         </div>
       </CardContent>
+      )}
     </Card>
   );
 };
