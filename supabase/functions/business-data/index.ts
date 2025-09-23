@@ -202,7 +202,7 @@ serve(async (req) => {
         };
         
         // Log the request for monitoring
-        await logBusinessDataRequest(supabase, null, 'elevenlabs', body, conversationInitData);
+        await logBusinessDataRequest(req.headers.get('business_id') || 'unknown', 'conversation_initiation', 'elevenlabs', body, 200, conversationInitData);
         
         return new Response(
           JSON.stringify(conversationInitData),
