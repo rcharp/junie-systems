@@ -266,7 +266,7 @@ serve(async (req) => {
       .from('google_calendar_settings')
       .select('is_connected, timezone, appointment_duration')
       .eq('user_id', businessData.user_id)
-      .single();
+      .maybeSingle();
 
     let calendarAvailability = null;
     if (calendarSettings?.is_connected) {
@@ -277,14 +277,18 @@ serve(async (req) => {
         });
         
         console.log('Calendar availability response:', availabilityResponse);
-        if (availabilityResponse.data) {
+        if (availabilityResponse.data && !availabilityResponse.error) {
           calendarAvailability = availabilityResponse.data;
         } else if (availabilityResponse.error) {
           console.error('Calendar availability error:', availabilityResponse.error);
+          calendarAvailability = { available: false, message: 'Calendar integration error' };
         }
       } catch (error) {
         console.error('Error fetching calendar availability:', error);
+        calendarAvailability = { available: false, message: 'Calendar integration error' };
       }
+    } else {
+      calendarAvailability = { available: false, message: 'Google Calendar not connected' };
     }
 
     console.log('Successfully retrieved business data for business_id:', businessId);
@@ -315,23 +319,35 @@ serve(async (req) => {
     const generateAvailableTimes = (hours: any[], calendarAvailability: any = null) => {
       console.log('Generating available times:', { hours, calendarAvailability });
       
-      // If we have calendar availability, use the actual available slots
-      if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.slots)) {
-        const slots = calendarAvailability.slots.slice(0, 15); // Limit to first 15 slots
-        if (slots.length > 0) {
-          return slots.map(slot => ({
-            startTime: new Date(slot.start).toISOString(),
-            endTime: new Date(slot.end).toISOString()
-          }));
-        }
+      // If we have calendar availability with actual slots, prioritize those
+      if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.slots) && calendarAvailability.slots.length > 0) {
+        console.log('Using actual Google Calendar availability slots');
+        return calendarAvailability.slots.slice(0, 15).map(slot => ({
+          startTime: new Date(slot.start).toISOString(),
+          endTime: new Date(slot.end).toISOString()
+        }));
       }
       
-      // Fallback to generating slots from business hours for the next 7 days
-      if (!Array.isArray(hours) || hours.length === 0) return [];
+      // If calendar is connected but no slots returned (or calendar error), don't generate fallback times
+      // This prevents showing availability when the user's calendar might actually be busy
+      if (calendarAvailability && (calendarAvailability.available === false || !calendarAvailability.available)) {
+        console.log('Calendar connected but no availability or error occurred - returning no slots');
+        return [];
+      }
+      
+      // Only use business hours fallback when calendar is NOT connected
+      if (!Array.isArray(hours) || hours.length === 0) {
+        console.log('No business hours configured');
+        return [];
+      }
       
       const openDays = hours.filter(day => day.isOpen || day.enabled);
-      if (openDays.length === 0) return [];
+      if (openDays.length === 0) {
+        console.log('No open days in business hours');
+        return [];
+      }
       
+      console.log('Using business hours fallback (calendar not connected)');
       const availableSlots = [];
       const today = new Date();
       
