@@ -311,48 +311,62 @@ serve(async (req) => {
       businessHours = [];
     }
 
-    // Helper function to format business hours for ElevenLabs
-    const formatBusinessHours = (hours: any[], calendarAvailability: any = null) => {
-      console.log('Formatting business hours:', { hours, calendarAvailability });
-      
-      if (!Array.isArray(hours) || hours.length === 0) return "Contact us for hours";
-      
-      const openDays = hours.filter(day => day.isOpen || day.enabled);
-      if (openDays.length === 0) return "Closed";
+    // Helper function to generate available times for ElevenLabs
+    const generateAvailableTimes = (hours: any[], calendarAvailability: any = null) => {
+      console.log('Generating available times:', { hours, calendarAvailability });
       
       // If we have calendar availability, use the actual available slots
       if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.availableSlots)) {
         const slots = calendarAvailability.availableSlots.slice(0, 15); // Limit to first 15 slots
         if (slots.length > 0) {
-          const formattedSlots = slots.map(slot => {
-            const start = new Date(slot.start);
-            const end = new Date(slot.end);
-            const dayName = start.toLocaleDateString('en-US', { weekday: 'long' });
-            const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            const dateString = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            return `${dayName} ${dateString} ${startTime}-${endTime}`;
-          });
-          return formattedSlots.join(', ');
+          return slots.map(slot => ({
+            startTime: new Date(slot.start).toISOString(),
+            endTime: new Date(slot.end).toISOString()
+          }));
         }
       }
       
-      // Fallback to detailed business hours by day
-      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const formattedDays = [];
+      // Fallback to generating slots from business hours for the next 7 days
+      if (!Array.isArray(hours) || hours.length === 0) return [];
       
-      openDays.forEach(day => {
-        const dayName = day.day || dayNames.find(name => day[name] !== undefined);
-        const openTime = day.openTime || day.start || '9:00';
-        const closeTime = day.closeTime || day.end || '17:00';
+      const openDays = hours.filter(day => day.isOpen || day.enabled);
+      if (openDays.length === 0) return [];
+      
+      const availableSlots = [];
+      const today = new Date();
+      
+      // Generate slots for the next 7 days
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        const dayName = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'][date.getDay()];
         
-        if (dayName) {
-          const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
-          formattedDays.push(`${capitalizedDay} ${openTime}-${closeTime}`);
+        const dayHours = openDays.find(day => day.day === dayName);
+        if (dayHours) {
+          const openTime = dayHours.openTime || dayHours.start || '09:00';
+          const closeTime = dayHours.closeTime || dayHours.end || '17:00';
+          
+          // Create start and end datetime for this day
+          const [openHour, openMinute] = openTime.split(':').map(Number);
+          const [closeHour, closeMinute] = closeTime.split(':').map(Number);
+          
+          const startDateTime = new Date(date);
+          startDateTime.setHours(openHour, openMinute, 0, 0);
+          
+          const endDateTime = new Date(date);
+          endDateTime.setHours(closeHour, closeMinute, 0, 0);
+          
+          // Only include future times
+          if (startDateTime > new Date()) {
+            availableSlots.push({
+              startTime: startDateTime.toISOString(),
+              endTime: endDateTime.toISOString()
+            });
+          }
         }
-      });
+      }
       
-      return formattedDays.length > 0 ? formattedDays.join(', ') : "Contact us for hours";
+      return availableSlots;
     };
 
     // Return ElevenLabs conversation initiation format
@@ -363,7 +377,7 @@ serve(async (req) => {
         business_name: businessData.business_name || "Our Business",
         business_phone: businessData.business_phone || "",
         business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : "",
-        available_hours: formatBusinessHours(businessHours, calendarAvailability),
+        available_times: generateAvailableTimes(businessHours, calendarAvailability),
         services: businessData.pricing_structure || JSON.stringify(servicesOffered),
         business_description: businessData.business_description || ""
       }
