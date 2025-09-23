@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, RefreshCw, Database, Pause, Play, Minimize2, Maximize2, Send } from 'lucide-react';
+import { Trash2, RefreshCw, Database, Minimize2, Maximize2, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -201,19 +201,8 @@ export const BusinessDataMonitor: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={() => setAutoRefresh(!autoRefresh)}
-              className="flex items-center gap-2"
             >
-              {autoRefresh ? (
-                <>
-                  <Pause className="h-4 w-4" />
-                  Pause Auto-refresh
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  Enable Auto-refresh
-                </>
-              )}
+              {autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
             </Button>
             <Button
               variant="outline"
@@ -223,7 +212,6 @@ export const BusinessDataMonitor: React.FC = () => {
               className="flex items-center gap-2"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
             </Button>
           </div>
         </div>
