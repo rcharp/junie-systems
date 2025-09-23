@@ -271,9 +271,13 @@ serve(async (req) => {
     let calendarAvailability = null;
     if (calendarSettings?.is_connected) {
       try {
-        const availabilityResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-availability/${businessData.user_id}`);
-        if (availabilityResponse.ok) {
-          calendarAvailability = await availabilityResponse.json();
+        console.log('Fetching calendar availability for user_id:', businessData.user_id);
+        const availabilityResponse = await supabase.functions.invoke('google-calendar-availability', {
+          body: { user_id: businessData.user_id }
+        });
+        console.log('Calendar availability response:', availabilityResponse);
+        if (availabilityResponse.data) {
+          calendarAvailability = availabilityResponse.data;
         }
       } catch (error) {
         console.error('Error fetching calendar availability:', error);
@@ -306,6 +310,8 @@ serve(async (req) => {
 
     // Helper function to format business hours for ElevenLabs
     const formatBusinessHours = (hours: any[], calendarAvailability: any = null) => {
+      console.log('Formatting business hours:', { hours, calendarAvailability });
+      
       if (!Array.isArray(hours) || hours.length === 0) return "Contact us for hours";
       
       const openDays = hours.filter(day => day.isOpen || day.enabled);
@@ -313,7 +319,7 @@ serve(async (req) => {
       
       // If we have calendar availability, use the actual available slots
       if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.availableSlots)) {
-        const slots = calendarAvailability.availableSlots.slice(0, 10); // Limit to first 10 slots
+        const slots = calendarAvailability.availableSlots.slice(0, 15); // Limit to first 15 slots
         if (slots.length > 0) {
           const formattedSlots = slots.map(slot => {
             const start = new Date(slot.start);
@@ -321,18 +327,29 @@ serve(async (req) => {
             const dayName = start.toLocaleDateString('en-US', { weekday: 'long' });
             const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
             const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            return `${dayName} ${startTime}-${endTime}`;
+            const dateString = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            return `${dayName} ${dateString} ${startTime}-${endTime}`;
           });
-          return `Available times: ${formattedSlots.join(', ')}`;
+          return formattedSlots.join(', ');
         }
       }
       
-      // Fallback to basic business hours
-      const firstDay = openDays[0];
-      const openTime = firstDay.openTime || firstDay.start;
-      const closeTime = firstDay.closeTime || firstDay.end;
+      // Fallback to detailed business hours by day
+      const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const formattedDays = [];
       
-      return `Monday-Friday ${openTime}-${closeTime}`;
+      openDays.forEach(day => {
+        const dayName = day.day || dayNames.find(name => day[name] !== undefined);
+        const openTime = day.openTime || day.start || '9:00';
+        const closeTime = day.closeTime || day.end || '17:00';
+        
+        if (dayName) {
+          const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+          formattedDays.push(`${capitalizedDay} ${openTime}-${closeTime}`);
+        }
+      });
+      
+      return formattedDays.length > 0 ? formattedDays.join(', ') : "Contact us for hours";
     };
 
     // Return ElevenLabs conversation initiation format
