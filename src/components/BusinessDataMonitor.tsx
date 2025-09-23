@@ -174,6 +174,56 @@ export const BusinessDataMonitor: React.FC = () => {
     }
   };
 
+  // Pagination calculations
+  const totalPages = Math.ceil(requestData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = requestData.slice(startIndex, endIndex);
+  const actualEndIndex = Math.min(endIndex, requestData.length);
+
+  const renderPagination = () => (
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious 
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (currentPage > 1) setCurrentPage(currentPage - 1);
+            }}
+            className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+          />
+        </PaginationItem>
+        
+        {Array.from({ length: totalPages }, (_, i) => (
+          <PaginationItem key={i + 1}>
+            <PaginationLink
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentPage(i + 1);
+              }}
+              isActive={currentPage === i + 1}
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        ))}
+        
+        <PaginationItem>
+          <PaginationNext 
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+            }}
+            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  );
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -245,181 +295,143 @@ export const BusinessDataMonitor: React.FC = () => {
               <p className="text-sm">Real POST requests to /functions/v1/business-data will appear here</p>
             </div>
           ) : (
-            (() => {
-              const totalPages = Math.ceil(requestData.length / itemsPerPage);
-              const startIndex = (currentPage - 1) * itemsPerPage;
-              const endIndex = startIndex + itemsPerPage;
-              const currentData = requestData.slice(startIndex, endIndex);
+            <>
+              {/* Top Pagination and Info */}
+              {requestData.length > 0 && (
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1}-{actualEndIndex} of {requestData.length} items
+                  </div>
+                  {renderPagination()}
+                </div>
+              )}
               
-              return (
-                <>
-                  {currentData.map((request) => {
-              const isItemExpanded = expandedItems[request.id] || false;
-              
-              return (
-              <Card 
-                key={request.id} 
-                className={`relative ${!isItemExpanded ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
-                onClick={!isItemExpanded ? () => toggleItemExpansion(request.id) : undefined}
-              >
-                <CardContent className="pt-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          variant="outline" 
-                          className={
-                            request.request_source.toLowerCase() === 'elevenlabs' 
-                              ? 'bg-blue-100 text-blue-800 border-blue-300' 
-                              : request.request_source.toLowerCase() === 'manual'
-                              ? 'bg-white text-gray-800 border-gray-300'
-                              : ''
-                          }
-                        >
-                          {request.request_source.toUpperCase()}
-                        </Badge>
-                        <Badge 
-                          variant="outline"
-                          className={
-                            request.response_status === 200 
-                              ? 'bg-green-100 text-green-800 border-green-300' 
-                              : 'bg-red-100 text-red-800 border-red-300'
-                          }
-                        >
-                          {request.response_status}
-                        </Badge>
+              {currentData.map((request) => {
+                const isItemExpanded = expandedItems[request.id] || false;
+                
+                return (
+                <Card 
+                  key={request.id} 
+                  className={`relative ${!isItemExpanded ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
+                  onClick={!isItemExpanded ? () => toggleItemExpansion(request.id) : undefined}
+                >
+                  <CardContent className="pt-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant="outline" 
+                            className={
+                              request.request_source.toLowerCase() === 'elevenlabs' 
+                                ? 'bg-blue-100 text-blue-800 border-blue-300' 
+                                : request.request_source.toLowerCase() === 'manual'
+                                ? 'bg-white text-gray-800 border-gray-300'
+                                : ''
+                            }
+                          >
+                            {request.request_source.toUpperCase()}
+                          </Badge>
+                          <Badge 
+                            variant="outline"
+                            className={
+                              request.response_status === 200 
+                                ? 'bg-green-100 text-green-800 border-green-300' 
+                                : 'bg-red-100 text-red-800 border-red-300'
+                            }
+                          >
+                            {request.response_status}
+                          </Badge>
+                        </div>
+                        {!isItemExpanded && (
+                          <div className="space-y-1">
+                            <p className="text-sm font-medium">
+                              Business ID: {request.business_id}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatTime(request.created_at)}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      {!isItemExpanded && (
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">
-                            Business ID: {request.business_id}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatTime(request.created_at)}
-                          </p>
+                      <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleItemExpansion(request.id)}
+                          className="flex items-center gap-1"
+                        >
+                          {isItemExpanded ? (
+                            <>
+                              <Minimize2 className="h-4 w-4" />
+                              Minimize
+                            </>
+                          ) : (
+                            <>
+                              <Maximize2 className="h-4 w-4" />
+                              Expand
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSingle(request.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {isItemExpanded && (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        {formatTime(request.created_at)}
+                      </p>
+                      <span className="text-sm font-medium">{request.request_type}</span>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Business ID:</span>
+                          <p className="text-muted-foreground font-mono">{request.business_id}</p>
+                        </div>
+                        <div>
+                          <span className="font-medium">Company:</span>
+                          <p className="text-muted-foreground">{request.company_name}</p>
+                        </div>
+                      </div>
+                      
+                      {request.request_data && (
+                        <div>
+                          <span className="font-medium text-sm">Request Data:</span>
+                          <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
+                            {JSON.stringify(request.request_data, null, 2)}
+                          </pre>
+                        </div>
+                      )}
+                      
+                      {request.response_data && (
+                        <div>
+                          <span className="font-medium text-sm">Response Data:</span>
+                          <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
+                            {JSON.stringify(request.response_data, null, 2)}
+                          </pre>
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleItemExpansion(request.id)}
-                        className="flex items-center gap-1"
-                      >
-                        {isItemExpanded ? (
-                          <>
-                            <Minimize2 className="h-4 w-4" />
-                            Minimize
-                          </>
-                        ) : (
-                          <>
-                            <Maximize2 className="h-4 w-4" />
-                            Expand
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteSingle(request.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                  
-                  {isItemExpanded && (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      {formatTime(request.created_at)}
-                    </p>
-                    <span className="text-sm font-medium">{request.request_type}</span>
-                    
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="font-medium">Business ID:</span>
-                        <p className="text-muted-foreground font-mono">{request.business_id}</p>
-                      </div>
-                      <div>
-                        <span className="font-medium">Company:</span>
-                        <p className="text-muted-foreground">{request.company_name}</p>
-                      </div>
-                    </div>
-                    
-                    {request.request_data && (
-                      <div>
-                        <span className="font-medium text-sm">Request Data:</span>
-                        <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
-                          {JSON.stringify(request.request_data, null, 2)}
-                        </pre>
-                      </div>
                     )}
-                    
-                    {request.response_data && (
-                      <div>
-                        <span className="font-medium text-sm">Response Data:</span>
-                        <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
-                          {JSON.stringify(request.response_data, null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                  )}
-                </CardContent>
-              </Card>
-                    );
-                  })}
-                  
-                  {/* Pagination Controls */}
-                  {requestData.length > 0 && (
-                    <div className="flex justify-center mt-6">
-                      <Pagination>
-                        <PaginationContent>
-                          <PaginationItem>
-                            <PaginationPrevious 
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (currentPage > 1) setCurrentPage(currentPage - 1);
-                              }}
-                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                            />
-                          </PaginationItem>
-                          
-                          {Array.from({ length: totalPages }, (_, i) => (
-                            <PaginationItem key={i + 1}>
-                              <PaginationLink
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setCurrentPage(i + 1);
-                                }}
-                                isActive={currentPage === i + 1}
-                              >
-                                {i + 1}
-                              </PaginationLink>
-                            </PaginationItem>
-                          ))}
-                          
-                          <PaginationItem>
-                            <PaginationNext 
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                              }}
-                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                            />
-                          </PaginationItem>
-                        </PaginationContent>
-                      </Pagination>
-                    </div>
-                  )}
-                </>
-              );
-            })()
+                  </CardContent>
+                </Card>
+                );
+              })}
+              
+              {/* Bottom Pagination Controls */}
+              {requestData.length > 0 && (
+                <div className="flex justify-center mt-6">
+                  {renderPagination()}
+                </div>
+              )}
+            </>
           )}
         </div>
       </CardContent>

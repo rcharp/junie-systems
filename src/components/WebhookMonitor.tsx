@@ -485,6 +485,55 @@ export const WebhookMonitor = () => {
     };
   }, [autoRefresh]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(webhookData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentData = webhookData.slice(startIndex, endIndex);
+  const actualEndIndex = Math.min(endIndex, webhookData.length);
+
+  const renderPagination = () => (
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious 
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (currentPage > 1) setCurrentPage(currentPage - 1);
+            }}
+            className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+          />
+        </PaginationItem>
+        
+        {Array.from({ length: totalPages }, (_, i) => (
+          <PaginationItem key={i + 1}>
+            <PaginationLink
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentPage(i + 1);
+              }}
+              isActive={currentPage === i + 1}
+            >
+              {i + 1}
+            </PaginationLink>
+          </PaginationItem>
+        ))}
+        
+        <PaginationItem>
+          <PaginationNext 
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+            }}
+            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
+  );
 
   return (
     <Card>
@@ -539,19 +588,20 @@ export const WebhookMonitor = () => {
       {!isMinimized && (
       <CardContent>
         <div className="space-y-4 max-h-[1200px] overflow-y-auto">
-          {/* Pagination Logic */}
-          {(() => {
-            const totalPages = Math.ceil(webhookData.length / itemsPerPage);
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const currentData = webhookData.slice(startIndex, endIndex);
+          {/* Top Pagination and Info */}
+          {webhookData.length > 0 && (
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{actualEndIndex} of {webhookData.length} items
+              </div>
+              {renderPagination()}
+            </div>
+          )}
+          
+          {currentData.map((data) => {
+            const isItemExpanded = expandedItems[data.id] || false;
             
             return (
-              <>
-                {currentData.map((data) => {
-                  const isItemExpanded = expandedItems[data.id] || false;
-                  
-                  return (
               <div 
                 key={data.id} 
                 className={`p-4 border rounded-lg bg-muted/30 relative ${!isItemExpanded ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
@@ -716,57 +766,15 @@ export const WebhookMonitor = () => {
               </>
               )}
               </div>
-                  );
-                })}
-                
-                {/* Pagination Controls */}
-                {webhookData.length > 0 && (
-                  <div className="flex justify-center mt-6">
-                    <Pagination>
-                      <PaginationContent>
-                        <PaginationItem>
-                          <PaginationPrevious 
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (currentPage > 1) setCurrentPage(currentPage - 1);
-                            }}
-                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-                          />
-                        </PaginationItem>
-                        
-                        {Array.from({ length: totalPages }, (_, i) => (
-                          <PaginationItem key={i + 1}>
-                            <PaginationLink
-                              href="#"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setCurrentPage(i + 1);
-                              }}
-                              isActive={currentPage === i + 1}
-                            >
-                              {i + 1}
-                            </PaginationLink>
-                          </PaginationItem>
-                        ))}
-                        
-                        <PaginationItem>
-                          <PaginationNext 
-                            href="#"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-                            }}
-                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-                          />
-                        </PaginationItem>
-                      </PaginationContent>
-                    </Pagination>
-                  </div>
-                )}
-              </>
             );
-          })()}
+          })}
+          
+          {/* Bottom Pagination Controls */}
+          {webhookData.length > 0 && (
+            <div className="flex justify-center mt-6">
+              {renderPagination()}
+            </div>
+          )}
           
           {webhookData.length === 0 && !loading && (
             <div className="text-center py-12">
