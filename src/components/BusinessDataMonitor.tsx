@@ -251,9 +251,25 @@ export const BusinessDataMonitor: React.FC = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">{request.request_source.toUpperCase()}</Badge>
                         <Badge 
-                          variant={request.response_status === 200 ? 'default' : 'destructive'}
+                          variant="outline" 
+                          className={
+                            request.request_source.toLowerCase() === 'elevenlabs' 
+                              ? 'bg-blue-100 text-blue-800 border-blue-300' 
+                              : request.request_source.toLowerCase() === 'manual'
+                              ? 'bg-red-100 text-red-800 border-red-300'
+                              : ''
+                          }
+                        >
+                          {request.request_source.toUpperCase()}
+                        </Badge>
+                        <Badge 
+                          variant="outline"
+                          className={
+                            request.response_status === 200 
+                              ? 'bg-green-100 text-green-800 border-green-300' 
+                              : 'bg-red-100 text-red-800 border-red-300'
+                          }
                         >
                           {request.response_status}
                         </Badge>
