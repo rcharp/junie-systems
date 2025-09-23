@@ -216,8 +216,8 @@ const CallDetails = () => {
                       const incomingCall = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || callDetail.metadata?.caller_id;
                       if (incomingCall) {
                         return (
-                          <p className="text-sm text-muted-foreground mb-1">
-                            Incoming Call: {incomingCall}
+                          <p className="text-sm font-medium text-muted-foreground mb-1">
+                            Incoming - {incomingCall}
                           </p>
                         );
                       }
@@ -225,7 +225,7 @@ const CallDetails = () => {
                     })()}
                     <CardTitle className="text-2xl">{callDetail.caller_name}</CardTitle>
                     <p className="text-muted-foreground">
-                      {format(new Date(callDetail.created_at), 'EEEE, MMMM d, yyyy at h:mm a')}
+                      Call Time: {format(new Date(callDetail.created_at), 'EEEE, MMMM d, yyyy at h:mm a')}
                     </p>
                   </div>
                 </div>
