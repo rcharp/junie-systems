@@ -175,10 +175,16 @@ serve(async (req) => {
       const body = await req.json();
       console.log('Request body:', body);
       
-      console.log('ElevenLabs conversation initiation request detected');
-      // Get business_id from headers for ElevenLabs requests
-      businessId = req.headers.get('business_id');
-      console.log('business_id from headers for ElevenLabs request:', businessId);
+      // Check if business_id is in the body (for manual requests)
+      if (body && body.business_id) {
+        businessId = body.business_id;
+        console.log('business_id from request body:', businessId);
+      } else {
+        console.log('ElevenLabs conversation initiation request detected');
+        // Get business_id from headers for ElevenLabs requests
+        businessId = req.headers.get('business_id');
+        console.log('business_id from headers for ElevenLabs request:', businessId);
+      }
     } else {
       // Get business_id from GET query parameters
       const url = new URL(req.url);
