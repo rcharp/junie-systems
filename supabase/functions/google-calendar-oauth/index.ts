@@ -35,8 +35,10 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      // Generate OAuth URL
-      const redirectUri = 'https://availabee.com/google_auth'
+      // Generate OAuth URL - get origin from referer or use current URL
+      const referer = req.headers.get('referer') || req.headers.get('origin')
+      const baseUrl = referer ? new URL(referer).origin : new URL(req.url).origin
+      const redirectUri = `${baseUrl}/google_auth`
       const scope = 'https://www.googleapis.com/auth/calendar'
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${googleClientId}&` +
@@ -59,8 +61,10 @@ Deno.serve(async (req) => {
         throw new Error('Invalid state parameter')
       }
 
-      // Exchange code for tokens
-      const redirectUri = 'https://availabee.com/google_auth'
+      // Exchange code for tokens - get origin from referer or use current URL
+      const referer = req.headers.get('referer') || req.headers.get('origin')
+      const baseUrl = referer ? new URL(referer).origin : new URL(req.url).origin
+      const redirectUri = `${baseUrl}/google_auth`
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {

@@ -41,21 +41,28 @@ const GoogleAuth = () => {
 
         setStatus('success');
         
-        // Close popup and refresh parent window
+        // Close popup and redirect parent window to calendar tab with success status
         if (window.opener) {
-          window.opener.postMessage({ type: 'google-calendar-connected' }, '*');
+          window.opener.location.href = '/settings?tab=setup&calendar_status=success';
           window.close();
         } else {
           // Fallback for non-popup case
           setTimeout(() => {
-            navigate('/settings', { replace: true });
+            navigate('/settings?tab=setup&calendar_status=success', { replace: true });
           }, 2000);
         }
 
       } catch (err) {
         console.error('Google auth callback error:', err);
-        setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+        const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+        setError(errorMessage);
         setStatus('error');
+        
+        // Close popup and redirect parent window to calendar tab with error status
+        if (window.opener) {
+          window.opener.location.href = `/settings?tab=setup&calendar_status=error&error=${encodeURIComponent(errorMessage)}`;
+          window.close();
+        }
       }
     };
 
@@ -63,7 +70,7 @@ const GoogleAuth = () => {
   }, [searchParams, navigate]);
 
   const handleRetry = () => {
-    navigate('/settings', { replace: true });
+    navigate('/settings?tab=setup', { replace: true });
   };
 
   if (status === 'processing') {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Calendar, Zap } from "lucide-react";
+import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Calendar, Zap, CheckCircle, XCircle, X } from "lucide-react";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
@@ -29,6 +29,11 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState("business");
+  const [showCalendarBanner, setShowCalendarBanner] = useState(false);
+  const [calendarBannerType, setCalendarBannerType] = useState<'success' | 'error'>('success');
+  const [calendarBannerMessage, setCalendarBannerMessage] = useState('');
   console.log("Settings state:", { user: user?.email, loading });
 
   // Business Info State
@@ -96,17 +101,33 @@ const Settings = () => {
       loadUserSettings(user.id);
     }
     
-    // Listen for Google Calendar connection completion
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'google-calendar-connected') {
-        // Refresh the page to show updated connection status
-        window.location.reload();
-      }
-    };
+    // Handle URL parameters for tab selection and calendar status
+    const tab = searchParams.get('tab');
+    const calendarStatus = searchParams.get('calendar_status');
+    const errorMessage = searchParams.get('error');
     
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [loading, user, navigate]);
+    if (tab) {
+      setActiveTab(tab);
+    }
+    
+    if (calendarStatus) {
+      setShowCalendarBanner(true);
+      setCalendarBannerType(calendarStatus as 'success' | 'error');
+      
+      if (calendarStatus === 'success') {
+        setCalendarBannerMessage('Google Calendar connected successfully!');
+      } else if (calendarStatus === 'error') {
+        setCalendarBannerMessage(errorMessage || 'Failed to connect Google Calendar. Please try again.');
+      }
+      
+      // Clear URL parameters after processing
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('calendar_status');
+      newSearchParams.delete('error');
+      if (!tab) newSearchParams.delete('tab');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [loading, user, navigate, searchParams, setSearchParams]);
 
   const loadUserSettings = async (userId: string) => {
     try {
@@ -782,7 +803,35 @@ const Settings = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="business" className="space-y-6">
+          {/* Calendar Connection Banner */}
+          {showCalendarBanner && (
+            <div className={`p-4 rounded-lg border mb-6 ${
+              calendarBannerType === 'success' 
+                ? 'bg-green-50 border-green-200 text-green-800' 
+                : 'bg-red-50 border-red-200 text-red-800'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {calendarBannerType === 'success' ? (
+                    <CheckCircle className="h-5 w-5" />
+                  ) : (
+                    <XCircle className="h-5 w-5" />
+                  )}
+                  <span className="font-medium">{calendarBannerMessage}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowCalendarBanner(false)}
+                  className="h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="business" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
