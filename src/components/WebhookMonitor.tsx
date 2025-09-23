@@ -380,11 +380,6 @@ export const WebhookMonitor = () => {
   };
 
   const handleDeleteSingle = async (callLogId: string) => {
-    // Single confirmation for deletion
-    if (!confirm('Are you sure you want to delete this call log? This action cannot be undone.')) {
-      return;
-    }
-
     try {
       setLoading(true);
       
