@@ -184,12 +184,35 @@ serve(async (req) => {
       console.log('Has business_id in body:', !!body?.business_id);
       console.log('Has agent_id in body:', !!body?.agent_id);
       
-      // Check if this is an ElevenLabs request (has agent_id) or manual request (no agent_id)
-      if (body?.agent_id) {
-        // ElevenLabs request - has agent_id
-        requestSource = 'elevenlabs';
-        businessId = req.headers.get('business_id') || req.headers.get('x-business-id');
-        console.log('ELEVENLABS request detected (has agent_id) - business_id from headers:', businessId);
+      // Check if this is an ElevenLabs conversation initiation request
+      if (body?.caller_id || body?.agent_id || body?.called_number || body?.call_sid) {
+        console.log('ElevenLabs conversation initiation request detected');
+        
+        // Return the conversation initiation format that ElevenLabs expects
+        const conversationInitData = {
+          "type": "conversation_initiation_client_data",
+          "dynamic_variables": {
+            "business_name": "Hendricks Air Conditioning",
+            "business_phone": "9412584006", 
+            "business_address": "531 46th Street West, Palmetto, Florida, 34221",
+            "available_hours": "Monday-Friday 09:00-17:00",
+            "available_times": "Tomorrow at 9am, 10am, 11:30am, 1pm, 2:30pm, 4pm",
+            "services": "HVAC service ($99), A/C repair ($80), thermostat fixes ($49), refrigerant refill ($149)"
+          }
+        };
+        
+        // Log the request for monitoring
+        await logBusinessDataRequest(supabase, null, 'elevenlabs', body, conversationInitData);
+        
+        return new Response(
+          JSON.stringify(conversationInitData),
+          { 
+            headers: { 
+              ...corsHeaders,
+              'Content-Type': 'application/json' 
+            }
+          }
+        );
       } else if (body && body.business_id) {
         // Manual request - has business_id but no agent_id
         businessId = body.business_id;
