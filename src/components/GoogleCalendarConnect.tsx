@@ -82,6 +82,15 @@ const GoogleCalendarConnect = () => {
                 description: "Google Calendar has been connected successfully!",
               });
             }, 500);
+          } else if (event.data?.type === 'google-calendar-error') {
+            window.removeEventListener('message', messageListener);
+            popup?.close();
+            setConnecting(false);
+            toast({
+              title: "Connection Failed",
+              description: event.data?.error || "Failed to connect to Google Calendar. Please try again.",
+              variant: "destructive",
+            });
           }
         };
 
@@ -92,13 +101,8 @@ const GoogleCalendarConnect = () => {
           if (popup?.closed) {
             clearInterval(checkClosed);
             window.removeEventListener('message', messageListener);
-            // Only refresh if we haven't already handled the success message
-            if (connecting) {
-              setTimeout(() => {
-                fetchCalendarSettings();
-                setConnecting(false);
-              }, 1000);
-            }
+            // Always reset connecting state when popup closes
+            setConnecting(false);
           }
         }, 1000);
       }
