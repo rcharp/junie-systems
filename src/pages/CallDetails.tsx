@@ -261,6 +261,25 @@ const CallDetails = () => {
                     <span>{Math.floor(callDetail.call_duration / 60)}m {callDetail.call_duration % 60}s</span>
                   </div>
                 )}
+                {/* Show appointment time if available */}
+                {(() => {
+                  const appointmentTime = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.appointment_time?.value;
+                  if (appointmentTime) {
+                    try {
+                      const appointmentDate = new Date(appointmentTime);
+                      return (
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-medium">Appointment:</span>
+                          <span>{format(appointmentDate, 'EEEE, MMMM d, yyyy at h:mm a')}</span>
+                        </div>
+                      );
+                    } catch (error) {
+                      return null;
+                    }
+                  }
+                  return null;
+                })()}
                 {callDetail.best_time_to_call && (
                   <div className="flex items-center space-x-2">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
