@@ -188,14 +188,16 @@ serve(async (req) => {
       if (body?.caller_id || body?.agent_id || body?.called_number || body?.call_sid) {
         console.log('ElevenLabs conversation initiation request detected');
         
-        // Get business_id from headers (ElevenLabs sends it there)
-        const conversationBusinessId = req.headers.get('business_id');
-        console.log('ElevenLabs business_id from headers:', conversationBusinessId);
+        // Get business_id from headers OR body (check both locations)
+        const conversationBusinessId = req.headers.get('business_id') || body?.business_id;
+        console.log('ElevenLabs business_id from headers:', req.headers.get('business_id'));
+        console.log('ElevenLabs business_id from body:', body?.business_id);
+        console.log('Final business_id used:', conversationBusinessId);
         
         if (!conversationBusinessId) {
-          console.error('No business_id found in headers for ElevenLabs request');
+          console.error('No business_id found in headers OR body for ElevenLabs request');
           return new Response(
-            JSON.stringify({ error: 'business_id required in headers for ElevenLabs requests' }),
+            JSON.stringify({ error: 'business_id required in headers or body for ElevenLabs requests' }),
             { 
               status: 400, 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
