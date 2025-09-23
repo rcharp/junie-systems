@@ -67,15 +67,37 @@ const GoogleCalendarConnect = () => {
           'width=600,height=600,scrollbars=yes,resizable=yes'
         );
 
-        // Listen for the OAuth completion
-        const checkClosed = setInterval(() => {
-          if (popup?.closed) {
-            clearInterval(checkClosed);
+        // Listen for messages from the popup
+        const messageListener = (event: MessageEvent) => {
+          if (event.data?.type === 'google-calendar-connected') {
+            window.removeEventListener('message', messageListener);
+            popup?.close();
             // Refresh settings after OAuth completion
             setTimeout(() => {
               fetchCalendarSettings();
               setConnecting(false);
-            }, 1000);
+              toast({
+                title: "Connected",
+                description: "Google Calendar has been connected successfully!",
+              });
+            }, 500);
+          }
+        };
+
+        window.addEventListener('message', messageListener);
+
+        // Fallback: check if popup is closed manually (in case postMessage fails)
+        const checkClosed = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', messageListener);
+            // Only refresh if we haven't already handled the success message
+            if (connecting) {
+              setTimeout(() => {
+                fetchCalendarSettings();
+                setConnecting(false);
+              }, 1000);
+            }
           }
         }, 1000);
       }
