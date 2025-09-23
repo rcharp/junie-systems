@@ -188,22 +188,156 @@ serve(async (req) => {
       if (body?.caller_id || body?.agent_id || body?.called_number || body?.call_sid) {
         console.log('ElevenLabs conversation initiation request detected');
         
+        // Get business_id from headers
+        const conversationBusinessId = req.headers.get('business_id') || 'unknown';
+        
+        // Fetch actual business data for this business_id
+        const { data: businessData, error } = await supabase
+          .from('business_settings')
+          .select(`
+            user_id,
+            business_name,
+            business_type,
+            business_type_full_name,
+            business_phone,
+            business_address,
+            business_address_state_full,
+            business_hours,
+            business_description,
+            business_website,
+            services_offered,
+            pricing_structure,
+            custom_greeting,
+            common_questions,
+            ai_personality,
+            appointment_booking,
+            lead_capture
+          `)
+          .eq('id', conversationBusinessId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Database error fetching business data:', error);
+          // Return basic response with business_id only if database error
+          const conversationInitData = {
+            "type": "conversation_initiation_client_data",
+            "dynamic_variables": {
+              "business_id": conversationBusinessId,
+              "business_name": "Business",
+              "business_phone": "Unknown",
+              "business_address": "Unknown",
+              "available_hours": "Please call for hours",
+              "available_times": "Please call to schedule",
+              "services": "Please call for services"
+            }
+          };
+          
+          await logBusinessDataRequest(conversationBusinessId, 'conversation_initiation', 'elevenlabs', body, 200, conversationInitData);
+          
+          return new Response(
+            JSON.stringify(conversationInitData),
+            { 
+              headers: { 
+                ...corsHeaders,
+                'Content-Type': 'application/json' 
+              }
+            }
+          );
+        }
+
+        // Parse business data
+        let servicesOffered = [];
+        let businessHours = [];
+        
+        try {
+          servicesOffered = businessData?.services_offered ? JSON.parse(businessData.services_offered) : [];
+        } catch (error) {
+          console.error('Error parsing services_offered:', error);
+          servicesOffered = [];
+        }
+        
+        try {
+          businessHours = businessData?.business_hours ? JSON.parse(businessData.business_hours) : [];
+        } catch (error) {
+          console.error('Error parsing business_hours:', error);
+          businessHours = [];
+        }
+
+        // Format services for display
+        const formattedServices = servicesOffered.map(service => 
+          service.price ? `${service.name} ($${service.price})` : service.name
+        ).join(', ') || 'Call for services';
+
+        // Format business hours for display
+        const formatBusinessHours = (hours) => {
+          if (!Array.isArray(hours) || hours.length === 0) {
+            return 'Please call for hours';
+          }
+          
+          const openDays = hours.filter(day => day.isOpen || day.enabled);
+          if (openDays.length === 0) {
+            return 'Please call for hours';
+          }
+          
+          // Group consecutive days with same hours
+          const hourRanges = openDays.map(day => {
+            const openTime = day.openTime || day.start || '09:00';
+            const closeTime = day.closeTime || day.end || '17:00';
+            return `${day.day}: ${openTime}-${closeTime}`;
+          }).join(', ');
+          
+          return hourRanges || 'Please call for hours';
+        };
+
+        // Use actual business address with full state name if available
+        const formattedAddress = businessData?.business_address_state_full ? 
+          normalizeAddressWithFullState(businessData.business_address, businessData.business_address_state_full) :
+          normalizeAddress(businessData?.business_address || 'Unknown');
+
+        // Generate basic available times (this can be enhanced with calendar integration later)
+        const generateBasicAvailableTimes = () => {
+          const openDays = businessHours.filter(day => day.isOpen || day.enabled);
+          if (openDays.length === 0) {
+            return 'Please call to schedule';
+          }
+          
+          // Generate next few available time slots
+          const today = new Date();
+          const tomorrow = new Date(today);
+          tomorrow.setDate(today.getDate() + 1);
+          
+          const availableTimes = [];
+          const firstOpenDay = openDays[0];
+          const openTime = firstOpenDay.openTime || firstOpenDay.start || '09:00';
+          const [hour] = openTime.split(':').map(Number);
+          
+          // Generate some sample times for the next day
+          for (let i = 0; i < 4; i++) {
+            const timeSlot = new Date(tomorrow);
+            timeSlot.setHours(hour + i * 2, 0, 0, 0);
+            const timeString = timeSlot.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+            availableTimes.push(timeString);
+          }
+          
+          return availableTimes.join(', ') || 'Please call to schedule';
+        };
+        
         // Return the conversation initiation format that ElevenLabs expects
         const conversationInitData = {
           "type": "conversation_initiation_client_data",
           "dynamic_variables": {
-            "business_id": req.headers.get('business_id') || 'unknown',
-            "business_name": "Hendricks Air Conditioning",
-            "business_phone": "9412584006",
-            "business_address": "531 46th Street West, Palmetto, Florida, 34221",
-            "available_hours": "Monday-Friday 09:00-17:00",
-            "available_times": "Tomorrow at 9am, 10am, 11:30am, 1pm, 2:30pm, 4pm",
-            "services": "HVAC service ($99), A/C repair ($80), thermostat fixes ($49), refrigerant refill ($149)"
+            "business_id": conversationBusinessId,
+            "business_name": businessData?.business_name || "Business",
+            "business_phone": businessData?.business_phone || "Unknown",
+            "business_address": formattedAddress,
+            "available_hours": formatBusinessHours(businessHours),
+            "available_times": generateBasicAvailableTimes(),
+            "services": formattedServices
           }
         };
         
         // Log the request for monitoring
-        await logBusinessDataRequest(req.headers.get('business_id') || 'unknown', 'conversation_initiation', 'elevenlabs', body, 200, conversationInitData);
+        await logBusinessDataRequest(conversationBusinessId, 'conversation_initiation', 'elevenlabs', body, 200, conversationInitData);
         
         return new Response(
           JSON.stringify(conversationInitData),
