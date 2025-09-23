@@ -247,6 +247,20 @@ const CallDetails = () => {
                     <span>{callDetail.metadata.caller_id}</span>
                   </div>
                 )}
+                {/* Show business ID if available */}
+                {(() => {
+                  const businessId = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value;
+                  if (businessId) {
+                    return (
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">Business ID:</span>
+                        <span className="font-mono text-xs">{businessId}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 {callDetail.email && (
                   <div className="flex items-center space-x-2">
                     <Mail className="w-4 h-4 text-muted-foreground" />
