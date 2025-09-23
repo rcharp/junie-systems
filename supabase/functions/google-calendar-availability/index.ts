@@ -276,94 +276,122 @@ Deno.serve(async (req) => {
       
       console.log(`Business hours in UTC: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
-      // Generate appointment slots
-      let slotStart = new Date(utcStartTime)
-      let slotNumber = 0
+      // Find continuous available time blocks
+      const availableBlocks = []
+      let currentStart = new Date(utcStartTime)
       const slotIncrement = 15 // Check every 15 minutes for availability
       
-      while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= utcEndTime.getTime()) {
-        slotNumber++
-        const slotEnd = new Date(slotStart.getTime() + (appointmentDuration * 60 * 1000))
+      while (currentStart.getTime() < utcEndTime.getTime()) {
+        // Check if current 15-minute slot is available
+        const slotEnd = new Date(currentStart.getTime() + (slotIncrement * 60 * 1000))
         
-        console.log(`  Checking slot ${slotNumber}: ${slotStart.toISOString()} to ${slotEnd.toISOString()}`)
-        
-        // Check if slot is in the future
-        if (slotStart <= now) {
-          console.log(`    SKIP: Slot is in the past`)
-          slotStart.setTime(slotStart.getTime() + (slotIncrement * 60 * 1000)) // Increment by 15 minutes
+        // Skip if in the past
+        if (currentStart <= now) {
+          currentStart.setTime(currentStart.getTime() + (slotIncrement * 60 * 1000))
           continue
         }
         
-        // Check for conflicts with busy times (all in UTC)
+        // Check for conflicts with busy times
         const hasConflict = busyTimes.some((busy: any) => {
           const busyStart = new Date(busy.start)
           const busyEnd = new Date(busy.end)
-          const conflict = (slotStart < busyEnd && slotEnd > busyStart)
-          if (conflict) {
-            console.log(`    CONFLICT: with busy time ${busyStart.toISOString()}-${busyEnd.toISOString()}`)
-          }
-          return conflict
+          return (currentStart < busyEnd && slotEnd > busyStart)
         })
         
         if (!hasConflict) {
-          // Convert back to local time for display
-          const displayStartTime = new Date(slotStart.getTime() - (4 * 60 * 60 * 1000))
-          const displayEndTime = new Date(slotEnd.getTime() - (4 * 60 * 60 * 1000))
+          // Start a new available block
+          let blockStart = new Date(currentStart)
+          let blockEnd = new Date(slotEnd)
           
-          const humanReadable = `${displayStartTime.toLocaleDateString('en-US', { 
-            weekday: 'long', 
-            month: 'long', 
-            day: 'numeric', 
-            year: 'numeric' 
-          })} ${displayStartTime.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: displayStartTime.getMinutes() === 0 ? undefined : '2-digit' 
-          }).toLowerCase()}-${displayEndTime.toLocaleTimeString('en-US', { 
-            hour: 'numeric', 
-            minute: displayEndTime.getMinutes() === 0 ? undefined : '2-digit' 
-          }).toLowerCase()}`
-          
-          console.log(`    ADDING: ${humanReadable}`)
-          console.log(`    UTC: ${slotStart.toISOString()} to ${slotEnd.toISOString()}`)
-          console.log(`    Local: ${displayStartTime.toString()} to ${displayEndTime.toString()}`)
-          
-          // Determine time of day tag based on the START time of the slot
-          const startHour = displayStartTime.getHours()
-          let timeOfDay: string
-          if (startHour >= 6 && startHour < 12) {
-            timeOfDay = "morning"
-          } else if (startHour >= 12 && startHour < 18) {
-            timeOfDay = "afternoon" 
-          } else {
-            timeOfDay = "evening"
+          // Extend the block as far as possible
+          let nextSlot = new Date(slotEnd)
+          while (nextSlot.getTime() < utcEndTime.getTime()) {
+            const nextSlotEnd = new Date(nextSlot.getTime() + (slotIncrement * 60 * 1000))
+            
+            // Check if next slot is also available
+            const nextHasConflict = busyTimes.some((busy: any) => {
+              const busyStart = new Date(busy.start)
+              const busyEnd = new Date(busy.end)
+              return (nextSlot < busyEnd && nextSlotEnd > busyStart)
+            })
+            
+            if (nextHasConflict) {
+              break // Stop extending the block
+            }
+            
+            blockEnd = new Date(nextSlotEnd)
+            nextSlot.setTime(nextSlot.getTime() + (slotIncrement * 60 * 1000))
           }
           
-          console.log(`    Time of day for ${startHour}:xx = ${timeOfDay}`)
+          // Only add blocks that are at least as long as the appointment duration
+          const blockDuration = blockEnd.getTime() - blockStart.getTime()
+          if (blockDuration >= (appointmentDuration * 60 * 1000)) {
+            availableBlocks.push({
+              start: blockStart,
+              end: blockEnd
+            })
+          }
           
-          availableSlots.push({
-            start: displayStartTime.toISOString(), // Use local time instead of UTC
-            end: displayEndTime.toISOString(),     // Use local time instead of UTC
-            display: displayStartTime.toLocaleString('en-US', {
-              weekday: 'long',
-              month: 'short', 
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit'
-            }),
-            humanReadable: humanReadable,
-            timeOfDay: timeOfDay
-          })
+          // Move to the end of this block
+          currentStart = new Date(blockEnd)
         } else {
-          console.log(`    SKIP: Has conflict`)
+          // Move to next 15-minute slot
+          currentStart.setTime(currentStart.getTime() + (slotIncrement * 60 * 1000))
+        }
+      }
+      
+      // Convert blocks to slots
+      let slotNumber = 0
+      for (const block of availableBlocks) {
+        slotNumber++
+        
+        // Convert back to local time for display
+        const displayStartTime = new Date(block.start.getTime() - (4 * 60 * 60 * 1000))
+        const displayEndTime = new Date(block.end.getTime() - (4 * 60 * 60 * 1000))
+        
+        const humanReadable = `${displayStartTime.toLocaleDateString('en-US', { 
+          weekday: 'long', 
+          month: 'long', 
+          day: 'numeric', 
+          year: 'numeric' 
+        })} ${displayStartTime.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: displayStartTime.getMinutes() === 0 ? undefined : '2-digit' 
+        }).toLowerCase()}-${displayEndTime.toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: displayEndTime.getMinutes() === 0 ? undefined : '2-digit' 
+        }).toLowerCase()}`
+        
+        console.log(`  Block ${slotNumber}: ${humanReadable}`)
+        console.log(`    UTC: ${block.start.toISOString()} to ${block.end.toISOString()}`)
+        console.log(`    Local: ${displayStartTime.toString()} to ${displayEndTime.toString()}`)
+        
+        // Determine time of day tag based on the START time of the slot
+        const startHour = displayStartTime.getHours()
+        let timeOfDay: string
+        if (startHour >= 6 && startHour < 12) {
+          timeOfDay = "morning"
+        } else if (startHour >= 12 && startHour < 18) {
+          timeOfDay = "afternoon" 
+        } else {
+          timeOfDay = "evening"
         }
         
-        slotStart.setTime(slotStart.getTime() + (slotIncrement * 60 * 1000)) // Move by 15 minutes
+        console.log(`    Time of day for ${startHour}:xx = ${timeOfDay}`)
         
-        // Safety break
-        if (slotNumber > 50) {
-          console.log('Safety break - too many slots')
-          break
-        }
+        availableSlots.push({
+          start: displayStartTime.toISOString(),
+          end: displayEndTime.toISOString(),
+          display: displayStartTime.toLocaleString('en-US', {
+            weekday: 'long',
+            month: 'short', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+          }),
+          humanReadable: humanReadable,
+          timeOfDay: timeOfDay
+        })
       }
       
       console.log(`Generated ${availableSlots.length} total slots so far`)
