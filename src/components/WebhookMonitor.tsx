@@ -149,9 +149,12 @@ export const WebhookMonitor = () => {
             }
             
             // Extract email
-            if (results.email && results.email.value) {
-              customerEmail = results.email.value;
+            if (results.email_address && results.email_address.value) {
+              customerEmail = results.email_address.value;
               console.log('Found email in data_collection_results:', customerEmail);
+            } else if (results.email && results.email.value) {
+              customerEmail = results.email.value;
+              console.log('Found email in data_collection_results (legacy field):', customerEmail);
             } else {
               console.log('No email found in data_collection_results. Available fields:', Object.keys(results));
             }
