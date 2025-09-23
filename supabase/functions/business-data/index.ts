@@ -316,8 +316,8 @@ serve(async (req) => {
       console.log('Generating available times:', { hours, calendarAvailability });
       
       // If we have calendar availability, use the actual available slots
-      if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.availableSlots)) {
-        const slots = calendarAvailability.availableSlots.slice(0, 15); // Limit to first 15 slots
+      if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.slots)) {
+        const slots = calendarAvailability.slots.slice(0, 15); // Limit to first 15 slots
         if (slots.length > 0) {
           return slots.map(slot => ({
             startTime: new Date(slot.start).toISOString(),

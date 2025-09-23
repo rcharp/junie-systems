@@ -30,20 +30,13 @@ Deno.serve(async (req) => {
 
     console.log('Fetching calendar availability for user:', userId)
 
-    // Get user's calendar settings with decrypted tokens
-    const { data: calendarSettings, error: settingsError } = await supabase
-      .from('google_calendar_settings')
-      .select(`
-        *,
-        decrypted_access_token:encrypted_access_token,
-        decrypted_refresh_token:encrypted_refresh_token
-      `)
-      .eq('user_id', userId)
-      .eq('is_connected', true)
-      .single()
+    // Get user's calendar settings with decrypted tokens using the secure function
+    const { data: calendarData, error: settingsError } = await supabase.rpc('get_google_calendar_tokens', {
+      p_user_id: userId
+    })
 
-    if (settingsError || !calendarSettings) {
-      console.log('No calendar settings found for user:', userId)
+    if (settingsError || !calendarData || calendarData.length === 0) {
+      console.log('No calendar settings found for user:', userId, settingsError)
       return new Response(JSON.stringify({ 
         available: false, 
         message: 'Google Calendar not connected' 
@@ -52,31 +45,29 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Decrypt tokens
-    let accessToken = null
-    let refreshToken = null
-    
-    if (calendarSettings.encrypted_access_token) {
-      const { data: decryptedAccess } = await supabase.rpc('decrypt_token', { 
-        encrypted_token: calendarSettings.encrypted_access_token 
-      })
-      accessToken = decryptedAccess
-    }
-    
-    if (calendarSettings.encrypted_refresh_token) {
-      const { data: decryptedRefresh } = await supabase.rpc('decrypt_token', { 
-        encrypted_token: calendarSettings.encrypted_refresh_token 
-      })
-      refreshToken = decryptedRefresh
-    }
+    const calendarSettings = calendarData[0]
+
+    // Get tokens directly from the secure function result
+    const accessToken = calendarSettings.access_token
+    const refreshToken = calendarSettings.refresh_token
 
     if (!accessToken) {
-      throw new Error('Failed to decrypt access token')
+      throw new Error('No access token available for user')
     }
+
+    console.log('Calendar settings:', {
+      calendar_id: calendarSettings.calendar_id,
+      timezone: calendarSettings.timezone,
+      expires_at: calendarSettings.expires_at,
+      has_access_token: !!accessToken,
+      has_refresh_token: !!refreshToken
+    })
 
     // Check if token needs refresh
     const expiresAt = new Date(calendarSettings.expires_at)
     const now = new Date()
+
+    let currentAccessToken = accessToken
 
     if (now >= expiresAt && refreshToken) {
       console.log('Access token expired, refreshing...')
@@ -97,13 +88,13 @@ Deno.serve(async (req) => {
       const tokenData = await tokenResponse.json()
       
       if (tokenResponse.ok) {
-        accessToken = tokenData.access_token
+        currentAccessToken = tokenData.access_token
         const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
         
         // Update the stored token using secure function
         await supabase.rpc('update_google_calendar_tokens', {
           p_user_id: userId,
-          p_access_token: accessToken,
+          p_access_token: currentAccessToken,
           p_expires_at: newExpiresAt,
         })
       } else {
@@ -123,7 +114,7 @@ Deno.serve(async (req) => {
     const freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${currentAccessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -149,7 +140,7 @@ Deno.serve(async (req) => {
     const current = new Date(startDate)
 
     while (current <= endDate) {
-      const dayName = current.toLocaleLowerCase('en-US', { weekday: 'long' })
+      const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
       const daySettings = availabilityHours[dayName]
 
       if (daySettings?.enabled) {
