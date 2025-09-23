@@ -640,7 +640,18 @@ export const WebhookMonitor = () => {
                 onClick={!isItemExpanded ? () => setExpandedItems(prev => ({ ...prev, [data.id]: !prev[data.id] })) : undefined}
               >
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-1">
+                  {/* Incoming Call Header */}
+                  {(() => {
+                    const incomingCall = data.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || 
+                                       data.raw_webhook_data?.caller_id || 
+                                       data.phone_number;
+                    return (
+                      <div className="text-sm font-medium text-muted-foreground">
+                        Incoming - {incomingCall}
+                      </div>
+                    );
+                  })()}
                   <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
                 </div>
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
