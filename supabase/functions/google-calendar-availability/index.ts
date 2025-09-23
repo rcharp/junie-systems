@@ -55,8 +55,8 @@ Deno.serve(async (req) => {
 
     if (calendarSettings.encrypted_access_token) {
       try {
-        const { data: decryptedAccess } = await supabase.rpc('decrypt_secret', {
-          secret_data: calendarSettings.encrypted_access_token
+        const { data: decryptedAccess } = await supabase.rpc('decrypt_token', {
+          encrypted_token: calendarSettings.encrypted_access_token
         })
         accessToken = decryptedAccess
       } catch (error) {
@@ -66,8 +66,8 @@ Deno.serve(async (req) => {
 
     if (calendarSettings.encrypted_refresh_token) {
       try {
-        const { data: decryptedRefresh } = await supabase.rpc('decrypt_secret', {
-          secret_data: calendarSettings.encrypted_refresh_token
+        const { data: decryptedRefresh } = await supabase.rpc('decrypt_token', {
+          encrypted_token: calendarSettings.encrypted_refresh_token
         })
         refreshToken = decryptedRefresh
       } catch (error) {
@@ -133,8 +133,8 @@ Deno.serve(async (req) => {
         const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
         
         // Encrypt and update the stored token
-        const { data: encryptedNewToken } = await supabase.rpc('encrypt_secret', {
-          secret_value: currentAccessToken
+        const { data: encryptedNewToken } = await supabase.rpc('encrypt_token', {
+          token: currentAccessToken
         })
         
         await supabase
