@@ -279,17 +279,17 @@ serve(async (req) => {
         console.log('Calendar availability response:', availabilityResponse);
         if (availabilityResponse.data && !availabilityResponse.error) {
           calendarAvailability = availabilityResponse.data;
-        } else if (availabilityResponse.error) {
-          console.error('Calendar availability error:', availabilityResponse.error);
-          calendarAvailability = { available: false, message: 'Calendar integration error' };
-        }
-      } catch (error) {
-        console.error('Error fetching calendar availability:', error);
-        calendarAvailability = { available: false, message: 'Calendar integration error' };
+      } else {
+        console.error('Calendar availability error:', availabilityResponse.error);
+        calendarAvailability = { available: false, message: 'Calendar integration error', isConnected: true };
       }
-    } else {
-      calendarAvailability = { available: false, message: 'Google Calendar not connected' };
+    } catch (error) {
+      console.error('Error fetching calendar availability:', error);
+      calendarAvailability = { available: false, message: 'Calendar integration error', isConnected: true };
     }
+  } else {
+    calendarAvailability = { available: false, message: 'Google Calendar not connected', isConnected: false };
+  }
 
     console.log('Successfully retrieved business data for business_id:', businessId);
 
@@ -328,26 +328,22 @@ serve(async (req) => {
         }));
       }
       
-      // If calendar is connected but no slots returned (or calendar error), don't generate fallback times
+      // If calendar is connected but has errors/no slots, don't generate fallback times
       // This prevents showing availability when the user's calendar might actually be busy
-      if (calendarAvailability && (calendarAvailability.available === false || !calendarAvailability.available)) {
-        console.log('Calendar connected but no availability or error occurred - returning no slots');
+      if (calendarAvailability && calendarAvailability.isConnected && !calendarAvailability.available) {
+        console.log('Calendar connected but error occurred - returning no slots to prevent false availability');
         return [];
       }
       
-      // Only use business hours fallback when calendar is NOT connected
+      // Use business hours fallback when:
+      // 1. No calendar is connected (calendarAvailability.isConnected === false), OR  
+      // 2. No calendar availability data at all (calendarAvailability is null)
+      console.log('Using business hours fallback - calendar not connected or no calendar data');
+      
       if (!Array.isArray(hours) || hours.length === 0) {
         console.log('No business hours configured');
         return [];
       }
-      
-      const openDays = hours.filter(day => day.isOpen || day.enabled);
-      if (openDays.length === 0) {
-        console.log('No open days in business hours');
-        return [];
-      }
-      
-      console.log('Using business hours fallback (calendar not connected)');
       const availableSlots = [];
       const today = new Date();
       
