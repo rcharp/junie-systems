@@ -41,14 +41,14 @@ const GoogleAuth = () => {
 
         setStatus('success');
         
-        // Close popup and redirect parent window to calendar tab with success status
+        // Send success message to parent window and close popup
         if (window.opener) {
-          window.opener.location.href = '/settings?tab=setup&calendar_status=success';
+          window.opener.postMessage({ type: 'google-calendar-connected' }, '*');
           window.close();
         } else {
           // Fallback for non-popup case
           setTimeout(() => {
-            navigate('/settings?tab=setup&calendar_status=success', { replace: true });
+            navigate('/settings', { replace: true });
           }, 2000);
         }
 
@@ -58,9 +58,9 @@ const GoogleAuth = () => {
         setError(errorMessage);
         setStatus('error');
         
-        // Close popup and redirect parent window to calendar tab with error status
+        // Send error message to parent window and close popup
         if (window.opener) {
-          window.opener.location.href = `/settings?tab=setup&calendar_status=error&error=${encodeURIComponent(errorMessage)}`;
+          window.opener.postMessage({ type: 'google-calendar-error', error: errorMessage }, '*');
           window.close();
         }
       }
@@ -70,7 +70,7 @@ const GoogleAuth = () => {
   }, [searchParams, navigate]);
 
   const handleRetry = () => {
-    navigate('/settings?tab=setup', { replace: true });
+    navigate('/settings', { replace: true });
   };
 
   if (status === 'processing') {
