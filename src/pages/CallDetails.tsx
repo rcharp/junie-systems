@@ -211,6 +211,18 @@ const CallDetails = () => {
                 <div className="flex items-center space-x-3">
                   <User className="w-5 h-5 text-muted-foreground" />
                   <div>
+                    {/* Show incoming call info if available */}
+                    {(() => {
+                      const incomingCall = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || callDetail.metadata?.caller_id;
+                      if (incomingCall) {
+                        return (
+                          <p className="text-sm text-muted-foreground mb-1">
+                            Incoming Call: {incomingCall}
+                          </p>
+                        );
+                      }
+                      return null;
+                    })()}
                     <CardTitle className="text-2xl">{callDetail.caller_name}</CardTitle>
                     <p className="text-muted-foreground">
                       {format(new Date(callDetail.created_at), 'EEEE, MMMM d, yyyy at h:mm a')}
@@ -235,6 +247,24 @@ const CallDetails = () => {
             <CardContent className="space-y-6">
               {/* Contact Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Show business ID prominently first */}
+                {(() => {
+                  const businessId = 
+                    callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value ||
+                    callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
+                    callDetail.metadata?.business_id;
+                  
+                  if (businessId) {
+                    return (
+                      <div className="flex items-center space-x-2 col-span-full">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">Business ID:</span>
+                        <span className="font-mono text-sm bg-muted px-2 py-1 rounded">{businessId}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
                 <div className="flex items-center space-x-2">
                   <Phone className="w-4 h-4 text-muted-foreground" />
                   <span className="font-medium">Phone:</span>
