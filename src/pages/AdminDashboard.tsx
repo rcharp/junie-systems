@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft } from 'lucide-react';
+import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut } from 'lucide-react';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { UserWebhookList } from '@/components/UserWebhookList';
 import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { useNavigate } from 'react-router-dom';
+import { handleRobustSignOut } from '@/lib/auth-utils';
 
 interface Stats {
   totalUsers: number;
@@ -146,6 +147,12 @@ const AdminDashboard = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
+              <Settings className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Bell className="w-5 h-5" />
+            </Button>
             <Badge variant="secondary" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Admin Access
@@ -153,6 +160,16 @@ const AdminDashboard = () => {
             <Badge variant="outline">
               {user?.email}
             </Badge>
+            <Button variant="ghost" onClick={async () => {
+              try {
+                await handleRobustSignOut(supabase);
+              } catch (error: any) {
+                window.location.href = '/';
+              }
+            }}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </header>

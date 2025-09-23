@@ -17,7 +17,8 @@ import {
   Mail,
   MessageSquare,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Shield
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -44,7 +45,7 @@ interface CallDetail {
 const CallDetails = () => {
   const { callId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
   const [callDetail, setCallDetail] = useState<CallDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -181,9 +182,22 @@ const CallDetails = () => {
             <h1 className="text-xl font-bold text-primary">Call Details</h1>
           </div>
           
-          <Badge variant="outline">
-            {isMessage ? 'Message' : 'Call Log'}
-          </Badge>
+          <div className="flex items-center space-x-4">
+            {isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/admin")}
+                className="text-primary hover:bg-primary/10"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Admin
+              </Button>
+            )}
+            <Badge variant="outline">
+              {isMessage ? 'Message' : 'Call Log'}
+            </Badge>
+          </div>
         </div>
       </header>
 

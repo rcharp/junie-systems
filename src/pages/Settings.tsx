@@ -25,7 +25,7 @@ import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
 
 const Settings = () => {
   console.log("Settings component rendering...");
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -753,9 +753,22 @@ const Settings = () => {
             <h1 className="text-xl font-bold text-primary">Settings</h1>
           </div>
           
-          <Badge variant="outline">
-            {user?.email}
-          </Badge>
+          <div className="flex items-center space-x-4">
+            {isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/admin")}
+                className="text-primary hover:bg-primary/10"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Admin
+              </Button>
+            )}
+            <Badge variant="outline">
+              {user?.email}
+            </Badge>
+          </div>
         </div>
       </header>
 
