@@ -262,187 +262,141 @@ serve(async (req) => {
     }
 
     // Fetch business settings using business_id (which is the primary key)
-        const { data: businessData, error } = await supabase
-          .from('business_settings')
-          .select(`
-            user_id,
-            business_name,
-            business_type,
-            business_type_full_name,
-            business_phone,
-            business_address,
-            business_address_state_full,
-            business_hours,
-            business_description,
-            business_website,
-            services_offered,
-            pricing_structure,
-            custom_greeting,
-            common_questions,
-            ai_personality,
-            appointment_booking,
-            lead_capture
-          `)
-          .eq('id', conversationBusinessId)
-          .maybeSingle();
+    const { data: businessData, error } = await supabase
+      .from('business_settings')
+      .select(`
+        user_id,
+        business_name,
+        business_type,
+        business_type_full_name,
+        business_phone,
+        business_address,
+        business_address_state_full,
+        business_hours,
+        business_description,
+        business_website,
+        services_offered,
+        pricing_structure,
+        custom_greeting,
+        common_questions,
+        ai_personality,
+        appointment_booking,
+        lead_capture
+      `)
+      .eq('id', businessId)
+      .maybeSingle();
 
-        console.log('Business data query result:', { businessData, error });
+    console.log('Business data query result:', { businessData, error });
 
-        if (error) {
-          console.error('Database error fetching business data:', error);
-          // Return basic response with business_id only if database error
-          const conversationInitData = {
-            "type": "conversation_initiation_client_data",
-            "dynamic_variables": {
-              "business_id": conversationBusinessId,
-              "business_name": "Business",
-              "business_phone": "Unknown",
-              "business_address": "Unknown",
-              "available_hours": "Please call for hours",
-              "available_times": "Please call to schedule",
-              "services": "Please call for services"
-            }
-          };
-          
-          await logBusinessDataRequest(conversationBusinessId, 'conversation_initiation', 'elevenlabs', body, 200, conversationInitData);
-          
-          return new Response(
-            JSON.stringify(conversationInitData),
-            { 
-              headers: { 
-                ...corsHeaders,
-                'Content-Type': 'application/json' 
-              }
-            }
-          );
+    if (error) {
+      console.error('Database error fetching business data:', error);
+      await logBusinessDataRequest(businessId, requestSource, requestSource, {}, 500, { error: error.message });
+      return new Response(
+        JSON.stringify({ error: 'Failed to fetch business data', details: error.message }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
+      );
+    }
 
-        // Parse business data
-        let servicesOffered = [];
-        let businessHours = [];
-        
-        try {
-          servicesOffered = businessData?.services_offered ? JSON.parse(businessData.services_offered) : [];
-        } catch (error) {
-          console.error('Error parsing services_offered:', error);
-          servicesOffered = [];
+    if (!businessData) {
+      await logBusinessDataRequest(businessId, requestSource, requestSource, {}, 404, { error: 'Business not found' });
+      return new Response(
+        JSON.stringify({ error: 'Business not found' }),
+        { 
+          status: 404, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
+      );
+    }
+
+    // Fetch Google Calendar settings if available
+    const { data: calendarSettings } = await supabase
+      .from('google_calendar_settings')
+      .select('*')
+      .eq('user_id', businessData.user_id)
+      .single();
+
+    // Generate available times based on business hours or calendar availability
+    let availableTimes = [];
+
+    if (calendarSettings && calendarSettings.is_connected) {
+      try {
+        console.log('Fetching calendar availability for user_id:', businessData.user_id);
+        const availabilityResponse = await supabase.functions.invoke('google-calendar-availability', {
+          method: 'GET',
+          body: { user_id: businessData.user_id }
+        });
         
-        try {
-          businessHours = businessData?.business_hours ? JSON.parse(businessData.business_hours) : [];
-        } catch (error) {
-          console.error('Error parsing business_hours:', error);
-          businessHours = [];
+        if (availabilityResponse.data && !availabilityResponse.error) {
+          availableTimes = availabilityResponse.data.slots || [];
         }
-
-        // Format services for display to match manual response format
-        const formattedServices = servicesOffered.map(service => 
-          service.price ? `${service.name}: ${service.price}` : service.name
-        ).join(', ') || 'Call for services';
-
-        // Format business hours for display
-        const formatBusinessHours = (hours) => {
-          if (!Array.isArray(hours) || hours.length === 0) {
-            return 'Please call for hours';
-          }
-          
-          const openDays = hours.filter(day => day.isOpen || day.enabled);
-          if (openDays.length === 0) {
-            return 'Please call for hours';
-          }
-          
-          // Group consecutive days with same hours
-          const hourRanges = openDays.map(day => {
-            const openTime = day.openTime || day.start || '09:00';
-            const closeTime = day.closeTime || day.end || '17:00';
-            return `${day.day}: ${openTime}-${closeTime}`;
-          }).join(', ');
-          
-          return hourRanges || 'Please call for hours';
-        };
-
-        // Use actual business address with full state name if available (matching manual response)
-        const formattedAddress = businessData?.business_address_state_full ? 
-          normalizeAddressWithFullState(businessData.business_address, businessData.business_address_state_full) :
-          normalizeAddress(businessData?.business_address || 'Unknown');
-
-        // Get calendar availability data for ElevenLabs (matching manual response)
-        let calendarAvailability = null;
-        if (businessData) {
-          try {
-            console.log('Fetching calendar availability for user_id:', businessData.user_id);
-            const availabilityResponse = await supabase.functions.invoke(`google-calendar-availability/${businessData.user_id}`, {
-              method: 'GET'
-            });
-            
-            if (availabilityResponse.data && !availabilityResponse.error) {
-              calendarAvailability = availabilityResponse.data;
-            }
-          } catch (error) {
-            console.error('Error fetching calendar availability for ElevenLabs:', error);
-          }
-        }
-
-        // Generate available times matching manual response format
-        const generateAvailableTimesForElevenLabs = () => {
-          // If we have calendar availability with actual slots, use those
-          if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.slots) && calendarAvailability.slots.length > 0) {
-            return calendarAvailability.slots.slice(0, 5).map(slot => ({
-              startTime: new Date(slot.start).toISOString(),
-              endTime: new Date(slot.end).toISOString(),
-              humanReadable: slot.humanReadable || `${new Date(slot.start).toLocaleDateString()} ${new Date(slot.start).toLocaleTimeString()}-${new Date(slot.end).toLocaleTimeString()}`,
-              timeOfDay: slot.timeOfDay
-            }));
-          }
-          
-          // Fallback to basic slots if no calendar
-          return [];
-        };
-        
-        // Return the conversation initiation format that matches manual response exactly
-        const availableTimes = generateAvailableTimesForElevenLabs();
-        
-        const conversationInitData = {
-          "type": "conversation_initiation_client_data",
-          "dynamic_variables": {
-            "business_id": conversationBusinessId,
-            "business_name": businessData?.business_name || "Business",
-            "business_phone": businessData?.business_phone || "Unknown",
-            "business_address": formattedAddress,
-            "available_times": availableTimes,
-            "services": formattedServices,
-            "business_description": businessData?.business_description || ""
-          }
-        };
-        
-        // Log the request for monitoring
-        await logBusinessDataRequest(conversationBusinessId, 'conversation_initiation', 'elevenlabs', body, 200, conversationInitData);
-        
-        return new Response(
-          JSON.stringify(conversationInitData),
-          { 
-            headers: { 
-              ...corsHeaders,
-              'Content-Type': 'application/json' 
-            }
-          }
-        );
-      } else if (body && body.business_id) {
-        // Manual request - has business_id but no agent_id
-        businessId = body.business_id;
-        requestSource = 'manual';
-        console.log('MANUAL request detected (no agent_id) - business_id from request body:', businessId);
-      } else {
-        console.log('Unknown request type - checking headers for business_id');
-        requestSource = 'elevenlabs';
-        businessId = req.headers.get('business_id') || req.headers.get('x-business-id');
-        console.log('Fallback to headers - business_id:', businessId);
+      } catch (error) {
+        console.error('Error fetching calendar availability:', error);
       }
-    } else {
-      // Get business_id from GET query parameters
-      const url = new URL(req.url);
-      businessId = url.searchParams.get('business_id');
-      requestSource = 'api';
+    }
+
+    // Parse services offered
+    let servicesOffered = [];
+    try {
+      servicesOffered = businessData.services_offered ? JSON.parse(businessData.services_offered) : [];
+    } catch (error) {
+      console.error('Error parsing services_offered:', error);
+      servicesOffered = [];
+    }
+
+    // Parse business hours
+    let businessHours = [];
+    try {
+      businessHours = businessData.business_hours ? JSON.parse(businessData.business_hours) : [];
+    } catch (error) {
+      console.error('Error parsing business_hours:', error);
+      businessHours = [];
+    }
+
+    // Normalize the business address
+    const normalizedAddress = businessData.business_address_state_full ? 
+      normalizeAddressWithFullState(businessData.business_address, businessData.business_address_state_full) :
+      normalizeAddress(businessData.business_address || 'N/A');
+
+    // Format the response
+    const responseData = {
+      businessData: {
+        user_id: businessData.user_id,
+        business_name: businessData.business_name || 'N/A',
+        business_type: businessData.business_type || 'N/A',
+        business_type_full_name: businessData.business_type_full_name || 'N/A',
+        business_phone: businessData.business_phone || 'N/A',
+        business_address: normalizedAddress,
+        business_address_state_full: businessData.business_address_state_full || 'N/A',
+        business_hours: businessData.business_hours || 'N/A',
+        business_description: businessData.business_description || 'N/A',
+        business_website: businessData.business_website || 'N/A',
+        services_offered: businessData.services_offered || 'N/A',
+        pricing_structure: businessData.pricing_structure || 'N/A',
+        custom_greeting: businessData.custom_greeting || '',
+        common_questions: businessData.common_questions || '',
+        ai_personality: businessData.ai_personality || 'professional',
+        appointment_booking: businessData.appointment_booking || false,
+        lead_capture: businessData.lead_capture || true
+      },
+      available_times: availableTimes,
+      error: null
+    };
+
+    // Log the successful request
+    await logBusinessDataRequest(businessId, requestSource, requestSource, {}, 200, responseData);
+
+    return new Response(
+      JSON.stringify(responseData),
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json' 
+        }
+      }
+    );
       console.log('API request detected - Query parameters:', Object.fromEntries(url.searchParams));
     }
 
