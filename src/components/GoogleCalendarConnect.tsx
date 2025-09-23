@@ -121,18 +121,12 @@ const GoogleCalendarConnect = () => {
     try {
       const { error } = await supabase
         .from('google_calendar_settings')
-        .update({
-          is_connected: false,
-          encrypted_access_token: null,
-          encrypted_refresh_token: null,
-          expires_at: null,
-          calendar_id: null,
-        })
+        .delete()
         .eq('user_id', user?.id);
 
       if (error) throw error;
 
-      setCalendarSettings(prev => prev ? { ...prev, is_connected: false } : null);
+      setCalendarSettings(null);
       toast({
         title: "Disconnected",
         description: "Google Calendar has been disconnected from your account.",
