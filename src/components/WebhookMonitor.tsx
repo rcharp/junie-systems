@@ -151,12 +151,14 @@ export const WebhookMonitor = () => {
             // Extract email
             if (results.email_address && results.email_address.value) {
               customerEmail = results.email_address.value;
-              console.log('Found email in data_collection_results:', customerEmail);
+              console.log('✅ Found email in data_collection_results.email_address:', customerEmail);
             } else if (results.email && results.email.value) {
               customerEmail = results.email.value;
-              console.log('Found email in data_collection_results (legacy field):', customerEmail);
+              console.log('✅ Found email in data_collection_results.email:', customerEmail);
             } else {
-              console.log('No email found in data_collection_results. Available fields:', Object.keys(results));
+              console.log('❌ No email found in data_collection_results');
+              console.log('Available fields:', Object.keys(results));
+              console.log('Full results object:', results);
             }
             
             // Extract service address
@@ -366,6 +368,12 @@ export const WebhookMonitor = () => {
           businessName
         });
         
+        console.log('📧 Final email assignment:', {
+          customerEmail,
+          logEmail: log.email,
+          finalEmail: customerEmail || log.email || 'N/A'
+        });
+
         return {
           id: log.id,
           business_id: businessId,
