@@ -78,15 +78,23 @@ Deno.serve(async (req) => {
       const { code, state } = await req.json()
       console.log('POST request - code:', code ? 'present' : 'missing', 'state:', state)
       
-      // Validate state parameter corresponds to a real user
-      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(state)
+      if (!code || !state) {
+        throw new Error('Missing authorization code or state parameter')
+      }
       
-      if (userError || !userData.user) {
+      // Validate state parameter corresponds to a real user by querying user_profiles
+      const { data: userProfile, error: userError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', state)
+        .single()
+      
+      if (userError || !userProfile) {
         console.error('Invalid state parameter - user not found:', userError)
         throw new Error('Invalid state parameter')
       }
       
-      const user = userData.user
+      console.log('Valid user found for state:', state)
 
       // Exchange code for tokens - use same logic as GET request
       const url = new URL(req.url)
@@ -146,7 +154,7 @@ Deno.serve(async (req) => {
       const { error: upsertError } = await supabase
         .from('google_calendar_settings')
         .upsert({
-          user_id: user.id,
+          user_id: state, // Use state instead of user.id since we validated it above
           is_connected: true,
           encrypted_access_token: await supabase.rpc('encrypt_token', { token: tokenData.access_token }),
           encrypted_refresh_token: await supabase.rpc('encrypt_token', { token: tokenData.refresh_token }),
