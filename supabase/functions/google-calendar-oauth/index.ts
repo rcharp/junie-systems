@@ -12,6 +12,7 @@ const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
 
 Deno.serve(async (req) => {
   console.log('google-calendar-oauth function called with method:', req.method)
+  console.log('Request headers:', Object.fromEntries(req.headers.entries()))
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -65,6 +66,8 @@ Deno.serve(async (req) => {
         `access_type=offline&` +
         `prompt=consent&` +
         `state=${user.id}`
+      
+      console.log('Full auth URL being generated:', authUrl)
 
       return new Response(JSON.stringify({ authUrl }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
