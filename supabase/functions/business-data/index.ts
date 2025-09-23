@@ -192,8 +192,9 @@ serve(async (req) => {
         const conversationInitData = {
           "type": "conversation_initiation_client_data",
           "dynamic_variables": {
+            "business_id": req.headers.get('business_id') || 'unknown',
             "business_name": "Hendricks Air Conditioning",
-            "business_phone": "9412584006", 
+            "business_phone": "9412584006",
             "business_address": "531 46th Street West, Palmetto, Florida, 34221",
             "available_hours": "Monday-Friday 09:00-17:00",
             "available_times": "Tomorrow at 9am, 10am, 11:30am, 1pm, 2:30pm, 4pm",
