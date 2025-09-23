@@ -31,9 +31,9 @@ export const WebhookMonitor = () => {
   const { toast } = useToast();
   const [webhookData, setWebhookData] = useState<WebhookData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [expandedRawData, setExpandedRawData] = useState<Record<string, boolean>>({});
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
   const fetchWebhookData = async () => {

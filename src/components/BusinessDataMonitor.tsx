@@ -23,7 +23,7 @@ interface BusinessDataRequest {
 export const BusinessDataMonitor: React.FC = () => {
   const [requestData, setRequestData] = useState<BusinessDataRequest[]>([]);
   const [loading, setLoading] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
