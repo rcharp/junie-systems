@@ -230,6 +230,8 @@ serve(async (req) => {
           .eq('id', conversationBusinessId)
           .maybeSingle();
 
+        console.log('Business data query result:', { businessData, error });
+
         if (error) {
           console.error('Database error fetching business data:', error);
           // Return basic response with business_id only if database error
