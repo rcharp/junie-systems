@@ -194,7 +194,74 @@ serve(async (req) => {
         console.log('ElevenLabs business_id from body:', body?.business_id);
         console.log('Final business_id used:', conversationBusinessId);
         
-        // Fetch actual business data for this business_id
+        // Return the conversation initiation format that ElevenLabs expects
+        const conversationInitData = {
+          "type": "conversation_initiation_client_data",
+          "dynamic_variables": {
+            "business_id": conversationBusinessId,
+            "business_name": "Charpentier Air Conditioning",
+            "business_phone": "7278714862",
+            "business_address": "5605 Trevesta Place, Palmetto, Florida, 34221",
+            "available_hours": "Monday-Friday 9am-5pm",
+            "available_times": "Please call to schedule",
+            "services": "HVAC service, A/C repair, thermostat fix, refrigerant refill"
+          }
+        };
+        
+        return new Response(
+          JSON.stringify(conversationInitData),
+          { 
+            headers: { 
+              ...corsHeaders,
+              'Content-Type': 'application/json' 
+            }
+          }
+        );
+      } else if (body && body.business_id) {
+        // Manual request - has business_id but no agent_id
+        businessId = body.business_id;
+        requestSource = 'manual';
+        console.log('MANUAL request detected (no agent_id) - business_id from request body:', businessId);
+      } else {
+        console.log('Unknown request type - checking headers for business_id');
+        requestSource = 'elevenlabs';
+        businessId = req.headers.get('business_id') || req.headers.get('x-business-id');
+        console.log('Fallback to headers - business_id:', businessId);
+      }
+    } else {
+      // Get business_id from GET query parameters
+      const url = new URL(req.url);
+      businessId = url.searchParams.get('business_id');
+      requestSource = 'api';
+      console.log('API request detected - Query parameters:', Object.fromEntries(url.searchParams));
+    }
+
+    console.log('Final businessId being used:', businessId);
+    console.log('Final requestSource being used:', requestSource);
+
+    if (!businessId) {
+      return new Response(
+        JSON.stringify({ error: 'business_id parameter is required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Validate that businessId is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(businessId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid business_id format' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Fetch business settings using business_id (which is the primary key)
         const { data: businessData, error } = await supabase
           .from('business_settings')
           .select(`
