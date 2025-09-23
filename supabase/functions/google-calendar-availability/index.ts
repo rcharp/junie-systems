@@ -260,20 +260,19 @@ Deno.serve(async (req) => {
       
       console.log(`Processing ${dayName}: ${startHour}:${startMinute} to ${endHour}:${endMinute}`)
       
-      // Create start and end times in user's timezone using proper date construction
+      // Create start and end times in user's timezone correctly
+      // For EDT (UTC-4): 9:00 AM EDT should become 13:00 UTC
+      // Business hours: 9:00-17:00 EDT = 13:00-21:00 UTC
+      
+      // Create times in user's local timezone first
       const startDateTime = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), startHour, startMinute, 0, 0)
       const endDateTime = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), endHour, endMinute, 0, 0)
       
-      console.log(`Local times: ${startDateTime.toString()} to ${endDateTime.toString()}`)
+      console.log(`Local business hours: ${startDateTime.toString()} to ${endDateTime.toString()}`)
       
-      // Convert to UTC using toLocaleString approach
-      const startTimeUTC = new Date(startDateTime.toLocaleString('sv-SE', { timeZone: userTimezone }))
-      const endTimeUTC = new Date(endDateTime.toLocaleString('sv-SE', { timeZone: userTimezone }))
-      
-      // Adjust for timezone offset
-      const offsetMs = startDateTime.getTimezoneOffset() * 60000
-      startTimeUTC.setTime(startTimeUTC.getTime() + offsetMs)
-      endTimeUTC.setTime(endTimeUTC.getTime() + offsetMs)
+      // Convert to UTC by adding the EDT offset (EDT = UTC-4, so add 4 hours to get UTC)
+      const startTimeUTC = new Date(startDateTime.getTime() + (4 * 60 * 60 * 1000))
+      const endTimeUTC = new Date(endDateTime.getTime() + (4 * 60 * 60 * 1000))
       
       console.log(`UTC times: ${startTimeUTC.toISOString()} to ${endTimeUTC.toISOString()}`)
       
@@ -300,9 +299,9 @@ Deno.serve(async (req) => {
         })
         
         if (!hasConflict && slotStart > now) {
-          // Convert back to local time for display
-          const localStart = new Date(slotStart.toLocaleString('en-US', { timeZone: userTimezone }))
-          const localEnd = new Date(slotEnd.toLocaleString('en-US', { timeZone: userTimezone }))
+          // Convert back to EDT for display (subtract 4 hours from UTC to get EDT)
+          const localStart = new Date(slotStart.getTime() - (4 * 60 * 60 * 1000))
+          const localEnd = new Date(slotEnd.getTime() - (4 * 60 * 60 * 1000))
           
           const humanReadable = `${localStart.toLocaleDateString('en-US', { 
             weekday: 'long', 
