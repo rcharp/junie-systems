@@ -34,6 +34,7 @@ export const WebhookMonitor = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [expandedRawData, setExpandedRawData] = useState<Record<string, boolean>>({});
   const [isMinimized, setIsMinimized] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
   const fetchWebhookData = async () => {
     try {

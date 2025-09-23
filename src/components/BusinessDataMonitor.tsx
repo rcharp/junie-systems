@@ -25,6 +25,7 @@ export const BusinessDataMonitor: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 
   const fetchBusinessDataRequests = async () => {
     setLoading(true);
@@ -110,6 +111,13 @@ export const BusinessDataMonitor: React.FC = () => {
     return new Date(timestamp).toLocaleString();
   };
 
+  const toggleItemExpansion = (id: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -183,35 +191,65 @@ export const BusinessDataMonitor: React.FC = () => {
               <p className="text-sm">Real POST requests to /functions/v1/business-data will appear here</p>
             </div>
           ) : (
-            requestData.map((request) => (
+            requestData.map((request) => {
+              const isItemExpanded = expandedItems[request.id] || false;
+              
+              return (
               <Card key={request.id} className="relative">
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start mb-4">
-                    <div className="space-y-2">
+                    <div className="space-y-2 flex-1">
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">{request.request_source.toUpperCase()}</Badge>
-                        <span className="text-sm font-medium">{request.request_type}</span>
                         <Badge 
                           variant={request.response_status === 200 ? 'default' : 'destructive'}
                         >
                           {request.response_status}
                         </Badge>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {formatTime(request.created_at)}
-                      </p>
+                      {!isItemExpanded && (
+                        <p className="text-sm font-medium">
+                          Business ID: {request.business_id}
+                        </p>
+                      )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteSingle(request.id)}
-                      className="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleItemExpansion(request.id)}
+                        className="flex items-center gap-1"
+                      >
+                        {isItemExpanded ? (
+                          <>
+                            <Minimize2 className="h-4 w-4" />
+                            Minimize
+                          </>
+                        ) : (
+                          <>
+                            <Maximize2 className="h-4 w-4" />
+                            Expand
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteSingle(request.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                   
+                  {isItemExpanded && (
                   <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      {formatTime(request.created_at)}
+                    </p>
+                    <span className="text-sm font-medium">{request.request_type}</span>
+                    
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="font-medium">Business ID:</span>
@@ -232,9 +270,11 @@ export const BusinessDataMonitor: React.FC = () => {
                       </div>
                     )}
                   </div>
+                  )}
                 </CardContent>
               </Card>
-            ))
+              );
+            })
           )}
         </div>
       </CardContent>
