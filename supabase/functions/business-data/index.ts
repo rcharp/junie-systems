@@ -326,7 +326,8 @@ serve(async (req) => {
         return calendarAvailability.slots.slice(0, 15).map(slot => ({
           startTime: new Date(slot.start).toISOString(),
           endTime: new Date(slot.end).toISOString(),
-          humanReadable: slot.humanReadable || `${new Date(slot.start).toLocaleDateString()} ${new Date(slot.start).toLocaleTimeString()}-${new Date(slot.end).toLocaleTimeString()}`
+          humanReadable: slot.humanReadable || `${new Date(slot.start).toLocaleDateString()} ${new Date(slot.start).toLocaleTimeString()}-${new Date(slot.end).toLocaleTimeString()}`,
+          timeOfDay: slot.timeOfDay
         }));
       }
       
