@@ -30,12 +30,14 @@ Deno.serve(async (req) => {
 
     console.log('Fetching calendar availability for user:', userId)
 
-    // Get user's calendar settings with decrypted tokens using the secure function
-    const { data: calendarData, error: settingsError } = await supabase.rpc('get_google_calendar_tokens', {
-      p_user_id: userId
-    })
+    // Get user's calendar settings
+    const { data: calendarData, error: settingsError } = await supabase
+      .from('google_calendar_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
 
-    if (settingsError || !calendarData || calendarData.length === 0) {
+    if (settingsError || !calendarData) {
       console.log('No calendar settings found for user:', userId, settingsError)
       return new Response(JSON.stringify({ 
         available: false, 
@@ -45,11 +47,33 @@ Deno.serve(async (req) => {
       })
     }
 
-    const calendarSettings = calendarData[0]
+    const calendarSettings = calendarData
 
-    // Get tokens directly from the secure function result
-    const accessToken = calendarSettings.access_token
-    const refreshToken = calendarSettings.refresh_token
+    // Decrypt tokens if they exist
+    let accessToken = null
+    let refreshToken = null
+
+    if (calendarSettings.encrypted_access_token) {
+      try {
+        const { data: decryptedAccess } = await supabase.rpc('decrypt_secret', {
+          secret_data: calendarSettings.encrypted_access_token
+        })
+        accessToken = decryptedAccess
+      } catch (error) {
+        console.error('Failed to decrypt access token:', error)
+      }
+    }
+
+    if (calendarSettings.encrypted_refresh_token) {
+      try {
+        const { data: decryptedRefresh } = await supabase.rpc('decrypt_secret', {
+          secret_data: calendarSettings.encrypted_refresh_token
+        })
+        refreshToken = decryptedRefresh
+      } catch (error) {
+        console.error('Failed to decrypt refresh token:', error)
+      }
+    }
 
     console.log('Calendar settings:', {
       calendar_id: calendarSettings.calendar_id,
@@ -108,12 +132,18 @@ Deno.serve(async (req) => {
         currentAccessToken = tokenData.access_token
         const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
         
-        // Update the stored token using secure function
-        await supabase.rpc('update_google_calendar_tokens', {
-          p_user_id: userId,
-          p_access_token: currentAccessToken,
-          p_expires_at: newExpiresAt,
+        // Encrypt and update the stored token
+        const { data: encryptedNewToken } = await supabase.rpc('encrypt_secret', {
+          secret_value: currentAccessToken
         })
+        
+        await supabase
+          .from('google_calendar_settings')
+          .update({
+            encrypted_access_token: encryptedNewToken,
+            expires_at: newExpiresAt
+          })
+          .eq('user_id', userId)
       } else {
         console.error('Token refresh failed:', tokenData)
         throw new Error('Failed to refresh access token')
