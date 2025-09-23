@@ -590,11 +590,13 @@ export const WebhookMonitor = () => {
         <div className="space-y-4 max-h-[1200px] overflow-y-auto">
           {/* Top Pagination and Info */}
           {webhookData.length > 0 && (
-            <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="flex items-center justify-between mb-4">
               <div className="text-sm text-muted-foreground">
                 Showing {startIndex + 1}-{actualEndIndex} of {webhookData.length}
               </div>
-              {renderPagination()}
+              <div className="flex-shrink-0">
+                {renderPagination()}
+              </div>
             </div>
           )}
           

@@ -298,11 +298,13 @@ export const BusinessDataMonitor: React.FC = () => {
             <>
               {/* Top Pagination and Info */}
                   {requestData.length > 0 && (
-                    <div className="flex items-center justify-center gap-4 mb-4">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="text-sm text-muted-foreground">
                         Showing {startIndex + 1}-{actualEndIndex} of {requestData.length}
                       </div>
-                      {renderPagination()}
+                      <div className="flex-shrink-0">
+                        {renderPagination()}
+                      </div>
                     </div>
                   )}
               
