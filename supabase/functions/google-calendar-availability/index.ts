@@ -326,16 +326,18 @@ Deno.serve(async (req) => {
           console.log(`    UTC: ${slotStart.toISOString()} to ${slotEnd.toISOString()}`)
           console.log(`    Local: ${displayStartTime.toString()} to ${displayEndTime.toString()}`)
           
-          // Determine time of day tag based on the hour
-          const hour = displayStartTime.getHours()
+          // Determine time of day tag based on the START time of the slot
+          const startHour = displayStartTime.getHours()
           let timeOfDay: string
-          if (hour >= 6 && hour < 12) {
+          if (startHour >= 6 && startHour < 12) {
             timeOfDay = "morning"
-          } else if (hour >= 12 && hour < 18) {
+          } else if (startHour >= 12 && startHour < 18) {
             timeOfDay = "afternoon" 
           } else {
             timeOfDay = "evening"
           }
+          
+          console.log(`    Time of day for ${startHour}:xx = ${timeOfDay}`)
           
           availableSlots.push({
             start: displayStartTime.toISOString(), // Use local time instead of UTC
