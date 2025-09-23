@@ -245,104 +245,121 @@ const CallDetails = () => {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Contact Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {/* Show business ID prominently first */}
-                {(() => {
-                  const businessId = 
-                    callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value ||
-                    callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
-                    callDetail.metadata?.business_id;
-                  
-                  if (businessId) {
-                    return (
-                      <div className="flex items-center space-x-2 col-span-full">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">Business ID:</span>
-                        <span className="font-mono text-sm bg-muted px-2 py-1 rounded">{businessId}</span>
+              {/* Call Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  {/* Business ID */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Business ID</label>
+                    <div className="mt-1">
+                      {(() => {
+                        const businessId = 
+                          callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value ||
+                          callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
+                          callDetail.metadata?.business_id;
+                        return businessId ? (
+                          <span className="font-mono text-sm">{businessId}</span>
+                        ) : (
+                          <span className="text-muted-foreground">N/A</span>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Company Name */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Company Name</label>
+                    <div className="mt-1">
+                      {callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.company_name?.value || 
+                       callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_name || 
+                       'N/A'}
+                    </div>
+                  </div>
+
+                  {/* Caller Name */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Caller Name</label>
+                    <div className="mt-1">{callDetail.caller_name}</div>
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Phone Number</label>
+                    <div className="mt-1">{callDetail.phone_number}</div>
+                  </div>
+
+                  {/* Incoming Call */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Incoming Call</label>
+                    <div className="mt-1">
+                      {(() => {
+                        const incomingCall = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || callDetail.metadata?.caller_id;
+                        return incomingCall || callDetail.phone_number;
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Call Duration */}
+                  {callDetail.call_duration && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Call Duration</label>
+                      <div className="mt-1">
+                        {Math.floor(callDetail.call_duration / 60)}m {callDetail.call_duration % 60}s
                       </div>
-                    );
-                  }
-                  return null;
-                })()}
-                <div className="flex items-center space-x-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-medium">Phone:</span>
-                  <span>{callDetail.phone_number}</span>
+                    </div>
+                  )}
                 </div>
-                {callDetail.metadata?.caller_id && (
-                  <div className="flex items-center space-x-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">Caller ID:</span>
-                    <span>{callDetail.metadata.caller_id}</span>
+
+                <div className="space-y-4">
+                  {/* Email Address */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Email Address</label>
+                    <div className="mt-1">
+                      {(() => {
+                        const email = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.email?.value || callDetail.email;
+                        return email || 'N/A';
+                      })()}
+                    </div>
                   </div>
-                )}
-                {/* Show business ID if available */}
-                {(() => {
-                  // Check multiple possible locations for business_id
-                  const businessId = 
-                    callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value ||
-                    callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
-                    callDetail.metadata?.business_id;
-                  
-                  if (businessId) {
-                    return (
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">Business ID:</span>
-                        <span className="font-mono text-xs">{businessId}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-                {/* Show email if available */}
-                {(() => {
-                  const email = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.email?.value || callDetail.email;
-                  if (email) {
-                    return (
-                      <div className="flex items-center space-x-2">
-                        <Mail className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">Email:</span>
-                        <span>{email}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })()}
-                {callDetail.call_duration && (
-                  <div className="flex items-center space-x-2">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">Duration:</span>
-                    <span>{Math.floor(callDetail.call_duration / 60)}m {callDetail.call_duration % 60}s</span>
+
+                  {/* Service Address */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Service Address</label>
+                    <div className="mt-1">
+                      {callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.service_address?.value || 'N/A'}
+                    </div>
                   </div>
-                )}
-                {/* Show appointment time if available */}
-                {(() => {
-                  const appointmentTime = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.appointment_time?.value;
-                  if (appointmentTime) {
-                    try {
-                      const appointmentDate = new Date(appointmentTime);
-                      return (
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span className="font-medium">Appointment:</span>
-                          <span>{format(appointmentDate, 'EEEE, MMMM d, yyyy at h:mm a')}</span>
-                        </div>
-                      );
-                    } catch (error) {
-                      return null;
-                    }
-                  }
-                  return null;
-                })()}
-                {callDetail.best_time_to_call && (
-                  <div className="flex items-center space-x-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">Best time:</span>
-                    <span>{callDetail.best_time_to_call}</span>
+
+                  {/* Appointment Scheduled */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Appointment Scheduled</label>
+                    <div className="mt-1">
+                      {(() => {
+                        const appointmentTime = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.appointment_time?.value;
+                        return appointmentTime ? 'Yes' : 'No';
+                      })()}
+                    </div>
                   </div>
-                )}
+
+                  {/* Appointment Date/Time */}
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Appointment Date/Time</label>
+                    <div className="mt-1">
+                      {(() => {
+                        const appointmentTime = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.appointment_time?.value;
+                        if (appointmentTime) {
+                          try {
+                            const appointmentDate = new Date(appointmentTime);
+                            return format(appointmentDate, 'EEEE, MMMM d, yyyy at h:mm a');
+                          } catch (error) {
+                            return appointmentTime;
+                          }
+                        }
+                        return callDetail.best_time_to_call || 'Not scheduled';
+                      })()}
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -399,56 +416,6 @@ const CallDetails = () => {
                       <span>Download Transcript</span>
                     </Button>
                   )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Post-Call Data */}
-          {callDetail.metadata && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Post-Call Data</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Business ID */}
-                  {(() => {
-                    const businessId = 
-                      callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value ||
-                      callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
-                      callDetail.metadata?.business_id;
-                    
-                    if (businessId) {
-                      return (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <User className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium text-sm">Business ID</span>
-                          </div>
-                          <span className="font-mono text-sm">{businessId}</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
-                  
-                  {/* Incoming Call */}
-                  {(() => {
-                    const incomingCall = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || callDetail.metadata?.caller_id;
-                    if (incomingCall) {
-                      return (
-                        <div className="p-3 bg-muted rounded-lg">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <Phone className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium text-sm">Incoming Call</span>
-                          </div>
-                          <span className="text-sm">{incomingCall}</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
                 </div>
               </CardContent>
             </Card>
