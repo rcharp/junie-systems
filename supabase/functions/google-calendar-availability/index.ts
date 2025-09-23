@@ -1,5 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
 
+// Helper function to get timezone offset in milliseconds
+function getTimezoneOffsetMs(timezone: string, date: Date): number {
+  // Create two dates: one in UTC and one in the target timezone
+  const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }))
+  const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }))
+  return tzDate.getTime() - utcDate.getTime()
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -226,24 +234,27 @@ Deno.serve(async (req) => {
         const month = current.getMonth()
         const date = current.getDate()
         
-        // Build time strings in the format that can be parsed with timezone
+        // Create a date in the user's timezone to get the proper offset
+        const tempDate = new Date(year, month, date, 12, 0, 0) // Use noon to avoid DST edge cases
+        const utcTime = tempDate.getTime() + (tempDate.getTimezoneOffset() * 60000)
+        
+        // Get offset for user's timezone at this date
+        const userDate = new Date(utcTime + (getTimezoneOffset(userTimezone, tempDate) * 60000))
+        const userTimezoneOffsetMs = userDate.getTimezoneOffset() * 60000
+        
+        // Build time strings for the user's timezone
         const startTimeString = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`
         const endTimeString = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00`
         
         console.log(`Time strings: ${startTimeString} to ${endTimeString}`)
         
-        // Parse as if they are in the user's timezone, then convert to UTC
-        // This is tricky - we need to create a date that represents the local time in the user's timezone
-        const tempStartDate = new Date(startTimeString)
-        const tempEndDate = new Date(endTimeString)
+        // Create dates and convert to UTC properly
+        const startTimeLocal = new Date(startTimeString)
+        const endTimeLocal = new Date(endTimeString)
         
-        // Get the timezone offset for the user's timezone
-        // For EDT (America/New_York in September), this should be -4 hours from UTC
-        const timeZoneOffset = userTimezone === 'America/New_York' ? -4 : 0 // EDT is UTC-4
-        
-        // Convert to UTC by subtracting the timezone offset (since we want to go from local to UTC)
-        const startTimeUTC = new Date(tempStartDate.getTime() - (timeZoneOffset * 60 * 60 * 1000))
-        const endTimeUTC = new Date(tempEndDate.getTime() - (timeZoneOffset * 60 * 60 * 1000))
+        // Convert to UTC by accounting for the user's timezone offset
+        const startTimeUTC = new Date(startTimeLocal.getTime() - getTimezoneOffsetMs(userTimezone, startTimeLocal))
+        const endTimeUTC = new Date(endTimeLocal.getTime() - getTimezoneOffsetMs(userTimezone, endTimeLocal))
 
         console.log(`Day ${dayName}: Local ${startTimeString} - ${endTimeString}`)
         console.log(`Day ${dayName}: UTC ${startTimeUTC.toISOString()} - ${endTimeUTC.toISOString()}`)
@@ -266,8 +277,8 @@ Deno.serve(async (req) => {
 
           if (!hasConflict && slotStart > now) {
             // Convert back to user timezone for display
-            const slotStartLocal = new Date(slotStart.getTime() + (timeZoneOffset * 60 * 60 * 1000))
-            const slotEndLocal = new Date(slotEnd.getTime() + (timeZoneOffset * 60 * 60 * 1000))
+            const slotStartLocal = new Date(slotStart.getTime() + getTimezoneOffsetMs(userTimezone, slotStart))
+            const slotEndLocal = new Date(slotEnd.getTime() + getTimezoneOffsetMs(userTimezone, slotEnd))
             console.log(`Adding available slot: ${slotStart.toISOString()} (UTC) = ${slotStartLocal.toLocaleString()} (${userTimezone})`)
             
             // Create human readable format: "Tuesday, October 7th, 2025 9am-10am"
