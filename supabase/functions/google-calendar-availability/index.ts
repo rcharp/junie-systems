@@ -51,17 +51,34 @@ Deno.serve(async (req) => {
     const accessToken = calendarSettings.access_token
     const refreshToken = calendarSettings.refresh_token
 
-    if (!accessToken) {
-      throw new Error('No access token available for user')
-    }
-
     console.log('Calendar settings:', {
       calendar_id: calendarSettings.calendar_id,
       timezone: calendarSettings.timezone,
       expires_at: calendarSettings.expires_at,
       has_access_token: !!accessToken,
-      has_refresh_token: !!refreshToken
+      has_refresh_token: !!refreshToken,
+      is_connected: calendarSettings.is_connected
     })
+
+    if (!calendarSettings.is_connected) {
+      console.log('Calendar not connected for user:', userId)
+      return new Response(JSON.stringify({ 
+        available: false, 
+        message: 'Google Calendar not connected' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (!accessToken) {
+      console.log('No access token found for user:', userId)
+      return new Response(JSON.stringify({ 
+        available: false, 
+        message: 'Google Calendar access token not available' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     // Check if token needs refresh
     const expiresAt = new Date(calendarSettings.expires_at)
@@ -110,6 +127,9 @@ Deno.serve(async (req) => {
     const timeMin = startDate.toISOString()
     const timeMax = endDate.toISOString()
 
+    // Use primary calendar if no specific calendar_id is set
+    const calendarId = calendarSettings.calendar_id || 'primary'
+    
     // Fetch busy times from Google Calendar
     const freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
       method: 'POST',
@@ -120,9 +140,11 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         timeMin,
         timeMax,
-        items: [{ id: calendarSettings.calendar_id }],
+        items: [{ id: calendarId }],
       }),
     })
+
+    console.log('FreeBusy request sent to calendar ID:', calendarId)
 
     const freeBusyData = await freeBusyResponse.json()
     console.log('FreeBusy response:', freeBusyData)
@@ -131,7 +153,7 @@ Deno.serve(async (req) => {
       throw new Error(`Failed to fetch calendar data: ${freeBusyData.error?.message}`)
     }
 
-    const busyTimes = freeBusyData.calendars[calendarSettings.calendar_id]?.busy || []
+    const busyTimes = freeBusyData.calendars[calendarId]?.busy || []
     const availabilityHours = calendarSettings.availability_hours || {}
     const appointmentDuration = calendarSettings.appointment_duration || 60 // minutes
 
