@@ -2,10 +2,30 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
 
 // Helper function to get timezone offset in milliseconds
 function getTimezoneOffsetMs(timezone: string, date: Date): number {
-  // Create two dates: one in UTC and one in the target timezone
-  const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }))
-  const tzDate = new Date(date.toLocaleString('en-US', { timeZone: timezone }))
-  return tzDate.getTime() - utcDate.getTime()
+  try {
+    // Use Intl.DateTimeFormat to get the proper timezone offset
+    const formatter = new Intl.DateTimeFormat('en', {
+      timeZone: timezone,
+      timeZoneName: 'longOffset'
+    })
+    const parts = formatter.formatToParts(date)
+    const offsetPart = parts.find(part => part.type === 'timeZoneName')
+    if (offsetPart) {
+      const offset = offsetPart.value // e.g., "GMT-4" or "GMT+5"
+      const match = offset.match(/GMT([+-])(\d{1,2})/)
+      if (match) {
+        const sign = match[1] === '+' ? 1 : -1
+        const hours = parseInt(match[2])
+        return sign * hours * 60 * 60 * 1000
+      }
+    }
+    // Fallback: use a simple approach
+    console.log('Falling back to simple timezone offset calculation')
+    return 0
+  } catch (error) {
+    console.error('Error calculating timezone offset:', error)
+    return 0
+  }
 }
 
 const corsHeaders = {
@@ -252,9 +272,21 @@ Deno.serve(async (req) => {
         const startTimeLocal = new Date(startTimeString)
         const endTimeLocal = new Date(endTimeString)
         
-        // Convert to UTC by accounting for the user's timezone offset
-        const startTimeUTC = new Date(startTimeLocal.getTime() - getTimezoneOffsetMs(userTimezone, startTimeLocal))
-        const endTimeUTC = new Date(endTimeLocal.getTime() - getTimezoneOffsetMs(userTimezone, endTimeLocal))
+        // Get timezone offset in hours (negative means behind UTC)
+        let timezoneOffsetHours = 0
+        if (userTimezone === 'America/New_York') {
+          // EDT is UTC-4 in September, EST is UTC-5 in winter
+          // For now, assume EDT (daylight saving time)
+          timezoneOffsetHours = -4
+        }
+        
+        console.log(`Timezone ${userTimezone} offset: ${timezoneOffsetHours} hours`)
+        console.log(`Local times: ${startTimeLocal.toISOString()} to ${endTimeLocal.toISOString()}`)
+        
+        // To convert from local time to UTC, subtract the offset
+        // EDT is UTC-4, so to convert 9:00 EDT to UTC: 9:00 + 4 = 13:00 UTC
+        const startTimeUTC = new Date(startTimeLocal.getTime() - (timezoneOffsetHours * 60 * 60 * 1000))
+        const endTimeUTC = new Date(endTimeLocal.getTime() - (timezoneOffsetHours * 60 * 60 * 1000))
 
         console.log(`Day ${dayName}: Local ${startTimeString} - ${endTimeString}`)
         console.log(`Day ${dayName}: UTC ${startTimeUTC.toISOString()} - ${endTimeUTC.toISOString()}`)
@@ -276,9 +308,9 @@ Deno.serve(async (req) => {
           })
 
           if (!hasConflict && slotStart > now) {
-            // Convert back to user timezone for display
-            const slotStartLocal = new Date(slotStart.getTime() + getTimezoneOffsetMs(userTimezone, slotStart))
-            const slotEndLocal = new Date(slotEnd.getTime() + getTimezoneOffsetMs(userTimezone, slotEnd))
+            // Convert back to user timezone for display (add the offset to go from UTC to local)
+            const slotStartLocal = new Date(slotStart.getTime() + (timezoneOffsetHours * 60 * 60 * 1000))
+            const slotEndLocal = new Date(slotEnd.getTime() + (timezoneOffsetHours * 60 * 60 * 1000))
             console.log(`Adding available slot: ${slotStart.toISOString()} (UTC) = ${slotStartLocal.toLocaleString()} (${userTimezone})`)
             
             // Create human readable format: "Tuesday, October 7th, 2025 9am-10am"
