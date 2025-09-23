@@ -245,7 +245,7 @@ Deno.serve(async (req) => {
             })
           }
 
-          slotStart.setTime(slotStart.getTime() + (30 * 60 * 1000)) // 30-minute intervals
+          slotStart.setTime(slotStart.getTime() + (appointmentDuration * 60 * 1000)) // Use appointment duration for intervals
         }
       }
 
