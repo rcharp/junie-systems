@@ -22,20 +22,20 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
-    // Get the user from the request
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('No authorization header')
-    }
-
-    const token = authHeader.replace('Bearer ', '')
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-    
-    if (authError || !user) {
-      throw new Error('Invalid token')
-    }
-
     if (req.method === 'GET') {
+      // For GET requests, we need user authentication
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        throw new Error('No authorization header')
+      }
+
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+      
+      if (authError || !user) {
+        throw new Error('Invalid token')
+      }
+
       // Generate OAuth URL - construct redirect URI from request
       const url = new URL(req.url)
       const protocol = req.headers.get('x-forwarded-proto') || url.protocol.slice(0, -1)
@@ -76,10 +76,17 @@ Deno.serve(async (req) => {
 
     if (req.method === 'POST') {
       const { code, state } = await req.json()
+      console.log('POST request - code:', code ? 'present' : 'missing', 'state:', state)
       
-      if (state !== user.id) {
+      // Validate state parameter corresponds to a real user
+      const { data: userData, error: userError } = await supabase.auth.admin.getUserById(state)
+      
+      if (userError || !userData.user) {
+        console.error('Invalid state parameter - user not found:', userError)
         throw new Error('Invalid state parameter')
       }
+      
+      const user = userData.user
 
       // Exchange code for tokens - use same logic as GET request
       const url = new URL(req.url)
