@@ -327,8 +327,8 @@ Deno.serve(async (req) => {
           console.log(`    Local: ${displayStartTime.toString()} to ${displayEndTime.toString()}`)
           
           availableSlots.push({
-            start: slotStart.toISOString(),
-            end: slotEnd.toISOString(),
+            start: displayStartTime.toISOString(), // Use local time instead of UTC
+            end: displayEndTime.toISOString(),     // Use local time instead of UTC
             display: displayStartTime.toLocaleString('en-US', {
               weekday: 'long',
               month: 'short', 
