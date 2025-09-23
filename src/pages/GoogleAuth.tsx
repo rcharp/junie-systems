@@ -41,16 +41,10 @@ const GoogleAuth = () => {
 
         setStatus('success');
         
-        // Send success message to parent window and close popup
-        if (window.opener) {
-          window.opener.postMessage({ type: 'google-calendar-connected' }, '*');
-          window.close();
-        } else {
-          // Fallback for non-popup case
-          setTimeout(() => {
-            navigate('/settings', { replace: true });
-          }, 2000);
-        }
+        // Redirect back to settings page with success status  
+        setTimeout(() => {
+          navigate('/settings?status=success', { replace: true });
+        }, 2000);
 
       } catch (err) {
         console.error('Google auth callback error:', err);
@@ -58,11 +52,10 @@ const GoogleAuth = () => {
         setError(errorMessage);
         setStatus('error');
         
-        // Send error message to parent window and close popup
-        if (window.opener) {
-          window.opener.postMessage({ type: 'google-calendar-error', error: errorMessage }, '*');
-          window.close();
-        }
+        // Redirect back to settings with error
+        setTimeout(() => {
+          navigate(`/settings?status=error&error=${encodeURIComponent(errorMessage)}`, { replace: true });
+        }, 3000);
       }
     };
 

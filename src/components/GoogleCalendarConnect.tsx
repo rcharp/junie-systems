@@ -27,7 +27,30 @@ const GoogleCalendarConnect = () => {
     if (user) {
       fetchCalendarSettings();
     }
-  }, [user]);
+    
+    // Check for redirect success/error status
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
+    
+    if (status === 'success') {
+      toast({
+        title: "Connected",
+        description: "Google Calendar has been connected successfully!",
+      });
+      // Clear the URL parameters
+      window.history.replaceState({}, '', '/settings');
+      fetchCalendarSettings();
+    } else if (status === 'error') {
+      const error = urlParams.get('error');
+      toast({
+        title: "Connection Failed",
+        description: error || "Failed to connect to Google Calendar.",
+        variant: "destructive",
+      });
+      // Clear the URL parameters
+      window.history.replaceState({}, '', '/settings');
+    }
+  }, [user, toast]);
 
   const fetchCalendarSettings = async () => {
     try {
@@ -60,46 +83,8 @@ const GoogleCalendarConnect = () => {
       if (error) throw error;
 
       if (data?.authUrl) {
-        // Open OAuth flow in a new window
-        const popup = window.open(
-          data.authUrl,
-          'google-calendar-oauth',
-          'width=600,height=600,scrollbars=yes,resizable=yes'
-        );
-
-        // Listen for messages from the popup
-        const messageListener = (event: MessageEvent) => {
-          if (event.data?.type === 'google-calendar-connected') {
-            window.removeEventListener('message', messageListener);
-            popup?.close();
-            // Refresh settings after OAuth completion
-            setTimeout(() => {
-              fetchCalendarSettings();
-              setConnecting(false);
-              toast({
-                title: "Connected",
-                description: "Google Calendar has been connected successfully!",
-              });
-            }, 500);
-          }
-        };
-
-        window.addEventListener('message', messageListener);
-
-        // Fallback: check if popup is closed manually (in case postMessage fails)
-        const checkClosed = setInterval(() => {
-          if (popup?.closed) {
-            clearInterval(checkClosed);
-            window.removeEventListener('message', messageListener);
-            // Only refresh if we haven't already handled the success message
-            if (connecting) {
-              setTimeout(() => {
-                fetchCalendarSettings();
-                setConnecting(false);
-              }, 1000);
-            }
-          }
-        }, 1000);
+        // Use redirect instead of popup to avoid blocking issues
+        window.location.href = data.authUrl;
       }
     } catch (error) {
       console.error('Error connecting to Google Calendar:', error);
