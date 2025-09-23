@@ -397,81 +397,18 @@ serve(async (req) => {
         }
       }
     );
-      console.log('API request detected - Query parameters:', Object.fromEntries(url.searchParams));
-    }
 
-    console.log('Final businessId being used:', businessId);
-    console.log('Final requestSource being used:', requestSource);
-
-    if (!businessId) {
-      return new Response(
-        JSON.stringify({ error: 'business_id parameter is required' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Validate that businessId is a valid UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(businessId)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid business_id format' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Fetch business settings using business_id (which is the primary key)
-    const { data: businessData, error } = await supabase
-      .from('business_settings')
-      .select(`
-        user_id,
-        business_name,
-        business_type,
-        business_type_full_name,
-        business_phone,
-        business_address,
-        business_address_state_full,
-        business_hours,
-        business_description,
-        business_website,
-        services_offered,
-        pricing_structure,
-        custom_greeting,
-        common_questions,
-        ai_personality,
-        appointment_booking,
-        lead_capture
-      `)
-      .eq('id', businessId)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Database error:', error);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch business data' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    if (!businessData) {
-      return new Response(
-        JSON.stringify({ error: 'No business data found for this business_id' }),
-        { 
-          status: 404, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Check if Google Calendar is connected for availability
+  } catch (error) {
+    console.error('Error in business-data function:', error);
+    return new Response(
+      JSON.stringify({ error: 'Internal server error' }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+  }
+});
     const { data: calendarSettings } = await supabase
       .from('google_calendar_settings')
       .select('is_connected, timezone, appointment_duration')
