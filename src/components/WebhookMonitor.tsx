@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { RefreshCw, Webhook, Activity, Trash2, ChevronDown, ChevronRight, Code, Minimize2, Maximize2 } from 'lucide-react';
+import { RefreshCw, Webhook, Activity, Trash2, ChevronDown, ChevronRight, Code, Minimize2, Maximize2, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parse, isValid, parseISO } from 'date-fns';
 
@@ -35,6 +35,7 @@ export const WebhookMonitor = () => {
   const [expandedRawData, setExpandedRawData] = useState<Record<string, boolean>>({});
   const [isMinimized, setIsMinimized] = useState(true);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   const fetchWebhookData = async () => {
     try {
@@ -436,6 +437,14 @@ export const WebhookMonitor = () => {
     }
   };
 
+  const handleDeleteClick = (callLogId: string) => {
+    setConfirmingDelete(callLogId);
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmingDelete(null);
+  };
+
   useEffect(() => {
     fetchWebhookData();
 
@@ -560,14 +569,36 @@ export const WebhookMonitor = () => {
                       </>
                     )}
                   </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDeleteSingle(data.id)}
-                    disabled={loading}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  {confirmingDelete === data.id ? (
+                    <div className="flex gap-1">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDeleteSingle(data.id)}
+                        disabled={loading}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancelDelete}
+                        disabled={loading}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteClick(data.id)}
+                      disabled={loading}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
               

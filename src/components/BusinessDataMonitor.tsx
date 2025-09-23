@@ -78,10 +78,6 @@ export const BusinessDataMonitor: React.FC = () => {
   };
 
   const handleDeleteSingle = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this business data request? This action cannot be undone.')) {
-      return;
-    }
-
     try {
       setLoading(true);
       
@@ -100,7 +96,7 @@ export const BusinessDataMonitor: React.FC = () => {
       
       toast({
         title: "Deleted",
-        description: `Business data request permanently deleted (${count} row${count !== 1 ? 's' : ''} affected)`,
+        description: `Business data request permanently deleted`,
       });
     } catch (error) {
       console.error('Error deleting request:', error);
