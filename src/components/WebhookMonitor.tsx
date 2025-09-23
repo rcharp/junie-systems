@@ -734,7 +734,13 @@ export const WebhookMonitor = () => {
                   <div className="space-y-3">
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground">Business ID</h4>
-                      <p className="text-sm">{data.business_id}</p>
+                      <p className="text-sm">{(() => {
+                        // Extract business_id from conversation_initiation_client_data or fallback to existing
+                        const businessId = data.raw_webhook_data?.data?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
+                                          data.raw_webhook_data?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
+                                          data.business_id;
+                        return businessId || 'N/A';
+                      })()}</p>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground">Company Name</h4>
