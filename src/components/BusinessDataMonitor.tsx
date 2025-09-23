@@ -124,18 +124,14 @@ export const BusinessDataMonitor: React.FC = () => {
     try {
       setLoading(true);
       
-      // Make a request to the business-data endpoint
-      const response = await fetch('/functions/v1/business-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Make a request to the business-data endpoint using Supabase client
+      const { data: result, error } = await supabase.functions.invoke('business-data', {
+        body: {
           business_id: businessId
-        })
+        }
       });
 
-      const result = await response.json();
+      if (error) throw error;
       
       toast({
         title: "Manual Request Sent",

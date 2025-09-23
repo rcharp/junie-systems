@@ -496,6 +496,24 @@ export const WebhookMonitor = () => {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="flex items-center gap-2"
+            >
+              {isMinimized ? (
+                <>
+                  <Maximize2 className="h-4 w-4" />
+                  Expand
+                </>
+              ) : (
+                <>
+                  <Minimize2 className="h-4 w-4" />
+                  Minimize
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setAutoRefresh(!autoRefresh)}
             >
               {autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
@@ -514,24 +532,53 @@ export const WebhookMonitor = () => {
       {!isMinimized && (
       <CardContent>
         <div className="space-y-4 max-h-[1200px] overflow-y-auto">
-          {webhookData.map((data) => (
-            <div key={data.id} className="p-4 border rounded-lg bg-muted/30 relative">
+          {webhookData.map((data) => {
+            const isItemExpanded = expandedItems[data.id] || false;
+            
+            return (
+              <div key={data.id} className="p-4 border rounded-lg bg-muted/30 relative">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
                 </div>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDeleteSingle(data.id)}
-                  disabled={loading}
-                  className="absolute top-3 right-3"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setExpandedItems(prev => ({ ...prev, [data.id]: !prev[data.id] }))}
+                    className="flex items-center gap-1"
+                  >
+                    {isItemExpanded ? (
+                      <>
+                        <Minimize2 className="h-4 w-4" />
+                        Minimize
+                      </>
+                    ) : (
+                      <>
+                        <Maximize2 className="h-4 w-4" />
+                        Expand
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteSingle(data.id)}
+                    disabled={loading}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               
+              {!isItemExpanded && (
+                <div className="text-sm text-muted-foreground">
+                  {data.call_datetime}
+                </div>
+              )}
               
+              {isItemExpanded && (
+              <>
               <div>
                 <h3 className="text-lg font-semibold mb-3">Call Details</h3>
                 <div className="grid grid-cols-2 gap-4 mb-4">
@@ -624,8 +671,11 @@ export const WebhookMonitor = () => {
                   </Collapsible>
                 )}
               </div>
-            </div>
-          ))}
+              </>
+              )}
+              </div>
+            );
+          })}
           
           {webhookData.length === 0 && !loading && (
             <div className="text-center py-12">
