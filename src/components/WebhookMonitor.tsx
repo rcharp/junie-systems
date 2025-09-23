@@ -648,7 +648,7 @@ export const WebhookMonitor = () => {
                                        data.raw_webhook_data?.caller_id || 
                                        data.phone_number;
                     return (
-                      <div className="text-sm font-medium text-muted-foreground">
+                      <div className="text-2xl font-bold text-foreground">
                         Incoming - {incomingCall}
                       </div>
                     );
