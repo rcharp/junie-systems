@@ -399,18 +399,29 @@ serve(async (req) => {
     };
 
     // Return ElevenLabs conversation initiation format
+    const availableTimes = generateAvailableTimes(businessHours, calendarAvailability);
+    console.log('Generated available times count:', availableTimes.length);
+    console.log('Sample available time:', availableTimes[0]);
+    
+    // Limit available times to prevent response from being too large
+    const limitedAvailableTimes = availableTimes.slice(0, 5);
+    
     const elevenLabsResponse = {
       type: "conversation_initiation_client_data",
       dynamic_variables: {
         business_id: businessId,
-        business_name: businessData.business_name || "Our Business",
-        business_phone: businessData.business_phone || "",
-        business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : "",
-        available_times: generateAvailableTimes(businessHours, calendarAvailability),
-        services: businessData.pricing_structure || JSON.stringify(servicesOffered),
-        business_description: businessData.business_description || ""
+        business_name: (businessData.business_name || "Our Business").replace(/[^\w\s-]/g, ''), // Remove special chars
+        business_phone: (businessData.business_phone || "").replace(/[^\d\-\(\)\+\s]/g, ''), // Clean phone
+        business_address: businessData.business_address ? 
+          normalizeAddress(businessData.business_address).replace(/[^\w\s,\-\.]/g, '') : "", // Clean address
+        available_times: limitedAvailableTimes,
+        services: businessData.pricing_structure || 
+          (servicesOffered.length > 0 ? JSON.stringify(servicesOffered).substring(0, 500) : "General services available"),
+        business_description: (businessData.business_description || "").replace(/[^\w\s\-\.,!?]/g, '').substring(0, 500) // Clean and limit description
       }
     };
+    
+    console.log('ElevenLabs response size (chars):', JSON.stringify(elevenLabsResponse).length);
 
     console.log('ElevenLabs response being sent:', JSON.stringify(elevenLabsResponse, null, 2));
     
