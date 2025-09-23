@@ -326,6 +326,17 @@ Deno.serve(async (req) => {
           console.log(`    UTC: ${slotStart.toISOString()} to ${slotEnd.toISOString()}`)
           console.log(`    Local: ${displayStartTime.toString()} to ${displayEndTime.toString()}`)
           
+          // Determine time of day tag based on the hour
+          const hour = displayStartTime.getHours()
+          let timeOfDay: string
+          if (hour >= 6 && hour < 12) {
+            timeOfDay = "morning"
+          } else if (hour >= 12 && hour < 18) {
+            timeOfDay = "afternoon" 
+          } else {
+            timeOfDay = "evening"
+          }
+          
           availableSlots.push({
             start: displayStartTime.toISOString(), // Use local time instead of UTC
             end: displayEndTime.toISOString(),     // Use local time instead of UTC
@@ -336,7 +347,8 @@ Deno.serve(async (req) => {
               hour: 'numeric',
               minute: '2-digit'
             }),
-            humanReadable: humanReadable
+            humanReadable: humanReadable,
+            timeOfDay: timeOfDay
           })
         } else {
           console.log(`    SKIP: Has conflict`)
