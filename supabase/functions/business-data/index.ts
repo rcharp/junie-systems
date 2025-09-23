@@ -272,19 +272,15 @@ serve(async (req) => {
     if (calendarSettings?.is_connected) {
       try {
         console.log('Fetching calendar availability for user_id:', businessData.user_id);
-        const availabilityResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-availability/${businessData.user_id}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-            'Content-Type': 'application/json'
-          }
+        const availabilityResponse = await supabase.functions.invoke(`google-calendar-availability/${businessData.user_id}`, {
+          method: 'GET'
         });
         
-        if (availabilityResponse.ok) {
-          calendarAvailability = await availabilityResponse.json();
-          console.log('Calendar availability response:', calendarAvailability);
-        } else {
-          console.error('Calendar availability fetch failed:', availabilityResponse.status, await availabilityResponse.text());
+        console.log('Calendar availability response:', availabilityResponse);
+        if (availabilityResponse.data) {
+          calendarAvailability = availabilityResponse.data;
+        } else if (availabilityResponse.error) {
+          console.error('Calendar availability error:', availabilityResponse.error);
         }
       } catch (error) {
         console.error('Error fetching calendar availability:', error);
