@@ -297,14 +297,14 @@ export const BusinessDataMonitor: React.FC = () => {
           ) : (
             <>
               {/* Top Pagination and Info */}
-              {requestData.length > 0 && (
-                    <div className="flex justify-between items-center mb-4">
+                  {requestData.length > 0 && (
+                    <div className="flex items-center justify-center gap-4 mb-4">
                       <div className="text-sm text-muted-foreground">
                         Showing {startIndex + 1}-{actualEndIndex} of {requestData.length}
                       </div>
-                  {renderPagination()}
-                </div>
-              )}
+                      {renderPagination()}
+                    </div>
+                  )}
               
               {currentData.map((request) => {
                 const isItemExpanded = expandedItems[request.id] || false;
