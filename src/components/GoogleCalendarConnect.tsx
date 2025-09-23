@@ -58,14 +58,15 @@ const GoogleCalendarConnect = () => {
         .from('google_calendar_settings')
         .select('*')
         .eq('user_id', user?.id)
-        .single();
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error) {
         console.error('Error fetching calendar settings:', error);
         return;
       }
 
-      setCalendarSettings(data);
+      setCalendarSettings(data?.[0] || null);
     } catch (error) {
       console.error('Error fetching calendar settings:', error);
     } finally {
