@@ -194,25 +194,25 @@ serve(async (req) => {
         // Fetch actual business data for this business_id
         const { data: businessData, error } = await supabase
           .from('business_settings')
-          .select(`
-            user_id,
-            business_name,
-            business_type,
-            business_type_full_name,
-            business_phone,
-            business_address,
-            business_address_state_full,
-            business_hours,
-            business_description,
-            business_website,
-            services_offered,
-            pricing_structure,
-            custom_greeting,
-            common_questions,
-            ai_personality,
-            appointment_booking,
-            lead_capture
-          `)
+      .select(`
+        user_id,
+        business_name,
+        business_type,
+        business_type_full_name,
+        business_phone,
+        business_address,
+        business_address_state_full,
+        business_hours,
+        business_description,
+        business_website,
+        services_offered,
+        pricing_structure,
+        custom_greeting,
+        common_questions,
+        ai_personality,
+        appointment_booking,
+        lead_capture
+      `)
           .eq('id', conversationBusinessId)
           .maybeSingle();
 
@@ -263,9 +263,9 @@ serve(async (req) => {
           businessHours = [];
         }
 
-        // Format services for display
+        // Format services for display to match manual response format
         const formattedServices = servicesOffered.map(service => 
-          service.price ? `${service.name} ($${service.price})` : service.name
+          service.price ? `${service.name}: ${service.price}` : service.name
         ).join(', ') || 'Call for services';
 
         // Format business hours for display
@@ -289,40 +289,47 @@ serve(async (req) => {
           return hourRanges || 'Please call for hours';
         };
 
-        // Use actual business address with full state name if available
+        // Use actual business address with full state name if available (matching manual response)
         const formattedAddress = businessData?.business_address_state_full ? 
           normalizeAddressWithFullState(businessData.business_address, businessData.business_address_state_full) :
           normalizeAddress(businessData?.business_address || 'Unknown');
 
-        // Generate basic available times (this can be enhanced with calendar integration later)
-        const generateBasicAvailableTimes = () => {
-          const openDays = businessHours.filter(day => day.isOpen || day.enabled);
-          if (openDays.length === 0) {
-            return 'Please call to schedule';
+        // Get calendar availability data for ElevenLabs (matching manual response)
+        let calendarAvailability = null;
+        if (businessData) {
+          try {
+            console.log('Fetching calendar availability for user_id:', businessData.user_id);
+            const availabilityResponse = await supabase.functions.invoke(`google-calendar-availability/${businessData.user_id}`, {
+              method: 'GET'
+            });
+            
+            if (availabilityResponse.data && !availabilityResponse.error) {
+              calendarAvailability = availabilityResponse.data;
+            }
+          } catch (error) {
+            console.error('Error fetching calendar availability for ElevenLabs:', error);
+          }
+        }
+
+        // Generate available times matching manual response format
+        const generateAvailableTimesForElevenLabs = () => {
+          // If we have calendar availability with actual slots, use those
+          if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.slots) && calendarAvailability.slots.length > 0) {
+            return calendarAvailability.slots.slice(0, 5).map(slot => ({
+              startTime: new Date(slot.start).toISOString(),
+              endTime: new Date(slot.end).toISOString(),
+              humanReadable: slot.humanReadable || `${new Date(slot.start).toLocaleDateString()} ${new Date(slot.start).toLocaleTimeString()}-${new Date(slot.end).toLocaleTimeString()}`,
+              timeOfDay: slot.timeOfDay
+            }));
           }
           
-          // Generate next few available time slots
-          const today = new Date();
-          const tomorrow = new Date(today);
-          tomorrow.setDate(today.getDate() + 1);
-          
-          const availableTimes = [];
-          const firstOpenDay = openDays[0];
-          const openTime = firstOpenDay.openTime || firstOpenDay.start || '09:00';
-          const [hour] = openTime.split(':').map(Number);
-          
-          // Generate some sample times for the next day
-          for (let i = 0; i < 4; i++) {
-            const timeSlot = new Date(tomorrow);
-            timeSlot.setHours(hour + i * 2, 0, 0, 0);
-            const timeString = timeSlot.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-            availableTimes.push(timeString);
-          }
-          
-          return availableTimes.join(', ') || 'Please call to schedule';
+          // Fallback to basic slots if no calendar
+          return [];
         };
         
-        // Return the conversation initiation format that ElevenLabs expects
+        // Return the conversation initiation format that matches manual response exactly
+        const availableTimes = generateAvailableTimesForElevenLabs();
+        
         const conversationInitData = {
           "type": "conversation_initiation_client_data",
           "dynamic_variables": {
@@ -330,9 +337,9 @@ serve(async (req) => {
             "business_name": businessData?.business_name || "Business",
             "business_phone": businessData?.business_phone || "Unknown",
             "business_address": formattedAddress,
-            "available_hours": formatBusinessHours(businessHours),
-            "available_times": generateBasicAvailableTimes(),
-            "services": formattedServices
+            "available_times": availableTimes,
+            "services": formattedServices,
+            "business_description": businessData?.business_description || ""
           }
         };
         
@@ -402,6 +409,7 @@ serve(async (req) => {
         business_type_full_name,
         business_phone,
         business_address,
+        business_address_state_full,
         business_hours,
         business_description,
         business_website,
@@ -582,18 +590,26 @@ serve(async (req) => {
     // Limit available times to prevent response from being too large
     const limitedAvailableTimes = availableTimes.slice(0, 5);
     
+    // Format services matching manual response (colon format, not parentheses)
+    const formattedServices = servicesOffered.map(service => 
+      service.price ? `${service.name}: ${service.price}` : service.name
+    ).join(', ') || 'General services available';
+
+    // Use business address with full state name to match manual response
+    const formattedBusinessAddress = businessData.business_address_state_full ? 
+      normalizeAddressWithFullState(businessData.business_address, businessData.business_address_state_full) :
+      normalizeAddress(businessData.business_address || "");
+
     const elevenLabsResponse = {
       type: "conversation_initiation_client_data",
       dynamic_variables: {
         business_id: businessId,
-        business_name: (businessData.business_name || "Our Business").replace(/[^\w\s-]/g, ''), // Remove special chars
-        business_phone: (businessData.business_phone || "").replace(/[^\d\-\(\)\+\s]/g, ''), // Clean phone
-        business_address: businessData.business_address ? 
-          normalizeAddress(businessData.business_address).replace(/[^\w\s,\-\.]/g, '') : "", // Clean address
+        business_name: businessData.business_name || "Our Business",
+        business_phone: businessData.business_phone || "",
+        business_address: formattedBusinessAddress,
         available_times: limitedAvailableTimes,
-        services: businessData.pricing_structure || 
-          (servicesOffered.length > 0 ? JSON.stringify(servicesOffered).substring(0, 500) : "General services available"),
-        business_description: (businessData.business_description || "").replace(/[^\w\s\-\.,!?]/g, '').substring(0, 500) // Clean and limit description
+        services: formattedServices,
+        business_description: businessData.business_description || ""
       }
     };
     
