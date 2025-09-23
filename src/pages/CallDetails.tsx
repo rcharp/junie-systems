@@ -404,7 +404,57 @@ const CallDetails = () => {
             </Card>
           )}
 
-          {/* Metadata */}
+          {/* Post-Call Data */}
+          {callDetail.metadata && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Post-Call Data</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Business ID */}
+                  {(() => {
+                    const businessId = 
+                      callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value ||
+                      callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
+                      callDetail.metadata?.business_id;
+                    
+                    if (businessId) {
+                      return (
+                        <div className="p-3 bg-muted rounded-lg">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-medium text-sm">Business ID</span>
+                          </div>
+                          <span className="font-mono text-sm">{businessId}</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {/* Incoming Call */}
+                  {(() => {
+                    const incomingCall = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || callDetail.metadata?.caller_id;
+                    if (incomingCall) {
+                      return (
+                        <div className="p-3 bg-muted rounded-lg">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <Phone className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-medium text-sm">Incoming Call</span>
+                          </div>
+                          <span className="text-sm">{incomingCall}</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Technical Details */}
           {callDetail.metadata && (
             <Card>
               <CardHeader>
