@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, RefreshCw, Database, Minimize2, Maximize2, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 interface BusinessDataRequest {
   id: string;
@@ -26,6 +27,8 @@ export const BusinessDataMonitor: React.FC = () => {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchBusinessDataRequests = async () => {
     setLoading(true);
@@ -242,7 +245,15 @@ export const BusinessDataMonitor: React.FC = () => {
               <p className="text-sm">Real POST requests to /functions/v1/business-data will appear here</p>
             </div>
           ) : (
-            requestData.map((request) => {
+            (() => {
+              const totalPages = Math.ceil(requestData.length / itemsPerPage);
+              const startIndex = (currentPage - 1) * itemsPerPage;
+              const endIndex = startIndex + itemsPerPage;
+              const currentData = requestData.slice(startIndex, endIndex);
+              
+              return (
+                <>
+                  {currentData.map((request) => {
               const isItemExpanded = expandedItems[request.id] || false;
               
               return (
@@ -358,8 +369,57 @@ export const BusinessDataMonitor: React.FC = () => {
                   )}
                 </CardContent>
               </Card>
+                    );
+                  })}
+                  
+                  {/* Pagination Controls */}
+                  {requestData.length > itemsPerPage && (
+                    <div className="flex justify-center mt-6">
+                      <Pagination>
+                        <PaginationContent>
+                          <PaginationItem>
+                            <PaginationPrevious 
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (currentPage > 1) setCurrentPage(currentPage - 1);
+                              }}
+                              className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                            />
+                          </PaginationItem>
+                          
+                          {Array.from({ length: totalPages }, (_, i) => (
+                            <PaginationItem key={i + 1}>
+                              <PaginationLink
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCurrentPage(i + 1);
+                                }}
+                                isActive={currentPage === i + 1}
+                              >
+                                {i + 1}
+                              </PaginationLink>
+                            </PaginationItem>
+                          ))}
+                          
+                          <PaginationItem>
+                            <PaginationNext 
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                              }}
+                              className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                            />
+                          </PaginationItem>
+                        </PaginationContent>
+                      </Pagination>
+                    </div>
+                  )}
+                </>
               );
-            })
+            })()
           )}
         </div>
       </CardContent>

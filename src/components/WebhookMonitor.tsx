@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { RefreshCw, Webhook, Activity, Trash2, ChevronDown, ChevronRight, Code, Minimize2, Maximize2, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format, parse, isValid, parseISO } from 'date-fns';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
 interface WebhookData {
   id: string;
@@ -36,6 +37,8 @@ export const WebhookMonitor = () => {
   const [isMinimized, setIsMinimized] = useState(true);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchWebhookData = async () => {
     try {
@@ -536,10 +539,19 @@ export const WebhookMonitor = () => {
       {!isMinimized && (
       <CardContent>
         <div className="space-y-4 max-h-[1200px] overflow-y-auto">
-          {webhookData.map((data) => {
-            const isItemExpanded = expandedItems[data.id] || false;
+          {/* Pagination Logic */}
+          {(() => {
+            const totalPages = Math.ceil(webhookData.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentData = webhookData.slice(startIndex, endIndex);
             
             return (
+              <>
+                {currentData.map((data) => {
+                  const isItemExpanded = expandedItems[data.id] || false;
+                  
+                  return (
               <div 
                 key={data.id} 
                 className={`p-4 border rounded-lg bg-muted/30 relative ${!isItemExpanded ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
@@ -704,8 +716,57 @@ export const WebhookMonitor = () => {
               </>
               )}
               </div>
+                  );
+                })}
+                
+                {/* Pagination Controls */}
+                {webhookData.length > itemsPerPage && (
+                  <div className="flex justify-center mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious 
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (currentPage > 1) setCurrentPage(currentPage - 1);
+                            }}
+                            className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
+                          />
+                        </PaginationItem>
+                        
+                        {Array.from({ length: totalPages }, (_, i) => (
+                          <PaginationItem key={i + 1}>
+                            <PaginationLink
+                              href="#"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(i + 1);
+                              }}
+                              isActive={currentPage === i + 1}
+                            >
+                              {i + 1}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        
+                        <PaginationItem>
+                          <PaginationNext 
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                            }}
+                            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             );
-          })}
+          })()}
           
           {webhookData.length === 0 && !loading && (
             <div className="text-center py-12">
