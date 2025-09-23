@@ -305,12 +305,29 @@ serve(async (req) => {
     }
 
     // Helper function to format business hours for ElevenLabs
-    const formatBusinessHours = (hours: any[]) => {
+    const formatBusinessHours = (hours: any[], calendarAvailability: any = null) => {
       if (!Array.isArray(hours) || hours.length === 0) return "Contact us for hours";
       
       const openDays = hours.filter(day => day.isOpen || day.enabled);
       if (openDays.length === 0) return "Closed";
       
+      // If we have calendar availability, use the actual available slots
+      if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.availableSlots)) {
+        const slots = calendarAvailability.availableSlots.slice(0, 10); // Limit to first 10 slots
+        if (slots.length > 0) {
+          const formattedSlots = slots.map(slot => {
+            const start = new Date(slot.start);
+            const end = new Date(slot.end);
+            const dayName = start.toLocaleDateString('en-US', { weekday: 'long' });
+            const startTime = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const endTime = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            return `${dayName} ${startTime}-${endTime}`;
+          });
+          return `Available times: ${formattedSlots.join(', ')}`;
+        }
+      }
+      
+      // Fallback to basic business hours
       const firstDay = openDays[0];
       const openTime = firstDay.openTime || firstDay.start;
       const closeTime = firstDay.closeTime || firstDay.end;
@@ -326,7 +343,7 @@ serve(async (req) => {
         business_name: businessData.business_name || "Our Business",
         business_phone: businessData.business_phone || "",
         business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : "",
-        available_hours: formatBusinessHours(businessHours),
+        available_hours: formatBusinessHours(businessHours, calendarAvailability),
         services: businessData.pricing_structure || JSON.stringify(servicesOffered),
         business_description: businessData.business_description || ""
       }
