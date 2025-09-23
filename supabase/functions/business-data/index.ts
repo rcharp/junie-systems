@@ -192,7 +192,7 @@ serve(async (req) => {
       console.log('Query parameters:', Object.fromEntries(url.searchParams));
     }
 
-    console.log('Fetching business data for business_id:', businessId);
+    console.log('Final businessId being used:', businessId);
 
     if (!businessId) {
       return new Response(
