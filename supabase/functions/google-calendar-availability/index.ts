@@ -208,6 +208,7 @@ Deno.serve(async (req) => {
 
     console.log('Generating slots with timezone:', userTimezone)
     console.log('Busy times from calendar:', busyTimes)
+    console.log('Availability hours:', availabilityHours)
 
     while (current <= endDate) {
       const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
@@ -219,23 +220,26 @@ Deno.serve(async (req) => {
         const [startHour, startMinute] = daySettings.start.split(':').map(Number)
         const [endHour, endMinute] = daySettings.end.split(':').map(Number)
         
-        // Create date objects in UTC for the user's timezone
-        const startTime = new Date(current)
-        startTime.setUTCHours(startHour, startMinute, 0, 0)
+        // Create times in EST and convert to UTC
+        // EST is UTC-4, so 9:00 EST = 13:00 UTC
+        const year = current.getFullYear()
+        const month = current.getMonth()
+        const date = current.getDate()
         
-        const endTime = new Date(current)
-        endTime.setUTCHours(endHour, endMinute, 0, 0)
+        // Create Date objects in local EST time first
+        const startTimeEST = new Date(year, month, date, startHour, startMinute, 0, 0)
+        const endTimeEST = new Date(year, month, date, endHour, endMinute, 0, 0)
         
-        // Convert from user timezone to UTC
-        const timezoneOffsetHours = userTimezone === 'America/New_York' ? 4 : 0 // EST is UTC-4 during DST
-        startTime.setUTCHours(startTime.getUTCHours() + timezoneOffsetHours)
-        endTime.setUTCHours(endTime.getUTCHours() + timezoneOffsetHours)
+        // Convert to UTC by adding 4 hours for EST (UTC-4)
+        const startTimeUTC = new Date(startTimeEST.getTime() + (4 * 60 * 60 * 1000))
+        const endTimeUTC = new Date(endTimeEST.getTime() + (4 * 60 * 60 * 1000))
 
-        console.log(`Day ${dayName}: ${startTime.toISOString()} to ${endTime.toISOString()}`)
+        console.log(`Day ${dayName}: EST ${startTimeEST.toLocaleString()} - ${endTimeEST.toLocaleString()}`)
+        console.log(`Day ${dayName}: UTC ${startTimeUTC.toISOString()} - ${endTimeUTC.toISOString()}`)
 
         // Generate slots for this day
-        const slotStart = new Date(startTime)
-        while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= endTime.getTime()) {
+        const slotStart = new Date(startTimeUTC)
+        while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= endTimeUTC.getTime()) {
           const slotEnd = new Date(slotStart.getTime() + (appointmentDuration * 60 * 1000))
 
           // Check if this slot conflicts with any busy times (all times are in UTC)
@@ -250,12 +254,14 @@ Deno.serve(async (req) => {
           })
 
           if (!hasConflict && slotStart > now) {
-            console.log(`Adding available slot: ${slotStart.toISOString()} to ${slotEnd.toISOString()}`)
+            // Convert back to EST for display
+            const slotStartEST = new Date(slotStart.getTime() - (4 * 60 * 60 * 1000))
+            console.log(`Adding available slot: ${slotStart.toISOString()} (UTC) = ${slotStartEST.toLocaleString()} (EST)`)
             
             availableSlots.push({
               start: slotStart.toISOString(),
               end: slotEnd.toISOString(),
-              display: slotStart.toLocaleString('en-US', {
+              display: slotStartEST.toLocaleString('en-US', {
                 weekday: 'long',
                 month: 'short',
                 day: 'numeric',
