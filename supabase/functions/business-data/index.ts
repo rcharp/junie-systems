@@ -182,18 +182,24 @@ serve(async (req) => {
       console.log('Request body:', body);
       console.log('Request body type:', typeof body);
       console.log('Has business_id in body:', !!body?.business_id);
+      console.log('Has agent_id in body:', !!body?.agent_id);
       
-      // Check if business_id is in the body (for manual requests)
-      if (body && body.business_id) {
+      // Check if this is an ElevenLabs request (has agent_id) or manual request (no agent_id)
+      if (body?.agent_id) {
+        // ElevenLabs request - has agent_id
+        requestSource = 'elevenlabs';
+        businessId = req.headers.get('business_id') || req.headers.get('x-business-id');
+        console.log('ELEVENLABS request detected (has agent_id) - business_id from headers:', businessId);
+      } else if (body && body.business_id) {
+        // Manual request - has business_id but no agent_id
         businessId = body.business_id;
         requestSource = 'manual';
-        console.log('MANUAL request detected - business_id from request body:', businessId);
+        console.log('MANUAL request detected (no agent_id) - business_id from request body:', businessId);
       } else {
-        console.log('ElevenLabs conversation initiation request detected');
+        console.log('Unknown request type - checking headers for business_id');
         requestSource = 'elevenlabs';
-        // Get business_id from headers for ElevenLabs requests
         businessId = req.headers.get('business_id') || req.headers.get('x-business-id');
-        console.log('ELEVENLABS request detected - business_id from headers:', businessId);
+        console.log('Fallback to headers - business_id:', businessId);
       }
     } else {
       // Get business_id from GET query parameters
