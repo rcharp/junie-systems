@@ -643,7 +643,8 @@ export const WebhookMonitor = () => {
                 <div className="flex flex-col gap-1">
                   {/* Incoming Call Header */}
                   {(() => {
-                    const incomingCall = data.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || 
+                    const incomingCall = data.raw_webhook_data?.data?.metadata?.phone_call?.external_number ||
+                                       data.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || 
                                        data.raw_webhook_data?.caller_id || 
                                        data.phone_number;
                     return (
