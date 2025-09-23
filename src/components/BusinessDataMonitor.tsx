@@ -78,11 +78,29 @@ export const BusinessDataMonitor: React.FC = () => {
   };
 
   const handleDeleteSingle = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this business data request? This action cannot be undone.')) {
+      return;
+    }
+
     try {
+      setLoading(true);
+      
+      const { error, count } = await supabase
+        .from('business_data_requests')
+        .delete({ count: 'exact' })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+
+      // Remove the deleted item from local state immediately
       setRequestData(prev => prev.filter(item => item.id !== id));
+      
       toast({
         title: "Deleted",
-        description: "Business data request removed successfully",
+        description: `Business data request permanently deleted (${count} row${count !== 1 ? 's' : ''} affected)`,
       });
     } catch (error) {
       console.error('Error deleting request:', error);
@@ -91,6 +109,8 @@ export const BusinessDataMonitor: React.FC = () => {
         description: "Failed to delete request",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
