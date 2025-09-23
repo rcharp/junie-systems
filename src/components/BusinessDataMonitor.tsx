@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, RefreshCw, Database, Pause, Play, Minimize2, Maximize2 } from 'lucide-react';
+import { Trash2, RefreshCw, Database, Pause, Play, Minimize2, Maximize2, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
@@ -118,6 +118,47 @@ export const BusinessDataMonitor: React.FC = () => {
     }));
   };
 
+  const handleManualRequest = async () => {
+    const businessId = "5a8a338e-d401-4a14-a109-6974859ce5b8";
+    
+    try {
+      setLoading(true);
+      
+      // Make a request to the business-data endpoint
+      const response = await fetch('/functions/v1/business-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          business_id: businessId
+        })
+      });
+
+      const result = await response.json();
+      
+      toast({
+        title: "Manual Request Sent",
+        description: `Business data request sent for ID: ${businessId}`,
+      });
+      
+      // Refresh the data to show the new request
+      setTimeout(() => {
+        fetchBusinessDataRequests();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error making manual request:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send manual business data request",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -132,6 +173,16 @@ export const BusinessDataMonitor: React.FC = () => {
             </CardDescription>
           </div>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualRequest}
+              disabled={loading}
+              className="flex items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              Test Request
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -208,9 +259,14 @@ export const BusinessDataMonitor: React.FC = () => {
                         </Badge>
                       </div>
                       {!isItemExpanded && (
-                        <p className="text-sm font-medium">
-                          Business ID: {request.business_id}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium">
+                            Business ID: {request.business_id}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatTime(request.created_at)}
+                          </p>
+                        </div>
                       )}
                     </div>
                     <div className="flex gap-2">
