@@ -188,8 +188,20 @@ serve(async (req) => {
       if (body?.caller_id || body?.agent_id || body?.called_number || body?.call_sid) {
         console.log('ElevenLabs conversation initiation request detected');
         
-        // Get business_id from headers
-        const conversationBusinessId = req.headers.get('business_id') || 'unknown';
+        // Get business_id from headers (ElevenLabs sends it there)
+        const conversationBusinessId = req.headers.get('business_id');
+        console.log('ElevenLabs business_id from headers:', conversationBusinessId);
+        
+        if (!conversationBusinessId) {
+          console.error('No business_id found in headers for ElevenLabs request');
+          return new Response(
+            JSON.stringify({ error: 'business_id required in headers for ElevenLabs requests' }),
+            { 
+              status: 400, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
         
         // Fetch actual business data for this business_id
         const { data: businessData, error } = await supabase
