@@ -35,10 +35,27 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === 'GET') {
-      // Generate OAuth URL - get origin from referer or use current URL
-      const referer = req.headers.get('referer') || req.headers.get('origin')
-      const baseUrl = referer ? new URL(referer).origin : new URL(req.url).origin
-      const redirectUri = `${baseUrl}/google_auth`
+      // Generate OAuth URL - construct redirect URI from request
+      const url = new URL(req.url)
+      const protocol = req.headers.get('x-forwarded-proto') || url.protocol.slice(0, -1)
+      const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || url.host
+      
+      // For local development, use the referer origin, for production use the forwarded host
+      const referer = req.headers.get('referer')
+      let redirectUri
+      
+      if (referer && (referer.includes('localhost') || referer.includes('127.0.0.1'))) {
+        // Local development - use referer origin
+        redirectUri = `${new URL(referer).origin}/google_auth`
+      } else if (referer && referer.includes('lovableproject.com')) {
+        // Lovable preview - use referer origin  
+        redirectUri = `${new URL(referer).origin}/google_auth`
+      } else {
+        // Production or other - construct from headers
+        redirectUri = `${protocol}://${host}/google_auth`
+      }
+      
+      console.log('OAuth redirect URI:', redirectUri)
       const scope = 'https://www.googleapis.com/auth/calendar'
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${googleClientId}&` +
@@ -61,10 +78,27 @@ Deno.serve(async (req) => {
         throw new Error('Invalid state parameter')
       }
 
-      // Exchange code for tokens - get origin from referer or use current URL
-      const referer = req.headers.get('referer') || req.headers.get('origin')
-      const baseUrl = referer ? new URL(referer).origin : new URL(req.url).origin
-      const redirectUri = `${baseUrl}/google_auth`
+      // Exchange code for tokens - use same logic as GET request
+      const url = new URL(req.url)
+      const protocol = req.headers.get('x-forwarded-proto') || url.protocol.slice(0, -1)
+      const host = req.headers.get('x-forwarded-host') || req.headers.get('host') || url.host
+      
+      // For local development, use the referer origin, for production use the forwarded host
+      const referer = req.headers.get('referer')
+      let redirectUri
+      
+      if (referer && (referer.includes('localhost') || referer.includes('127.0.0.1'))) {
+        // Local development - use referer origin
+        redirectUri = `${new URL(referer).origin}/google_auth`
+      } else if (referer && referer.includes('lovableproject.com')) {
+        // Lovable preview - use referer origin  
+        redirectUri = `${new URL(referer).origin}/google_auth`
+      } else {
+        // Production or other - construct from headers
+        redirectUri = `${protocol}://${host}/google_auth`
+      }
+      
+      console.log('Token exchange redirect URI:', redirectUri)
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
         headers: {
