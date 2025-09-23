@@ -246,7 +246,11 @@ export const BusinessDataMonitor: React.FC = () => {
               const isItemExpanded = expandedItems[request.id] || false;
               
               return (
-              <Card key={request.id} className="relative">
+              <Card 
+                key={request.id} 
+                className={`relative ${!isItemExpanded ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
+                onClick={!isItemExpanded ? () => toggleItemExpansion(request.id) : undefined}
+              >
                 <CardContent className="pt-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="space-y-2 flex-1">
@@ -285,7 +289,7 @@ export const BusinessDataMonitor: React.FC = () => {
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="sm"

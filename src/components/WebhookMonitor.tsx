@@ -540,12 +540,16 @@ export const WebhookMonitor = () => {
             const isItemExpanded = expandedItems[data.id] || false;
             
             return (
-              <div key={data.id} className="p-4 border rounded-lg bg-muted/30 relative">
+              <div 
+                key={data.id} 
+                className={`p-4 border rounded-lg bg-muted/30 relative ${!isItemExpanded ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
+                onClick={!isItemExpanded ? () => setExpandedItems(prev => ({ ...prev, [data.id]: !prev[data.id] })) : undefined}
+              >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
                     size="sm"
