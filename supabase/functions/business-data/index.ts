@@ -276,6 +276,7 @@ serve(async (req) => {
           method: 'GET'
         });
         
+        console.log('Calendar availability response status:', availabilityResponse.error ? 'ERROR' : 'SUCCESS');
         console.log('Calendar availability response:', availabilityResponse);
         if (availabilityResponse.data && !availabilityResponse.error) {
           calendarAvailability = availabilityResponse.data;

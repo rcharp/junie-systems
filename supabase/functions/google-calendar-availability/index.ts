@@ -55,10 +55,14 @@ Deno.serve(async (req) => {
 
     if (calendarSettings.encrypted_access_token) {
       try {
-        const { data: decryptedAccess } = await supabase.rpc('decrypt_token', {
+        console.log('Attempting to decrypt access token...')
+        const { data: decryptedAccess, error: decryptError } = await supabase.rpc('decrypt_token', {
           encrypted_token: calendarSettings.encrypted_access_token
         })
-        accessToken = decryptedAccess
+        console.log('Decryption result:', { success: !!decryptedAccess, hasError: !!decryptError })
+        if (decryptedAccess) {
+          accessToken = decryptedAccess
+        }
       } catch (error) {
         console.error('Failed to decrypt access token:', error)
       }
@@ -66,10 +70,14 @@ Deno.serve(async (req) => {
 
     if (calendarSettings.encrypted_refresh_token) {
       try {
-        const { data: decryptedRefresh } = await supabase.rpc('decrypt_token', {
+        console.log('Attempting to decrypt refresh token...')
+        const { data: decryptedRefresh, error: decryptError } = await supabase.rpc('decrypt_token', {
           encrypted_token: calendarSettings.encrypted_refresh_token
         })
-        refreshToken = decryptedRefresh
+        console.log('Refresh decryption result:', { success: !!decryptedRefresh, hasError: !!decryptError })
+        if (decryptedRefresh) {
+          refreshToken = decryptedRefresh
+        }
       } catch (error) {
         console.error('Failed to decrypt refresh token:', error)
       }
@@ -133,17 +141,23 @@ Deno.serve(async (req) => {
         const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
         
         // Encrypt and update the stored token
-        const { data: encryptedNewToken } = await supabase.rpc('encrypt_token', {
+        console.log('Encrypting new access token...')
+        const { data: encryptedNewToken, error: encryptError } = await supabase.rpc('encrypt_token', {
           token: currentAccessToken
         })
         
-        await supabase
-          .from('google_calendar_settings')
-          .update({
-            encrypted_access_token: encryptedNewToken,
-            expires_at: newExpiresAt
-          })
-          .eq('user_id', userId)
+        if (encryptedNewToken && !encryptError) {
+          await supabase
+            .from('google_calendar_settings')
+            .update({
+              encrypted_access_token: encryptedNewToken,
+              expires_at: newExpiresAt
+            })
+            .eq('user_id', userId)
+          console.log('Updated stored access token')
+        } else {
+          console.error('Failed to encrypt new token:', encryptError)
+        }
       } else {
         console.error('Token refresh failed:', tokenData)
         throw new Error('Failed to refresh access token')
