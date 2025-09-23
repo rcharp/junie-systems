@@ -157,7 +157,12 @@ serve(async (req) => {
             business_id: businessId,
             request_type: requestType,
             request_source: requestSource,
-            request_data: requestData,
+            request_data: {
+              ...requestData,
+              headers: Object.fromEntries(req.headers.entries()),
+              method: req.method,
+              url: req.url
+            },
             response_status: responseStatus,
             response_data: responseData,
             user_agent: req.headers.get('user-agent'),
@@ -181,30 +186,9 @@ serve(async (req) => {
         console.log('business_id from request body:', businessId);
       } else {
         console.log('ElevenLabs conversation initiation request detected');
-        // For ElevenLabs requests, try multiple ways to get business_id
-        businessId = req.headers.get('business_id') || 
-                    req.headers.get('x-business-id') ||
-                    req.headers.get('Business-ID') ||
-                    body?.called_number; // Use called number to lookup business
+        // Get business_id from headers for ElevenLabs requests
+        businessId = req.headers.get('business_id') || req.headers.get('x-business-id');
         console.log('business_id from headers for ElevenLabs request:', businessId);
-        
-        // If we have a called_number but no business_id, we need to look it up
-        if (!businessId && body?.called_number) {
-          console.log('Attempting to lookup business_id by called_number:', body.called_number);
-          // For now, we'll need to implement a lookup by phone number
-          // This is a temporary solution - ElevenLabs should send business_id in webhook
-          const phoneNumber = body.called_number.replace(/\D/g, ''); // Remove non-digits
-          const { data: businessLookup } = await supabase
-            .from('business_settings')
-            .select('id')
-            .ilike('business_phone', `%${phoneNumber}%`)
-            .maybeSingle();
-          
-          if (businessLookup) {
-            businessId = businessLookup.id;
-            console.log('Found business_id by phone lookup:', businessId);
-          }
-        }
       }
     } else {
       // Get business_id from GET query parameters

@@ -317,6 +317,15 @@ export const BusinessDataMonitor: React.FC = () => {
                       </div>
                     </div>
                     
+                    {request.request_data && (
+                      <div>
+                        <span className="font-medium text-sm">Request Data:</span>
+                        <pre className="text-xs bg-muted p-2 rounded mt-1 overflow-x-auto">
+                          {JSON.stringify(request.request_data, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                    
                     {request.response_data && (
                       <div>
                         <span className="font-medium text-sm">Response Data:</span>
