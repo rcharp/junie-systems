@@ -256,7 +256,28 @@ Deno.serve(async (req) => {
           if (!hasConflict && slotStart > now) {
             // Convert back to EST for display
             const slotStartEST = new Date(slotStart.getTime() - (4 * 60 * 60 * 1000))
+            const slotEndEST = new Date(slotEnd.getTime() - (4 * 60 * 60 * 1000))
             console.log(`Adding available slot: ${slotStart.toISOString()} (UTC) = ${slotStartEST.toLocaleString()} (EST)`)
+            
+            // Create human readable format: "Tuesday, October 7th, 2025 9am-10am"
+            const dateStr = slotStartEST.toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+              timeZone: userTimezone,
+            })
+            const startTimeStr = slotStartEST.toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: slotStartEST.getMinutes() === 0 ? undefined : '2-digit',
+              timeZone: userTimezone,
+            }).toLowerCase()
+            const endTimeStr = slotEndEST.toLocaleTimeString('en-US', {
+              hour: 'numeric', 
+              minute: slotEndEST.getMinutes() === 0 ? undefined : '2-digit',
+              timeZone: userTimezone,
+            }).toLowerCase()
+            const humanReadable = `${dateStr} ${startTimeStr}-${endTimeStr}`
             
             availableSlots.push({
               start: slotStart.toISOString(),
@@ -269,6 +290,7 @@ Deno.serve(async (req) => {
                 minute: '2-digit',
                 timeZone: userTimezone,
               }),
+              humanReadable: humanReadable,
             })
           }
 
