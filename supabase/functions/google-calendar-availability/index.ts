@@ -209,6 +209,7 @@ Deno.serve(async (req) => {
     console.log('Generating slots with timezone:', userTimezone)
     console.log('Busy times from calendar:', busyTimes)
     console.log('Availability hours:', availabilityHours)
+    console.log('Start date:', startDate.toISOString(), 'End date:', endDate.toISOString())
 
     while (current <= endDate) {
       const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
@@ -220,21 +221,31 @@ Deno.serve(async (req) => {
         const [startHour, startMinute] = daySettings.start.split(':').map(Number)
         const [endHour, endMinute] = daySettings.end.split(':').map(Number)
         
-        // Create times in EST and convert to UTC
-        // EST is UTC-4, so 9:00 EST = 13:00 UTC
+        // Create times properly using the user's timezone
         const year = current.getFullYear()
         const month = current.getMonth()
         const date = current.getDate()
         
-        // Create Date objects in local EST time first
-        const startTimeEST = new Date(year, month, date, startHour, startMinute, 0, 0)
-        const endTimeEST = new Date(year, month, date, endHour, endMinute, 0, 0)
+        // Build time strings in the format that can be parsed with timezone
+        const startTimeString = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`
+        const endTimeString = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00`
         
-        // Convert to UTC by adding 4 hours for EST (UTC-4)
-        const startTimeUTC = new Date(startTimeEST.getTime() + (4 * 60 * 60 * 1000))
-        const endTimeUTC = new Date(endTimeEST.getTime() + (4 * 60 * 60 * 1000))
+        console.log(`Time strings: ${startTimeString} to ${endTimeString}`)
+        
+        // Parse as if they are in the user's timezone, then convert to UTC
+        // This is tricky - we need to create a date that represents the local time in the user's timezone
+        const tempStartDate = new Date(startTimeString)
+        const tempEndDate = new Date(endTimeString)
+        
+        // Get the timezone offset for the user's timezone
+        // For EDT (America/New_York in September), this should be -4 hours from UTC
+        const timeZoneOffset = userTimezone === 'America/New_York' ? -4 : 0 // EDT is UTC-4
+        
+        // Convert to UTC by subtracting the timezone offset (since we want to go from local to UTC)
+        const startTimeUTC = new Date(tempStartDate.getTime() - (timeZoneOffset * 60 * 60 * 1000))
+        const endTimeUTC = new Date(tempEndDate.getTime() - (timeZoneOffset * 60 * 60 * 1000))
 
-        console.log(`Day ${dayName}: EST ${startTimeEST.toLocaleString()} - ${endTimeEST.toLocaleString()}`)
+        console.log(`Day ${dayName}: Local ${startTimeString} - ${endTimeString}`)
         console.log(`Day ${dayName}: UTC ${startTimeUTC.toISOString()} - ${endTimeUTC.toISOString()}`)
 
         // Generate slots for this day
@@ -254,41 +265,37 @@ Deno.serve(async (req) => {
           })
 
           if (!hasConflict && slotStart > now) {
-            // Convert back to EST for display
-            const slotStartEST = new Date(slotStart.getTime() - (4 * 60 * 60 * 1000))
-            const slotEndEST = new Date(slotEnd.getTime() - (4 * 60 * 60 * 1000))
-            console.log(`Adding available slot: ${slotStart.toISOString()} (UTC) = ${slotStartEST.toLocaleString()} (EST)`)
+            // Convert back to user timezone for display
+            const slotStartLocal = new Date(slotStart.getTime() + (timeZoneOffset * 60 * 60 * 1000))
+            const slotEndLocal = new Date(slotEnd.getTime() + (timeZoneOffset * 60 * 60 * 1000))
+            console.log(`Adding available slot: ${slotStart.toISOString()} (UTC) = ${slotStartLocal.toLocaleString()} (${userTimezone})`)
             
             // Create human readable format: "Tuesday, October 7th, 2025 9am-10am"
-            const dateStr = slotStartEST.toLocaleDateString('en-US', {
+            const dateStr = slotStartLocal.toLocaleDateString('en-US', {
               weekday: 'long',
               month: 'long',
               day: 'numeric',
               year: 'numeric',
-              timeZone: userTimezone,
             })
-            const startTimeStr = slotStartEST.toLocaleTimeString('en-US', {
+            const startTimeStr = slotStartLocal.toLocaleTimeString('en-US', {
               hour: 'numeric',
-              minute: slotStartEST.getMinutes() === 0 ? undefined : '2-digit',
-              timeZone: userTimezone,
+              minute: slotStartLocal.getMinutes() === 0 ? undefined : '2-digit',
             }).toLowerCase()
-            const endTimeStr = slotEndEST.toLocaleTimeString('en-US', {
+            const endTimeStr = slotEndLocal.toLocaleTimeString('en-US', {
               hour: 'numeric', 
-              minute: slotEndEST.getMinutes() === 0 ? undefined : '2-digit',
-              timeZone: userTimezone,
+              minute: slotEndLocal.getMinutes() === 0 ? undefined : '2-digit',
             }).toLowerCase()
             const humanReadable = `${dateStr} ${startTimeStr}-${endTimeStr}`
             
             availableSlots.push({
               start: slotStart.toISOString(),
               end: slotEnd.toISOString(),
-              display: slotStartEST.toLocaleString('en-US', {
+              display: slotStartLocal.toLocaleString('en-US', {
                 weekday: 'long',
                 month: 'short',
                 day: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit',
-                timeZone: userTimezone,
               }),
               humanReadable: humanReadable,
             })
