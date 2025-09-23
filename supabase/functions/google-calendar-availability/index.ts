@@ -204,26 +204,38 @@ Deno.serve(async (req) => {
     // Generate available time slots
     const availableSlots = []
     const current = new Date(startDate)
+    const userTimezone = calendarSettings.timezone || 'America/New_York'
 
     while (current <= endDate) {
-      const dayName = current.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+      // Create a date in the user's timezone for this day
+      const dayInUserTz = new Date(current.toLocaleString('en-CA', { timeZone: userTimezone }))
+      const dayName = dayInUserTz.toLocaleDateString('en-US', { weekday: 'long', timeZone: userTimezone }).toLowerCase()
       const daySettings = availabilityHours[dayName]
 
       if (daySettings?.enabled) {
-        const startTime = new Date(current)
+        // Create start and end times in the user's timezone
         const [startHour, startMinute] = daySettings.start.split(':').map(Number)
-        startTime.setHours(startHour, startMinute, 0, 0)
-
-        const endTime = new Date(current)
         const [endHour, endMinute] = daySettings.end.split(':').map(Number)
-        endTime.setHours(endHour, endMinute, 0, 0)
+        
+        // Create times in user's timezone, then convert to UTC for comparison
+        const startTimeStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00`
+        const endTimeStr = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00`
+        
+        // Convert to UTC for proper comparison with busy times
+        const startTime = new Date(new Date(startTimeStr).toLocaleString('en-US', { timeZone: userTimezone }))
+        const endTime = new Date(new Date(endTimeStr).toLocaleString('en-US', { timeZone: userTimezone }))
+        
+        // Adjust to UTC for API calls
+        const utcOffset = startTime.getTimezoneOffset() * 60000
+        const startTimeUTC = new Date(startTime.getTime() - utcOffset)
+        const endTimeUTC = new Date(endTime.getTime() - utcOffset)
 
         // Generate slots for this day
-        const slotStart = new Date(startTime)
-        while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= endTime.getTime()) {
+        const slotStart = new Date(startTimeUTC)
+        while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= endTimeUTC.getTime()) {
           const slotEnd = new Date(slotStart.getTime() + (appointmentDuration * 60 * 1000))
 
-          // Check if this slot conflicts with any busy times
+          // Check if this slot conflicts with any busy times (busy times are in UTC)
           const hasConflict = busyTimes.some((busy: any) => {
             const busyStart = new Date(busy.start)
             const busyEnd = new Date(busy.end)
@@ -231,16 +243,19 @@ Deno.serve(async (req) => {
           })
 
           if (!hasConflict && slotStart > now) {
+            // Convert back to user timezone for display
+            const displayTime = new Date(slotStart.toLocaleString('en-US', { timeZone: userTimezone }))
+            
             availableSlots.push({
               start: slotStart.toISOString(),
               end: slotEnd.toISOString(),
-              display: slotStart.toLocaleString('en-US', {
+              display: displayTime.toLocaleString('en-US', {
                 weekday: 'long',
                 month: 'short',
                 day: 'numeric',
                 hour: 'numeric',
                 minute: '2-digit',
-                timeZone: calendarSettings.timezone,
+                timeZone: userTimezone,
               }),
             })
           }
