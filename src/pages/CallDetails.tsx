@@ -249,7 +249,12 @@ const CallDetails = () => {
                 )}
                 {/* Show business ID if available */}
                 {(() => {
-                  const businessId = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value;
+                  // Check multiple possible locations for business_id
+                  const businessId = 
+                    callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value ||
+                    callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
+                    callDetail.metadata?.business_id;
+                  
                   if (businessId) {
                     return (
                       <div className="flex items-center space-x-2">
