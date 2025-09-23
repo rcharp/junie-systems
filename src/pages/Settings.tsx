@@ -1291,52 +1291,47 @@ const Settings = () => {
 
             {/* Setup */}
             <TabsContent value="setup">
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Calendar Integration
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>Enable Appointment Booking</Label>
-                          <p className="text-sm text-muted-foreground">
-                            Allow AI to schedule appointments directly
-                          </p>
-                        </div>
-                        <Switch
-                          checked={appointmentBooking}
-                          onCheckedChange={setAppointmentBooking}
-                        />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Calendar Integration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Enable Appointment Booking</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Allow AI to schedule appointments directly
+                        </p>
                       </div>
-
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <Label>Lead Capture</Label>
-                          <p className="text-sm text-muted-foreground">
-                            Collect contact information from callers
-                          </p>
-                        </div>
-                        <Switch
-                          checked={leadCapture}
-                          onCheckedChange={setLeadCapture}
-                        />
-                      </div>
+                      <Switch
+                        checked={appointmentBooking}
+                        onCheckedChange={setAppointmentBooking}
+                      />
                     </div>
-                    
-                    <Button onClick={() => saveSettings("AI")} disabled={saving}>
-                      <Save className="w-4 h-4 mr-2" />
-                      {saving ? "Saving..." : "Save Setup Settings"}
-                    </Button>
-                  </CardContent>
-                </Card>
 
-                <GoogleCalendarConnect />
-              </div>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Lead Capture</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Collect contact information from callers
+                        </p>
+                      </div>
+                      <Switch
+                        checked={leadCapture}
+                        onCheckedChange={setLeadCapture}
+                      />
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <GoogleCalendarConnect />
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Notifications */}
