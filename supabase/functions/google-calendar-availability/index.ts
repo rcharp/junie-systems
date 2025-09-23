@@ -237,7 +237,7 @@ Deno.serve(async (req) => {
     console.log('User timezone:', userTimezone)
     console.log('Appointment duration:', appointmentDuration, 'minutes')
     console.log('Availability hours:', JSON.stringify(availabilityHours))
-    console.log('Busy times:', JSON.stringify(busyTimes))
+    console.log('Current time (now):', now.toISOString())
     
     // Generate slots for the next 7 days
     for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
@@ -248,7 +248,6 @@ Deno.serve(async (req) => {
       const daySettings = availabilityHours[dayName]
       
       console.log(`--- Day ${dayOffset + 1}: ${dayName} (${currentDate.toDateString()}) ---`)
-      console.log('Day settings:', JSON.stringify(daySettings))
       
       if (!daySettings?.enabled) {
         console.log(`Skipping ${dayName} - not enabled`)
@@ -258,70 +257,79 @@ Deno.serve(async (req) => {
       const [startHour, startMinute] = daySettings.start.split(':').map(Number)
       const [endHour, endMinute] = daySettings.end.split(':').map(Number)
       
-      console.log(`Processing ${dayName}: ${startHour}:${startMinute} to ${endHour}:${endMinute}`)
+      console.log(`Processing ${dayName}: ${startHour}:${startMinute} to ${endHour}:${endMinute} in ${userTimezone}`)
       
-      // Create start and end times in user's timezone correctly
-      // For EDT (UTC-4): 9:00 AM EDT should become 13:00 UTC
-      // Business hours: 9:00-17:00 EDT = 13:00-21:00 UTC
+      // Create business hours in EDT/EST and convert to UTC
+      // EDT = UTC-4, so 9:00 AM EDT becomes 13:00 UTC
+      const year = currentDate.getFullYear()
+      const month = currentDate.getMonth()
+      const date = currentDate.getDate()
       
-      // Create times in user's local timezone first
-      const startDateTime = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), startHour, startMinute, 0, 0)
-      const endDateTime = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), endHour, endMinute, 0, 0)
+      // Create dates in the local timezone (this creates them in the server's timezone, but we'll adjust)
+      const localStartTime = new Date(year, month, date, startHour, startMinute, 0, 0)
+      const localEndTime = new Date(year, month, date, endHour, endMinute, 0, 0)
       
-      console.log(`Local business hours: ${startDateTime.toString()} to ${endDateTime.toString()}`)
+      // Convert to UTC by treating them as if they were already in the target timezone
+      // For America/New_York, add 4 hours during EDT season (or 5 during EST)
+      const utcStartTime = new Date(localStartTime.getTime() + (4 * 60 * 60 * 1000))
+      const utcEndTime = new Date(localEndTime.getTime() + (4 * 60 * 60 * 1000))
       
-      // Convert to UTC by adding the EDT offset (EDT = UTC-4, so add 4 hours to get UTC)
-      const startTimeUTC = new Date(startDateTime.getTime() + (4 * 60 * 60 * 1000))
-      const endTimeUTC = new Date(endDateTime.getTime() + (4 * 60 * 60 * 1000))
+      console.log(`Business hours in UTC: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
-      console.log(`UTC times: ${startTimeUTC.toISOString()} to ${endTimeUTC.toISOString()}`)
-      
-      // Generate slots
-      let slotStart = new Date(startTimeUTC)
+      // Generate appointment slots
+      let slotStart = new Date(utcStartTime)
       let slotNumber = 0
       
-      while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= endTimeUTC.getTime()) {
+      while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= utcEndTime.getTime()) {
         slotNumber++
         const slotEnd = new Date(slotStart.getTime() + (appointmentDuration * 60 * 1000))
         
-        console.log(`  Slot ${slotNumber}: ${slotStart.toISOString()} to ${slotEnd.toISOString()}`)
-        console.log(`  Slot start > now? ${slotStart > now} (${slotStart.getTime()} > ${now.getTime()})`)
+        console.log(`  Checking slot ${slotNumber}: ${slotStart.toISOString()} to ${slotEnd.toISOString()}`)
         
-        // Check for conflicts with busy times
+        // Check if slot is in the future
+        if (slotStart <= now) {
+          console.log(`    SKIP: Slot is in the past`)
+          slotStart.setTime(slotStart.getTime() + (appointmentDuration * 60 * 1000))
+          continue
+        }
+        
+        // Check for conflicts with busy times (all in UTC)
         const hasConflict = busyTimes.some((busy: any) => {
           const busyStart = new Date(busy.start)
           const busyEnd = new Date(busy.end)
           const conflict = (slotStart < busyEnd && slotEnd > busyStart)
           if (conflict) {
-            console.log(`    CONFLICT: slot conflicts with busy time ${busyStart.toISOString()}-${busyEnd.toISOString()}`)
+            console.log(`    CONFLICT: with busy time ${busyStart.toISOString()}-${busyEnd.toISOString()}`)
           }
           return conflict
         })
         
-        if (!hasConflict && slotStart > now) {
-          // Convert back to EDT for display (subtract 4 hours from UTC to get EDT)
-          const localStart = new Date(slotStart.getTime() - (4 * 60 * 60 * 1000))
-          const localEnd = new Date(slotEnd.getTime() - (4 * 60 * 60 * 1000))
+        if (!hasConflict) {
+          // Convert back to local time for display
+          const displayStartTime = new Date(slotStart.getTime() - (4 * 60 * 60 * 1000))
+          const displayEndTime = new Date(slotEnd.getTime() - (4 * 60 * 60 * 1000))
           
-          const humanReadable = `${localStart.toLocaleDateString('en-US', { 
+          const humanReadable = `${displayStartTime.toLocaleDateString('en-US', { 
             weekday: 'long', 
             month: 'long', 
             day: 'numeric', 
             year: 'numeric' 
-          })} ${localStart.toLocaleTimeString('en-US', { 
+          })} ${displayStartTime.toLocaleTimeString('en-US', { 
             hour: 'numeric', 
-            minute: localStart.getMinutes() === 0 ? undefined : '2-digit' 
-          }).toLowerCase()}-${localEnd.toLocaleTimeString('en-US', { 
+            minute: displayStartTime.getMinutes() === 0 ? undefined : '2-digit' 
+          }).toLowerCase()}-${displayEndTime.toLocaleTimeString('en-US', { 
             hour: 'numeric', 
-            minute: localEnd.getMinutes() === 0 ? undefined : '2-digit' 
+            minute: displayEndTime.getMinutes() === 0 ? undefined : '2-digit' 
           }).toLowerCase()}`
           
-          console.log(`    ADDING SLOT: ${humanReadable}`)
+          console.log(`    ADDING: ${humanReadable}`)
+          console.log(`    UTC: ${slotStart.toISOString()} to ${slotEnd.toISOString()}`)
+          console.log(`    Local: ${displayStartTime.toString()} to ${displayEndTime.toString()}`)
           
           availableSlots.push({
             start: slotStart.toISOString(),
             end: slotEnd.toISOString(),
-            display: localStart.toLocaleString('en-US', {
+            display: displayStartTime.toLocaleString('en-US', {
               weekday: 'long',
               month: 'short', 
               day: 'numeric',
@@ -331,19 +339,19 @@ Deno.serve(async (req) => {
             humanReadable: humanReadable
           })
         } else {
-          console.log(`    SKIPPING: hasConflict=${hasConflict}, futureTime=${slotStart > now}`)
+          console.log(`    SKIP: Has conflict`)
         }
         
         slotStart.setTime(slotStart.getTime() + (appointmentDuration * 60 * 1000))
         
         // Safety break
         if (slotNumber > 50) {
-          console.log('Breaking - too many slots generated')
+          console.log('Safety break - too many slots')
           break
         }
       }
       
-      console.log(`Generated ${slotNumber} slots for ${dayName}`)
+      console.log(`Generated ${availableSlots.length} total slots so far`)
     }
 
     console.log(`Generated ${availableSlots.length} available slots`)
