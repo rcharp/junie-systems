@@ -194,52 +194,28 @@ serve(async (req) => {
         console.log('ElevenLabs business_id from body:', body?.business_id);
         console.log('Final business_id used:', conversationBusinessId);
         
-        // Return a basic successful response for ElevenLabs
-        const conversationInitData = {
-          "type": "conversation_initiation_client_data",
-          "dynamic_variables": {
-            "business_id": conversationBusinessId,
-            "business_name": "Business",
-            "business_phone": "Unknown",
-            "business_address": "Unknown", 
-            "available_hours": "Please call for hours",
-            "available_times": "Please call to schedule",
-            "services": "Please call for services"
-          }
-        };
-        
-        return new Response(
-          JSON.stringify(conversationInitData),
-          { 
-            headers: { 
-              ...corsHeaders,
-              'Content-Type': 'application/json' 
-            }
-          }
-        );
-        
         // Fetch actual business data for this business_id
         const { data: businessData, error } = await supabase
           .from('business_settings')
-      .select(`
-        user_id,
-        business_name,
-        business_type,
-        business_type_full_name,
-        business_phone,
-        business_address,
-        business_address_state_full,
-        business_hours,
-        business_description,
-        business_website,
-        services_offered,
-        pricing_structure,
-        custom_greeting,
-        common_questions,
-        ai_personality,
-        appointment_booking,
-        lead_capture
-      `)
+          .select(`
+            user_id,
+            business_name,
+            business_type,
+            business_type_full_name,
+            business_phone,
+            business_address,
+            business_address_state_full,
+            business_hours,
+            business_description,
+            business_website,
+            services_offered,
+            pricing_structure,
+            custom_greeting,
+            common_questions,
+            ai_personality,
+            appointment_booking,
+            lead_capture
+          `)
           .eq('id', conversationBusinessId)
           .maybeSingle();
 
