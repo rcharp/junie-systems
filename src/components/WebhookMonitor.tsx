@@ -720,7 +720,7 @@ export const WebhookMonitor = () => {
                 })}
                 
                 {/* Pagination Controls */}
-                {webhookData.length > itemsPerPage && (
+                {webhookData.length > 0 && (
                   <div className="flex justify-center mt-6">
                     <Pagination>
                       <PaginationContent>

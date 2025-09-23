@@ -373,7 +373,7 @@ export const BusinessDataMonitor: React.FC = () => {
                   })}
                   
                   {/* Pagination Controls */}
-                  {requestData.length > itemsPerPage && (
+                  {requestData.length > 0 && (
                     <div className="flex justify-center mt-6">
                       <Pagination>
                         <PaginationContent>
