@@ -344,6 +344,13 @@ serve(async (req) => {
         console.log('No business hours configured');
         return [];
       }
+      
+      const openDays = hours.filter(day => day.isOpen || day.enabled);
+      if (openDays.length === 0) {
+        console.log('No open days in business hours');
+        return [];
+      }
+      
       const availableSlots = [];
       const today = new Date();
       
