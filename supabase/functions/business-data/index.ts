@@ -323,12 +323,19 @@ serve(async (req) => {
       // If we have calendar availability with actual slots, prioritize those
       if (calendarAvailability && calendarAvailability.available && Array.isArray(calendarAvailability.slots) && calendarAvailability.slots.length > 0) {
         console.log('Using actual Google Calendar availability slots');
-        return calendarAvailability.slots.slice(0, 15).map(slot => ({
-          startTime: new Date(slot.start).toISOString(),
-          endTime: new Date(slot.end).toISOString(),
-          humanReadable: slot.humanReadable || `${new Date(slot.start).toLocaleDateString()} ${new Date(slot.start).toLocaleTimeString()}-${new Date(slot.end).toLocaleTimeString()}`,
-          timeOfDay: slot.timeOfDay
-        }));
+        const mappedSlots = calendarAvailability.slots.slice(0, 15).map(slot => {
+          console.log('Mapping slot:', slot);
+          const mapped = {
+            startTime: new Date(slot.start).toISOString(),
+            endTime: new Date(slot.end).toISOString(),
+            humanReadable: slot.humanReadable || `${new Date(slot.start).toLocaleDateString()} ${new Date(slot.start).toLocaleTimeString()}-${new Date(slot.end).toLocaleTimeString()}`,
+            timeOfDay: slot.timeOfDay
+          };
+          console.log('Mapped slot result:', mapped);
+          return mapped;
+        });
+        console.log('Final mapped slots:', mappedSlots);
+        return mappedSlots;
       }
       
       // If calendar is connected but has errors/no slots, don't generate fallback times
