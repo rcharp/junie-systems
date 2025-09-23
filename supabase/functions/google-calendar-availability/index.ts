@@ -279,6 +279,7 @@ Deno.serve(async (req) => {
       // Generate appointment slots
       let slotStart = new Date(utcStartTime)
       let slotNumber = 0
+      const slotIncrement = 15 // Check every 15 minutes for availability
       
       while (slotStart.getTime() + (appointmentDuration * 60 * 1000) <= utcEndTime.getTime()) {
         slotNumber++
@@ -289,7 +290,7 @@ Deno.serve(async (req) => {
         // Check if slot is in the future
         if (slotStart <= now) {
           console.log(`    SKIP: Slot is in the past`)
-          slotStart.setTime(slotStart.getTime() + (appointmentDuration * 60 * 1000))
+          slotStart.setTime(slotStart.getTime() + (slotIncrement * 60 * 1000)) // Increment by 15 minutes
           continue
         }
         
@@ -356,7 +357,7 @@ Deno.serve(async (req) => {
           console.log(`    SKIP: Has conflict`)
         }
         
-        slotStart.setTime(slotStart.getTime() + (appointmentDuration * 60 * 1000))
+        slotStart.setTime(slotStart.getTime() + (slotIncrement * 60 * 1000)) // Move by 15 minutes
         
         // Safety break
         if (slotNumber > 50) {
