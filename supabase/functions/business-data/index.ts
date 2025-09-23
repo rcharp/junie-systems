@@ -414,24 +414,60 @@ serve(async (req) => {
 
     console.log('ElevenLabs response being sent:', JSON.stringify(elevenLabsResponse, null, 2));
     
-    // Log the ElevenLabs request
-    await logBusinessDataRequest(
-      businessId,
-      'conversation_initiation',
-      'elevenlabs',
-      { 
-        caller_id: req.headers.get('caller_id'), 
-        agent_id: req.headers.get('agent_id'),
-        business_type: businessData.business_type 
-      },
-      200,
-      elevenLabsResponse
-    );
+    // Validate the response format before sending
+    if (!elevenLabsResponse.type || !elevenLabsResponse.dynamic_variables) {
+      console.error('Invalid ElevenLabs response format:', elevenLabsResponse);
+      return new Response(
+        JSON.stringify({ error: 'Invalid response format generated' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    // Ensure all required fields are present
+    const requiredFields = ['business_id', 'business_name', 'business_phone', 'business_address', 'available_times', 'services', 'business_description'];
+    const missingFields = requiredFields.filter(field => !elevenLabsResponse.dynamic_variables.hasOwnProperty(field));
+    
+    if (missingFields.length > 0) {
+      console.error('Missing required fields in ElevenLabs response:', missingFields);
+      return new Response(
+        JSON.stringify({ error: `Missing required fields: ${missingFields.join(', ')}` }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    try {
+      // Log the ElevenLabs request
+      await logBusinessDataRequest(
+        businessId,
+        'conversation_initiation',
+        'elevenlabs',
+        { 
+          caller_id: req.headers.get('caller_id'), 
+          agent_id: req.headers.get('agent_id'),
+          business_type: businessData.business_type 
+        },
+        200,
+        elevenLabsResponse
+      );
+    } catch (logError) {
+      console.error('Error logging request (non-blocking):', logError);
+      // Continue with response even if logging fails
+    }
     
     return new Response(
       JSON.stringify(elevenLabsResponse),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Content-Length': JSON.stringify(elevenLabsResponse).length.toString()
+        } 
       }
     );
 
