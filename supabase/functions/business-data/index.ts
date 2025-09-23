@@ -180,28 +180,31 @@ serve(async (req) => {
       // Get business_id from POST body or headers for ElevenLabs requests
       const body = await req.json();
       console.log('Request body:', body);
+      console.log('Request body type:', typeof body);
+      console.log('Has business_id in body:', !!body?.business_id);
       
       // Check if business_id is in the body (for manual requests)
       if (body && body.business_id) {
         businessId = body.business_id;
         requestSource = 'manual';
-        console.log('business_id from request body:', businessId);
+        console.log('MANUAL request detected - business_id from request body:', businessId);
       } else {
         console.log('ElevenLabs conversation initiation request detected');
         requestSource = 'elevenlabs';
         // Get business_id from headers for ElevenLabs requests
         businessId = req.headers.get('business_id') || req.headers.get('x-business-id');
-        console.log('business_id from headers for ElevenLabs request:', businessId);
+        console.log('ELEVENLABS request detected - business_id from headers:', businessId);
       }
     } else {
       // Get business_id from GET query parameters
       const url = new URL(req.url);
       businessId = url.searchParams.get('business_id');
       requestSource = 'api';
-      console.log('Query parameters:', Object.fromEntries(url.searchParams));
+      console.log('API request detected - Query parameters:', Object.fromEntries(url.searchParams));
     }
 
     console.log('Final businessId being used:', businessId);
+    console.log('Final requestSource being used:', requestSource);
 
     if (!businessId) {
       return new Response(
