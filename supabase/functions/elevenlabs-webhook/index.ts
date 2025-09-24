@@ -887,6 +887,8 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
 
     // Set the time
     appointmentDate.setHours(hour, minute, 0, 0);
+    console.log(`Original appointmentDate (before timezone conversion): ${appointmentDate.toISOString()}`);
+    console.log(`Hour: ${hour}, Minute: ${minute}, User timezone: ${userTimezone}`);
 
     // Ensure the appointment is in the future
     if (appointmentDate <= now) {
@@ -894,16 +896,19 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
     }
 
     // Convert to timezone-aware ISO string
-    // The appointmentDate is treated as being in the user's timezone
-    // We need to convert from local timezone to UTC
+    // The appointmentDate is currently in the system timezone (likely UTC)
+    // We need to treat it as if it's in the user's timezone and convert to UTC
     const timezoneOffset = getTimezoneOffset(userTimezone);
+    console.log(`Timezone offset for ${userTimezone}: ${timezoneOffset} minutes`);
     
-    // Convert local time to UTC by adding the timezone offset
-    // For example: 10am EST (UTC-4) + 4 hours = 14:00 UTC
-    const utcDate = new Date(appointmentDate.getTime() + (Math.abs(timezoneOffset) * 60 * 1000));
+    // The appointmentDate was created as if it's UTC, but we want to treat it as local time
+    // So we need to subtract the timezone offset to get the correct UTC time
+    // For EST (UTC-4), offset is -240, so we subtract -240 (add 240) to convert local to UTC
+    const utcDate = new Date(appointmentDate.getTime() - (timezoneOffset * 60 * 1000));
     const isoString = utcDate.toISOString();
     
-    console.log(`Parsed appointment time: "${appointmentTimeString}" -> ${isoString} (user timezone: ${userTimezone}, offset: ${timezoneOffset}, local time: ${appointmentDate.toISOString()})`);
+    console.log(`Final UTC time: ${isoString}`);
+    console.log(`Verification - converting back to ${userTimezone}: ${new Date(isoString).toLocaleString('en-US', { timeZone: userTimezone })}`);
     return isoString;
 
   } catch (error) {
