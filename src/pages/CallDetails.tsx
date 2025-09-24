@@ -306,7 +306,22 @@ const CallDetails = () => {
                           if (!isNaN(appointmentDate.getTime())) {
                             const formatted = formatInTimeZone(appointmentDate, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
                             console.log('Final formatted:', formatted);
-                            return formatted;
+                            
+                            // Create Google Calendar link
+                            const startTime = appointmentDate.toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+                            const endTime = new Date(appointmentDate.getTime() + 60 * 60 * 1000).toISOString().replace(/[:-]/g, '').split('.')[0] + 'Z';
+                            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&dates=${startTime}/${endTime}&text=${encodeURIComponent(callData.caller_name + ' - Service Appointment')}&details=${encodeURIComponent(callData.message || '')}&location=${encodeURIComponent(callData.service_address || '')}`;
+                            
+                            return (
+                              <a 
+                                href={googleCalendarUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline cursor-pointer"
+                              >
+                                {formatted}
+                              </a>
+                            );
                           }
                         } catch (error) {
                           console.error('Date parsing error:', error, callData.appointment_date_time);

@@ -612,7 +612,7 @@ Example:
               'anthropic-version': '2023-06-01'
             },
             body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
+              model: 'claude-3-5-haiku-20241022',
               max_tokens: 300,
               messages: [
                 {
@@ -886,7 +886,7 @@ Focus only on the TIME component, not date ordinals. For "twenty-sixth at ten in
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-opus-4-1-20250805',
+          model: 'claude-3-5-haiku-20241022',
           max_tokens: 500,
           messages: [
             {
