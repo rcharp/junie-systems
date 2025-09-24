@@ -461,12 +461,13 @@ export const WebhookMonitor = () => {
       setLoading(true);
       
       // Use Supabase client to invoke the edge function with webhook_id parameter
-      const { data: result, error: functionError } = await supabase.functions.invoke(`elevenlabs-webhook?webhook_id=${profileData.webhook_id}`, {
+      const { data: result, error: functionError } = await supabase.functions.invoke('elevenlabs-webhook', {
         body: testData,
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-test-call': 'true'
+          'x-test-call': 'true',
+          'x-webhook-id': profileData.webhook_id
         }
       });
 

@@ -59,10 +59,10 @@ serve(async (req) => {
       // Allow the request to continue without signature verification for debugging
     }
 
-    // Extract webhook_id from URL query params
+    // Extract webhook_id from URL query params or header
     const url = new URL(req.url);
-    const webhookId = url.searchParams.get('webhook_id');
-    console.log('Webhook ID from URL:', webhookId);
+    const webhookId = url.searchParams.get('webhook_id') || req.headers.get('x-webhook-id');
+    console.log('Webhook ID from URL/header:', webhookId);
     
     // Parse JSON with better error handling
     let webhookData;
