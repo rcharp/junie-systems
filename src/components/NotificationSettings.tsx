@@ -2,17 +2,104 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Bell, Mail, MessageSquare, Phone, AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { Bell, Mail, MessageSquare, Phone, AlertTriangle, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const NotificationSettings = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
-  const [smsNotifications, setSmsNotifications] = useState(true);
-  const [urgentCallsOnly, setUrgentCallsOnly] = useState(false);
-  const [email, setEmail] = useState("user@example.com");
-  const [phone, setPhone] = useState("+1 (555) 123-4567");
+  const [smsNotifications, setSmsNotifications] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [instantAlerts, setInstantAlerts] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
+  
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Load notification settings on component mount
+  useEffect(() => {
+    if (user) {
+      loadNotificationSettings();
+    }
+  }, [user]);
+
+  const loadNotificationSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('business_settings')
+        .select('id, email_notifications, sms_notifications, push_notifications, instant_alerts')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading notification settings:', error);
+        return;
+      }
+
+      if (data) {
+        setBusinessSettingsId(data.id);
+        setEmailNotifications(data.email_notifications !== false);
+        setSmsNotifications(data.sms_notifications || false);
+        setPushNotifications(data.push_notifications !== false);
+        setInstantAlerts(data.instant_alerts !== false);
+      }
+    } catch (error) {
+      console.error('Error loading notification settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load notification settings",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveNotificationSettings = async () => {
+    if (!businessSettingsId) {
+      toast({
+        title: "Error",
+        description: "No business settings found. Please complete your business setup first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('business_settings')
+        .update({
+          email_notifications: emailNotifications,
+          sms_notifications: smsNotifications,
+          push_notifications: pushNotifications,
+          instant_alerts: instantAlerts
+        })
+        .eq('id', businessSettingsId);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Settings Saved",
+        description: "Your notification preferences have been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving notification settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save notification settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const recentNotifications = [
     {
@@ -44,6 +131,27 @@ const NotificationSettings = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Bell className="w-5 h-5" />
+              <span>Notification Settings</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+              <span>Loading notification settings...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -54,40 +162,13 @@ const NotificationSettings = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <Label htmlFor="email" className="text-base font-medium">Email Address</Label>
-              <div className="flex items-center space-x-2">
-                <Mail className="w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <Label htmlFor="phone" className="text-base font-medium">Phone Number</Label>
-              <div className="flex items-center space-x-2">
-                <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="flex-1"
-                />
-              </div>
-            </div>
-          </div>
-
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label htmlFor="email-notifications" className="text-base font-medium">Email Notifications</Label>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-base font-medium">Email Notifications</span>
+                </div>
                 <p className="text-sm text-muted-foreground">Receive email alerts for calls and appointments</p>
               </div>
               <Switch
@@ -99,7 +180,10 @@ const NotificationSettings = () => {
 
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label htmlFor="sms-notifications" className="text-base font-medium">SMS Notifications</Label>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-base font-medium">SMS Notifications</span>
+                </div>
                 <p className="text-sm text-muted-foreground">Get instant text messages for important calls</p>
               </div>
               <Switch
@@ -111,18 +195,43 @@ const NotificationSettings = () => {
 
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <Label htmlFor="urgent-only" className="text-base font-medium">Urgent Calls Only</Label>
-                <p className="text-sm text-muted-foreground">Only notify for urgent or emergency calls</p>
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-base font-medium">Push Notifications</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Browser notifications for real-time updates</p>
               </div>
               <Switch
-                id="urgent-only"
-                checked={urgentCallsOnly}
-                onCheckedChange={setUrgentCallsOnly}
+                id="push-notifications"
+                checked={pushNotifications}
+                onCheckedChange={setPushNotifications}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-base font-medium">Instant Alerts</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Get immediate notifications for urgent matters</p>
+              </div>
+              <Switch
+                id="instant-alerts"
+                checked={instantAlerts}
+                onCheckedChange={setInstantAlerts}
               />
             </div>
           </div>
 
-          <Button className="w-full">Save Notification Settings</Button>
+          <Button 
+            onClick={saveNotificationSettings}
+            disabled={saving}
+            className="w-full"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? "Saving..." : "Save Notification Settings"}
+          </Button>
         </CardContent>
       </Card>
 
