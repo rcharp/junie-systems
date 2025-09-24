@@ -51,22 +51,43 @@ Deno.serve(async (req) => {
     let accessToken = null
     let refreshToken = null
     
+    console.log('Attempting to decrypt access token...')
     if (calendarSettings.encrypted_access_token) {
-      const { data: decryptedAccess } = await supabase.rpc('decrypt_token', { 
+      const { data: decryptedAccess, error: decryptError } = await supabase.rpc('decrypt_token', { 
         encrypted_token: calendarSettings.encrypted_access_token 
       })
-      accessToken = decryptedAccess
+      
+      if (decryptError) {
+        console.error('Error decrypting access token:', decryptError)
+      } else {
+        console.log('Access token decryption result:', decryptedAccess ? 'Success' : 'Failed (null)')
+        accessToken = decryptedAccess
+      }
     }
     
+    console.log('Attempting to decrypt refresh token...')
     if (calendarSettings.encrypted_refresh_token) {
-      const { data: decryptedRefresh } = await supabase.rpc('decrypt_token', { 
-        encrypted_token: calendarSettings.encrypted_refresh_token 
+      // Handle both JSON format and plain string format
+      let tokenToDecrypt = calendarSettings.encrypted_refresh_token
+      if (typeof tokenToDecrypt === 'object' && tokenToDecrypt.data) {
+        tokenToDecrypt = tokenToDecrypt.data
+      }
+      
+      const { data: decryptedRefresh, error: refreshDecryptError } = await supabase.rpc('decrypt_token', { 
+        encrypted_token: tokenToDecrypt 
       })
-      refreshToken = decryptedRefresh
+      
+      if (refreshDecryptError) {
+        console.error('Error decrypting refresh token:', refreshDecryptError)
+      } else {
+        console.log('Refresh token decryption result:', decryptedRefresh ? 'Success' : 'Failed (null)')
+        refreshToken = decryptedRefresh
+      }
     }
 
     if (!accessToken) {
-      throw new Error('Failed to decrypt access token')
+      console.error('No valid access token available. User needs to reconnect Google Calendar.')
+      throw new Error('Google Calendar access token is invalid. Please reconnect your Google Calendar.')
     }
 
     // Check if token needs refresh
