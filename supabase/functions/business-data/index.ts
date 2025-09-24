@@ -8,9 +8,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('=== BUSINESS-DATA FUNCTION CALLED ===');
   console.log('business-data function called with method:', req.method);
   console.log('Request URL:', req.url);
   console.log('Request headers:', Object.fromEntries(req.headers.entries()));
+  console.log('Timestamp:', new Date().toISOString());
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -272,10 +274,20 @@ serve(async (req) => {
 
     // Log the request to business_data_requests table
     try {
-      const requestData = req.method === 'POST' ? await req.json() : {};
+      let requestData = {};
+      if (req.method === 'POST') {
+        // Use the body that was already parsed above
+        if (businessId && requestSource === 'manual') {
+          requestData = { business_id: businessId };
+        }
+      } else {
+        const url = new URL(req.url);
+        requestData = Object.fromEntries(url.searchParams);
+      }
+      
       const requestHeaders = Object.fromEntries(req.headers.entries());
       
-      await supabase
+      const insertResult = await supabase
         .from('business_data_requests')
         .insert({
           business_id: businessId,
@@ -293,6 +305,7 @@ serve(async (req) => {
           ip_address: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || ''
         });
       
+      console.log('Insert result:', insertResult);
       console.log('Successfully logged request to business_data_requests table');
     } catch (logError) {
       console.error('Error logging request to business_data_requests table:', logError);
