@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Calendar, Clock, CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
+import { Calendar, Clock, CheckCircle, AlertCircle, ExternalLink, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -288,18 +288,40 @@ const GoogleCalendarConnect = () => {
               </Select>
             </div>
 
-            {/* Embedded Google Calendar */}
-            <div className="w-full">
-              <iframe
-                src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarSettings.calendar_id || 'primary')}&ctz=${encodeURIComponent(calendarSettings.timezone || 'America/New_York')}&showTitle=0&showDate=1&showPrint=0&showCalendars=0&mode=WEEK&height=600&wkst=1&bgcolor=%23ffffff`}
-                style={{ border: 0 }}
-                width="100%"
-                height="500"
-                frameBorder="0"
-                scrolling="no"
-                title="Google Calendar"
-                className="rounded-lg border"
-              />
+            {/* Calendar Information and Instructions */}
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">Calendar Integration Active</h4>
+                <p className="text-sm text-blue-700">
+                  Your Google Calendar is now connected! Appointments booked through your AI phone system will automatically appear in your calendar.
+                </p>
+              </div>
+              
+              {calendarSettings.calendar_id && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Quick Calendar Access</Label>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`https://calendar.google.com/calendar/u/0/r`, '_blank')}
+                      className="flex items-center gap-2"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Open Google Calendar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`https://calendar.google.com/calendar/u/0/r/settings`, '_blank')}
+                      className="flex items-center gap-2"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Calendar Settings
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2">
