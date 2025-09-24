@@ -331,7 +331,7 @@ serve(async (req) => {
         .eq('user_id', businessUserId)
         .maybeSingle();
       
-      appointmentBookingEnabled = businessData?.appointment_booking || false;
+      appointmentBookingEnabled = businessData?.appointment_booking === true;
       console.log('Appointment booking enabled:', appointmentBookingEnabled);
     }
 
