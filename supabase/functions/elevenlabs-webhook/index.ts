@@ -371,23 +371,7 @@ serve(async (req) => {
       }
     }
 
-    // If we have a business_id, always look up the user_id from business_settings to ensure it's set correctly
-    if (businessId) {
-      console.log('Looking up user_id for business_id:', businessId);
-      const { data: businessSettings, error: businessError } = await supabase
-        .from('business_settings')
-        .select('user_id')
-        .eq('id', businessId)
-        .single();
-
-      if (businessSettings?.user_id) {
-        businessUserId = businessSettings.user_id;
-        console.log('Found user_id from business_id:', businessUserId);
-      } else {
-        console.error('Error fetching user_id from business_id:', businessError);
-        console.log('No user_id found for business_id:', businessId);
-      }
-    }
+    // User_id lookup will happen after business_id extraction from data collection results
 
     // Get user settings for timezone and appointment booking settings
     let userTimezone = 'America/New_York'; // Default timezone
@@ -511,6 +495,23 @@ serve(async (req) => {
       if (vars.notes) serviceRequested = vars.notes;
     }
 
+    // NOW lookup user_id from business_id after all business_id extraction is complete
+    if (businessId && !businessUserId) {
+      console.log('Looking up user_id for business_id:', businessId);
+      const { data: businessSettings, error: businessError } = await supabase
+        .from('business_settings')
+        .select('user_id')
+        .eq('id', businessId)
+        .single();
+
+      if (businessSettings?.user_id) {
+        businessUserId = businessSettings.user_id;
+        console.log('Found user_id from business_id:', businessUserId);
+      } else {
+        console.error('Error fetching user_id from business_id:', businessError);
+        console.log('No user_id found for business_id:', businessId);
+      }
+    }
     // Refine timezone based on service address if user doesn't have timezone set
     if (userTimezone === 'America/New_York' && serviceAddress) {
       console.log('No custom timezone in user profile, determining from service address:', serviceAddress);
