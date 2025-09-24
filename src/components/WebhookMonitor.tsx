@@ -799,6 +799,8 @@ export const WebhookMonitor = () => {
                       </div>
                     );
                   })()}
+                </div>
+                <div>
                   <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
                 </div>
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
@@ -853,11 +855,6 @@ export const WebhookMonitor = () => {
                 </div>
               </div>
               
-              {!isItemExpanded && (
-                <div className="text-sm text-muted-foreground">
-                  {data.call_datetime}
-                </div>
-              )}
               
               {isItemExpanded && (
               <>
