@@ -799,7 +799,7 @@ export const WebhookMonitor = () => {
                       </div>
                     );
                   })()}
-                  <span className="text-xs text-muted-foreground px-1.5 py-0.5 border border-border rounded text-[10px] leading-tight">Call Time: {data.call_datetime}</span>
+                  <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
                 </div>
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button
