@@ -103,9 +103,9 @@ export const WebhookMonitor = () => {
 
       // Transform filtered call logs to webhook data format
       const transformedData: WebhookData[] = filteredLogs.map(log => {
-        // Get business_id from metadata
+        // Get business_id directly from the call log (priority) or metadata fallback
         const metadata = log.metadata || {};
-        const businessId = (metadata as any)?.business_id || log.user_id || 'N/A';
+        const businessId = log.business_id || (metadata as any)?.business_id || log.user_id || 'N/A';
         
         // Extract raw webhook data for detailed customer info
         const rawWebhookData = (metadata as any)?.raw_webhook_data;
@@ -392,7 +392,7 @@ export const WebhookMonitor = () => {
           address: serviceAddress,
           email: customerEmail || log.email || 'N/A',
           service_info: serviceRequested,
-          appointment_datetime: formatDisplayDateTime(appointmentDetails),
+          appointment_datetime: log.appointment_date_time ? formatDisplayDateTime(log.appointment_date_time) : formatDisplayDateTime(appointmentDetails),
           appointment_scheduled: appointmentScheduled,
           call_datetime: new Date(log.created_at).toLocaleString(),
           first_name: firstName,
@@ -832,13 +832,13 @@ export const WebhookMonitor = () => {
                   <div className="space-y-3">
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground">Business ID</h4>
-                      <p className="text-sm">{(() => {
-                        // Extract business_id from conversation_initiation_client_data or fallback to existing
-                        const businessId = data.raw_webhook_data?.data?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
-                                          data.raw_webhook_data?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
-                                          data.business_id;
-                        return businessId || 'N/A';
-                      })()}</p>
+                       <p className="text-sm">{(() => {
+                         // Extract business_id from call log data first, then fallback to webhook data
+                         const businessId = data.business_id || 
+                                           data.raw_webhook_data?.data?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
+                                           data.raw_webhook_data?.conversation_initiation_client_data?.dynamic_variables?.business_id;
+                         return businessId || 'N/A';
+                       })()}</p>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground">Company Name</h4>
@@ -868,8 +868,33 @@ export const WebhookMonitor = () => {
                       <p className="text-sm">{data.appointment_scheduled}</p>
                     </div>
                     <div>
-                      <h4 className="text-sm font-medium text-muted-foreground">Appointment Date/Time</h4>
-                      <p className="text-sm">{data.appointment_datetime}</p>
+                       <h4 className="text-sm font-medium text-muted-foreground">Appointment Date/Time</h4>
+                       <p className="text-sm">{(() => {
+                         // Use the appointment_datetime (transformed from call logs) or try direct access
+                         const appointmentDateTime = data.appointment_datetime || (data as any).appointment_date_time;
+                         if (!appointmentDateTime) return 'Not scheduled';
+                         
+                         try {
+                           let dateString = String(appointmentDateTime);
+                           
+                           // Handle postgres timestamp format "2025-09-26 13:00:00+00"
+                           if (dateString.includes(' ') && !dateString.includes('T')) {
+                             dateString = dateString.replace(' ', 'T');
+                             if (dateString.endsWith('+00')) {
+                               dateString = dateString.replace('+00', 'Z');
+                             }
+                           }
+                           
+                           const appointmentDate = new Date(dateString);
+                           if (!isNaN(appointmentDate.getTime())) {
+                             return formatInTimeZone(appointmentDate, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
+                           }
+                         } catch (error) {
+                           console.error('Date parsing error in WebhookMonitor:', error);
+                         }
+                         
+                         return 'Invalid date format';
+                       })()}</p>
                     </div>
                   </div>
                 </div>
