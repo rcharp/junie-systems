@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { GripVertical, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import {
@@ -127,6 +128,7 @@ export function TodoChecklist() {
   const [newTodoText, setNewTodoText] = useState('');
   const [newTodoPriority, setNewTodoPriority] = useState<'high' | 'medium' | 'low'>('medium');
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchTodos();
@@ -211,7 +213,7 @@ export function TodoChecklist() {
   };
 
   const addTodo = async () => {
-    if (!newTodoText.trim()) return;
+    if (!newTodoText.trim() || !user) return;
 
     try {
       const maxOrder = Math.max(...todos.map(t => t.display_order), 0);
@@ -221,6 +223,7 @@ export function TodoChecklist() {
           text: newTodoText.trim(),
           priority: newTodoPriority,
           display_order: maxOrder + 1,
+          user_id: user.id,
         })
         .select()
         .single();
@@ -298,6 +301,19 @@ export function TodoChecklist() {
 
   const completedCount = todos.filter(todo => todo.completed).length;
   const totalCount = todos.length;
+
+  if (!user) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Development Todo List</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">Please log in to view and manage todos.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>

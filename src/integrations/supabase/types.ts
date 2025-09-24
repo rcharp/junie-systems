@@ -429,6 +429,45 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          justification: string | null
+          record_id: string | null
+          sensitive_data_accessed: boolean | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          justification?: string | null
+          record_id?: string | null
+          sensitive_data_accessed?: boolean | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          justification?: string | null
+          record_id?: string | null
+          sensitive_data_accessed?: boolean | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           business_id: string
@@ -553,6 +592,7 @@ export type Database = {
           priority: string
           text: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           completed?: boolean
@@ -562,6 +602,7 @@ export type Database = {
           priority?: string
           text: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           completed?: boolean
@@ -571,6 +612,7 @@ export type Database = {
           priority?: string
           text?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
