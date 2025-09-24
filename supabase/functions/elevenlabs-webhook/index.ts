@@ -72,10 +72,19 @@ serve(async (req) => {
     // Parse JSON with better error handling
     let webhookData;
     
-    // Handle empty body (test calls) - use test data from test-data.ts
+    // Handle empty body - check if it's a manual test call
     if (!rawBody || rawBody.trim() === '') {
-      console.log('Empty body received, using test data from test-data.ts');
-      webhookData = {
+      // Check if this is specifically a manual test call (e.g., from admin dashboard or testing tool)
+      const userAgent = req.headers.get('user-agent') || '';
+      const isManualTest = userAgent.includes('PostmanRuntime') || 
+                          userAgent.includes('curl') || 
+                          userAgent.includes('HTTPie') ||
+                          userAgent.includes('Insomnia') ||
+                          req.headers.get('x-test-call') === 'true';
+      
+      if (isManualTest) {
+        console.log('Manual test call detected, using test data from test-data.ts');
+        webhookData = {
         "data": {
           "status": "done",
           "user_id": "o3zdIqYwDYfKPw2KrSE2Tbi9kxX2",
@@ -259,6 +268,14 @@ serve(async (req) => {
           ]
         }
       };
+      } else {
+        // Not a manual test call, treat as empty webhook (possibly from ElevenLabs testing)
+        console.log('Empty body received, treating as empty webhook');
+        webhookData = {
+          test: false,
+          message: 'Empty webhook call'
+        };
+      }
     } else {
       try {
         webhookData = JSON.parse(rawBody);
