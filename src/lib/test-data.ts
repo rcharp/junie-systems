@@ -28,7 +28,7 @@ export const DEFAULT_TEST_CALL_DATA = {
             "type": "string"
           },
           "rationale": "The user scheduled an appointment for Friday, September twenty-sixth, at ten in the morning. This information is extracted from the agent's confirmation message at 2025-09-24T15:40:20+00:00.",
-          "value": "2025-09-26T10:30:00-04:00"
+          "value": "Friday, September twenty-sixth, at ten thirty in the morning"
         },
         "business_id": {
           "data_collection_id": "business_id",
@@ -149,7 +149,7 @@ export const DEFAULT_TEST_CALL_DATA = {
       },
       {
         "role": "agent",
-        "message": "Perfect. I have Friday, September twenty-sixth available at ten in the morning. Would that work for you?"
+        "message": "Perfect. I have Friday, September twenty-sixth available at ten thirty in the morning. Would that work for you?"
       },
       {
         "role": "user",
@@ -157,7 +157,7 @@ export const DEFAULT_TEST_CALL_DATA = {
       },
       {
         "role": "agent",
-        "message": "Excellent! So to confirm, I have you scheduled for Friday, September twenty-sixth, at ten in the morning at 5605 Trevesta Place, Palmetto, FL 34221. The technician will call you at 7278714862 about thirty minutes before arrival. Is there anything else you need help with today?"
+        "message": "Excellent! So to confirm, I have you scheduled for Friday, September twenty-sixth, at ten thirty in the morning at 5605 Trevesta Place, Palmetto, FL 34221. The technician will call you at 7278714862 about thirty minutes before arrival. Is there anything else you need help with today?"
       },
       {
         "role": "user",
