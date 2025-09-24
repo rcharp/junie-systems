@@ -428,14 +428,23 @@ export const WebhookMonitor = () => {
       
       setLoading(true);
       
-      // Post the raw webhook data to the elevenlabs-webhook endpoint
-      const response = await supabase.functions.invoke('elevenlabs-webhook', {
-        body: latestCall.raw_webhook_data
+      // Make a direct HTTP call to the elevenlabs-webhook endpoint
+      const response = await fetch(`https://urkoxlolimjjadbdckco.supabase.co/functions/v1/elevenlabs-webhook`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVya294bG9saW1qamFkYmRja2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwNTM3MDAsImV4cCI6MjA3MDYyOTcwMH0.1kZKwOYAl7NUlCDCtRxhU7yQqBAYn9-I5g0JHN88yE0`
+        },
+        body: JSON.stringify(latestCall.raw_webhook_data)
       });
 
-      if (response.error) {
-        throw response.error;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || `HTTP ${response.status}`);
       }
+
+      console.log('🧪 Test response:', result);
 
       toast({
         title: "Test Successful",
