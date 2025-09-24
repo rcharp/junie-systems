@@ -319,27 +319,17 @@ const GoogleCalendarConnect = () => {
                       <Settings className="h-4 w-4" />
                       Calendar Settings
                     </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDisconnect}
+                      className="flex items-center gap-2"
+                    >
+                      Disconnect Calendar
+                    </Button>
                   </div>
                 </div>
               )}
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={handleDisconnect}
-                className="flex-1"
-              >
-                Disconnect Calendar
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => window.open('https://calendar.google.com', '_blank')}
-                className="flex items-center gap-2"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Open Calendar
-              </Button>
             </div>
           </div>
         ) : (
