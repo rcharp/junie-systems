@@ -895,12 +895,15 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
 
     // Convert to timezone-aware ISO string
     // The appointmentDate is treated as being in the user's timezone
-    // We need to adjust for timezone offset to get the correct UTC time
+    // We need to convert from local timezone to UTC
     const timezoneOffset = getTimezoneOffset(userTimezone);
-    const utcDate = new Date(appointmentDate.getTime() - (timezoneOffset * 60 * 1000));
+    
+    // Convert local time to UTC by adding the timezone offset
+    // For example: 10am EST (UTC-4) + 4 hours = 14:00 UTC
+    const utcDate = new Date(appointmentDate.getTime() + (Math.abs(timezoneOffset) * 60 * 1000));
     const isoString = utcDate.toISOString();
     
-    console.log(`Parsed appointment time: "${appointmentTimeString}" -> ${isoString} (user timezone: ${userTimezone}, offset: ${timezoneOffset})`);
+    console.log(`Parsed appointment time: "${appointmentTimeString}" -> ${isoString} (user timezone: ${userTimezone}, offset: ${timezoneOffset}, local time: ${appointmentDate.toISOString()})`);
     return isoString;
 
   } catch (error) {
