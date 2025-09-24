@@ -652,6 +652,21 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_secure_appointments_for_admin: {
+        Args: { target_user_id?: string }
+        Returns: {
+          caller_name_masked: string
+          contact_masked: string
+          created_at: string
+          id: string
+          notes_preview: string
+          preferred_date: string
+          preferred_time: string
+          service_type: string
+          status: string
+          user_id: string
+        }[]
+      }
       get_tiktok_tokens: {
         Args: { account_id: string }
         Returns: Json
