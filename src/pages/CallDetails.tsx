@@ -287,20 +287,26 @@ const CallDetails = () => {
                         
                         try {
                           let dateString = String(callData.appointment_date_time);
+                          console.log('Original date string:', dateString);
                           
                           // Handle postgres timestamp format "2025-09-26 13:00:00+00"
                           if (dateString.includes(' ') && !dateString.includes('T')) {
-                            // Convert postgres format to ISO: "2025-09-26 13:00:00+00" -> "2025-09-26T13:00:00+00:00"
+                            // Convert postgres format to ISO
                             dateString = dateString.replace(' ', 'T');
                             if (dateString.endsWith('+00')) {
-                              dateString = dateString.replace('+00', '+00:00');
+                              dateString = dateString.replace('+00', 'Z');
                             }
+                            console.log('Converted to ISO:', dateString);
                           }
                           
                           const appointmentDate = new Date(dateString);
+                          console.log('Parsed date object:', appointmentDate);
+                          console.log('Is valid:', !isNaN(appointmentDate.getTime()));
                           
                           if (!isNaN(appointmentDate.getTime())) {
-                            return formatInTimeZone(appointmentDate, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
+                            const formatted = formatInTimeZone(appointmentDate, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
+                            console.log('Final formatted:', formatted);
+                            return formatted;
                           }
                         } catch (error) {
                           console.error('Date parsing error:', error, callData.appointment_date_time);

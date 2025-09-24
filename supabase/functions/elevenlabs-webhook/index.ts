@@ -539,6 +539,8 @@ serve(async (req) => {
       appointment_scheduled: isAppointmentScheduled,
       appointment_date_time: parsedAppointmentDateTime,
       service_address: serviceAddress,
+      // Set business_id for manual test calls when no businessUserId is found
+      business_id: businessUserId ? null : '5a8a338e-d401-4a14-a109-6974859ce5b8',
       metadata: {
         caller_zip: '',
         caller_address: serviceAddress || '',
