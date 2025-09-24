@@ -40,7 +40,7 @@ export const DEFAULT_TEST_CALL_DATA = {
             "type": "string"
           },
           "rationale": "The business's ID is not mentioned in the conversation. The name of the business is 'Test A/C', but not its ID.",
-          "value": null
+          "value": "5a8a338e-d401-4a14-a109-6974859ce5b8"
         },
         "business_name": {
           "data_collection_id": "business_name",
