@@ -333,7 +333,7 @@ serve(async (req) => {
         business_type: webhookData.variables?.business_type || '',
         appointment_scheduled: callerInfo.appointment_scheduled,
         service_address: callerInfo.service_address,
-        appointment_date_time: callerInfo.appointment_details ? new Date().toISOString() : null, // This would need proper date parsing
+        appointment_date_time: callerInfo.appointmentDateTime || null,
         metadata: {
           ...metadata,
           webhook_received_at: new Date().toISOString(),
