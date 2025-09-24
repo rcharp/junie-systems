@@ -48,59 +48,7 @@ const CallDetails = () => {
     try {
       setLoading(true);
 
-      // First get user's business_id
-      const { data: businessData, error: businessError } = await supabase
-        .from('business_settings')
-        .select('id')
-        .eq('user_id', user?.id)
-        .maybeSingle();
-
-      if (!businessData) {
-        toast({
-          title: "Error",
-          description: "Business settings not found",
-          variant: "destructive",
-        });
-        navigate('/dashboard');
-        return;
-      }
-
-      // Check if callId exists in business_data_requests
-      const { data: businessRequestData, error: businessRequestError } = await supabase
-        .from('business_data_requests')
-        .select('*')
-        .eq('id', callId)
-        .eq('business_id', businessData.id)
-        .maybeSingle();
-
-      if (businessRequestData && businessRequestData.response_data) {
-        // Transform business_data_requests data to CallData format
-        const responseData = businessRequestData.response_data as any;
-        const transformedData: CallData = {
-          id: businessRequestData.id,
-          call_id: responseData.call_id || businessRequestData.id,
-          caller_name: responseData.caller_name || responseData.name || 'Unknown',
-          phone_number: responseData.phone_number || responseData.phone || 'N/A',
-          email: responseData.email,
-          message: responseData.message || responseData.summary || 'No message available',
-          urgency_level: responseData.urgency_level || responseData.urgency || 'medium',
-          best_time_to_call: responseData.best_time_to_call || responseData.preferred_time,
-          call_type: responseData.call_type || responseData.type || 'general',
-          status: responseData.status || 'completed',
-          call_duration: responseData.call_duration || responseData.duration,
-          recording_url: responseData.recording_url,
-          transcript: responseData.transcript || responseData.full_transcript,
-          created_at: businessRequestData.created_at,
-          call_status: responseData.call_status || 'completed',
-          business_name: responseData.business_name,
-          business_type: responseData.business_type,
-          provider: responseData.provider || 'Availabee AI'
-        };
-        setCallData(transformedData);
-        return;
-      }
-
-      // Try to find in call_logs as fallback
+      // Try to find in call_logs first (most comprehensive call data)
       const { data: logData, error: logError } = await supabase
         .from('call_logs')
         .select('*')
@@ -126,7 +74,7 @@ const CallDetails = () => {
         return;
       }
 
-      // If not found in any table, show error
+      // If not found in either table, show error
       toast({
         title: "Error",
         description: "Call not found or you don't have permission to view it",
