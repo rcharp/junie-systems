@@ -768,21 +768,32 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
     let appointmentDate = new Date(now);
 
     // Extract time - try word patterns first
-    const wordTimeMatch = lowerStr.match(/(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(thirty|fifteen|forty-five|o'?clock)?.*?(morning|afternoon|evening|am|pm)/i);
+    console.log(`Parsing appointment time: "${appointmentTimeString}"`);
+    console.log(`Lowercase string: "${lowerStr}"`);
+    
+    const wordTimeMatch = lowerStr.match(/(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?.*?(morning|afternoon|evening|am|pm)/i);
+    console.log('Word time match:', wordTimeMatch);
+    
     if (wordTimeMatch) {
       hour = timeWords[wordTimeMatch[1]];
+      console.log(`Found hour word: "${wordTimeMatch[1]}" = ${hour}`);
       
-      if (wordTimeMatch[2]) {
-        if (wordTimeMatch[2].includes('thirty')) {
+      if (wordTimeMatch[3]) {
+        console.log(`Found minute word: "${wordTimeMatch[3]}"`);
+        if (wordTimeMatch[3].includes('thirty')) {
           minute = 30;
-        } else if (wordTimeMatch[2].includes('fifteen')) {
+        } else if (wordTimeMatch[3].includes('fifteen')) {
           minute = 15;
-        } else if (wordTimeMatch[2].includes('forty-five')) {
+        } else if (wordTimeMatch[3].includes('forty-five')) {
           minute = 45;
         }
+      } else {
+        console.log('No minute word found, using 0 minutes');
+        minute = 0;
       }
       
-      const period = wordTimeMatch[3];
+      const period = wordTimeMatch[4];
+      console.log(`Period: "${period}"`);
       if (period && (period.includes('afternoon') || period.includes('evening') || period.includes('pm')) && hour !== 12) {
         hour += 12;
       } else if (period && (period.includes('morning') || period.includes('am')) && hour === 12) {
