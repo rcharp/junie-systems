@@ -86,6 +86,61 @@ const Dashboard = () => {
     }
   };
 
+  const extractCallAction = (message: string, callType: string) => {
+    if (!message) return 'called';
+    
+    // Convert to lowercase for easier matching
+    const lowerMessage = message.toLowerCase();
+    const lowerCallType = callType.toLowerCase();
+    
+    // Define action patterns based on call type and message content
+    if (lowerCallType === 'appointment') {
+      if (lowerMessage.includes('scheduled') || lowerMessage.includes('appointment')) {
+        return 'scheduled an appointment';
+      }
+      return 'called about scheduling';
+    }
+    
+    if (lowerCallType === 'sales') {
+      if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('quote')) {
+        return 'asked about pricing';
+      }
+      if (lowerMessage.includes('service') || lowerMessage.includes('product')) {
+        return 'inquired about services';
+      }
+      return 'made a sales inquiry';
+    }
+    
+    if (lowerCallType === 'support') {
+      if (lowerMessage.includes('problem') || lowerMessage.includes('issue') || lowerMessage.includes('help')) {
+        return 'requested support';
+      }
+      return 'called for assistance';
+    }
+    
+    if (lowerCallType === 'complaint') {
+      return 'filed a complaint';
+    }
+    
+    // General patterns for any call type
+    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('quote')) {
+      return 'asked about pricing';
+    }
+    if (lowerMessage.includes('appointment') || lowerMessage.includes('schedule')) {
+      return 'inquired about scheduling';
+    }
+    if (lowerMessage.includes('service') || lowerMessage.includes('help')) {
+      return 'asked about services';
+    }
+    if (lowerMessage.includes('information') || lowerMessage.includes('details')) {
+      return 'requested information';
+    }
+    
+    // Extract first few words as fallback
+    const words = message.split(' ').slice(0, 4).join(' ');
+    return words ? `called (${words.length > 30 ? words.substring(0, 30) + '...' : words})` : 'called';
+  };
+
   const fetchRecentActivity = async () => {
     try {
       setActivityLoading(true);
@@ -114,10 +169,14 @@ const Dashboard = () => {
 
         if (callLogs) {
           callLogs.forEach(log => {
+            // Extract key action from message or call_summary
+            const fullMessage = log.call_summary || log.message || '';
+            const actionDescription = extractCallAction(fullMessage, log.call_type);
+            
             activities.push({
               id: log.id,
               time: formatDistanceToNow(new Date(log.created_at), { addSuffix: true }),
-              action: `${log.caller_name} called`,
+              action: `${log.caller_name} ${actionDescription}`,
               type: log.urgency_level === 'urgent' ? 'error' : 
                     log.urgency_level === 'high' ? 'warning' : 'success',
               caller_name: log.caller_name,
@@ -138,10 +197,13 @@ const Dashboard = () => {
 
       if (callMessages) {
         callMessages.forEach(message => {
+          // Extract key action from message
+          const actionDescription = extractCallAction(message.message, message.call_type);
+          
           activities.push({
             id: message.id,
             time: formatDistanceToNow(new Date(message.created_at), { addSuffix: true }),
-            action: `${message.caller_name} left a message`,
+            action: `${message.caller_name} ${actionDescription.replace('called', 'left a message')}`,
             type: message.urgency_level === 'urgent' ? 'error' : 
                   message.urgency_level === 'high' ? 'warning' : 'success',
             caller_name: message.caller_name,
@@ -409,7 +471,12 @@ const Dashboard = () => {
                           activity.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
                         }`} />
                         <div className="flex-1">
-                          <p className="text-sm font-medium">{activity.action}</p>
+                          <div className="flex items-center space-x-2 mb-1">
+                            <p className="text-sm font-medium">{activity.action}</p>
+                            <Badge variant="secondary" className="text-xs">
+                              {activity.call_type}
+                            </Badge>
+                          </div>
                           <p className="text-xs text-muted-foreground">{activity.time}</p>
                         </div>
                       </div>
