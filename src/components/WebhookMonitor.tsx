@@ -357,16 +357,23 @@ export const WebhookMonitor = () => {
             console.log('=== Original dateString:', dateString);
             
             // Handle PostgreSQL timestamp format "2025-09-26 13:00:00+00"
+            // Also handle ISO format like "2025-09-26T13:00:00+00:00"
             if (dateString.includes(' ') && !dateString.includes('T')) {
               dateString = dateString.replace(' ', 'T');
               if (dateString.endsWith('+00')) {
                 dateString = dateString.replace('+00', 'Z');
               }
-              console.log('=== Converted dateString:', dateString);
+              console.log('=== Converted space dateString:', dateString);
+            } else if (dateString.includes('T') && dateString.endsWith('+00:00')) {
+              // Convert "+00:00" to "Z" for proper UTC parsing
+              dateString = dateString.replace('+00:00', 'Z');
+              console.log('=== Converted ISO dateString:', dateString);
             }
             
             const date = new Date(dateString);
             console.log('=== Created Date object:', date, 'isValid:', !isNaN(date.getTime()));
+            console.log('=== Date UTC time:', date.toISOString());
+            console.log('=== Date in America/New_York before format:', date.toLocaleString('en-US', { timeZone: 'America/New_York' }));
             
             if (isNaN(date.getTime())) {
               console.error('=== Invalid date after parsing:', dateString);
