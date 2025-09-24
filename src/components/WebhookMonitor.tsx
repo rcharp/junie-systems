@@ -345,10 +345,16 @@ export const WebhookMonitor = () => {
         
         // Format appointment datetime for display - handles PostgreSQL timestamp format
         const formatDisplayDateTime = (appointmentDateTime: string) => {
-          if (!appointmentDateTime || appointmentDateTime === 'Not scheduled') return 'Not scheduled';
+          console.log('=== formatDisplayDateTime called with:', appointmentDateTime, typeof appointmentDateTime);
+          
+          if (!appointmentDateTime || appointmentDateTime === 'Not scheduled') {
+            console.log('=== Returning early: Not scheduled');
+            return 'Not scheduled';
+          }
           
           try {
             let dateString = String(appointmentDateTime);
+            console.log('=== Original dateString:', dateString);
             
             // Handle PostgreSQL timestamp format "2025-09-26 13:00:00+00"
             if (dateString.includes(' ') && !dateString.includes('T')) {
@@ -356,16 +362,22 @@ export const WebhookMonitor = () => {
               if (dateString.endsWith('+00')) {
                 dateString = dateString.replace('+00', 'Z');
               }
+              console.log('=== Converted dateString:', dateString);
             }
             
             const date = new Date(dateString);
+            console.log('=== Created Date object:', date, 'isValid:', !isNaN(date.getTime()));
+            
             if (isNaN(date.getTime())) {
-              console.error('Invalid date after parsing:', dateString);
+              console.error('=== Invalid date after parsing:', dateString);
               return 'Invalid date';
             }
-            return formatInTimeZone(date, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
+            
+            const formatted = formatInTimeZone(date, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
+            console.log('=== Final formatted result:', formatted);
+            return formatted;
           } catch (error) {
-            console.error('Date parsing error:', error, 'Input:', appointmentDateTime);
+            console.error('=== Date parsing error:', error, 'Input:', appointmentDateTime);
             return 'Invalid date';
           }
         };
@@ -403,7 +415,12 @@ export const WebhookMonitor = () => {
           address: serviceAddress,
           email: customerEmail || log.email || 'N/A',
           service_info: serviceRequested,
-          appointment_datetime: log.appointment_date_time ? formatDisplayDateTime(log.appointment_date_time) : formatDisplayDateTime(appointmentDetails),
+          appointment_datetime: (() => {
+            console.log('=== Processing appointment_datetime. log.appointment_date_time:', log.appointment_date_time, 'appointmentDetails:', appointmentDetails);
+            const result = log.appointment_date_time ? formatDisplayDateTime(log.appointment_date_time) : formatDisplayDateTime(appointmentDetails);
+            console.log('=== Final appointment_datetime result:', result);
+            return result;
+          })(),
           appointment_scheduled: appointmentScheduled,
           call_datetime: new Date(log.created_at).toLocaleString(),
           first_name: firstName,
@@ -880,32 +897,28 @@ export const WebhookMonitor = () => {
                     </div>
                     <div>
                        <h4 className="text-sm font-medium text-muted-foreground">Appointment Date/Time</h4>
-                       <p className="text-sm">{(() => {
-                         // Use the appointment_datetime (transformed from call logs) or try direct access
-                         const appointmentDateTime = data.appointment_datetime || (data as any).appointment_date_time;
-                         if (!appointmentDateTime) return 'Not scheduled';
-                         
-                         try {
-                           let dateString = String(appointmentDateTime);
-                           
-                           // Handle postgres timestamp format "2025-09-26 13:00:00+00"
-                           if (dateString.includes(' ') && !dateString.includes('T')) {
-                             dateString = dateString.replace(' ', 'T');
-                             if (dateString.endsWith('+00')) {
-                               dateString = dateString.replace('+00', 'Z');
-                             }
-                           }
-                           
-                           const appointmentDate = new Date(dateString);
-                           if (!isNaN(appointmentDate.getTime())) {
-                             return formatInTimeZone(appointmentDate, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
-                           }
-                         } catch (error) {
-                           console.error('Date parsing error in WebhookMonitor:', error);
-                         }
-                         
-                         return 'Invalid date format';
-                       })()}</p>
+       <p className="text-sm">{(() => {
+         console.log('=== Display logic - data.appointment_datetime:', data.appointment_datetime);
+         console.log('=== Display logic - (data as any).appointment_date_time:', (data as any).appointment_date_time);
+         
+         // Use the appointment_datetime (transformed from call logs) or try direct access
+         const appointmentDateTime = data.appointment_datetime || (data as any).appointment_date_time;
+         console.log('=== Display logic - final appointmentDateTime:', appointmentDateTime);
+         
+         if (!appointmentDateTime) {
+           console.log('=== Display logic - No appointment date, returning Not scheduled');
+           return 'Not scheduled';
+         }
+         
+         // If it's already formatted, return as-is
+         if (typeof appointmentDateTime === 'string' && !appointmentDateTime.includes('2025-')) {
+           console.log('=== Display logic - Already formatted, returning:', appointmentDateTime);
+           return appointmentDateTime;
+         }
+         
+         console.log('=== Display logic - Raw appointmentDateTime, attempting to format:', appointmentDateTime);
+         return appointmentDateTime;
+       })()}</p>
                     </div>
                   </div>
                 </div>
