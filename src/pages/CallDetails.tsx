@@ -168,7 +168,9 @@ const CallDetails = () => {
           </Button>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">{callData.call_type} - {callData.caller_name}</h1>
+              <h1 className="text-2xl font-bold">
+                {callData.phone_number || 'Unknown'} - {callData.appointment_scheduled ? 'Scheduled appointment' : 'Inquiry'}
+              </h1>
               <p className="text-muted-foreground">
                 Call Time: {format(new Date(callData.created_at), 'M/d/yyyy, h:mm:ss a')}
               </p>
