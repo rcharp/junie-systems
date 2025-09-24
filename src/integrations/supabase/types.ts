@@ -548,6 +548,7 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          setup_completed: boolean | null
           subscription_plan: string | null
           subscription_status: string | null
           trial_ends_at: string | null
@@ -559,6 +560,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id: string
+          setup_completed?: boolean | null
           subscription_plan?: string | null
           subscription_status?: string | null
           trial_ends_at?: string | null
@@ -570,6 +572,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          setup_completed?: boolean | null
           subscription_plan?: string | null
           subscription_status?: string | null
           trial_ends_at?: string | null

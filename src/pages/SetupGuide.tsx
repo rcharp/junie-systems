@@ -62,6 +62,28 @@ const SetupGuide = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // Effect to mark setup as completed when all steps are done
+  useEffect(() => {
+    if (completedSteps.length === setupSteps.length && user) {
+      markSetupComplete();
+    }
+  }, [completedSteps.length, user]);
+
+  const markSetupComplete = async () => {
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ setup_completed: true })
+        .eq('id', user?.id);
+
+      if (error) {
+        console.error('Error marking setup as complete:', error);
+      }
+    } catch (error) {
+      console.error('Error marking setup as complete:', error);
+    }
+  };
+
   const handleStepComplete = (stepNumber: number) => {
     if (!completedSteps.includes(stepNumber)) {
       setCompletedSteps([...completedSteps, stepNumber]);

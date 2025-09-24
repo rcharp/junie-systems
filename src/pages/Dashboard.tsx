@@ -40,6 +40,7 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalCalls: 0,
     totalMessages: 0,
@@ -59,8 +60,31 @@ const Dashboard = () => {
     if (user) {
       fetchRecentActivity();
       fetchDashboardStats();
+      checkSetupStatus();
     }
   }, [user]);
+
+  const checkSetupStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('setup_completed')
+        .eq('id', user?.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error checking setup status:', error);
+        return;
+      }
+
+      // Show setup guide if user hasn't completed it yet
+      setShowSetupGuide(!data?.setup_completed);
+    } catch (error) {
+      console.error('Error checking setup status:', error);
+      // Default to showing setup guide if we can't determine status
+      setShowSetupGuide(true);
+    }
+  };
 
   const fetchRecentActivity = async () => {
     try {
@@ -288,22 +312,24 @@ const Dashboard = () => {
 
 
         {/* Main Dashboard Content */}
-        {/* Welcome Card moved to top */}
-        <Card className="mb-8 bg-gradient-hero text-white border-0">
-          <CardHeader>
-            <CardTitle className="text-white">🎉 Welcome to Availabee!</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-white/90 mb-4">
-              Your intelligent call answering service is ready to help you never miss another customer call.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button variant="secondary" onClick={() => navigate("/setup-guide")}>
-                Setup Guide
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Welcome Card - only show if setup not completed */}
+        {showSetupGuide && (
+          <Card className="mb-8 bg-gradient-hero text-white border-0">
+            <CardHeader>
+              <CardTitle className="text-white">🎉 Welcome to Availabee!</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-white/90 mb-4">
+                Your intelligent call answering service is ready to help you never miss another customer call.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="secondary" onClick={() => navigate("/setup-guide")}>
+                  Setup Guide
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-1">

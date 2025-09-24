@@ -855,10 +855,21 @@ const Settings = () => {
             <TabsContent value="business">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Building className="w-5 h-5 mr-2" />
-                    Business Information
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center">
+                      <Building className="w-5 h-5 mr-2" />
+                      Business Information
+                    </CardTitle>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate("/setup-guide")}
+                      className="flex items-center gap-2"
+                    >
+                      <Zap className="w-4 h-4" />
+                      Setup Guide
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                 <WebsiteImporter 
