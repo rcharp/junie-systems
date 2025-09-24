@@ -43,7 +43,23 @@ const GoogleCalendarConnect = () => {
         return;
       }
 
-      setCalendarSettings(data?.[0] || null);
+      const settings = data?.[0] || null;
+      // Check if we actually have valid tokens, not just is_connected flag
+      const hasValidTokens = settings?.encrypted_access_token || settings?.encrypted_refresh_token;
+      const isReallyConnected = settings?.is_connected && hasValidTokens;
+      
+      // If is_connected is true but no tokens, reset the connection status
+      if (settings?.is_connected && !hasValidTokens) {
+        console.log('Found stale connection, resetting...');
+        await supabase
+          .from('google_calendar_settings')
+          .update({ is_connected: false })
+          .eq('user_id', user?.id);
+        
+        setCalendarSettings({ ...settings, is_connected: false });
+      } else {
+        setCalendarSettings(settings);
+      }
     } catch (error) {
       console.error('Error fetching calendar settings:', error);
     } finally {

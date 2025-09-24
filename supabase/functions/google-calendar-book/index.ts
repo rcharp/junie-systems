@@ -47,47 +47,41 @@ Deno.serve(async (req) => {
       throw new Error('Google Calendar not connected for this user')
     }
 
-    // Decrypt tokens
-    let accessToken = null
-    let refreshToken = null
-    
-    console.log('Attempting to decrypt access token...')
-    if (calendarSettings.encrypted_access_token) {
-      const { data: decryptedAccess, error: decryptError } = await supabase.rpc('decrypt_token', { 
-        encrypted_token: calendarSettings.encrypted_access_token 
-      })
-      
-      if (decryptError) {
-        console.error('Error decrypting access token:', decryptError)
-      } else {
-        console.log('Access token decryption result:', decryptedAccess ? 'Success' : 'Failed (null)')
-        accessToken = decryptedAccess
-      }
-    }
-    
-    console.log('Attempting to decrypt refresh token...')
-    if (calendarSettings.encrypted_refresh_token) {
-      // Handle both JSON format and plain string format
-      let tokenToDecrypt = calendarSettings.encrypted_refresh_token
-      if (typeof tokenToDecrypt === 'object' && tokenToDecrypt.data) {
-        tokenToDecrypt = tokenToDecrypt.data
-      }
-      
-      const { data: decryptedRefresh, error: refreshDecryptError } = await supabase.rpc('decrypt_token', { 
-        encrypted_token: tokenToDecrypt 
-      })
-      
-      if (refreshDecryptError) {
-        console.error('Error decrypting refresh token:', refreshDecryptError)
-      } else {
-        console.log('Refresh token decryption result:', decryptedRefresh ? 'Success' : 'Failed (null)')
-        refreshToken = decryptedRefresh
-      }
+    // Check if we have encrypted tokens before proceeding
+    if (!calendarSettings.encrypted_access_token && !calendarSettings.encrypted_refresh_token) {
+      console.error('No encrypted tokens found in database. User needs to reconnect.')
+      throw new Error('Google Calendar tokens not found. Please reconnect your Google Calendar.')
     }
 
-    // If access token is invalid/corrupted but we have a refresh token, try to refresh
+    // Get decrypted tokens using the function
+    const { data: tokenData, error: tokenError } = await supabase.rpc('get_google_calendar_tokens', { 
+      p_user_id: userId 
+    })
+    
+    if (tokenError || !tokenData || tokenData.length === 0) {
+      console.error('Error getting calendar tokens:', tokenError)
+      throw new Error('Failed to retrieve Google Calendar tokens. Please reconnect your Google Calendar.')
+    }
+
+    const calendarData = tokenData[0]
+    let accessToken = calendarData.access_token
+    let refreshToken = calendarData.refresh_token
+
+    console.log('Retrieved tokens:', {
+      hasAccessToken: !!accessToken,
+      hasRefreshToken: !!refreshToken,
+      expiresAt: calendarData.expires_at
+    })
+
+    // If we don't have any tokens, user needs to reconnect
+    if (!accessToken && !refreshToken) {
+      console.error('No valid tokens available. User needs to reconnect.')
+      throw new Error('Google Calendar tokens are invalid. Please reconnect your Google Calendar.')
+    }
+
+    // If access token is missing but we have refresh token, try to refresh
     if (!accessToken && refreshToken) {
-      console.log('Access token invalid/corrupted, attempting refresh with refresh token...')
+      console.log('Access token missing, attempting refresh with refresh token...')
       
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',
@@ -102,11 +96,11 @@ Deno.serve(async (req) => {
         }),
       })
 
-      const tokenData = await tokenResponse.json()
+      const tokenResponseData = await tokenResponse.json()
       
       if (tokenResponse.ok) {
-        accessToken = tokenData.access_token
-        const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
+        accessToken = tokenResponseData.access_token
+        const newExpiresAt = new Date(Date.now() + (tokenResponseData.expires_in * 1000)).toISOString()
         
         console.log('Successfully refreshed access token')
         
@@ -114,11 +108,11 @@ Deno.serve(async (req) => {
         await supabase.rpc('update_google_calendar_tokens', {
           p_user_id: userId,
           p_access_token: accessToken,
-          p_refresh_token: tokenData.refresh_token || refreshToken, // Use new refresh token if provided
+          p_refresh_token: tokenResponseData.refresh_token || refreshToken,
           p_expires_at: newExpiresAt
         })
       } else {
-        console.error('Failed to refresh token:', tokenData)
+        console.error('Failed to refresh token:', tokenResponseData)
         throw new Error('Google Calendar tokens are invalid. Please reconnect your Google Calendar.')
       }
     }
@@ -128,8 +122,8 @@ Deno.serve(async (req) => {
       throw new Error('Google Calendar access token is invalid. Please reconnect your Google Calendar.')
     }
 
-    // Check if token needs refresh
-    const expiresAt = new Date(calendarSettings.expires_at)
+    // Check if token needs refresh based on expiration
+    const expiresAt = new Date(calendarData.expires_at)
     const now = new Date()
 
     if (now >= expiresAt && refreshToken) {
@@ -148,11 +142,11 @@ Deno.serve(async (req) => {
         }),
       })
 
-      const tokenData = await tokenResponse.json()
+      const tokenResponseData = await tokenResponse.json()
       
       if (tokenResponse.ok) {
-        accessToken = tokenData.access_token
-        const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
+        accessToken = tokenResponseData.access_token
+        const newExpiresAt = new Date(Date.now() + (tokenResponseData.expires_in * 1000)).toISOString()
         
         // Update the stored token using secure function
         await supabase.rpc('update_google_calendar_tokens', {
@@ -161,7 +155,7 @@ Deno.serve(async (req) => {
           p_expires_at: newExpiresAt,
         })
       } else {
-        console.error('Token refresh failed:', tokenData)
+        console.error('Token refresh failed:', tokenResponseData)
         throw new Error('Failed to refresh access token')
       }
     }
