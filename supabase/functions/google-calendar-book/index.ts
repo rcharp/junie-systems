@@ -148,10 +148,13 @@ Deno.serve(async (req) => {
         accessToken = tokenResponseData.access_token
         const newExpiresAt = new Date(Date.now() + (tokenResponseData.expires_in * 1000)).toISOString()
         
+        console.log('Successfully refreshed expired access token, expires at:', newExpiresAt)
+        
         // Update the stored token using secure function
         await supabase.rpc('update_google_calendar_tokens', {
           p_user_id: userId,
           p_access_token: accessToken,
+          p_refresh_token: tokenResponseData.refresh_token || refreshToken,
           p_expires_at: newExpiresAt,
         })
       } else {
