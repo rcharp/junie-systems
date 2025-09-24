@@ -211,6 +211,25 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
     }
 
     console.log('Creating calendar event:', event)
+    console.log('Using access token (first 20 chars):', accessToken?.substring(0, 20) + '...')
+    console.log('Calendar ID:', calendarSettings.calendar_id)
+
+    // First, test the token with a simple API call to make sure it's valid
+    console.log('Testing token validity with calendar list API...')
+    const testResponse = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList/primary', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    })
+    
+    const testData = await testResponse.json()
+    console.log('Token test response status:', testResponse.status)
+    console.log('Token test response:', testData)
+    
+    if (!testResponse.ok) {
+      console.error('Token validation failed:', testData)
+      throw new Error(`Invalid access token: ${testData.error?.message || 'Token test failed'}`)
+    }
 
     const createEventResponse = await fetch(
       `https://www.googleapis.com/calendar/v3/calendars/${calendarSettings.calendar_id}/events`,
