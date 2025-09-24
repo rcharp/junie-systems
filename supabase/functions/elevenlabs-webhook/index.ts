@@ -525,12 +525,14 @@ serve(async (req) => {
           const bookingResult = await supabase.functions.invoke('google-calendar-book', {
             body: {
               userId: targetUserId,
-              appointmentDateTime: parsedAppointmentDateTime,
-              customerName: customerName,
-              customerPhone: customerPhone,
-              customerEmail: customerEmail,
+              startTime: parsedAppointmentDateTime,
+              endTime: parsedAppointmentDateTime, // The function will add duration
+              callerName: customerName,
+              phoneNumber: customerPhone,
+              email: customerEmail,
               serviceAddress: serviceAddress,
-              serviceRequested: serviceRequested
+              serviceType: serviceRequested,
+              notes: `Service requested: ${serviceRequested}`
             }
           });
 
