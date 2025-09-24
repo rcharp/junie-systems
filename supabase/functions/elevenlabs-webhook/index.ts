@@ -791,12 +791,26 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
     let month = monthNames[monthStr];
     let day = writtenNumbers[dayStr] || parseInt(dayStr) || 1;
     
-    if (month !== undefined) {
-      targetDate = new Date(currentYear, month, day);
-      // If the date is in the past, assume next year
-      if (targetDate < now) {
-        targetDate.setFullYear(currentYear + 1);
+    console.log('Parsed - month:', month, 'day:', day, 'from:', monthStr, dayStr);
+    
+    if (month !== undefined && day >= 1 && day <= 31) {
+      // For dates in 2025, don't automatically assume next year
+      let year = currentYear;
+      
+      // Only assume next year if the parsed date is significantly in the past (more than 60 days)
+      const testDate = new Date(year, month, day);
+      const daysDiff = (testDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+      
+      console.log('Date difference in days:', daysDiff, 'test date:', testDate.toDateString());
+      
+      // If it's more than 60 days in the past, assume next year
+      if (daysDiff < -60) {
+        year = currentYear + 1;
+        console.log('Date is too far in past, using year:', year);
       }
+      
+      targetDate = new Date(year, month, day);
+      console.log('Final target date before time:', targetDate.toDateString());
     }
   } else {
     // Try day of week patterns (e.g., "Thursday", "next Thursday")
