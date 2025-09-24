@@ -412,6 +412,51 @@ export const WebhookMonitor = () => {
     fetchWebhookData();
   };
 
+  const handleTestPostCallData = async () => {
+    try {
+      const latestCall = webhookData[0];
+      if (!latestCall?.raw_webhook_data) {
+        toast({
+          variant: "destructive",
+          title: "No Data",
+          description: "No call data available to test with"
+        });
+        return;
+      }
+
+      console.log('🧪 Testing with call data:', latestCall);
+      
+      setLoading(true);
+      
+      // Post the raw webhook data to the elevenlabs-webhook endpoint
+      const response = await supabase.functions.invoke('elevenlabs-webhook', {
+        body: latestCall.raw_webhook_data
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      toast({
+        title: "Test Successful",
+        description: "Post-call data sent to webhook endpoint successfully"
+      });
+
+      // Refresh data to see any updates
+      setTimeout(fetchWebhookData, 2000);
+      
+    } catch (error) {
+      console.error('Error testing post-call data:', error);
+      toast({
+        variant: "destructive",
+        title: "Test Failed",
+        description: error.message || "Failed to send test data"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDeleteSingle = async (callLogId: string) => {
     try {
       setLoading(true);
@@ -579,6 +624,16 @@ export const WebhookMonitor = () => {
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestPostCallData}
+              disabled={loading || webhookData.length === 0}
+              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+            >
+              <Activity className="h-4 w-4 mr-1" />
+              Test Latest Call
+            </Button>
             <Button
               variant="outline"
               size="sm"
