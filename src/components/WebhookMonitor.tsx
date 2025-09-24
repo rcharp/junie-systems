@@ -462,20 +462,17 @@ export const WebhookMonitor = () => {
       
       setLoading(true);
       
-      // Make a direct HTTP call to the elevenlabs-webhook endpoint with webhook_id parameter
-      const response = await fetch(`https://urkoxlolimjjadbdckco.supabase.co/functions/v1/elevenlabs-webhook?webhook_id=${profileData.webhook_id}`, {
+      // Use Supabase client to invoke the edge function with webhook_id parameter
+      const { data: result, error: functionError } = await supabase.functions.invoke(`elevenlabs-webhook?webhook_id=${profileData.webhook_id}`, {
+        body: testData,
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVya294bG9saW1qamFkYmRja2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwNTM3MDAsImV4cCI6MjA3MDYyOTcwMH0.1kZKwOYAl7NUlCDCtRxhU7yQqBAYn9-I5g0JHN88yE0`
-        },
-        body: JSON.stringify(testData)
+          'Content-Type': 'application/json'
+        }
       });
 
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.error || `HTTP ${response.status}`);
+      if (functionError) {
+        throw new Error(functionError.message || 'Function invocation failed');
       }
 
       console.log('🧪 Test response:', result);
