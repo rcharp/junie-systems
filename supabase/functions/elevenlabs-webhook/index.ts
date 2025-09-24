@@ -114,7 +114,7 @@ serve(async (req) => {
       }
     }
 
-    // Extract caller info - prioritize variables data from webhook
+    // Extract caller info - prioritize data_collection_results from webhook analysis
     let callerInfo = {
       caller_name: 'Unknown Caller',
       phone_number: 'Unknown',
@@ -124,8 +124,41 @@ serve(async (req) => {
       call_type: 'other'
     };
 
-    // Parse caller data from variables if available (this contains the actual caller data)
-    if (webhookData.variables) {
+    // First try to extract from analysis.data_collection_results (this is the structured data)
+    if (webhookData.data?.analysis?.data_collection_results) {
+      const results = webhookData.data.analysis.data_collection_results;
+      console.log('Data collection results found:', results);
+      
+      // Extract caller details from data collection results
+      if (results.customer_name?.value) {
+        callerInfo.caller_name = results.customer_name.value;
+      }
+      
+      if (results.phone_number?.value) {
+        // Handle both string and number formats
+        callerInfo.phone_number = String(results.phone_number.value);
+      }
+      
+      if (results.email_address?.value) {
+        callerInfo.email = results.email_address.value;
+      }
+      
+      // Use the transcript summary as the message
+      if (webhookData.data?.analysis?.transcript_summary) {
+        callerInfo.message = webhookData.data.analysis.transcript_summary.substring(0, 500);
+      }
+      
+      // Determine call type from appointment data
+      if (results.appointment_scheduled?.value === true) {
+        callerInfo.call_type = 'appointment';
+      } else {
+        callerInfo.call_type = 'inquiry';
+      }
+      
+      console.log('Caller info extracted from data collection results:', callerInfo);
+    }
+    // Fallback to variables if available
+    else if (webhookData.variables) {
       const vars = webhookData.variables;
       
       console.log('Variables found:', vars);
