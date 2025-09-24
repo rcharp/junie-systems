@@ -383,6 +383,7 @@ serve(async (req) => {
       if (userSettings) {
         if (userSettings.timezone) {
           userTimezone = userSettings.timezone;
+          console.log('Using timezone from user profile:', userTimezone);
         }
         appointmentBookingEnabled = userSettings.appointment_booking_enabled || false;
       } else {
@@ -390,7 +391,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('Using user timezone:', userTimezone);
+    console.log('Initial user timezone:', userTimezone);
     console.log('Appointment booking enabled:', appointmentBookingEnabled);
 
     // Parse appointment time from extracted data and check if appointment booking should be triggered
@@ -483,6 +484,18 @@ serve(async (req) => {
       if (vars.service_requested) serviceRequested = vars.service_requested;
       if (vars.notes) serviceRequested = vars.notes;
     }
+
+    // Refine timezone based on service address if user doesn't have timezone set
+    if (userTimezone === 'America/New_York' && serviceAddress) {
+      console.log('No custom timezone in user profile, determining from service address:', serviceAddress);
+      const addressTimezone = getTimezoneFromAddress(serviceAddress);
+      if (addressTimezone && addressTimezone.timezone) {
+        userTimezone = addressTimezone.timezone;
+        console.log('Updated timezone from service address:', userTimezone);
+      }
+    }
+
+    console.log('Final user timezone:', userTimezone);
 
     console.log('=== CHECKING APPOINTMENT BOOKING CONDITIONS ===');
     console.log('businessUserId:', businessUserId);
@@ -939,4 +952,62 @@ function getTimezoneOffset(timezone: string): number {
   
   // Default to Eastern Time if timezone not found
   return timezoneOffsets[timezone] || -240;
+}
+
+function getTimezoneFromAddress(address: string): { timezone: string; offset: string } | null {
+  if (!address) return null;
+  
+  const addressLower = address.toLowerCase();
+  
+  // Simple state-based timezone mapping
+  const timezoneMap: Record<string, { timezone: string; offset: string }> = {
+    // Eastern Time
+    'new york': { timezone: 'America/New_York', offset: '-05:00' },
+    'florida': { timezone: 'America/New_York', offset: '-05:00' },
+    'georgia': { timezone: 'America/New_York', offset: '-05:00' },
+    'virginia': { timezone: 'America/New_York', offset: '-05:00' },
+    'north carolina': { timezone: 'America/New_York', offset: '-05:00' },
+    'south carolina': { timezone: 'America/New_York', offset: '-05:00' },
+    'massachusetts': { timezone: 'America/New_York', offset: '-05:00' },
+    'connecticut': { timezone: 'America/New_York', offset: '-05:00' },
+    'pennsylvania': { timezone: 'America/New_York', offset: '-05:00' },
+    
+    // Central Time
+    'texas': { timezone: 'America/Chicago', offset: '-06:00' },
+    'illinois': { timezone: 'America/Chicago', offset: '-06:00' },
+    'missouri': { timezone: 'America/Chicago', offset: '-06:00' },
+    'louisiana': { timezone: 'America/Chicago', offset: '-06:00' },
+    'minnesota': { timezone: 'America/Chicago', offset: '-06:00' },
+    'wisconsin': { timezone: 'America/Chicago', offset: '-06:00' },
+    'iowa': { timezone: 'America/Chicago', offset: '-06:00' },
+    'kansas': { timezone: 'America/Chicago', offset: '-06:00' },
+    'oklahoma': { timezone: 'America/Chicago', offset: '-06:00' },
+    
+    // Mountain Time
+    'colorado': { timezone: 'America/Denver', offset: '-07:00' },
+    'utah': { timezone: 'America/Denver', offset: '-07:00' },
+    'wyoming': { timezone: 'America/Denver', offset: '-07:00' },
+    'montana': { timezone: 'America/Denver', offset: '-07:00' },
+    'new mexico': { timezone: 'America/Denver', offset: '-07:00' },
+    'arizona': { timezone: 'America/Phoenix', offset: '-07:00' }, // Arizona doesn't observe DST
+    
+    // Pacific Time
+    'california': { timezone: 'America/Los_Angeles', offset: '-08:00' },
+    'washington': { timezone: 'America/Los_Angeles', offset: '-08:00' },
+    'oregon': { timezone: 'America/Los_Angeles', offset: '-08:00' },
+    'nevada': { timezone: 'America/Los_Angeles', offset: '-08:00' },
+    
+    // Alaska/Hawaii
+    'alaska': { timezone: 'America/Anchorage', offset: '-09:00' },
+    'hawaii': { timezone: 'Pacific/Honolulu', offset: '-10:00' },
+  };
+  
+  // Check for state matches
+  for (const [state, tz] of Object.entries(timezoneMap)) {
+    if (addressLower.includes(state)) {
+      return tz;
+    }
+  }
+  
+  return null;
 }
