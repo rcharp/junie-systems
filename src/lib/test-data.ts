@@ -24,7 +24,7 @@ export const DEFAULT_TEST_CALL_DATA = {
         },
         "email_address": {
           "data_collection_id": "email_address",
-          "value": "test_user@gmail.com"
+          "value": "head2dasky@gmail.com"
         },
         "phone_number": {
           "data_collection_id": "phone_number",
