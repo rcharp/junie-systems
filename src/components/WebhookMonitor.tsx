@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { RefreshCw, Webhook, Activity, Trash2, ChevronDown, ChevronRight, Code, Minimize2, Maximize2, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format, parse, isValid, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { DEFAULT_TEST_CALL_DATA } from '@/lib/test-data';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
@@ -172,10 +172,9 @@ export const WebhookMonitor = () => {
               serviceRequested = results.service_type.value.toLowerCase();
             }
             
-            // Extract appointment time and format it
-            if (results.appointment_time && results.appointment_time.value) {
-              appointmentDetails = results.appointment_time.value;
-            }
+            // Use the properly parsed appointment_date_time from database instead of text
+            // The appointment time text is already parsed and stored as ISO datetime in the database
+            appointmentDetails = log.appointment_date_time || 'Not scheduled';
             
             // Extract appointment scheduled status
             if (results.appointment_scheduled && results.appointment_scheduled.value) {
@@ -337,20 +336,20 @@ export const WebhookMonitor = () => {
         
         const cleanSummary = createCallSummary();
         
-        // Format appointment datetime for display in the top section
-        const formatDisplayDateTime = (appointmentDetails: string) => {
-          if (!appointmentDetails || appointmentDetails === 'Not scheduled') return 'Not scheduled';
+        // Format appointment datetime for display - expects ISO datetime from database
+        const formatDisplayDateTime = (appointmentDateTime: string) => {
+          if (!appointmentDateTime || appointmentDateTime === 'Not scheduled') return 'Not scheduled';
           
           try {
-            const isoDate = parseISO(appointmentDetails);
-            if (isValid(isoDate)) {
-              return format(isoDate, 'EEEE, MMMM do, yyyy \'at\' haaa');
+            const date = new Date(appointmentDateTime);
+            if (isNaN(date.getTime())) {
+              return 'Invalid date';
             }
+            return format(date, 'EEEE, MMM do \'at\' h:mma');
           } catch (error) {
-            console.warn('Error parsing ISO date for display:', error);
+            console.warn('Error formatting appointment date:', error);
+            return appointmentDateTime;
           }
-          
-          return appointmentDetails;
         };
         
         // Parse name parts
