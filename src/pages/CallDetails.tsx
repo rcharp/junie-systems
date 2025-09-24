@@ -127,6 +127,56 @@ const CallDetails = () => {
     }
   };
 
+  const getCallReason = (callData: CallData) => {
+    const callType = callData.call_type?.toLowerCase() || 'inquiry';
+    const businessType = callData.business_type || '';
+    const summary = callData.call_summary || callData.message || '';
+    
+    // Extract service type from summary or message
+    const lowerSummary = summary.toLowerCase();
+    
+    // Common service patterns
+    const servicePatterns = {
+      'hvac|a/c|air conditioning|heating|cooling': 'HVAC',
+      'plumbing|plumber|leak|drain|pipe': 'Plumbing',
+      'electrical|electrician|wiring|power': 'Electrical',
+      'roofing|roof|shingle': 'Roofing',
+      'cleaning|clean|maid': 'Cleaning',
+      'lawn|landscaping|yard|garden': 'Landscaping',
+      'pest|exterminator|bug|termite': 'Pest Control',
+      'repair|fix|broken': 'Repair',
+      'installation|install': 'Installation',
+      'maintenance|service': 'Service',
+      'emergency|urgent': 'Emergency',
+      'estimate|quote|pricing': 'Estimate'
+    };
+    
+    let serviceType = '';
+    for (const [pattern, type] of Object.entries(servicePatterns)) {
+      if (new RegExp(pattern, 'i').test(lowerSummary)) {
+        serviceType = type;
+        break;
+      }
+    }
+    
+    // Generate description based on call type and detected service
+    switch (callType) {
+      case 'appointment':
+        return serviceType ? `${serviceType} Appointment` : 'Service Appointment';
+      case 'complaint':
+        return serviceType ? `${serviceType} Complaint` : 'Service Complaint';
+      case 'sales':
+        return serviceType ? `${serviceType} Sales Inquiry` : 'Sales Inquiry';
+      case 'support':
+        return serviceType ? `${serviceType} Support` : 'Customer Support';
+      case 'emergency':
+        return serviceType ? `${serviceType} Emergency` : 'Emergency Call';
+      case 'inquiry':
+      default:
+        return serviceType ? `${serviceType} Inquiry` : 'Service Inquiry';
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
@@ -169,7 +219,7 @@ const CallDetails = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">
-                {callData.phone_number || 'Unknown'} - {callData.appointment_scheduled ? 'Scheduled appointment' : 'Inquiry'}
+                {callData.phone_number || 'Unknown'} - {getCallReason(callData)}
               </h1>
               <p className="text-muted-foreground">
                 Call Time: {format(new Date(callData.created_at), 'M/d/yyyy, h:mm:ss a')}
