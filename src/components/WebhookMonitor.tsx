@@ -453,12 +453,10 @@ export const WebhookMonitor = () => {
         return;
       }
 
-      const latestCall = webhookData[0];
-      
-      // Use stored test data when no historical data is available
-      const testData = latestCall?.raw_webhook_data || DEFAULT_TEST_CALL_DATA;
+      // Always use the test data from test-data.ts for testing
+      const testData = DEFAULT_TEST_CALL_DATA;
 
-      console.log('🧪 Testing with call data:', latestCall ? 'Historical data' : 'Default test data');
+      console.log('🧪 Testing with default test data from test-data.ts');
       
       setLoading(true);
       
@@ -467,7 +465,8 @@ export const WebhookMonitor = () => {
         body: testData,
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-test-call': 'true'
         }
       });
 
