@@ -55,13 +55,31 @@ const CallDetails = () => {
     try {
       setLoading(true);
 
-      // Try to find in call_logs first (most comprehensive call data)
-      const { data: logData, error: logError } = await supabase
-        .from('call_logs')
-        .select('*')
-        .eq('id', callId)
+      // Get user's business_id first to find associated data
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_settings')
+        .select('id')
         .eq('user_id', user?.id)
         .maybeSingle();
+
+      if (businessError) throw businessError;
+
+      // Try to find in call_logs first (most comprehensive call data)
+      // Search by both user_id and business_id (similar to CallList logic)
+      let logQuery = supabase
+        .from('call_logs')
+        .select('*')
+        .eq('id', callId);
+
+      if (businessData) {
+        // If user has business settings, search using both user_id and business_id
+        logQuery = logQuery.or(`user_id.eq.${user?.id},business_id.eq.${businessData.id}`);
+      } else {
+        // Fallback to just user_id
+        logQuery = logQuery.eq('user_id', user?.id);
+      }
+
+      const { data: logData, error: logError } = await logQuery.maybeSingle();
 
       if (logData) {
         setCallData(logData);
