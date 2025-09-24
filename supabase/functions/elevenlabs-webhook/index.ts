@@ -309,6 +309,23 @@ serve(async (req) => {
                        webhookData.data?.summary || 
                        '';
 
+    // Extract appointment time from webhook data and parse it
+    const rawAppointmentTime = webhookData.data?.analysis?.data_collection_results?.appointment_time?.value;
+    let parsedAppointmentDateTime = null;
+    
+    if (rawAppointmentTime) {
+      try {
+        // Parse natural language appointment time
+        parsedAppointmentDateTime = parseAppointmentTime(rawAppointmentTime);
+        console.log('Parsed appointment time:', rawAppointmentTime, '→', parsedAppointmentDateTime);
+      } catch (error) {
+        console.error('Error parsing appointment time:', rawAppointmentTime, error);
+      }
+    }
+
+    // Check if appointment was scheduled from webhook data
+    const isAppointmentScheduled = webhookData.data?.analysis?.data_collection_results?.appointment_scheduled?.value === true;
+
     // Insert or update call log with extracted data
     const { error: upsertError } = await supabase
       .from('call_logs')
@@ -331,9 +348,9 @@ serve(async (req) => {
         business_name: webhookData.data?.analysis?.data_collection_results?.business_name?.value || 
                       webhookData.variables?.business_name || '',
         business_type: webhookData.variables?.business_type || '',
-        appointment_scheduled: callerInfo.appointment_scheduled,
-        service_address: callerInfo.service_address,
-        appointment_date_time: callerInfo.appointmentDateTime || null,
+        appointment_scheduled: isAppointmentScheduled,
+        service_address: webhookData.data?.analysis?.data_collection_results?.service_address?.value || callerInfo.service_address,
+        appointment_date_time: parsedAppointmentDateTime,
         metadata: {
           ...metadata,
           webhook_received_at: new Date().toISOString(),
@@ -635,4 +652,119 @@ function getNextWeekday(date: Date, targetDay: number): Date {
   const result = new Date(date);
   result.setDate(date.getDate() + (daysUntilTarget === 0 ? 7 : daysUntilTarget));
   return result;
+}
+
+// Function to parse natural language appointment time into ISO datetime
+function parseAppointmentTime(appointmentTimeString: string): string | null {
+  if (!appointmentTimeString) return null;
+  
+  const lowerText = appointmentTimeString.toLowerCase();
+  console.log('Parsing appointment time:', lowerText);
+  
+  // Current date for reference
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  
+  // Day of week mapping
+  const dayNames: { [key: string]: number } = {
+    'sunday': 0, 'monday': 1, 'tuesday': 2, 'wednesday': 3,
+    'thursday': 4, 'friday': 5, 'saturday': 6
+  };
+  
+  // Month mapping
+  const monthNames: { [key: string]: number } = {
+    'january': 0, 'february': 1, 'march': 2, 'april': 3, 'may': 4, 'june': 5,
+    'july': 6, 'august': 7, 'september': 8, 'october': 9, 'november': 10, 'december': 11
+  };
+  
+  let targetDate = new Date();
+  let hour = 9; // Default to 9 AM
+  let minute = 0;
+  
+  // Parse time (hour and minute)
+  const timePatterns = [
+    /(\d{1,2})\s*(?::(\d{2}))?\s*(am|pm|in the morning|in the afternoon|in the evening)/i,
+    /(\d{1,2})\s*(?::(\d{2}))?\s*o'?clock/i,
+    /(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s*(am|pm|in the morning|in the afternoon|in the evening)/i
+  ];
+  
+  for (const pattern of timePatterns) {
+    const timeMatch = lowerText.match(pattern);
+    if (timeMatch) {
+      let parsedHour: number;
+      
+      if (isNaN(parseInt(timeMatch[1]))) {
+        // Handle written numbers
+        const numberWords: { [key: string]: number } = {
+          'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
+          'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12
+        };
+        parsedHour = numberWords[timeMatch[1]] || 9;
+      } else {
+        parsedHour = parseInt(timeMatch[1]);
+      }
+      
+      minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+      
+      // Handle AM/PM or context
+      const timeContext = timeMatch[3]?.toLowerCase() || '';
+      if (timeContext.includes('pm') || timeContext.includes('afternoon') || timeContext.includes('evening')) {
+        if (parsedHour < 12) parsedHour += 12;
+      } else if (timeContext.includes('am') || timeContext.includes('morning')) {
+        if (parsedHour === 12) parsedHour = 0;
+      } else {
+        // Default interpretation: if hour is <= 12 and no AM/PM specified, assume PM for business hours
+        if (parsedHour <= 12 && parsedHour >= 8) {
+          parsedHour = parsedHour === 12 ? 12 : parsedHour + (parsedHour < 8 ? 12 : 0);
+        }
+      }
+      
+      hour = parsedHour;
+      break;
+    }
+  }
+  
+  // Parse date
+  // Try specific date patterns first (e.g., "September 25th", "25th", "September twenty-fifth")
+  const monthDayPattern = /(\w+)\s+(\w+)(?:st|nd|rd|th)?/i;
+  const monthMatch = lowerText.match(monthDayPattern);
+  
+  if (monthMatch) {
+    const monthStr = monthMatch[1].toLowerCase();
+    const dayStr = monthMatch[2].toLowerCase();
+    
+    // Convert written numbers to digits
+    const writtenNumbers: { [key: string]: number } = {
+      'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5, 'sixth': 6, 'seventh': 7,
+      'eighth': 8, 'ninth': 9, 'tenth': 10, 'eleventh': 11, 'twelfth': 12, 'thirteenth': 13,
+      'fourteenth': 14, 'fifteenth': 15, 'sixteenth': 16, 'seventeenth': 17, 'eighteenth': 18,
+      'nineteenth': 19, 'twentieth': 20, 'twenty-first': 21, 'twenty-second': 22, 'twenty-third': 23,
+      'twenty-fourth': 24, 'twenty-fifth': 25, 'twenty-sixth': 26, 'twenty-seventh': 27,
+      'twenty-eighth': 28, 'twenty-ninth': 29, 'thirtieth': 30, 'thirty-first': 31
+    };
+    
+    let month = monthNames[monthStr];
+    let day = writtenNumbers[dayStr] || parseInt(dayStr) || 1;
+    
+    if (month !== undefined) {
+      targetDate = new Date(currentYear, month, day);
+      // If the date is in the past, assume next year
+      if (targetDate < now) {
+        targetDate.setFullYear(currentYear + 1);
+      }
+    }
+  } else {
+    // Try day of week patterns (e.g., "Thursday", "next Thursday")
+    for (const [dayName, dayIndex] of Object.entries(dayNames)) {
+      if (lowerText.includes(dayName)) {
+        targetDate = getNextWeekday(now, dayIndex);
+        break;
+      }
+    }
+  }
+  
+  // Set the time
+  targetDate.setHours(hour, minute, 0, 0);
+  
+  return targetDate.toISOString();
 }
