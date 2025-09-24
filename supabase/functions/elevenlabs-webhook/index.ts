@@ -408,7 +408,7 @@ serve(async (req) => {
         
         // Get appointment time
         if (results.appointment_time && results.appointment_time.value) {
-          parsedAppointmentDateTime = parseAppointmentTime(results.appointment_time.value, userTimezone);
+          parsedAppointmentDateTime = await parseAppointmentTime(results.appointment_time.value, userTimezone);
         }
       }
     }
@@ -421,7 +421,7 @@ serve(async (req) => {
         isAppointmentScheduled = true;
         
         if (webhookData.variables.appointment_details) {
-          parsedAppointmentDateTime = parseAppointmentTime(webhookData.variables.appointment_details, userTimezone);
+          parsedAppointmentDateTime = await parseAppointmentTime(webhookData.variables.appointment_details, userTimezone);
         }
       }
     }
@@ -763,7 +763,7 @@ function getNextWeekday(date: Date, targetDay: number): Date {
   return result;
 }
 
-function parseAppointmentTime(appointmentTimeString: string, userTimezone: string): string | null {
+async function parseAppointmentTime(appointmentTimeString: string, userTimezone: string): Promise<string | null> {
   if (!appointmentTimeString || typeof appointmentTimeString !== 'string') {
     console.log('Invalid appointment time string:', appointmentTimeString);
     return null;
@@ -779,88 +779,114 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
       'thursday': 4, 'friday': 5, 'saturday': 6
     };
 
-    // Time word mapping
-    const timeWords: { [key: string]: number } = {
-      'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
-      'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12,
-      'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16,
-      'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
-      'thirty': 30, 'forty': 40, 'fifty': 50
-    };
-
     let hour = 9, minute = 0; // Default time
     let appointmentDate = new Date(now);
-
-    // Extract time - use a more robust approach that separates time from date
-    console.log(`Parsing appointment time: "${appointmentTimeString}"`);
-    console.log(`Lowercase string: "${lowerStr}"`);
     
-    // Time extraction patterns - look for time indicators with word boundaries
-    const smartTimePatterns = [
-      // Pattern 1: "at [time] in the [period]" or "at [time] [period]"
-      /\bat\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?\s*(?:in\s+the\s+)?(morning|afternoon|evening)/i,
-      // Pattern 2: "[time] in the [period]" or "[time] [period]" (not preceded by ordinal indicators)
-      /(?<!twenty-|thirty-|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?\s*(?:in\s+the\s+)?(morning|afternoon|evening|am|pm)/i,
-      // Pattern 3: Numeric patterns
-      /(\d{1,2}):(\d{2})\s*(am|pm)/i,
-      /(\d{1,2})\s*(am|pm)/i,
-      /(\d{1,2})\s*o'?clock/i
-    ];
+    // Use Claude AI to parse the appointment time intelligently
+    console.log(`Using Claude AI to parse appointment time: "${appointmentTimeString}"`);
     
-    let timeMatch = null;
-    let patternIndex = -1;
-    
-    // Try each pattern until we find a match
-    for (let i = 0; i < smartTimePatterns.length; i++) {
-      timeMatch = lowerStr.match(smartTimePatterns[i]);
-      if (timeMatch) {
-        patternIndex = i;
-        console.log(`Found time match with pattern ${i}:`, timeMatch);
-        break;
+    try {
+      const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+      if (!anthropicApiKey) {
+        console.error('ANTHROPIC_API_KEY not found, falling back to simple parsing');
+        throw new Error('No API key');
       }
-    }
-    
-    if (timeMatch) {
-      if (patternIndex <= 1) {
-        // Word-based patterns
-        hour = timeWords[timeMatch[1]];
-        console.log(`Found hour word: "${timeMatch[1]}" = ${hour}`);
+
+      const prompt = `Parse this appointment time string and extract the date and time information: "${appointmentTimeString}"
+
+Please respond with a JSON object containing:
+- hour: number (24-hour format)
+- minute: number
+- date: ISO date string (YYYY-MM-DD) if a specific date is mentioned, otherwise null
+- dayOfWeek: number (0=Sunday, 1=Monday, etc.) if a day of the week is mentioned, otherwise null
+
+Current date for context: ${now.toISOString()}
+Current timezone: ${userTimezone}
+
+Examples:
+- "Friday, September twenty-sixth, at ten in the morning" should extract hour=10, minute=0, and the appropriate date
+- "tomorrow at 2 PM" should extract hour=14, minute=0
+- "next Tuesday at nine thirty" should extract hour=9, minute=30
+
+Focus only on the TIME component, not date ordinals. For "twenty-sixth at ten in the morning", the time is "ten in the morning" (10:00 AM).`;
+
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-1-20250805',
+          max_tokens: 500,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const content = result.content[0].text;
+        console.log('Claude AI response:', content);
         
-        // Check for minute words
-        if (timeMatch[3]) {
-          console.log(`Found minute word: "${timeMatch[3]}"`);
-          if (timeMatch[3].includes('thirty')) {
-            minute = 30;
-          } else if (timeMatch[3].includes('fifteen')) {
-            minute = 15;
-          } else if (timeMatch[3].includes('forty-five')) {
-            minute = 45;
-          }
+        // Extract JSON from the response
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsedTime = JSON.parse(jsonMatch[0]);
+          console.log('Parsed time from Claude:', parsedTime);
+          
+          // Use Claude's parsed values
+          hour = parsedTime.hour || 9;
+          minute = parsedTime.minute || 0;
+          
+          console.log(`Claude extracted time: ${hour}:${minute < 10 ? '0' + minute : minute}`);
         } else {
-          minute = 0;
-        }
-        
-        // Handle period (morning/afternoon/evening/am/pm)
-        const period = timeMatch[4] || timeMatch[5]; // Different capture groups for different patterns
-        console.log(`Period: "${period}"`);
-        if (period && (period.includes('afternoon') || period.includes('evening') || period.includes('pm')) && hour !== 12) {
-          hour += 12;
-        } else if (period && (period.includes('morning') || period.includes('am')) && hour === 12) {
-          hour = 0;
+          throw new Error('Could not extract JSON from Claude response');
         }
       } else {
-        // Numeric patterns
+        throw new Error(`Claude API error: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Error using Claude AI for parsing, falling back to simple extraction:', error);
+      
+      // Fallback to basic parsing if Claude fails
+      // Look for common time patterns
+      const timeMatch = lowerStr.match(/(\d{1,2}):?(\d{2})?\s*(am|pm|morning|afternoon|evening)/i);
+      if (timeMatch) {
         hour = parseInt(timeMatch[1]);
         minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
         
-        if (timeMatch[3] && timeMatch[3].toLowerCase() === 'pm' && hour !== 12) {
+        const period = timeMatch[3].toLowerCase();
+        if ((period.includes('pm') || period.includes('afternoon') || period.includes('evening')) && hour !== 12) {
           hour += 12;
-        } else if (timeMatch[3] && timeMatch[3].toLowerCase() === 'am' && hour === 12) {
+        } else if ((period.includes('am') || period.includes('morning')) && hour === 12) {
           hour = 0;
         }
+      } else {
+        // Try to extract word-based times
+        const wordMatch = lowerStr.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b.*?(morning|afternoon|evening)/i);
+        if (wordMatch) {
+          const timeWords: { [key: string]: number } = {
+            'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
+            'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12
+          };
+          
+          hour = timeWords[wordMatch[1]] || 9;
+          minute = 0;
+          
+          const period = wordMatch[2].toLowerCase();
+          if ((period.includes('afternoon') || period.includes('evening')) && hour !== 12) {
+            hour += 12;
+          } else if (period.includes('morning') && hour === 12) {
+            hour = 0;
+          }
+        }
       }
-    } else {
-      console.log('No time pattern matched, using default time:', hour, ':', minute);
     }
 
     // Convert words to numbers for dates
