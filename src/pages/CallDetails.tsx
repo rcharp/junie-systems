@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Phone, Clock, User, Calendar, Mail, Play, Download, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 
 interface CallData {
   id: string;
@@ -280,7 +281,7 @@ const CallDetails = () => {
                     <span className="text-sm font-medium text-muted-foreground">Appointment Date/Time</span>
                     <p className="mt-1">
                       {callData.appointment_date_time 
-                        ? format(new Date(callData.appointment_date_time), 'EEEE, MMM do \'at\' h:mma')
+                        ? formatInTimeZone(new Date(callData.appointment_date_time), 'America/New_York', 'EEEE, MMM do \'at\' h:mma')
                         : 'Not scheduled'
                       }
                     </p>

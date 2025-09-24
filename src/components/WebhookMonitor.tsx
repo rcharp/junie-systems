@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { RefreshCw, Webhook, Activity, Trash2, ChevronDown, ChevronRight, Code, Minimize2, Maximize2, Check, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { DEFAULT_TEST_CALL_DATA } from '@/lib/test-data';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 
@@ -351,7 +352,7 @@ export const WebhookMonitor = () => {
             if (isNaN(date.getTime())) {
               return 'Invalid date';
             }
-            return format(date, 'EEEE, MMM do \'at\' h:mma');
+            return formatInTimeZone(date, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
           } catch (error) {
             console.warn('Error formatting appointment date:', error);
             return appointmentDateTime;
