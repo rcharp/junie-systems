@@ -59,41 +59,40 @@ const Dashboard = () => {
       if (businessError) throw businessError;
 
       if (businessData) {
-        // Fetch recent call logs that match this business
-        const { data: callLogs, error: callError } = await supabase
-          .from('call_logs')
-          .select('id, caller_name, call_type, message, created_at, business_name')
-          .eq('user_id', user?.id)
+        // Fetch recent business_data_requests for this business
+        const { data: businessRequests, error: requestError } = await supabase
+          .from('business_data_requests')
+          .select('*')
+          .eq('business_id', businessData.id)
           .order('created_at', { ascending: false })
           .limit(5);
 
-        if (callError) throw callError;
+        if (requestError) throw requestError;
 
-        // Transform call logs into recent activity
-        const activities: RecentActivity[] = (callLogs || []).map(call => {
-          // Extract key action from message
-          let action = "Called";
-          if (call.message.toLowerCase().includes('scheduled') || call.message.toLowerCase().includes('appointment')) {
-            action = `scheduled ${call.call_type}`;
-          } else if (call.message.toLowerCase().includes('pricing') || call.message.toLowerCase().includes('cost')) {
-            action = "asked about pricing";
-          } else if (call.message.toLowerCase().includes('emergency') || call.message.toLowerCase().includes('urgent')) {
-            action = "reported urgent issue";
-          } else if (call.call_type.toLowerCase().includes('repair')) {
-            action = `scheduled ${call.call_type}`;
-          } else {
-            action = `called about ${call.call_type}`;
+        // Transform business_data_requests into recent activity
+        const activities: RecentActivity[] = (businessRequests || []).map(request => {
+          const requestData = request.request_data as any || {};
+          const responseData = request.response_data as any || {};
+          
+          let action = "called";
+          let callerName = "A customer";
+          
+          if (responseData.caller_name) {
+            callerName = responseData.caller_name;
           }
-
+          
+          if (request.request_type === 'conversation_initiation') {
+            action = "started a conversation";
+          }
+          
           return {
-            id: call.id,
-            time: formatDistanceToNow(new Date(call.created_at), { addSuffix: true }),
-            action: `${call.caller_name} ${action}`,
-            type: call.call_type.toLowerCase().includes('emergency') ? 'error' : 
-                  call.call_type.toLowerCase().includes('appointment') ? 'success' : 'warning',
-            caller_name: call.caller_name,
-            call_type: call.call_type,
-            created_at: call.created_at,
+            id: request.id,
+            time: formatDistanceToNow(new Date(request.created_at), { addSuffix: true }),
+            action: `${callerName} ${action}`,
+            type: 'success' as const,
+            caller_name: responseData.caller_name || 'Unknown',
+            call_type: request.request_type || 'inquiry',
+            created_at: request.created_at,
           };
         });
 
@@ -200,7 +199,7 @@ const Dashboard = () => {
         </Card>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-1">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-1">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="calls" className="text-xs sm:text-sm">
               <span className="hidden md:inline">Messages & </span>Calls
