@@ -1315,7 +1315,7 @@ const Settings = () => {
                       <div className="space-y-0.5">
                         <Label>Enable Appointment Booking</Label>
                         <p className="text-sm text-muted-foreground">
-                          Allow AI to schedule appointments directly
+                          Allow AI to automatically schedule appointments directly on your calendar
                         </p>
                       </div>
                       <Switch
