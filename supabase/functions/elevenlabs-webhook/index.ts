@@ -309,15 +309,29 @@ serve(async (req) => {
                        webhookData.data?.summary || 
                        '';
 
+    // Get user's timezone for proper appointment time parsing
+    let userTimezone = 'America/New_York'; // Default
+    if (businessUserId) {
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('timezone')
+        .eq('id', businessUserId)
+        .maybeSingle();
+      
+      if (profileData?.timezone) {
+        userTimezone = profileData.timezone;
+        console.log('Using user timezone:', userTimezone);
+      }
+    }
+
     // Extract appointment time from webhook data and parse it
     const rawAppointmentTime = webhookData.data?.analysis?.data_collection_results?.appointment_time?.value;
     let parsedAppointmentDateTime = null;
     
     if (rawAppointmentTime) {
       try {
-        // Parse natural language appointment time with timezone consideration
-        // Default to Eastern timezone for now, but this should be retrieved from user profile
-        parsedAppointmentDateTime = parseAppointmentTime(rawAppointmentTime, 'America/New_York');
+        // Parse natural language appointment time with user's timezone
+        parsedAppointmentDateTime = parseAppointmentTime(rawAppointmentTime, userTimezone);
         console.log('Parsed appointment time:', rawAppointmentTime, '→', parsedAppointmentDateTime);
       } catch (error) {
         console.error('Error parsing appointment time:', rawAppointmentTime, error);
@@ -768,8 +782,36 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
   targetDate.setHours(hour, minute, 0, 0);
   
   // Convert to UTC by adjusting for the timezone offset
-  // EDT is UTC-4, so we need to add 4 hours to convert local time to UTC
-  const timezoneOffset = userTimezone === 'America/New_York' ? 4 : 0; // Assuming EDT for now
+  // Get timezone offset for common US timezones
+  let timezoneOffset = 0;
+  switch (userTimezone) {
+    case 'America/New_York':
+    case 'America/Detroit':
+    case 'America/Toronto':
+      // Eastern Time: UTC-5 (EST) or UTC-4 (EDT)
+      // Assuming EDT during business hours for now
+      timezoneOffset = 4;
+      break;
+    case 'America/Chicago':
+    case 'America/Mexico_City':
+      // Central Time: UTC-6 (CST) or UTC-5 (CDT)
+      timezoneOffset = 5;
+      break;
+    case 'America/Denver':
+    case 'America/Phoenix':
+      // Mountain Time: UTC-7 (MST) or UTC-6 (MDT)
+      timezoneOffset = 6;
+      break;
+    case 'America/Los_Angeles':
+    case 'America/Vancouver':
+      // Pacific Time: UTC-8 (PST) or UTC-7 (PDT)
+      timezoneOffset = 7;
+      break;
+    default:
+      // Default to Eastern Time
+      timezoneOffset = 4;
+  }
+  
   targetDate.setHours(targetDate.getHours() + timezoneOffset);
   
   return targetDate.toISOString();

@@ -551,6 +551,7 @@ export type Database = {
           setup_completed: boolean | null
           subscription_plan: string | null
           subscription_status: string | null
+          timezone: string | null
           trial_ends_at: string | null
           updated_at: string | null
           webhook_id: string | null
@@ -563,6 +564,7 @@ export type Database = {
           setup_completed?: boolean | null
           subscription_plan?: string | null
           subscription_status?: string | null
+          timezone?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
           webhook_id?: string | null
@@ -575,6 +577,7 @@ export type Database = {
           setup_completed?: boolean | null
           subscription_plan?: string | null
           subscription_status?: string | null
+          timezone?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
           webhook_id?: string | null
