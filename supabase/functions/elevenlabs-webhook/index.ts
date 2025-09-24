@@ -771,8 +771,21 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
   
   // Parse date
   // Try specific date patterns first (e.g., "September 25th", "25th", "September twenty-fifth")
-  const monthDayPattern = /(\w+)\s+(\w+)(?:st|nd|rd|th)?/i;
-  const monthMatch = lowerText.match(monthDayPattern);
+  // More specific patterns first to catch "twenty-fourth" properly
+  const monthDayPatterns = [
+    /(\w+)\s+(twenty-fourth|twenty-fourth)/i, // Specific for twenty-fourth
+    /(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?/i,     // Numbers with ordinals
+    /(\w+)\s+(\w+)(?:st|nd|rd|th)?/i          // Written numbers
+  ];
+  
+  let monthMatch = null;
+  for (const pattern of monthDayPatterns) {
+    monthMatch = lowerText.match(pattern);
+    if (monthMatch) {
+      console.log('Matched pattern:', pattern, 'result:', monthMatch);
+      break;
+    }
+  }
   
   if (monthMatch) {
     const monthStr = monthMatch[1].toLowerCase();
