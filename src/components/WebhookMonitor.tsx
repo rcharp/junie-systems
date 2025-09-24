@@ -460,20 +460,27 @@ export const WebhookMonitor = () => {
       
       setLoading(true);
       
-      // Use Supabase client to invoke the edge function with webhook_id parameter
-      const { data: result, error: functionError } = await supabase.functions.invoke('elevenlabs-webhook', {
-        body: testData,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-test-call': 'true',
-          'x-webhook-id': profileData.webhook_id
+      // Use direct fetch to the edge function URL with webhook_id as query param
+      const response = await fetch(
+        `https://urkoxlolimjjadbdckco.supabase.co/functions/v1/elevenlabs-webhook?webhook_id=${profileData.webhook_id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-test-call': 'true',
+            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVya294bG9saW1qamFkYmRja2NvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUwNTM3MDAsImV4cCI6MjA3MDYyOTcwMH0.1kZKwOYAl7NUlCDCtRxhU7yQqBAYn9-I5g0JHN88yE0'
+          },
+          body: JSON.stringify(testData)
         }
-      });
+      );
 
-      if (functionError) {
-        throw new Error(functionError.message || 'Function invocation failed');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
+
+      const result = await response.json();
 
       console.log('🧪 Test response:', result);
 
