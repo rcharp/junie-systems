@@ -454,8 +454,14 @@ serve(async (req) => {
           }
 
           // Check if this is an appointment request and schedule it if Google Calendar is connected AND appointment booking is enabled
+          console.log('=== APPOINTMENT BOOKING CHECK ===');
+          console.log('isAppointmentScheduled:', isAppointmentScheduled);
+          console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
+          console.log('callerInfo.caller_name:', callerInfo.caller_name);
+          console.log('appointmentBookingEnabled:', appointmentBookingEnabled);
+          
           if (isAppointmentScheduled && parsedAppointmentDateTime && callerInfo.caller_name && appointmentBookingEnabled) {
-            console.log('Attempting to schedule appointment via Google Calendar (appointment booking enabled)...');
+            console.log('✅ All conditions met - Attempting to schedule appointment via Google Calendar...');
             
             try {
               // Calculate end time (default to 1 hour appointment)
@@ -471,6 +477,17 @@ serve(async (req) => {
                                 callSummary?.includes('plumbing') ? 'Plumbing Service' :
                                 callSummary?.includes('electrical') ? 'Electrical Service' :
                                 'Service Appointment';
+
+              console.log('📅 Calling Google Calendar booking function with:', {
+                userId: businessUserId,
+                startTime,
+                endTime,
+                callerName: callerInfo.caller_name,
+                phoneNumber: callerInfo.phone_number,
+                email: callerInfo.email,
+                serviceType,
+                serviceAddress
+              });
 
               const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-book`, {
                 method: 'POST',
@@ -491,19 +508,29 @@ serve(async (req) => {
                 }),
               });
 
+              console.log('📅 Google Calendar response status:', response.status);
               const bookingResult = await response.json();
+              console.log('📅 Google Calendar response:', bookingResult);
               
               if (bookingResult.success) {
-                console.log('Successfully scheduled appointment:', bookingResult.appointment);
-                console.log('Calendar event created:', bookingResult.calendarEvent);
+                console.log('✅ Successfully scheduled appointment:', bookingResult.appointment);
+                console.log('✅ Calendar event created:', bookingResult.calendarEvent);
               } else {
-                console.log('Failed to schedule appointment:', bookingResult.error);
+                console.log('❌ Failed to schedule appointment:', bookingResult.error);
               }
             } catch (bookingError) {
-              console.error('Error scheduling appointment:', bookingError);
+              console.error('❌ Error scheduling appointment:', bookingError);
             }
-          } else if (isAppointmentScheduled && parsedAppointmentDateTime && !appointmentBookingEnabled) {
-            console.log('Appointment was scheduled but automatic booking is disabled. Manual calendar entry required.');
+          } else {
+            console.log('❌ Appointment booking conditions not met:');
+            if (!isAppointmentScheduled) console.log('  - isAppointmentScheduled: false');
+            if (!parsedAppointmentDateTime) console.log('  - parsedAppointmentDateTime: null/empty');
+            if (!callerInfo.caller_name) console.log('  - callerInfo.caller_name: null/empty');
+            if (!appointmentBookingEnabled) console.log('  - appointmentBookingEnabled: false');
+            
+            if (isAppointmentScheduled && parsedAppointmentDateTime && !appointmentBookingEnabled) {
+              console.log('ℹ️ Appointment was scheduled but automatic booking is disabled. Manual calendar entry required.');
+            }
           }
         }
       } catch (extractError) {
