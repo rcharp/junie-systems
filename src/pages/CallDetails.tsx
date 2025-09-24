@@ -280,33 +280,10 @@ const CallDetails = () => {
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Appointment Date/Time</span>
                     <p className="mt-1">
-                      {(() => {
-                        if (!callData.appointment_date_time) return 'Not scheduled';
-                        
-                        try {
-                          // First try the database appointment_date_time
-                          const appointmentDate = new Date(callData.appointment_date_time);
-                          if (!isNaN(appointmentDate.getTime())) {
-                            return formatInTimeZone(appointmentDate, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
-                          }
-                        } catch (error) {
-                          console.error('Error parsing appointment_date_time:', error);
-                        }
-                        
-                        // Fallback to raw webhook data if database value is invalid
-                        if (callData.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.appointment_time?.value) {
-                          try {
-                            const rawAppointmentTime = callData.metadata.raw_webhook_data.data.analysis.data_collection_results.appointment_time.value;
-                            // Try to parse the raw appointment time string into a proper date
-                            // This is just a fallback display, showing the raw text
-                            return rawAppointmentTime;
-                          } catch (error) {
-                            console.error('Error parsing raw appointment time:', error);
-                          }
-                        }
-                        
-                        return 'Not scheduled';
-                      })()}
+                      {callData.appointment_date_time 
+                        ? formatInTimeZone(new Date(callData.appointment_date_time), 'America/New_York', 'EEEE, MMM do \'at\' h:mma')
+                        : 'Not scheduled'
+                      }
                     </p>
                   </div>
                 </div>

@@ -803,12 +803,34 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
       appointmentDate.setDate(appointmentDate.getDate() + 1);
     }
 
-    const isoString = appointmentDate.toISOString();
-    console.log(`Parsed appointment time: "${appointmentTimeString}" -> ${isoString}`);
+    // Convert to timezone-aware ISO string
+    // The appointmentDate is treated as being in the user's timezone
+    // We need to adjust for timezone offset to get the correct UTC time
+    const timezoneOffset = getTimezoneOffset(userTimezone);
+    const utcDate = new Date(appointmentDate.getTime() - (timezoneOffset * 60 * 1000));
+    const isoString = utcDate.toISOString();
+    
+    console.log(`Parsed appointment time: "${appointmentTimeString}" -> ${isoString} (user timezone: ${userTimezone}, offset: ${timezoneOffset})`);
     return isoString;
 
   } catch (error) {
     console.error('Error parsing appointment time:', error);
     return null;
   }
+}
+
+function getTimezoneOffset(timezone: string): number {
+  // Map common timezone names to their UTC offsets (in minutes)
+  const timezoneOffsets: { [key: string]: number } = {
+    'America/New_York': -240, // EDT (UTC-4) during summer, -300 (UTC-5) during winter
+    'America/Chicago': -300,   // CDT (UTC-5) during summer, -360 (UTC-6) during winter  
+    'America/Denver': -360,    // MDT (UTC-6) during summer, -420 (UTC-7) during winter
+    'America/Los_Angeles': -420, // PDT (UTC-7) during summer, -480 (UTC-8) during winter
+    'America/Phoenix': -420,   // MST (UTC-7) year round
+    'America/Anchorage': -480, // AKDT (UTC-8) during summer, -540 (UTC-9) during winter
+    'Pacific/Honolulu': -600   // HST (UTC-10) year round
+  };
+  
+  // Default to Eastern Time if timezone not found
+  return timezoneOffsets[timezone] || -240;
 }
