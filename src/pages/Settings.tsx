@@ -1320,22 +1320,42 @@ const Settings = () => {
                       </div>
                       <Switch
                         checked={appointmentBooking}
-                        onCheckedChange={setAppointmentBooking}
+                        onCheckedChange={async (checked) => {
+                          setAppointmentBooking(checked);
+                          // Auto-save appointment booking setting
+                          if (businessSettingsId) {
+                            try {
+                              const { error } = await supabase
+                                .from('business_settings')
+                                .update({ appointment_booking: checked })
+                                .eq('id', businessSettingsId);
+                              
+                              if (error) {
+                                console.error('Error saving appointment booking setting:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to save appointment booking setting",
+                                  variant: "destructive",
+                                });
+                                // Revert the state if save failed
+                                setAppointmentBooking(!checked);
+                              } else {
+                                toast({
+                                  title: checked ? "Appointment Booking Enabled" : "Appointment Booking Disabled",
+                                  description: checked 
+                                    ? "AI can now schedule appointments when Google Calendar is connected"
+                                    : "AI will no longer schedule appointments automatically",
+                                });
+                              }
+                            } catch (error) {
+                              console.error('Error updating appointment booking:', error);
+                              setAppointmentBooking(!checked);
+                            }
+                          }
+                        }}
                       />
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Lead Capture</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Collect contact information from callers
-                        </p>
-                      </div>
-                      <Switch
-                        checked={leadCapture}
-                        onCheckedChange={setLeadCapture}
-                      />
-                    </div>
                   </div>
                   
                   <Separator />

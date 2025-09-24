@@ -309,8 +309,9 @@ serve(async (req) => {
                        webhookData.data?.summary || 
                        '';
 
-    // Get user's timezone for proper appointment time parsing
+    // Get user's timezone and appointment booking setting for proper appointment time parsing
     let userTimezone = 'America/New_York'; // Default
+    let appointmentBookingEnabled = false;
     if (businessUserId) {
       const { data: profileData } = await supabase
         .from('user_profiles')
@@ -322,6 +323,16 @@ serve(async (req) => {
         userTimezone = profileData.timezone;
         console.log('Using user timezone:', userTimezone);
       }
+
+      // Check if appointment booking is enabled
+      const { data: businessData } = await supabase
+        .from('business_settings')
+        .select('appointment_booking')
+        .eq('user_id', businessUserId)
+        .maybeSingle();
+      
+      appointmentBookingEnabled = businessData?.appointment_booking || false;
+      console.log('Appointment booking enabled:', appointmentBookingEnabled);
     }
 
     // Extract appointment time from webhook data and parse it
@@ -442,9 +453,9 @@ serve(async (req) => {
             console.log('Successfully saved call message for user:', userId);
           }
 
-          // Check if this is an appointment request and schedule it if Google Calendar is connected
-          if (isAppointmentScheduled && parsedAppointmentDateTime && callerInfo.caller_name) {
-            console.log('Attempting to schedule appointment via Google Calendar...');
+          // Check if this is an appointment request and schedule it if Google Calendar is connected AND appointment booking is enabled
+          if (isAppointmentScheduled && parsedAppointmentDateTime && callerInfo.caller_name && appointmentBookingEnabled) {
+            console.log('Attempting to schedule appointment via Google Calendar (appointment booking enabled)...');
             
             try {
               // Calculate end time (default to 1 hour appointment)
@@ -491,6 +502,8 @@ serve(async (req) => {
             } catch (bookingError) {
               console.error('Error scheduling appointment:', bookingError);
             }
+          } else if (isAppointmentScheduled && parsedAppointmentDateTime && !appointmentBookingEnabled) {
+            console.log('Appointment was scheduled but automatic booking is disabled. Manual calendar entry required.');
           }
         }
       } catch (extractError) {
