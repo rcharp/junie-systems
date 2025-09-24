@@ -309,7 +309,7 @@ const Dashboard = () => {
             <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-1">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="calls" className="text-xs sm:text-sm">
-              <span className="hidden md:inline">Messages & </span>Calls
+              <span className="hidden md:inline">Messages & </span> Calls
             </TabsTrigger>
             <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
           </TabsList>
