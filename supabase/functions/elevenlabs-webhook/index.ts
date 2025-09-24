@@ -779,13 +779,6 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
       'thursday': 4, 'friday': 5, 'saturday': 6
     };
 
-    // Time extraction patterns
-    const timePatterns = [
-      /(\d{1,2}):(\d{2})\s*(am|pm)/i,
-      /(\d{1,2})\s*(am|pm)/i,
-      /(\d{1,2})\s*o'?clock/i
-    ];
-
     // Time word mapping
     const timeWords: { [key: string]: number } = {
       'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
@@ -798,59 +791,76 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
     let hour = 9, minute = 0; // Default time
     let appointmentDate = new Date(now);
 
-    // Extract time - try word patterns first
+    // Extract time - use a more robust approach that separates time from date
     console.log(`Parsing appointment time: "${appointmentTimeString}"`);
     console.log(`Lowercase string: "${lowerStr}"`);
     
-    // Test the specific regex pattern
-    const testPattern = /\bat\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?\s+(in\s+the\s+)?(morning|afternoon|evening|am|pm)/i;
-    console.log('Testing regex pattern on:', lowerStr);
-    console.log('Regex pattern:', testPattern);
+    // Time extraction patterns - look for time indicators with word boundaries
+    const smartTimePatterns = [
+      // Pattern 1: "at [time] in the [period]" or "at [time] [period]"
+      /\bat\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?\s*(?:in\s+the\s+)?(morning|afternoon|evening)/i,
+      // Pattern 2: "[time] in the [period]" or "[time] [period]" (not preceded by ordinal indicators)
+      /(?<!twenty-|thirty-|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth)\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?\s*(?:in\s+the\s+)?(morning|afternoon|evening|am|pm)/i,
+      // Pattern 3: Numeric patterns
+      /(\d{1,2}):(\d{2})\s*(am|pm)/i,
+      /(\d{1,2})\s*(am|pm)/i,
+      /(\d{1,2})\s*o'?clock/i
+    ];
     
-    const wordTimeMatch = lowerStr.match(testPattern);
-    console.log('Word time match result:', wordTimeMatch);
+    let timeMatch = null;
+    let patternIndex = -1;
     
-    if (wordTimeMatch) {
-      hour = timeWords[wordTimeMatch[1]];
-      console.log(`Found hour word: "${wordTimeMatch[1]}" = ${hour}`);
-      
-      if (wordTimeMatch[3]) {
-        console.log(`Found minute word: "${wordTimeMatch[3]}"`);
-        if (wordTimeMatch[3].includes('thirty')) {
-          minute = 30;
-        } else if (wordTimeMatch[3].includes('fifteen')) {
-          minute = 15;
-        } else if (wordTimeMatch[3].includes('forty-five')) {
-          minute = 45;
+    // Try each pattern until we find a match
+    for (let i = 0; i < smartTimePatterns.length; i++) {
+      timeMatch = lowerStr.match(smartTimePatterns[i]);
+      if (timeMatch) {
+        patternIndex = i;
+        console.log(`Found time match with pattern ${i}:`, timeMatch);
+        break;
+      }
+    }
+    
+    if (timeMatch) {
+      if (patternIndex <= 1) {
+        // Word-based patterns
+        hour = timeWords[timeMatch[1]];
+        console.log(`Found hour word: "${timeMatch[1]}" = ${hour}`);
+        
+        // Check for minute words
+        if (timeMatch[3]) {
+          console.log(`Found minute word: "${timeMatch[3]}"`);
+          if (timeMatch[3].includes('thirty')) {
+            minute = 30;
+          } else if (timeMatch[3].includes('fifteen')) {
+            minute = 15;
+          } else if (timeMatch[3].includes('forty-five')) {
+            minute = 45;
+          }
+        } else {
+          minute = 0;
+        }
+        
+        // Handle period (morning/afternoon/evening/am/pm)
+        const period = timeMatch[4] || timeMatch[5]; // Different capture groups for different patterns
+        console.log(`Period: "${period}"`);
+        if (period && (period.includes('afternoon') || period.includes('evening') || period.includes('pm')) && hour !== 12) {
+          hour += 12;
+        } else if (period && (period.includes('morning') || period.includes('am')) && hour === 12) {
+          hour = 0;
         }
       } else {
-        console.log('No minute word found, using 0 minutes');
-        minute = 0;
-      }
-      
-      const period = wordTimeMatch[5]; // Updated group index
-      console.log(`Period: "${period}"`);
-      if (period && (period.includes('afternoon') || period.includes('evening') || period.includes('pm')) && hour !== 12) {
-        hour += 12;
-      } else if (period && (period.includes('morning') || period.includes('am')) && hour === 12) {
-        hour = 0;
-      }
-    } else {
-      // Extract time using numeric patterns
-      for (const pattern of timePatterns) {
-        const timeMatch = lowerStr.match(pattern);
-        if (timeMatch) {
-          hour = parseInt(timeMatch[1]);
-          minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
-          
-          if (timeMatch[3] && timeMatch[3].toLowerCase() === 'pm' && hour !== 12) {
-            hour += 12;
-          } else if (timeMatch[3] && timeMatch[3].toLowerCase() === 'am' && hour === 12) {
-            hour = 0;
-          }
-          break;
+        // Numeric patterns
+        hour = parseInt(timeMatch[1]);
+        minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+        
+        if (timeMatch[3] && timeMatch[3].toLowerCase() === 'pm' && hour !== 12) {
+          hour += 12;
+        } else if (timeMatch[3] && timeMatch[3].toLowerCase() === 'am' && hour === 12) {
+          hour = 0;
         }
       }
+    } else {
+      console.log('No time pattern matched, using default time:', hour, ':', minute);
     }
 
     // Convert words to numbers for dates
