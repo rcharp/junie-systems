@@ -172,27 +172,39 @@ Deno.serve(async (req) => {
 
     const businessName = businessSettings?.business_name || 'Business'
 
-    // Extract a concise service type from the full service description
+    // Extract a concise service type from the full service description using business type categories
     let conciseServiceType = serviceType;
     
-    // Try to extract service type using simple patterns first
+    // Try to extract service type using business type patterns from dropdown
     if (serviceType && serviceType.length > 30) {
-      // Common service patterns
-      if (serviceType.toLowerCase().includes('a/c') || serviceType.toLowerCase().includes('hvac') || serviceType.toLowerCase().includes('air condition')) {
-        conciseServiceType = 'HVAC Service';
-      } else if (serviceType.toLowerCase().includes('plumb')) {
-        conciseServiceType = 'Plumbing Service';
-      } else if (serviceType.toLowerCase().includes('electric')) {
-        conciseServiceType = 'Electrical Service';
-      } else if (serviceType.toLowerCase().includes('heat')) {
-        conciseServiceType = 'Heating Service';
-      } else if (serviceType.toLowerCase().includes('roof')) {
-        conciseServiceType = 'Roofing Service';
-      } else if (serviceType.toLowerCase().includes('repair')) {
+      const lowerServiceType = serviceType.toLowerCase();
+      
+      // Match against business type categories from the dropdown
+      if (lowerServiceType.includes('electric') || lowerServiceType.includes('electrical')) {
+        conciseServiceType = 'Electric Services';
+      } else if (lowerServiceType.includes('garage door') || lowerServiceType.includes('garage-door')) {
+        conciseServiceType = 'Garage Door Services';
+      } else if (lowerServiceType.includes('handyman') || lowerServiceType.includes('general repair')) {
+        conciseServiceType = 'Handyman Services';
+      } else if (lowerServiceType.includes('hvac') || lowerServiceType.includes('a/c') || lowerServiceType.includes('air condition') || lowerServiceType.includes('heating') || lowerServiceType.includes('cooling')) {
+        conciseServiceType = 'HVAC & Air Conditioning';
+      } else if (lowerServiceType.includes('landscaping') || lowerServiceType.includes('lawn') || lowerServiceType.includes('garden') || lowerServiceType.includes('yard')) {
+        conciseServiceType = 'Landscaping';
+      } else if (lowerServiceType.includes('pest control') || lowerServiceType.includes('pest') || lowerServiceType.includes('exterminator') || lowerServiceType.includes('bug') || lowerServiceType.includes('termite')) {
+        conciseServiceType = 'Pest Control';
+      } else if (lowerServiceType.includes('plumb') || lowerServiceType.includes('pipe') || lowerServiceType.includes('drain') || lowerServiceType.includes('leak')) {
+        conciseServiceType = 'Plumbing';
+      } else if (lowerServiceType.includes('pool') || lowerServiceType.includes('spa') || lowerServiceType.includes('hot tub')) {
+        conciseServiceType = 'Pool & Spa Services';
+      } else if (lowerServiceType.includes('cleaning') || lowerServiceType.includes('clean') || lowerServiceType.includes('maid') || lowerServiceType.includes('janitorial')) {
+        conciseServiceType = 'Professional Cleaning';
+      } else if (lowerServiceType.includes('roof') || lowerServiceType.includes('shingle') || lowerServiceType.includes('gutter')) {
+        conciseServiceType = 'Roofing';
+      } else if (lowerServiceType.includes('repair')) {
         conciseServiceType = 'Repair Service';
-      } else if (serviceType.toLowerCase().includes('install')) {
+      } else if (lowerServiceType.includes('install') || lowerServiceType.includes('installation')) {
         conciseServiceType = 'Installation Service';
-      } else if (serviceType.toLowerCase().includes('maintenance')) {
+      } else if (lowerServiceType.includes('maintenance') || lowerServiceType.includes('service')) {
         conciseServiceType = 'Maintenance Service';
       } else {
         // Fallback: take first few words or use generic term
