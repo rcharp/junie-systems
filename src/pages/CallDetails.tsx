@@ -127,94 +127,6 @@ const CallDetails = () => {
     }
   };
 
-  const formatAppointmentTime = (timeStr: string) => {
-    if (!timeStr) return 'Not scheduled';
-    
-    // Parse text like "Friday, September twenty-sixth, at ten in the morning"
-    const cleanText = timeStr.toLowerCase();
-    
-    // Extract day of week
-    const dayMatch = cleanText.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
-    const day = dayMatch ? dayMatch[1] : '';
-    
-    // Extract month and date
-    const monthNames = {
-      'january': 'Jan', 'february': 'Feb', 'march': 'Mar', 'april': 'Apr',
-      'may': 'May', 'june': 'Jun', 'july': 'Jul', 'august': 'Aug',
-      'september': 'Sep', 'october': 'Oct', 'november': 'Nov', 'december': 'Dec'
-    };
-    
-    const numbers = {
-      'first': '1st', 'second': '2nd', 'third': '3rd', 'fourth': '4th', 'fifth': '5th',
-      'sixth': '6th', 'seventh': '7th', 'eighth': '8th', 'ninth': '9th', 'tenth': '10th',
-      'eleventh': '11th', 'twelfth': '12th', 'thirteenth': '13th', 'fourteenth': '14th',
-      'fifteenth': '15th', 'sixteenth': '16th', 'seventeenth': '17th', 'eighteenth': '18th',
-      'nineteenth': '19th', 'twentieth': '20th', 'twenty-first': '21st', 'twenty-second': '22nd',
-      'twenty-third': '23rd', 'twenty-fourth': '24th', 'twenty-fifth': '25th', 'twenty-sixth': '26th',
-      'twenty-seventh': '27th', 'twenty-eighth': '28th', 'twenty-ninth': '29th', 'thirtieth': '30th',
-      'thirty-first': '31st'
-    };
-    
-    let month = '';
-    let date = '';
-    
-    for (const [fullMonth, shortMonth] of Object.entries(monthNames)) {
-      if (cleanText.includes(fullMonth)) {
-        month = shortMonth;
-        break;
-      }
-    }
-    
-    for (const [textNum, ordinal] of Object.entries(numbers)) {
-      if (cleanText.includes(textNum)) {
-        date = ordinal;
-        break;
-      }
-    }
-    
-    // Extract time
-    let time = '';
-    if (cleanText.includes('ten in the morning') || cleanText.includes('10 in the morning')) {
-      time = '10am';
-    } else if (cleanText.includes('eleven in the morning') || cleanText.includes('11 in the morning')) {
-      time = '11am';
-    } else if (cleanText.includes('twelve in the afternoon') || cleanText.includes('noon')) {
-      time = '12pm';
-    } else if (cleanText.includes('one in the afternoon') || cleanText.includes('1 in the afternoon')) {
-      time = '1pm';
-    } else if (cleanText.includes('two in the afternoon') || cleanText.includes('2 in the afternoon')) {
-      time = '2pm';
-    } else if (cleanText.includes('three in the afternoon') || cleanText.includes('3 in the afternoon')) {
-      time = '3pm';
-    } else if (cleanText.includes('four in the afternoon') || cleanText.includes('4 in the afternoon')) {
-      time = '4pm';
-    } else if (cleanText.includes('five in the afternoon') || cleanText.includes('5 in the afternoon')) {
-      time = '5pm';
-    } else {
-      // Try to extract numeric time
-      const timeMatch = cleanText.match(/(\d{1,2})\s*(?::|am|pm)/);
-      if (timeMatch) {
-        const hour = parseInt(timeMatch[1]);
-        if (cleanText.includes('morning') || cleanText.includes('am')) {
-          time = `${hour}am`;
-        } else if (cleanText.includes('afternoon') || cleanText.includes('evening') || cleanText.includes('pm')) {
-          time = `${hour}pm`;
-        }
-      }
-    }
-    
-    // Capitalize day
-    const capitalizedDay = day.charAt(0).toUpperCase() + day.slice(1);
-    
-    // Build formatted string
-    if (capitalizedDay && month && date && time) {
-      return `${capitalizedDay}, ${month} ${date} at ${time}`;
-    }
-    
-    // Fallback to original if parsing fails
-    return timeStr;
-  };
-
   const getCallReason = (callData: CallData) => {
     const callType = callData.call_type?.toLowerCase() || 'inquiry';
     const businessType = callData.business_type || '';
@@ -367,18 +279,10 @@ const CallDetails = () => {
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Appointment Date/Time</span>
                     <p className="mt-1">
-                      {(() => {
-                        // Try to get appointment time from metadata first (for test data)
-                        const appointmentTime = callData.metadata?.analysis?.data_collection_results?.appointment_time?.value;
-                        if (appointmentTime) {
-                          return formatAppointmentTime(appointmentTime);
-                        }
-                        // Fallback to appointment_date_time if available
-                        if (callData.appointment_date_time) {
-                          return format(new Date(callData.appointment_date_time), 'PPp');
-                        }
-                        return 'Not scheduled';
-                      })()}
+                      {callData.appointment_date_time 
+                        ? format(new Date(callData.appointment_date_time), 'EEEE, MMM do \'at\' h:mma')
+                        : 'Not scheduled'
+                      }
                     </p>
                   </div>
                 </div>
