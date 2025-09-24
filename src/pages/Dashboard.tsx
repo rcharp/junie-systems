@@ -78,13 +78,13 @@ const Dashboard = () => {
       const activities: RecentActivity[] = [];
 
       if (businessData) {
-        // Fetch from call_logs using business_id
+        // Fetch from call_logs using both user_id and business_id
         const { data: callLogs, error: logsError } = await supabase
           .from('call_logs')
           .select('*')
-          .eq('business_id', businessData.id)
+          .or(`user_id.eq.${user?.id},business_id.eq.${businessData.id}`)
           .order('created_at', { ascending: false })
-          .limit(3);
+          .limit(5);
 
         if (logsError) throw logsError;
 
@@ -158,11 +158,11 @@ const Dashboard = () => {
       let successRate = 100;
 
       if (businessData) {
-        // Fetch call_logs for this business
+        // Fetch call_logs using both user_id and business_id
         const { data: callLogs, error: logsError } = await supabase
           .from('call_logs')
           .select('*')
-          .eq('business_id', businessData.id);
+          .or(`user_id.eq.${user?.id},business_id.eq.${businessData.id}`);
 
         if (logsError) throw logsError;
 

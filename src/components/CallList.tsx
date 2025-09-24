@@ -77,7 +77,7 @@ const CallList = () => {
         const { data: callLogs, error: logsError } = await supabase
           .from('call_logs')
           .select('*')
-          .eq('business_id', businessData.id)
+          .or(`user_id.eq.${user?.id},business_id.eq.${businessData.id}`)
           .order('created_at', { ascending: false })
           .limit(50);
 
