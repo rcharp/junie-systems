@@ -86,6 +86,34 @@ const Dashboard = () => {
     }
   };
 
+  const getContextualCallerName = (callerName: string, callType: string) => {
+    // If caller name is provided and not "Unknown" variations, use it
+    if (callerName && 
+        !callerName.toLowerCase().includes('unknown') && 
+        callerName.trim() !== '' && 
+        callerName !== 'Unknown Caller') {
+      return callerName;
+    }
+    
+    // Return contextual name based on call type
+    const lowerCallType = callType.toLowerCase();
+    
+    switch (lowerCallType) {
+      case 'appointment':
+        return 'A potential client';
+      case 'sales':
+        return 'A potential customer';
+      case 'support':
+        return 'A customer';
+      case 'complaint':
+        return 'A customer';
+      case 'inquiry':
+        return 'A potential customer';
+      default:
+        return 'A potential customer';
+    }
+  };
+
   const extractCallAction = (message: string, callType: string) => {
     if (!message) return 'called';
     
@@ -172,11 +200,12 @@ const Dashboard = () => {
             // Extract key action from message or call_summary
             const fullMessage = log.call_summary || log.message || '';
             const actionDescription = extractCallAction(fullMessage, log.call_type);
+            const displayName = getContextualCallerName(log.caller_name, log.call_type);
             
             activities.push({
               id: log.id,
               time: formatDistanceToNow(new Date(log.created_at), { addSuffix: true }),
-              action: `${log.caller_name} ${actionDescription}`,
+              action: `${displayName} ${actionDescription}`,
               type: log.urgency_level === 'urgent' ? 'error' : 
                     log.urgency_level === 'high' ? 'warning' : 'success',
               caller_name: log.caller_name,
@@ -199,11 +228,12 @@ const Dashboard = () => {
         callMessages.forEach(message => {
           // Extract key action from message
           const actionDescription = extractCallAction(message.message, message.call_type);
+          const displayName = getContextualCallerName(message.caller_name, message.call_type);
           
           activities.push({
             id: message.id,
             time: formatDistanceToNow(new Date(message.created_at), { addSuffix: true }),
-            action: `${message.caller_name} ${actionDescription.replace('called', 'left a message')}`,
+            action: `${displayName} ${actionDescription.replace('called', 'left a message')}`,
             type: message.urgency_level === 'urgent' ? 'error' : 
                   message.urgency_level === 'high' ? 'warning' : 'success',
             caller_name: message.caller_name,
