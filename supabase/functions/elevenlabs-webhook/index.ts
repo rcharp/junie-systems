@@ -352,6 +352,89 @@ serve(async (req) => {
     // Check if appointment was scheduled from webhook data
     const isAppointmentScheduled = webhookData.data?.analysis?.data_collection_results?.appointment_scheduled?.value === true;
 
+    // ========== GOOGLE CALENDAR APPOINTMENT BOOKING ==========
+    // Do this check BEFORE inserting call log so booking happens immediately
+    console.log('=== MAIN APPOINTMENT BOOKING CHECK ===');
+    console.log('isAppointmentScheduled:', isAppointmentScheduled);
+    console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
+    console.log('callerInfo.caller_name:', callerInfo.caller_name);
+    console.log('appointmentBookingEnabled:', appointmentBookingEnabled);
+    console.log('businessUserId:', businessUserId);
+    
+    if (isAppointmentScheduled && parsedAppointmentDateTime && callerInfo.caller_name && appointmentBookingEnabled && businessUserId) {
+      console.log('✅ All conditions met for Google Calendar booking - Proceeding...');
+      
+      try {
+        // Calculate end time (default to 1 hour appointment)
+        const startTime = parsedAppointmentDateTime;
+        const endTime = new Date(new Date(startTime).getTime() + 60 * 60 * 1000).toISOString();
+        
+        // Get service address from webhook data
+        const serviceAddress = webhookData.data?.analysis?.data_collection_results?.service_address?.value || 
+                              callerInfo.service_address || '';
+        
+        // Determine service type from call summary or default
+        const serviceType = callSummary?.includes('A/C') || callSummary?.includes('HVAC') ? 'HVAC Service' :
+                          callSummary?.includes('plumbing') ? 'Plumbing Service' :
+                          callSummary?.includes('electrical') ? 'Electrical Service' :
+                          'Service Appointment';
+
+        console.log('📅 Calling Google Calendar booking function with:', {
+          userId: businessUserId,
+          startTime,
+          endTime,
+          callerName: callerInfo.caller_name,
+          phoneNumber: callerInfo.phone_number,
+          email: callerInfo.email,
+          serviceType,
+          serviceAddress
+        });
+
+        const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-book`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({
+            userId: businessUserId,
+            startTime: startTime,
+            endTime: endTime,
+            callerName: callerInfo.caller_name,
+            phoneNumber: callerInfo.phone_number || 'Not provided',
+            email: callerInfo.email || null,
+            serviceType: serviceType,
+            serviceAddress: serviceAddress,
+            notes: callerInfo.message || callSummary || 'Appointment scheduled via phone call',
+          }),
+        });
+
+        console.log('📅 Google Calendar response status:', response.status);
+        const bookingResult = await response.json();
+        console.log('📅 Google Calendar response:', bookingResult);
+        
+        if (bookingResult.success) {
+          console.log('✅ Successfully scheduled appointment:', bookingResult.appointment);
+          console.log('✅ Calendar event created:', bookingResult.calendarEvent);
+        } else {
+          console.log('❌ Failed to schedule appointment:', bookingResult.error);
+        }
+      } catch (bookingError) {
+        console.error('❌ Error scheduling appointment:', bookingError);
+      }
+    } else {
+      console.log('❌ Main appointment booking conditions not met:');
+      if (!isAppointmentScheduled) console.log('  - isAppointmentScheduled: false');
+      if (!parsedAppointmentDateTime) console.log('  - parsedAppointmentDateTime: null/empty');
+      if (!callerInfo.caller_name) console.log('  - callerInfo.caller_name: null/empty');
+      if (!appointmentBookingEnabled) console.log('  - appointmentBookingEnabled: false');
+      if (!businessUserId) console.log('  - businessUserId: null/empty');
+      
+      if (isAppointmentScheduled && parsedAppointmentDateTime && !appointmentBookingEnabled) {
+        console.log('ℹ️ Appointment was scheduled but automatic booking is disabled. Manual calendar entry required.');
+      }
+    }
+
     // Insert or update call log with extracted data
     const { error: upsertError } = await supabase
       .from('call_logs')
@@ -398,12 +481,19 @@ serve(async (req) => {
     }
 
     // Extract message information from transcript if call was completed
+    console.log('=== CHECKING APPOINTMENT BOOKING CONDITIONS ===');
+    console.log('status:', status);
+    console.log('fullTranscript exists:', !!fullTranscript);
+    console.log('isAppointmentScheduled:', isAppointmentScheduled);
+    console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
+    console.log('appointmentBookingEnabled:', appointmentBookingEnabled);
+    
     if (status === 'completed' && fullTranscript) {
       try {
         // Enhanced extraction logic with better parsing
-        const callerInfo = extractCallerInfo(transcript);
+        const transcriptCallerInfo = extractCallerInfo(transcript);
         
-        if (callerInfo.caller_name || callerInfo.phone_number) {
+        if (transcriptCallerInfo.caller_name || transcriptCallerInfo.phone_number) {
           let userId = null;
 
           // First try to get user_id from webhook_id if provided
@@ -454,13 +544,13 @@ serve(async (req) => {
           }
 
           // Check if this is an appointment request and schedule it if Google Calendar is connected AND appointment booking is enabled
-          console.log('=== APPOINTMENT BOOKING CHECK ===');
+          console.log('=== APPOINTMENT BOOKING CHECK (TRANSCRIPT) ===');
           console.log('isAppointmentScheduled:', isAppointmentScheduled);
           console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
-          console.log('callerInfo.caller_name:', callerInfo.caller_name);
+          console.log('transcriptCallerInfo.caller_name:', transcriptCallerInfo.caller_name);
           console.log('appointmentBookingEnabled:', appointmentBookingEnabled);
           
-          if (isAppointmentScheduled && parsedAppointmentDateTime && callerInfo.caller_name && appointmentBookingEnabled) {
+          if (isAppointmentScheduled && parsedAppointmentDateTime && transcriptCallerInfo.caller_name && appointmentBookingEnabled) {
             console.log('✅ All conditions met - Attempting to schedule appointment via Google Calendar...');
             
             try {
