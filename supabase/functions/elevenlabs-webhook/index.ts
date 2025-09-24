@@ -90,16 +90,33 @@ serve(async (req) => {
 
     const { call_id, status, transcript, duration, recording_url, metadata, transcripts } = webhookData;
 
-    // Handle both transcript (single) and transcripts (array) formats
+    // Handle transcript extraction from ElevenLabs format
     let fullTranscript = '';
-    if (transcript) {
+    
+    // First try the new ElevenLabs format: data.transcript (array of conversation objects)
+    if (webhookData.data?.transcript && Array.isArray(webhookData.data.transcript)) {
+      console.log('Found transcript array in data.transcript:', webhookData.data.transcript.length, 'entries');
+      fullTranscript = webhookData.data.transcript
+        .filter(item => item.message && item.message.trim()) // Filter out empty messages
+        .map(item => {
+          const role = item.role === 'agent' ? 'Agent' : 
+                      item.role === 'user' ? 'Caller' : 
+                      item.role?.charAt(0).toUpperCase() + item.role?.slice(1) || 'Speaker';
+          return `${role}: ${item.message}`;
+        })
+        .join('\n\n');
+      console.log('Processed ElevenLabs transcript into full transcript:', fullTranscript.length, 'characters');
+    }
+    // Fallback to legacy formats
+    else if (transcript) {
       fullTranscript = transcript;
+      console.log('Using legacy transcript field');
     } else if (transcripts && Array.isArray(transcripts)) {
-      // Combine all transcript entries into a single string
+      // Handle legacy transcripts array format
       fullTranscript = transcripts
         .map(t => `${t.user === 'user' ? 'Caller' : 'Assistant'}: ${t.text}`)
         .join('\n');
-      console.log('Processed transcripts into full transcript:', fullTranscript);
+      console.log('Processed legacy transcripts into full transcript:', fullTranscript);
     }
 
     // Get user_id from webhook_id if provided
