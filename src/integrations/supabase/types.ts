@@ -615,7 +615,7 @@ export type Database = {
         Returns: boolean
       }
       decrypt_token: {
-        Args: { encrypted_token: string }
+        Args: { encoded_token: string }
         Returns: string
       }
       encrypt_token: {
