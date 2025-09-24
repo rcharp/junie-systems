@@ -564,6 +564,14 @@ serve(async (req) => {
     }
 
     // Save the call log to the database
+    console.log('=== PREPARING TO SAVE CALL LOG ===');
+    console.log('parsedAppointmentDateTime value:', parsedAppointmentDateTime);
+    console.log('Type of parsedAppointmentDateTime:', typeof parsedAppointmentDateTime);
+    if (parsedAppointmentDateTime) {
+      console.log('Converted to Date object:', new Date(parsedAppointmentDateTime));
+      console.log('Date in EST:', new Date(parsedAppointmentDateTime).toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    }
+    
     const callLogData = {
       user_id: businessUserId,
       caller_name: customerName,
