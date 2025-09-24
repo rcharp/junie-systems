@@ -28,6 +28,10 @@ interface WebhookData {
   first_name: string;
   last_name: string;
   raw_webhook_data: any;
+  metadata?: {
+    formatted_appointment_details?: string;
+    [key: string]: any;
+  };
 }
 
 export const WebhookMonitor = () => {
@@ -424,6 +428,15 @@ export const WebhookMonitor = () => {
           service_info: serviceRequested,
           appointment_datetime: (() => {
             console.log('=== Processing appointment_datetime. log.appointment_date_time:', log.appointment_date_time, 'appointmentDetails:', appointmentDetails);
+            
+            // Check if we have a Claude-formatted appointment in metadata
+            if (log.metadata && typeof log.metadata === 'object' && (log.metadata as any).formatted_appointment_details) {
+              const formatted = (log.metadata as any).formatted_appointment_details;
+              console.log('=== Using Claude-formatted appointment details:', formatted);
+              return formatted;
+            }
+            
+            // Fallback to existing formatting logic
             const result = log.appointment_date_time ? formatDisplayDateTime(log.appointment_date_time) : formatDisplayDateTime(appointmentDetails);
             console.log('=== Final appointment_datetime result:', result);
             return result;
@@ -906,6 +919,13 @@ export const WebhookMonitor = () => {
        <p className="text-sm">{(() => {
          console.log('=== Display logic - data.appointment_datetime:', data.appointment_datetime);
          console.log('=== Display logic - (data as any).appointment_date_time:', (data as any).appointment_date_time);
+         
+         // First check for Claude-formatted appointment details in metadata
+         if (data.metadata && typeof data.metadata === 'object' && (data.metadata as any).formatted_appointment_details) {
+           const formatted = (data.metadata as any).formatted_appointment_details;
+           console.log('=== Display logic - Using Claude-formatted details:', formatted);
+           return formatted;
+         }
          
          // Use the appointment_datetime (transformed from call logs) or try direct access
          const appointmentDateTime = data.appointment_datetime || (data as any).appointment_date_time;

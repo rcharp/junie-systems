@@ -576,6 +576,73 @@ serve(async (req) => {
       console.log('  - appointmentBookingEnabled:', appointmentBookingEnabled);
     }
 
+    // Use Claude to generate a clean appointment summary and formatted date
+    let formattedAppointmentDetails = null;
+    let enhancedCallSummary = serviceRequested;
+    
+    if (isAppointmentScheduled && parsedAppointmentDateTime) {
+      console.log('=== FORMATTING APPOINTMENT WITH CLAUDE ===');
+      try {
+        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+        if (anthropicApiKey) {
+          const appointmentPrompt = `Based on this call transcript and appointment data, create a clean, formatted appointment summary:
+
+Transcript excerpt: "${fullTranscript.substring(0, 500)}..."
+Raw appointment time: "${appointmentDetails || 'N/A'}"
+Parsed appointment datetime: "${parsedAppointmentDateTime}"
+Service address: "${serviceAddress || 'N/A'}"
+Customer name: "${customerName}"
+Service requested: "${serviceRequested}"
+
+Please respond with a JSON object containing:
+- formattedDate: A clean, readable date/time like "Friday, September 26 at 10:00 AM"
+- callSummary: A concise 1-2 sentence summary of what was scheduled
+
+Example:
+{
+  "formattedDate": "Friday, September 26 at 10:00 AM",
+  "callSummary": "Scheduled A/C repair appointment for Ricky Charpentier at 5605 Trevesta Place, Palmetto, FL."
+}`;
+
+          const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': anthropicApiKey,
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 300,
+              messages: [
+                {
+                  role: 'user',
+                  content: appointmentPrompt
+                }
+              ]
+            })
+          });
+
+          if (response.ok) {
+            const result = await response.json();
+            const content = result.content[0].text;
+            console.log('Claude formatting response:', content);
+            
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              const formattedData = JSON.parse(jsonMatch[0]);
+              formattedAppointmentDetails = formattedData.formattedDate;
+              enhancedCallSummary = formattedData.callSummary;
+              console.log('Formatted appointment details:', formattedAppointmentDetails);
+              console.log('Enhanced call summary:', enhancedCallSummary);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error formatting appointment with Claude:', error);
+      }
+    }
+
     // Save the call log to the database
     console.log('=== PREPARING TO SAVE CALL LOG ===');
     console.log('parsedAppointmentDateTime value:', parsedAppointmentDateTime);
@@ -610,6 +677,7 @@ serve(async (req) => {
       metadata: {
         caller_zip: '',
         caller_address: serviceAddress || '',
+        formatted_appointment_details: formattedAppointmentDetails,
         raw_webhook_data: webhookData
       }
     };
@@ -634,9 +702,9 @@ serve(async (req) => {
         user_id: businessUserId,
         caller_name: customerName,
         phone_number: customerPhone,
-        message: serviceRequested,
-        urgency_level: callerInfo.urgency_level,
-        best_time_to_call: callerInfo.best_time_to_call,
+      message: enhancedCallSummary,
+      urgency_level: callerInfo.urgency_level,
+      best_time_to_call: callerInfo.best_time_to_call,
         call_type: callerInfo.call_type
       };
 
