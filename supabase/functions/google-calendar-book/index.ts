@@ -29,6 +29,7 @@ Deno.serve(async (req) => {
       phoneNumber, 
       email, 
       serviceType, 
+      serviceAddress,
       notes 
     } = await req.json()
 
@@ -118,12 +119,14 @@ Deno.serve(async (req) => {
     // Create the calendar event
     const event = {
       summary: `${serviceType} - ${callerName}`,
+      location: serviceAddress || '',
       description: `
 Appointment Details:
 - Service: ${serviceType}
 - Customer: ${callerName}
 - Phone: ${phoneNumber}
 - Email: ${email || 'Not provided'}
+- Service Location: ${serviceAddress || 'Not provided'}
 - Notes: ${notes || 'None'}
 
 Business Contact: ${businessSettings?.business_phone || 'Not provided'}

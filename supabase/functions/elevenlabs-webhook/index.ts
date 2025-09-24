@@ -443,31 +443,48 @@ serve(async (req) => {
           }
 
           // Check if this is an appointment request and schedule it if Google Calendar is connected
-          if (callerInfo.call_type === 'appointment' && callerInfo.appointmentDateTime) {
+          if (isAppointmentScheduled && parsedAppointmentDateTime && callerInfo.caller_name) {
             console.log('Attempting to schedule appointment via Google Calendar...');
             
             try {
-              const bookingResponse = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-book`, {
+              // Calculate end time (default to 1 hour appointment)
+              const startTime = parsedAppointmentDateTime;
+              const endTime = new Date(new Date(startTime).getTime() + 60 * 60 * 1000).toISOString();
+              
+              // Get service address from webhook data
+              const serviceAddress = webhookData.data?.analysis?.data_collection_results?.service_address?.value || 
+                                   callerInfo.service_address || '';
+              
+              // Determine service type from call summary or default
+              const serviceType = callSummary?.includes('A/C') || callSummary?.includes('HVAC') ? 'HVAC Service' :
+                                callSummary?.includes('plumbing') ? 'Plumbing Service' :
+                                callSummary?.includes('electrical') ? 'Electrical Service' :
+                                'Service Appointment';
+
+              const response = await fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-book`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
                 },
                 body: JSON.stringify({
-                  userId: userId,
-                  startTime: callerInfo.appointmentDateTime,
-                  endTime: new Date(new Date(callerInfo.appointmentDateTime).getTime() + 60 * 60 * 1000).toISOString(), // 1 hour appointment
-                  callerName: callerInfo.caller_name || 'Unknown Caller',
-                  phoneNumber: callerInfo.phone_number || 'Unknown',
-                  email: callerInfo.email,
-                  serviceType: callerInfo.serviceType || 'Consultation',
-                  notes: callerInfo.message,
+                  userId: businessUserId,
+                  startTime: startTime,
+                  endTime: endTime,
+                  callerName: callerInfo.caller_name,
+                  phoneNumber: callerInfo.phone_number || 'Not provided',
+                  email: callerInfo.email || null,
+                  serviceType: serviceType,
+                  serviceAddress: serviceAddress,
+                  notes: callerInfo.message || callSummary || 'Appointment scheduled via phone call',
                 }),
               });
 
-              const bookingResult = await bookingResponse.json();
+              const bookingResult = await response.json();
               
               if (bookingResult.success) {
                 console.log('Successfully scheduled appointment:', bookingResult.appointment);
+                console.log('Calendar event created:', bookingResult.calendarEvent);
               } else {
                 console.log('Failed to schedule appointment:', bookingResult.error);
               }
