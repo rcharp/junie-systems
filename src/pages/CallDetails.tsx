@@ -6,62 +6,49 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  ArrowLeft, 
-  Phone, 
-  Clock, 
-  User, 
-  Calendar, 
-  Play, 
-  Download, 
-  Mail,
-  MessageSquare,
-  FileText,
-  AlertCircle,
-  Shield
-} from "lucide-react";
+import { ArrowLeft, Phone, Clock, User, Calendar, Mail, Play, Download, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 
-interface CallDetail {
+interface CallData {
   id: string;
   call_id?: string;
   caller_name: string;
   phone_number: string;
   email?: string;
-  call_status?: string;
-  call_type: string;
-  urgency_level: string;
   message: string;
+  urgency_level: string;
+  best_time_to_call?: string;
+  call_type: string;
+  status?: string;
   call_duration?: number;
   recording_url?: string;
   transcript?: string;
-  best_time_to_call?: string;
   created_at: string;
-  updated_at: string;
-  metadata?: any;
-  ended_at?: string;
+  call_status?: string;
+  business_name?: string;
+  business_type?: string;
+  provider?: string;
 }
 
 const CallDetails = () => {
-  const { callId } = useParams();
+  const { callId } = useParams<{ callId: string }>();
   const navigate = useNavigate();
-  const { user, isAdmin } = useAuth();
   const { toast } = useToast();
-  const [callDetail, setCallDetail] = useState<CallDetail | null>(null);
+  const { user } = useAuth();
+  const [callData, setCallData] = useState<CallData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isMessage, setIsMessage] = useState(false);
 
   useEffect(() => {
-    if (user && callId) {
-      fetchCallDetail();
+    if (callId && user) {
+      fetchCallDetails();
     }
-  }, [user, callId]);
+  }, [callId, user]);
 
-  const fetchCallDetail = async () => {
+  const fetchCallDetails = async () => {
     try {
       setLoading(true);
-      
-      // First try to find in call_logs
+
+      // Try to find in call_logs first
       const { data: logData, error: logError } = await supabase
         .from('call_logs')
         .select('*')
@@ -70,8 +57,7 @@ const CallDetails = () => {
         .maybeSingle();
 
       if (logData) {
-        setCallDetail(logData);
-        setIsMessage(false);
+        setCallData(logData);
         return;
       }
 
@@ -84,24 +70,24 @@ const CallDetails = () => {
         .maybeSingle();
 
       if (messageData) {
-        setCallDetail(messageData);
-        setIsMessage(true);
+        setCallData(messageData);
         return;
       }
 
-      // If not found in either table
-      if (logError && messageError) {
-        throw new Error('Call not found');
-      }
-
+      // If not found in either, show error
+      toast({
+        title: "Error",
+        description: "Call not found or you don't have permission to view it",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
     } catch (error: any) {
-      console.error('Error fetching call detail:', error);
+      console.error('Error fetching call details:', error);
       toast({
         title: "Error",
         description: "Failed to load call details",
         variant: "destructive",
       });
-      navigate('/dashboard');
     } finally {
       setLoading(false);
     }
@@ -143,18 +129,16 @@ const CallDetails = () => {
     );
   }
 
-  if (!callDetail) {
+  if (!callData) {
     return (
       <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
         <Card>
           <CardContent className="p-6 text-center">
-            <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">Call not found</h3>
             <p className="text-muted-foreground mb-4">
-              The call details you're looking for could not be found.
+              The call you're looking for doesn't exist or you don't have permission to view it.
             </p>
             <Button onClick={() => navigate('/dashboard')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Dashboard
             </Button>
           </CardContent>
@@ -167,275 +151,181 @@ const CallDetails = () => {
     <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <a href="/" className="flex items-center">
-              <img 
-                src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-                alt="Availabee Logo" 
-                className="h-8 w-8"
-              />
-            </a>
-            <h1 className="text-xl font-bold text-primary">Call Details</h1>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {isAdmin && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate("/admin")}
-                className="text-primary hover:bg-primary/10"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Admin
-              </Button>
-            )}
-            <Badge variant="outline">
-              {isMessage ? 'Message' : 'Call Log'}
-            </Badge>
+        <div className="container mx-auto px-4 py-4">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/dashboard')}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Call Details</h1>
+              <p className="text-muted-foreground">
+                Call from {callData.caller_name} on {format(new Date(callData.created_at), 'MMM d, yyyy at h:mm a')}
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <Badge className={getUrgencyColor(callData.urgency_level)}>
+                {callData.urgency_level}
+              </Badge>
+              <Badge className={getCallTypeColor(callData.call_type)}>
+                {callData.call_type}
+              </Badge>
+              {callData.status && (
+                <Badge variant={callData.status === 'new' ? 'default' : 'secondary'}>
+                  {callData.status}
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Call Overview */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center space-x-3">
-                  <User className="w-5 h-5 text-muted-foreground" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Call Information */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <User className="w-5 h-5" />
+                  <span>Caller Information</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    {/* Show incoming call info if available */}
-                    {(() => {
-                      const incomingCall = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || callDetail.metadata?.caller_id;
-                      if (incomingCall) {
-                        return (
-                          <p className="text-sm font-medium text-muted-foreground mb-1">
-                            Incoming - {incomingCall}
-                          </p>
-                        );
-                      }
-                      return null;
-                    })()}
-                    <CardTitle className="text-2xl">{callDetail.caller_name}</CardTitle>
-                    <p className="text-muted-foreground">
-                      Call Time: {format(new Date(callDetail.created_at), 'EEEE, MMMM d, yyyy at h:mm a')}
-                    </p>
+                    <label className="text-sm font-medium text-muted-foreground">Name</label>
+                    <p className="text-lg font-semibold">{callData.caller_name}</p>
                   </div>
-                </div>
-                <div className="flex space-x-2">
-                  <Badge className={getUrgencyColor(callDetail.urgency_level)}>
-                    {callDetail.urgency_level}
-                  </Badge>
-                  <Badge className={getCallTypeColor(callDetail.call_type)}>
-                    {callDetail.call_type}
-                  </Badge>
-                  {callDetail.call_status && (
-                    <Badge variant={callDetail.call_status === 'completed' ? 'default' : 'secondary'}>
-                      {callDetail.call_status}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Call Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  {/* Business ID */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Business ID</label>
-                    <div className="mt-1">
-                      {(() => {
-                        const businessId = 
-                          callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.business_id?.value ||
-                          callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_id ||
-                          callDetail.metadata?.business_id;
-                        return businessId ? (
-                          <span className="font-mono text-sm">{businessId}</span>
-                        ) : (
-                          <span className="text-muted-foreground">N/A</span>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Company Name */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Company Name</label>
-                    <div className="mt-1">
-                      {callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.company_name?.value || 
-                       callDetail.metadata?.conversation_initiation_client_data?.dynamic_variables?.business_name || 
-                       'N/A'}
-                    </div>
-                  </div>
-
-                  {/* Caller Name */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Caller Name</label>
-                    <div className="mt-1">{callDetail.caller_name}</div>
-                  </div>
-
-                  {/* Phone Number */}
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Phone Number</label>
-                    <div className="mt-1">{callDetail.phone_number}</div>
-                  </div>
-
-                  {/* Incoming Call */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Incoming Call</label>
-                    <div className="mt-1">
-                      {(() => {
-                        const incomingCall = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value || callDetail.metadata?.caller_id;
-                        return incomingCall || callDetail.phone_number;
-                      })()}
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-lg">{callData.phone_number}</p>
                     </div>
                   </div>
-
-                  {/* Call Duration */}
-                  {callDetail.call_duration && (
+                  {callData.email && (
                     <div>
-                      <label className="text-sm font-medium text-muted-foreground">Call Duration</label>
-                      <div className="mt-1">
-                        {Math.floor(callDetail.call_duration / 60)}m {callDetail.call_duration % 60}s
+                      <label className="text-sm font-medium text-muted-foreground">Email</label>
+                      <div className="flex items-center space-x-2">
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-lg">{callData.email}</p>
+                      </div>
+                    </div>
+                  )}
+                  {callData.best_time_to_call && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Best Time to Call</label>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-lg">{callData.best_time_to_call}</p>
                       </div>
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-4">
-                  {/* Email Address */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Email Address</label>
-                    <div className="mt-1">
-                      {(() => {
-                        const email = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.email?.value || callDetail.email;
-                        return email || 'N/A';
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Service Address */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Service Address</label>
-                    <div className="mt-1">
-                      {callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.service_address?.value || 'N/A'}
-                    </div>
-                  </div>
-
-                  {/* Appointment Scheduled */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Appointment Scheduled</label>
-                    <div className="mt-1">
-                      {(() => {
-                        const appointmentTime = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.appointment_time?.value;
-                        return appointmentTime ? 'Yes' : 'No';
-                      })()}
-                    </div>
-                  </div>
-
-                  {/* Appointment Date/Time */}
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Appointment Date/Time</label>
-                    <div className="mt-1">
-                      {(() => {
-                        const appointmentTime = callDetail.metadata?.raw_webhook_data?.data?.analysis?.data_collection_results?.appointment_time?.value;
-                        if (appointmentTime) {
-                          try {
-                            const appointmentDate = new Date(appointmentTime);
-                            return format(appointmentDate, 'EEEE, MMMM d, yyyy at h:mm a');
-                          } catch (error) {
-                            return appointmentTime;
-                          }
-                        }
-                        return callDetail.best_time_to_call || 'Not scheduled';
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Call Summary/Message */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <MessageSquare className="w-5 h-5 mr-2" />
-                {isMessage ? 'Message Summary' : 'Call Summary'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
-                <p className="text-sm leading-relaxed">{callDetail.message}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Transcript */}
-          {callDetail.transcript && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <FileText className="w-5 h-5 mr-2" />
-                  Full Transcript
+                <CardTitle className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5" />
+                  <span>Call Summary</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{callDetail.transcript}</p>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="whitespace-pre-wrap">{callData.message}</p>
                 </div>
               </CardContent>
             </Card>
-          )}
 
-          {/* Actions */}
-          {(callDetail.recording_url || callDetail.transcript) && (
+            {callData.transcript && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Full Transcript</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-96 overflow-y-auto">
+                    <p className="whitespace-pre-wrap text-sm">{callData.transcript}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Call Metadata */}
+          <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Actions</CardTitle>
+                <CardTitle>Call Details</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-3">
-                  {callDetail.recording_url && (
-                    <Button variant="outline" className="flex items-center space-x-2">
-                      <Play className="w-4 h-4" />
-                      <span>Play Recording</span>
-                    </Button>
-                  )}
-                  {callDetail.transcript && (
-                    <Button variant="outline" className="flex items-center space-x-2">
-                      <Download className="w-4 h-4" />
-                      <span>Download Transcript</span>
-                    </Button>
-                  )}
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Call ID</label>
+                  <p className="text-sm font-mono">{callData.call_id || 'N/A'}</p>
                 </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
+                  <p className="text-sm">{format(new Date(callData.created_at), 'PPpp')}</p>
+                </div>
+                {callData.call_duration && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Duration</label>
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-sm">{Math.floor(callData.call_duration / 60)}m {callData.call_duration % 60}s</p>
+                    </div>
+                  </div>
+                )}
+                {callData.call_status && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <p className="text-sm">{callData.call_status}</p>
+                  </div>
+                )}
+                {callData.business_name && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Business</label>
+                    <p className="text-sm">{callData.business_name}</p>
+                  </div>
+                )}
+                {callData.provider && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Provider</label>
+                    <p className="text-sm">{callData.provider}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
-          )}
 
-          {/* Technical Details */}
-          {callDetail.metadata && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Technical Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
-                  <pre className="text-xs overflow-auto">
-                    {JSON.stringify(callDetail.metadata, null, 2)}
-                  </pre>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+            {(callData.recording_url || callData.transcript) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {callData.recording_url && (
+                    <Button variant="outline" className="w-full justify-start">
+                      <Play className="w-4 h-4 mr-2" />
+                      Play Recording
+                    </Button>
+                  )}
+                  {callData.transcript && (
+                    <Button variant="outline" className="w-full justify-start">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Transcript
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
       </main>
     </div>

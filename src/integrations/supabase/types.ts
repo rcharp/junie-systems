@@ -524,6 +524,36 @@ export type Database = {
           },
         ]
       }
+      todos: {
+        Row: {
+          completed: boolean
+          created_at: string
+          display_order: number
+          id: string
+          priority: string
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          priority?: string
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          display_order?: number
+          id?: string
+          priority?: string
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       trending_analysis: {
         Row: {
           analysis_date: string

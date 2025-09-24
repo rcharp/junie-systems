@@ -13,18 +13,98 @@ import CallAnalytics from "@/components/CallAnalytics";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 
+
+interface RecentActivity {
+  id: string;
+  time: string;
+  action: string;
+  type: 'success' | 'warning' | 'error';
+  caller_name: string;
+  call_type: string;
+  created_at: string;
+}
 
 const Dashboard = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     }
   }, [loading, user, navigate]);
+
+  useEffect(() => {
+    if (user) {
+      fetchRecentActivity();
+    }
+  }, [user]);
+
+  const fetchRecentActivity = async () => {
+    try {
+      setActivityLoading(true);
+      
+      // Get user's business_id first
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_settings')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (businessError) throw businessError;
+
+      if (businessData) {
+        // Fetch recent call logs that match this business
+        const { data: callLogs, error: callError } = await supabase
+          .from('call_logs')
+          .select('id, caller_name, call_type, message, created_at, business_name')
+          .eq('user_id', user?.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (callError) throw callError;
+
+        // Transform call logs into recent activity
+        const activities: RecentActivity[] = (callLogs || []).map(call => {
+          // Extract key action from message
+          let action = "Called";
+          if (call.message.toLowerCase().includes('scheduled') || call.message.toLowerCase().includes('appointment')) {
+            action = `scheduled ${call.call_type}`;
+          } else if (call.message.toLowerCase().includes('pricing') || call.message.toLowerCase().includes('cost')) {
+            action = "asked about pricing";
+          } else if (call.message.toLowerCase().includes('emergency') || call.message.toLowerCase().includes('urgent')) {
+            action = "reported urgent issue";
+          } else if (call.call_type.toLowerCase().includes('repair')) {
+            action = `scheduled ${call.call_type}`;
+          } else {
+            action = `called about ${call.call_type}`;
+          }
+
+          return {
+            id: call.id,
+            time: formatDistanceToNow(new Date(call.created_at), { addSuffix: true }),
+            action: `${call.caller_name} ${action}`,
+            type: call.call_type.toLowerCase().includes('emergency') ? 'error' : 
+                  call.call_type.toLowerCase().includes('appointment') ? 'success' : 'warning',
+            caller_name: call.caller_name,
+            call_type: call.call_type,
+            created_at: call.created_at,
+          };
+        });
+
+        setRecentActivity(activities);
+      }
+    } catch (error: any) {
+      console.error('Error fetching recent activity:', error);
+    } finally {
+      setActivityLoading(false);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -181,23 +261,32 @@ const Dashboard = () => {
                   <CardTitle>Recent Activity</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {[
-                    { time: "2 minutes ago", action: "Answered call from potential customer", type: "success" },
-                    { time: "15 minutes ago", action: "Took message from existing client", type: "warning" },
-                    { time: "1 hour ago", action: "Forwarded urgent call to owner", type: "error" },
-                    { time: "2 hours ago", action: "Scheduled appointment for new prospect", type: "success" },
-                  ].map((activity, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className={`w-2 h-2 rounded-full ${
-                        activity.type === 'success' ? 'bg-green-500' :
-                        activity.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
-                      }`} />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{activity.action}</p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
-                      </div>
+                  {activityLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                     </div>
-                  ))}
+                  ) : recentActivity.length > 0 ? (
+                    recentActivity.map((activity) => (
+                      <div 
+                        key={activity.id} 
+                        className="flex items-center space-x-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors"
+                        onClick={() => navigate(`/call/${activity.id}`)}
+                      >
+                        <div className={`w-2 h-2 rounded-full ${
+                          activity.type === 'success' ? 'bg-green-500' :
+                          activity.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+                        }`} />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{activity.action}</p>
+                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-muted-foreground">No recent activity</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 

@@ -60,7 +60,16 @@ const CallList = () => {
     try {
       setLoading(true);
       
-      // Fetch call logs
+      // Get user's business_id first
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_settings')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (businessError) throw businessError;
+
+      // Fetch call logs that match this business or user
       const { data: logs, error: logsError } = await supabase
         .from('call_logs')
         .select('*')
@@ -70,7 +79,7 @@ const CallList = () => {
 
       if (logsError) throw logsError;
 
-      // Fetch call messages
+      // Fetch call messages that match this business or user
       const { data: messages, error: messagesError } = await supabase
         .from('call_messages')
         .select('*')
