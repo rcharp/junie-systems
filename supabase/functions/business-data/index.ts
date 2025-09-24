@@ -52,22 +52,23 @@ serve(async (req) => {
 
     let businessId: string | undefined;
     let requestSource = 'unknown';
+    let parsedBody: any = {};
     
     if (req.method === 'POST') {
-      const body = await req.json();
-      console.log('Request body:', body);
-      console.log('Request body type:', typeof body);
-      console.log('Has business_id in body:', !!body?.business_id);
-      console.log('Has agent_id in body:', !!body?.agent_id);
+      parsedBody = await req.json();
+      console.log('Request body:', parsedBody);
+      console.log('Request body type:', typeof parsedBody);
+      console.log('Has business_id in body:', !!parsedBody?.business_id);
+      console.log('Has agent_id in body:', !!parsedBody?.agent_id);
       
       // Check if this is an ElevenLabs conversation initiation request
-      if (body?.caller_id || body?.agent_id || body?.called_number || body?.call_sid) {
+      if (parsedBody?.caller_id || parsedBody?.agent_id || parsedBody?.called_number || parsedBody?.call_sid) {
         console.log('ElevenLabs conversation initiation request detected');
         
         // Get business_id from headers OR body (check both locations)
-        const conversationBusinessId = req.headers.get('business_id') || body?.business_id;
+        const conversationBusinessId = req.headers.get('business_id') || parsedBody?.business_id;
         console.log('ElevenLabs business_id from headers:', req.headers.get('business_id'));
-        console.log('ElevenLabs business_id from body:', body?.business_id);
+        console.log('ElevenLabs business_id from body:', parsedBody?.business_id);
         console.log('Final business_id used:', conversationBusinessId);
         
         // Return the conversation initiation format that ElevenLabs expects
@@ -98,7 +99,7 @@ serve(async (req) => {
                 url: req.url,
                 method: req.method,
                 headers: requestHeaders,
-                ...body
+                ...parsedBody
               },
               response_status: 200,
               response_data: conversationInitData,
@@ -124,14 +125,14 @@ serve(async (req) => {
       }
       
       // Check if this is an ElevenLabs post-call transcription with nested business_id
-      if (body?.conversation_initiation_client_data?.dynamic_variables?.business_id) {
+      if (parsedBody?.conversation_initiation_client_data?.dynamic_variables?.business_id) {
         console.log('ElevenLabs post-call transcription request detected');
-        businessId = body.conversation_initiation_client_data.dynamic_variables.business_id;
+        businessId = parsedBody.conversation_initiation_client_data.dynamic_variables.business_id;
         requestSource = 'elevenlabs_transcription';
         console.log('ElevenLabs transcription business_id:', businessId);
-      } else if (body && body.business_id) {
+      } else if (parsedBody && parsedBody.business_id) {
         // Manual request with business_id in body
-        businessId = body.business_id;
+        businessId = parsedBody.business_id;
         requestSource = 'manual';
         console.log('MANUAL request detected - business_id from request body:', businessId);
       } else {
@@ -276,10 +277,8 @@ serve(async (req) => {
     try {
       let requestData = {};
       if (req.method === 'POST') {
-        // Use the body that was already parsed above
-        if (businessId && requestSource === 'manual') {
-          requestData = { business_id: businessId };
-        }
+        // Use the already parsed body
+        requestData = parsedBody;
       } else {
         const url = new URL(req.url);
         requestData = Object.fromEntries(url.searchParams);
