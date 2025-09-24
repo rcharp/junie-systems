@@ -292,7 +292,8 @@ serve(async (req) => {
         urgency_level: callerInfo.urgency_level,
         call_type: callerInfo.call_type,
         ended_at: new Date().toISOString(),
-        business_name: businessName || '',
+        business_name: webhookData.data?.analysis?.data_collection_results?.business_name?.value || 
+                      webhookData.variables?.business_name || '',
         business_type: webhookData.variables?.business_type || '',
         appointment_scheduled: callerInfo.appointment_scheduled,
         service_address: callerInfo.service_address,
