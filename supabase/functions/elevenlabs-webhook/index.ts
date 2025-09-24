@@ -250,22 +250,25 @@ serve(async (req) => {
 
     console.log('Extracted caller info:', callerInfo);
 
-    // Get business_id from business_name if available
+    // Get business_id directly from webhook data and fetch user_id
     let businessId = null;
     let businessUserId = userId; // Default to webhook user_id
-    const businessName = webhookData.data?.analysis?.data_collection_results?.business_name?.value || 
-                        webhookData.variables?.business_name;
     
-    if (businessName && userId) {
+    // Extract business_id from data collection results
+    const extractedBusinessId = webhookData.data?.analysis?.data_collection_results?.business_id?.value || 
+                               webhookData.variables?.business_id;
+    
+    if (extractedBusinessId) {
+      businessId = extractedBusinessId;
+      
+      // Get user_id from business_settings using the business_id
       const { data: businessData } = await supabase
         .from('business_settings')
-        .select('id, user_id')
-        .eq('user_id', userId)
-        .eq('business_name', businessName)
+        .select('user_id')
+        .eq('id', businessId)
         .maybeSingle();
       
       if (businessData) {
-        businessId = businessData.id;
         businessUserId = businessData.user_id;
       }
     }
