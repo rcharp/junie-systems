@@ -794,14 +794,16 @@ export const WebhookMonitor = () => {
                     };
                     
                     return (
-                      <div className="text-2xl font-bold text-foreground">
-                        Incoming - {formatPhoneNumber(incomingCall)}
-                      </div>
+                      <>
+                        <div className="text-2xl font-bold text-foreground">
+                          Incoming - {formatPhoneNumber(incomingCall)}
+                        </div>
+                        <div>
+                          <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
+                        </div>
+                      </>
                     );
                   })()}
-                </div>
-                <div>
-                  <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
                 </div>
                 <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                   <Button
