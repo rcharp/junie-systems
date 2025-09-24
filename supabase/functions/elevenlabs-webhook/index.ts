@@ -720,22 +720,54 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
       /(\d{1,2})\s*o'?clock/i
     ];
 
+    // Time word mapping
+    const timeWords: { [key: string]: number } = {
+      'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5, 'six': 6,
+      'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12,
+      'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16,
+      'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+      'thirty': 30, 'forty': 40, 'fifty': 50
+    };
+
     let hour = 9, minute = 0; // Default time
     let appointmentDate = new Date(now);
 
-    // Extract time
-    for (const pattern of timePatterns) {
-      const timeMatch = lowerStr.match(pattern);
-      if (timeMatch) {
-        hour = parseInt(timeMatch[1]);
-        minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
-        
-        if (timeMatch[3] && timeMatch[3].toLowerCase() === 'pm' && hour !== 12) {
-          hour += 12;
-        } else if (timeMatch[3] && timeMatch[3].toLowerCase() === 'am' && hour === 12) {
-          hour = 0;
+    // Extract time - try word patterns first
+    const wordTimeMatch = lowerStr.match(/(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(thirty|fifteen|forty-five|o'?clock)?.*?(morning|afternoon|evening|am|pm)/i);
+    if (wordTimeMatch) {
+      hour = timeWords[wordTimeMatch[1]];
+      
+      if (wordTimeMatch[2]) {
+        if (wordTimeMatch[2].includes('thirty')) {
+          minute = 30;
+        } else if (wordTimeMatch[2].includes('fifteen')) {
+          minute = 15;
+        } else if (wordTimeMatch[2].includes('forty-five')) {
+          minute = 45;
         }
-        break;
+      }
+      
+      const period = wordTimeMatch[3];
+      if (period && (period.includes('afternoon') || period.includes('evening') || period.includes('pm')) && hour !== 12) {
+        hour += 12;
+      } else if (period && (period.includes('morning') || period.includes('am')) && hour === 12) {
+        hour = 0;
+      }
+    } else {
+      // Extract time using numeric patterns
+      for (const pattern of timePatterns) {
+        const timeMatch = lowerStr.match(pattern);
+        if (timeMatch) {
+          hour = parseInt(timeMatch[1]);
+          minute = timeMatch[2] ? parseInt(timeMatch[2]) : 0;
+          
+          if (timeMatch[3] && timeMatch[3].toLowerCase() === 'pm' && hour !== 12) {
+            hour += 12;
+          } else if (timeMatch[3] && timeMatch[3].toLowerCase() === 'am' && hour === 12) {
+            hour = 0;
+          }
+          break;
+        }
       }
     }
 
