@@ -28,6 +28,12 @@ interface CallData {
   business_name?: string;
   business_type?: string;
   provider?: string;
+  business_id?: string;
+  appointment_scheduled?: boolean;
+  appointment_date_time?: string;
+  service_address?: string;
+  call_summary?: string;
+  metadata?: any;
 }
 
 const CallDetails = () => {
@@ -240,7 +246,54 @@ const CallDetails = () => {
               </CardHeader>
               <CardContent>
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                  <p className="whitespace-pre-wrap">{callData.message}</p>
+                  <p className="whitespace-pre-wrap">{callData.call_summary || callData.message}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Additional Call Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Detailed Call Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {callData.business_id && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Business ID</label>
+                      <p className="text-sm font-mono">{callData.business_id}</p>
+                    </div>
+                  )}
+                  {callData.business_name && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Business Name</label>
+                      <p className="text-sm">{callData.business_name}</p>
+                    </div>
+                  )}
+                  {callData.service_address && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Service Address</label>
+                      <p className="text-sm">{callData.service_address}</p>
+                    </div>
+                  )}
+                  {callData.appointment_scheduled !== undefined && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Appointment Scheduled</label>
+                      <p className="text-sm">{callData.appointment_scheduled ? 'Yes' : 'No'}</p>
+                    </div>
+                  )}
+                  {callData.appointment_date_time && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Appointment Date/Time</label>
+                      <p className="text-sm">{format(new Date(callData.appointment_date_time), 'PPpp')}</p>
+                    </div>
+                  )}
+                  {callData.business_type && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Business Type</label>
+                      <p className="text-sm">{callData.business_type}</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -268,7 +321,7 @@ const CallDetails = () => {
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Call ID</label>
-                  <p className="text-sm font-mono">{callData.call_id || 'N/A'}</p>
+                  <p className="text-sm font-mono">{callData.call_id || callData.id}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Date & Time</label>
@@ -285,20 +338,30 @@ const CallDetails = () => {
                 )}
                 {callData.call_status && (
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Status</label>
+                    <label className="text-sm font-medium text-muted-foreground">Call Status</label>
                     <p className="text-sm">{callData.call_status}</p>
-                  </div>
-                )}
-                {callData.business_name && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Business</label>
-                    <p className="text-sm">{callData.business_name}</p>
                   </div>
                 )}
                 {callData.provider && (
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Provider</label>
                     <p className="text-sm">{callData.provider}</p>
+                  </div>
+                )}
+                {callData.urgency_level && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Urgency Level</label>
+                    <Badge className={getUrgencyColor(callData.urgency_level)}>
+                      {callData.urgency_level}
+                    </Badge>
+                  </div>
+                )}
+                {callData.call_type && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground">Call Type</label>
+                    <Badge className={getCallTypeColor(callData.call_type)}>
+                      {callData.call_type}
+                    </Badge>
                   </div>
                 )}
               </CardContent>
