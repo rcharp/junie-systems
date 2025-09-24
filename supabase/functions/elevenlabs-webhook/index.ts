@@ -802,7 +802,7 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
     console.log(`Parsing appointment time: "${appointmentTimeString}"`);
     console.log(`Lowercase string: "${lowerStr}"`);
     
-    const wordTimeMatch = lowerStr.match(/(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?.*?(morning|afternoon|evening|am|pm)/i);
+    const wordTimeMatch = lowerStr.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?\s+(in\s+the\s+)?(morning|afternoon|evening|am|pm)/i);
     console.log('Word time match:', wordTimeMatch);
     
     if (wordTimeMatch) {
@@ -823,7 +823,7 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
         minute = 0;
       }
       
-      const period = wordTimeMatch[4];
+      const period = wordTimeMatch[5]; // Updated group index
       console.log(`Period: "${period}"`);
       if (period && (period.includes('afternoon') || period.includes('evening') || period.includes('pm')) && hour !== 12) {
         hour += 12;
