@@ -955,38 +955,55 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
   // Set the time
   targetDate.setHours(hour, minute, 0, 0);
   
-  // Convert to UTC by adjusting for the timezone offset
-  // Get timezone offset for common US timezones
-  let timezoneOffset = 0;
-  switch (userTimezone) {
-    case 'America/New_York':
-    case 'America/Detroit':
-    case 'America/Toronto':
-      // Eastern Time: UTC-5 (EST) or UTC-4 (EDT)
-      // Assuming EDT during business hours for now
-      timezoneOffset = 4;
-      break;
-    case 'America/Chicago':
-    case 'America/Mexico_City':
-      // Central Time: UTC-6 (CST) or UTC-5 (CDT)
-      timezoneOffset = 5;
-      break;
-    case 'America/Denver':
-    case 'America/Phoenix':
-      // Mountain Time: UTC-7 (MST) or UTC-6 (MDT)
-      timezoneOffset = 6;
-      break;
-    case 'America/Los_Angeles':
-    case 'America/Vancouver':
-      // Pacific Time: UTC-8 (PST) or UTC-7 (PDT)
-      timezoneOffset = 7;
-      break;
-    default:
-      // Default to Eastern Time
-      timezoneOffset = 4;
+  // Convert local time to UTC using date-fns-tz for proper timezone handling
+  try {
+    // Import date-fns functions we need
+    const { formatInTimeZone, toZonedTime, fromZonedTime } = await import('https://cdn.skypack.dev/date-fns-tz@3.0.0');
+    
+    // Create a date in the user's timezone, then convert to UTC
+    const localDateTime = toZonedTime(targetDate, userTimezone);
+    const utcDateTime = fromZonedTime(localDateTime, userTimezone);
+    
+    console.log('Local time in timezone:', formatInTimeZone(targetDate, userTimezone, 'yyyy-MM-dd HH:mm:ss zzz'));
+    console.log('Converted to UTC:', utcDateTime.toISOString());
+    
+    return utcDateTime.toISOString();
+  } catch (error) {
+    console.error('Error with date-fns-tz conversion, falling back to manual offset:', error);
+    
+    // Fallback: manually convert to UTC by subtracting (not adding) the timezone offset
+    let timezoneOffset = 0;
+    switch (userTimezone) {
+      case 'America/New_York':
+      case 'America/Detroit':
+      case 'America/Toronto':
+        // Eastern Time: UTC-5 (EST) or UTC-4 (EDT)
+        // Assuming EDT during business hours for now
+        timezoneOffset = 4;
+        break;
+      case 'America/Chicago':
+      case 'America/Mexico_City':
+        // Central Time: UTC-6 (CST) or UTC-5 (CDT)
+        timezoneOffset = 5;
+        break;
+      case 'America/Denver':
+      case 'America/Phoenix':
+        // Mountain Time: UTC-7 (MST) or UTC-6 (MDT)
+        timezoneOffset = 6;
+        break;
+      case 'America/Los_Angeles':
+      case 'America/Vancouver':
+        // Pacific Time: UTC-8 (PST) or UTC-7 (PDT)
+        timezoneOffset = 7;
+        break;
+      default:
+        // Default to Eastern Time
+        timezoneOffset = 4;
+    }
+    
+    // SUBTRACT the offset to convert local time to UTC (not add)
+    targetDate.setHours(targetDate.getHours() - timezoneOffset);
+    
+    return targetDate.toISOString();
   }
-  
-  targetDate.setHours(targetDate.getHours() + timezoneOffset);
-  
-  return targetDate.toISOString();
 }
