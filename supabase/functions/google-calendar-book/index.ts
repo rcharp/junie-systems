@@ -172,9 +172,38 @@ Deno.serve(async (req) => {
 
     const businessName = businessSettings?.business_name || 'Business'
 
-    // Create the calendar event
+    // Extract a concise service type from the full service description
+    let conciseServiceType = serviceType;
+    
+    // Try to extract service type using simple patterns first
+    if (serviceType && serviceType.length > 30) {
+      // Common service patterns
+      if (serviceType.toLowerCase().includes('a/c') || serviceType.toLowerCase().includes('hvac') || serviceType.toLowerCase().includes('air condition')) {
+        conciseServiceType = 'HVAC Service';
+      } else if (serviceType.toLowerCase().includes('plumb')) {
+        conciseServiceType = 'Plumbing Service';
+      } else if (serviceType.toLowerCase().includes('electric')) {
+        conciseServiceType = 'Electrical Service';
+      } else if (serviceType.toLowerCase().includes('heat')) {
+        conciseServiceType = 'Heating Service';
+      } else if (serviceType.toLowerCase().includes('roof')) {
+        conciseServiceType = 'Roofing Service';
+      } else if (serviceType.toLowerCase().includes('repair')) {
+        conciseServiceType = 'Repair Service';
+      } else if (serviceType.toLowerCase().includes('install')) {
+        conciseServiceType = 'Installation Service';
+      } else if (serviceType.toLowerCase().includes('maintenance')) {
+        conciseServiceType = 'Maintenance Service';
+      } else {
+        // Fallback: take first few words or use generic term
+        const words = serviceType.split(' ').slice(0, 3);
+        conciseServiceType = words.length > 0 ? words.join(' ') : 'Service Appointment';
+      }
+    }
+
+    // Create the calendar event with a concise, professional title
     const event = {
-      summary: `${serviceType} - ${callerName}`,
+      summary: `${callerName} - ${conciseServiceType}`,
       location: serviceAddress || '',
       description: `
 Appointment Details:

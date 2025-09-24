@@ -302,9 +302,38 @@ async function handleBookingRequest(supabase: any, userId: string, bookingData: 
 
   const businessName = businessSettings?.business_name || 'Business'
 
+  // Extract a concise service type from the full service description
+  let conciseServiceType = serviceType;
+  
+  // Try to extract service type using simple patterns first
+  if (serviceType && serviceType.length > 30) {
+    // Common service patterns
+    if (serviceType.toLowerCase().includes('a/c') || serviceType.toLowerCase().includes('hvac') || serviceType.toLowerCase().includes('air condition')) {
+      conciseServiceType = 'HVAC Service';
+    } else if (serviceType.toLowerCase().includes('plumb')) {
+      conciseServiceType = 'Plumbing Service';
+    } else if (serviceType.toLowerCase().includes('electric')) {
+      conciseServiceType = 'Electrical Service';
+    } else if (serviceType.toLowerCase().includes('heat')) {
+      conciseServiceType = 'Heating Service';
+    } else if (serviceType.toLowerCase().includes('roof')) {
+      conciseServiceType = 'Roofing Service';
+    } else if (serviceType.toLowerCase().includes('repair')) {
+      conciseServiceType = 'Repair Service';
+    } else if (serviceType.toLowerCase().includes('install')) {
+      conciseServiceType = 'Installation Service';
+    } else if (serviceType.toLowerCase().includes('maintenance')) {
+      conciseServiceType = 'Maintenance Service';
+    } else {
+      // Fallback: take first few words or use generic term
+      const words = serviceType.split(' ').slice(0, 3);
+      conciseServiceType = words.length > 0 ? words.join(' ') : 'Service Appointment';
+    }
+  }
+
   // Create the calendar event
   const event = {
-    summary: `${serviceType || 'Appointment'} - ${callerName}`,
+    summary: `${callerName} - ${conciseServiceType}`,
     description: `
 Appointment Details:
 - Service: ${serviceType || 'General appointment'}
