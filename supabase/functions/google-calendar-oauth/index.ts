@@ -151,16 +151,28 @@ Deno.serve(async (req) => {
       // Store calendar settings using secure function
       const expiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
       
+      // Encrypt tokens first
+      const { data: encryptedAccessToken } = await supabase.rpc('encrypt_token', { 
+        token: tokenData.access_token 
+      })
+      const { data: encryptedRefreshToken } = await supabase.rpc('encrypt_token', { 
+        token: tokenData.refresh_token 
+      })
+      
+      console.log('Encrypted tokens prepared, upserting calendar settings...')
+      
       const { error: upsertError } = await supabase
         .from('google_calendar_settings')
         .upsert({
           user_id: state, // Use state instead of user.id since we validated it above
           is_connected: true,
-          encrypted_access_token: await supabase.rpc('encrypt_token', { token: tokenData.access_token }),
-          encrypted_refresh_token: await supabase.rpc('encrypt_token', { token: tokenData.refresh_token }),
+          encrypted_access_token: encryptedAccessToken,
+          encrypted_refresh_token: encryptedRefreshToken,
           expires_at: expiresAt,
           calendar_id: calendarData.id,
           timezone: calendarData.timeZone || 'America/New_York',
+        }, {
+          onConflict: 'user_id'
         })
 
       if (upsertError) {
