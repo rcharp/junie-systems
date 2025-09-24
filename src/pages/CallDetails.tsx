@@ -196,7 +196,7 @@ const CallDetails = () => {
                 <CardTitle>Call Details</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Company Name</span>
                     <p className="mt-1">{callData.business_name || callData.caller_name || 'Unknown'}</p>
