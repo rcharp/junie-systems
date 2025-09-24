@@ -48,7 +48,7 @@ const CallList = () => {
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [callMessages, setCallMessages] = useState<CallMessage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'logs' | 'messages'>('messages');
+  const [activeTab, setActiveTab] = useState<'logs' | 'messages'>('logs');
 
   useEffect(() => {
     if (user) {
@@ -185,20 +185,20 @@ const CallList = () => {
       {/* Tab Navigation */}
       <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
         <Button
-          variant={activeTab === 'messages' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('messages')}
-          className="flex-1"
-        >
-          <MessageSquare className="w-4 h-4 mr-2" />
-          Messages ({callMessages.filter(m => m.status === 'new').length} new)
-        </Button>
-        <Button
           variant={activeTab === 'logs' ? 'default' : 'ghost'}
           onClick={() => setActiveTab('logs')}
           className="flex-1"
         >
           <Phone className="w-4 h-4 mr-2" />
           Call Logs ({callLogs.length})
+        </Button>
+        <Button
+          variant={activeTab === 'messages' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('messages')}
+          className="flex-1"
+        >
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Messages ({callMessages.filter(m => m.status === 'new').length} new)
         </Button>
       </div>
 
