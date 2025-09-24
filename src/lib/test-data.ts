@@ -28,7 +28,7 @@ export const DEFAULT_TEST_CALL_DATA = {
             "type": "string"
           },
           "rationale": "The user scheduled an appointment for Friday, September twenty-sixth, at ten in the morning. This information is extracted from the agent's confirmation message at 2025-09-24T15:40:20+00:00.",
-          "value": "2025-09-26T10:30:00-04:00"
+          "value": "2025-09-24T12:17:40-04:00"
         },
         "business_id": {
           "data_collection_id": "business_id",
