@@ -85,8 +85,46 @@ Deno.serve(async (req) => {
       }
     }
 
+    // If access token is invalid/corrupted but we have a refresh token, try to refresh
+    if (!accessToken && refreshToken) {
+      console.log('Access token invalid/corrupted, attempting refresh with refresh token...')
+      
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: googleClientId,
+          client_secret: googleClientSecret,
+          refresh_token: refreshToken,
+          grant_type: 'refresh_token',
+        }),
+      })
+
+      const tokenData = await tokenResponse.json()
+      
+      if (tokenResponse.ok) {
+        accessToken = tokenData.access_token
+        const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
+        
+        console.log('Successfully refreshed access token')
+        
+        // Update the stored token using secure function
+        await supabase.rpc('update_google_calendar_tokens', {
+          p_user_id: userId,
+          p_access_token: accessToken,
+          p_refresh_token: tokenData.refresh_token || refreshToken, // Use new refresh token if provided
+          p_expires_at: newExpiresAt
+        })
+      } else {
+        console.error('Failed to refresh token:', tokenData)
+        throw new Error('Google Calendar tokens are invalid. Please reconnect your Google Calendar.')
+      }
+    }
+    
     if (!accessToken) {
-      console.error('No valid access token available. User needs to reconnect Google Calendar.')
+      console.error('No valid access token available after refresh attempt.')
       throw new Error('Google Calendar access token is invalid. Please reconnect your Google Calendar.')
     }
 
