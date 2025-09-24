@@ -72,12 +72,192 @@ serve(async (req) => {
     // Parse JSON with better error handling
     let webhookData;
     
-    // Handle empty body (test calls)
+    // Handle empty body (test calls) - use test data from test-data.ts
     if (!rawBody || rawBody.trim() === '') {
-      console.log('Empty body received, using test data');
+      console.log('Empty body received, using test data from test-data.ts');
       webhookData = {
-        test: true,
-        message: 'Test webhook call'
+        "data": {
+          "status": "done",
+          "user_id": "o3zdIqYwDYfKPw2KrSE2Tbi9kxX2",
+          "agent_id": "agent_1601k5fak9jsfrzsk06455d9f98j",
+          "analysis": {
+            "call_successful": "success",
+            "call_summary_title": "Schedule A/C Appointment",
+            "transcript_summary": "The user called to schedule an A/C repair appointment. The agent collected the user's name, address, phone number, and email. An appointment was scheduled for Friday, September 26th at 10 AM. The user provided a gate code for the technician. All details were confirmed with the user before ending the call.\n",
+            "data_collection_results": {
+              "business_id": {
+                "value": null,
+                "rationale": "The business's ID is not mentioned in the conversation. The name of the business is 'Test A/C', but not its ID.",
+                "json_schema": {
+                  "enum": null,
+                  "type": "string",
+                  "description": "The business's ID",
+                  "constant_value": "",
+                  "dynamic_variable": ""
+                },
+                "data_collection_id": "business_id"
+              },
+              "phone_number": {
+                "value": 7278714862,
+                "rationale": "The user provided their phone number as '7278714862' in the conversation. This is a ten-digit number, so it can be extracted as the phone number of the caller.",
+                "json_schema": {
+                  "enum": null,
+                  "type": "integer",
+                  "description": "The phone number of the caller",
+                  "constant_value": "",
+                  "dynamic_variable": ""
+                },
+                "data_collection_id": "phone_number"
+              },
+              "business_name": {
+                "value": "Test A/C",
+                "rationale": "The business's name is mentioned in the first line of the conversation: \"Thanks for calling Test A/C.\"",
+                "json_schema": {
+                  "enum": null,
+                  "type": "string",
+                  "description": "The business's name.",
+                  "constant_value": "",
+                  "dynamic_variable": ""
+                },
+                "data_collection_id": "business_name"
+              },
+              "customer_name": {
+                "value": "Ricky Charpentier",
+                "rationale": "The customer's full name is requested by the agent and provided by the user as 'Ricky Charpentier'.",
+                "json_schema": {
+                  "enum": null,
+                  "type": "string",
+                  "description": "The name of the customer who is calling",
+                  "constant_value": "",
+                  "dynamic_variable": ""
+                },
+                "data_collection_id": "customer_name"
+              },
+              "email_address": {
+                "value": "head2dasky@gmail.com",
+                "rationale": "The user provided their email address as head2dasky@gmail.com, which was confirmed by the agent.",
+                "json_schema": {
+                  "enum": null,
+                  "type": "string",
+                  "description": "The caller's email address, if collected",
+                  "constant_value": "",
+                  "dynamic_variable": ""
+                },
+                "data_collection_id": "email_address"
+              },
+              "service_address": {
+                "value": "5605 Trevesta Place, Palmetto, FL 34221",
+                "rationale": "The user provided the address '5605 Trevesta Place, Palmetto, FL 34221' in their message at 2025-09-24T15:39:13+00:00, which was then confirmed by the agent and the user.",
+                "json_schema": {
+                  "enum": null,
+                  "type": "string",
+                  "description": "The address of the location where the service will be performed",
+                  "constant_value": "",
+                  "dynamic_variable": ""
+                },
+                "data_collection_id": "service_address"
+              },
+              "appointment_time": {
+                "value": "Friday, September twenty-sixth, at ten in the morning",
+                "rationale": "The user scheduled an appointment for Friday, September twenty-sixth, at ten in the morning. This information is extracted from the agent's confirmation message at 2025-09-24T15:40:20+00:00.",
+                "json_schema": {
+                  "enum": null,
+                  "type": "string",
+                  "description": "The date and time of the appointment, if one was scheduled",
+                  "constant_value": "",
+                  "dynamic_variable": ""
+                },
+                "data_collection_id": "appointment_time"
+              },
+              "appointment_scheduled": {
+                "value": true,
+                "rationale": "The user explicitly requested to schedule an appointment for a technician to come out and take a look at their A/C unit. The agent then proceeded to collect the necessary information and schedule the appointment for Friday, September 26th at 10 AM. The user confirmed all the details of the appointment, indicating that the appointment was successfully scheduled. Therefore, the value is true.",
+                "json_schema": {
+                  "enum": null,
+                  "type": "boolean",
+                  "description": "Whether or not the customer scheduled an appointment",
+                  "constant_value": "",
+                  "dynamic_variable": ""
+                },
+                "data_collection_id": "appointment_scheduled"
+              }
+            },
+            "evaluation_criteria_results": {}
+          },
+          "metadata": {
+            "cost": 567,
+            "error": null,
+            "call_duration_secs": 133,
+            "termination_reason": "end_call tool was called.",
+            "authorization_method": "authorization_header",
+            "start_time_unix_secs": 1758728314,
+            "accepted_time_unix_secs": 1758728314,
+            "conversation_initiation_source": "react_sdk",
+            "conversation_initiation_source_version": "0.5.0"
+          },
+          "transcript": [
+            {
+              "role": "agent",
+              "message": "Thanks for calling Test A/C. How can I help you today?",
+              "time_in_call_secs": 0
+            },
+            {
+              "role": "user",
+              "message": "hi, my a/c isn't working, can i schedule an appointment for a technician to come out and take a look at it?",
+              "time_in_call_secs": 0
+            },
+            {
+              "role": "agent",
+              "message": "Sure thing, I'll get someone out to take a look at that for you. May I have your full name, please?",
+              "time_in_call_secs": 26
+            },
+            {
+              "role": "user",
+              "message": "Ricky Charpentier",
+              "time_in_call_secs": 60
+            },
+            {
+              "role": "agent",
+              "message": "Great, thank you Ricky. And what's the best phone number to reach you at?",
+              "time_in_call_secs": 65
+            },
+            {
+              "role": "user",
+              "message": "7278714862",
+              "time_in_call_secs": 70
+            },
+            {
+              "role": "agent",
+              "message": "Perfect. And could I get an email address for you as well?",
+              "time_in_call_secs": 75
+            },
+            {
+              "role": "user",
+              "message": "head2dasky@gmail.com",
+              "time_in_call_secs": 80
+            },
+            {
+              "role": "agent",
+              "message": "Excellent. And what's the address where you need the service?",
+              "time_in_call_secs": 85
+            },
+            {
+              "role": "user",
+              "message": "5605 Trevesta Place, Palmetto, FL 34221",
+              "time_in_call_secs": 90
+            },
+            {
+              "role": "agent",
+              "message": "Perfect. I have you scheduled for Friday, September twenty-sixth, at ten in the morning. Is that time good for you?",
+              "time_in_call_secs": 100
+            },
+            {
+              "role": "user",
+              "message": "Yes, that works great. Thank you!",
+              "time_in_call_secs": 110
+            }
+          ]
+        }
       };
     } else {
       try {
@@ -107,8 +287,8 @@ serve(async (req) => {
     if (webhookData.data?.transcript && Array.isArray(webhookData.data.transcript)) {
       console.log('Found transcript array in data.transcript:', webhookData.data.transcript.length, 'entries');
       fullTranscript = webhookData.data.transcript
-        .filter(item => item.message && item.message.trim()) // Filter out empty messages
-        .map(item => {
+        .filter((item: any) => item.message && item.message.trim()) // Filter out empty messages
+        .map((item: any) => {
           const role = item.role === 'agent' ? 'Agent' : 
                       item.role === 'user' ? 'Caller' : 
                       item.role?.charAt(0).toUpperCase() + item.role?.slice(1) || 'Speaker';
@@ -200,7 +380,7 @@ Agent: You're very welcome! We'll see you Monday morning. Have a great day!`;
       // Extract customer name and format properly
       if (results.customer_name?.value) {
         callerInfo.caller_name = results.customer_name.value.split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(' ');
       }
       
@@ -256,7 +436,7 @@ Agent: You're very welcome! We'll see you Monday morning. Have a great day!`;
       // Extract name (prefer full name, fallback to first/last) and capitalize
       if (vars.name) {
         callerInfo.caller_name = vars.name.split(' ')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(' ');
       } else if (vars.first_name || vars.last_name) {
         const firstName = vars.first_name ? 
@@ -711,7 +891,7 @@ Agent: You're very welcome! We'll see you Monday morning. Have a great day!`;
     console.error("Webhook error:", error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message 
+      error: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
