@@ -20,6 +20,7 @@ import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
 import { AddressInput } from "@/components/AddressAutocomplete";
 import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
+import { getUserTimezone, getTimezoneFromAddress, getCommonTimezones } from "@/lib/timezone-utils";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -44,6 +45,8 @@ const Settings = () => {
   const [businessAddress, setBusinessAddress] = useState("");
   const [businessDescription, setBusinessDescription] = useState("");
   const [businessWebsite, setBusinessWebsite] = useState("");
+  const [businessTimezone, setBusinessTimezone] = useState("");
+  const [businessTimezoneOffset, setBusinessTimezoneOffset] = useState("");
   const [businessHours, setBusinessHours] = useState([
     { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
     { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
@@ -181,6 +184,8 @@ const Settings = () => {
         setSmsNotifications(data.sms_notifications || false);
         setPushNotifications(data.push_notifications !== false);
         setInstantAlerts(data.instant_alerts !== false);
+        setBusinessTimezone(data.business_timezone || "");
+        setBusinessTimezoneOffset(data.business_timezone_offset || "");
         
         // Load services from the new services table
         await loadServices(data.id);
@@ -576,6 +581,24 @@ const Settings = () => {
           services: false
         });
 
+        // Auto-detect timezone if not set
+        let timezone = businessTimezone;
+        let timezoneOffset = businessTimezoneOffset;
+        
+        if (!timezone && fullAddress) {
+          const detectedTz = getTimezoneFromAddress(fullAddress);
+          timezone = detectedTz.timezone;
+          timezoneOffset = detectedTz.offset;
+          setBusinessTimezone(timezone);
+          setBusinessTimezoneOffset(timezoneOffset);
+        } else if (!timezone) {
+          const userTz = getUserTimezone();
+          timezone = userTz.timezone;
+          timezoneOffset = userTz.offset;
+          setBusinessTimezone(timezone);
+          setBusinessTimezoneOffset(timezoneOffset);
+        }
+
         updateData = {
           business_name: businessName,
           business_type: businessType,
@@ -584,6 +607,8 @@ const Settings = () => {
           business_hours: JSON.stringify(businessHours),
           business_description: businessDescription,
           business_website: businessWebsite,
+          business_timezone: timezone,
+          business_timezone_offset: timezoneOffset,
           services_offered: JSON.stringify(validServices),
           pricing_structure: validServices.map(s => `${s.name}: ${s.price}`).join(', ')
         };
@@ -678,10 +703,29 @@ const Settings = () => {
     return { street: addressString, city: '', state: '', zip: '' };
   };
 
+  const handleAddressSelect = (selectedAddress: string) => {
+    setBusinessAddress(selectedAddress);
+    
+    // Auto-detect timezone when address changes (only if not manually set)
+    if (!businessTimezone || businessTimezone === getUserTimezone().timezone) {
+      const detectedTz = getTimezoneFromAddress(selectedAddress);
+      setBusinessTimezone(detectedTz.timezone);
+      setBusinessTimezoneOffset(detectedTz.offset);
+    }
+  };
+
   const handleWebsiteDataExtracted = async (extractedData: any) => {
     if (extractedData.business_name) setBusinessName(extractedData.business_name);
     if (extractedData.business_phone) setBusinessPhone(extractedData.business_phone);
-    if (extractedData.business_address) setBusinessAddress(extractedData.business_address);
+    if (extractedData.business_address) {
+      setBusinessAddress(extractedData.business_address);
+      // Auto-detect timezone from address
+      const detectedTz = getTimezoneFromAddress(extractedData.business_address);
+      if (!businessTimezone) {
+        setBusinessTimezone(detectedTz.timezone);
+        setBusinessTimezoneOffset(detectedTz.offset);
+      }
+    }
     if (extractedData.business_description) setBusinessDescription(extractedData.business_description);
     if (extractedData.business_website) setBusinessWebsite(extractedData.business_website);
 
@@ -977,6 +1021,7 @@ const Settings = () => {
                     <AddressInput
                       value={addressData}
                       onChange={setAddressData}
+                      onAddressComplete={handleAddressSelect}
                       label="Business Address *"
                       className={validationErrors.businessAddress ? "border-red-500" : ""}
                       required={true}
@@ -1116,6 +1161,36 @@ const Settings = () => {
                       onChange={(e) => setBusinessWebsite(e.target.value)}
                       placeholder="https://www.yourbusiness.com"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="businessTimezone">Business Timezone</Label>
+                    <Select 
+                      value={businessTimezone} 
+                      onValueChange={(value) => {
+                        const tz = getCommonTimezones().find(t => t.value === value);
+                        if (tz) {
+                          setBusinessTimezone(tz.value);
+                          setBusinessTimezoneOffset(tz.offset);
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your business timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCommonTimezones().map((tz) => (
+                          <SelectItem key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {businessTimezone && (
+                      <p className="text-sm text-muted-foreground">
+                        Current timezone: {businessTimezone} ({businessTimezoneOffset})
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-4">

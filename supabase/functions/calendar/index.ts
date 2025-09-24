@@ -56,10 +56,10 @@ Deno.serve(async (req) => {
 async function handleAvailabilityRequest(supabase: any, userId: string) {
   console.log('Fetching calendar availability for user:', userId)
 
-  // Get user's business settings to check business hours
+  // Get user's business settings to check business hours and timezone
   const { data: businessSettings, error: businessError } = await supabase
     .from('business_settings')
-    .select('business_hours, business_name')
+    .select('business_hours, business_name, business_timezone, business_timezone_offset')
     .eq('user_id', userId)
     .maybeSingle()
 
@@ -223,7 +223,7 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
     business_name: businessSettings.business_name,
     available: availableSlots.length > 0,
     slots: availableSlots.slice(0, 20), // Return first 20 slots
-    timezone: calendarSettings.timezone,
+    timezone: businessSettings.business_timezone || calendarSettings.timezone,
     duration: appointmentDuration,
   }
 
@@ -293,10 +293,10 @@ async function handleBookingRequest(supabase: any, userId: string, bookingData: 
     throw new Error('Failed to get valid access token')
   }
 
-  // Get business settings for the user
+  // Get business settings for the user (including timezone)
   const { data: businessSettings } = await supabase
     .from('business_settings')
-    .select('business_name, business_phone, business_address')
+    .select('business_name, business_phone, business_address, business_timezone, business_timezone_offset')
     .eq('user_id', userId)
     .maybeSingle()
 
@@ -317,11 +317,11 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
     `.trim(),
     start: {
       dateTime: startTime,
-      timeZone: calendarSettings.timezone,
+      timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
     },
     end: {
       dateTime: endTime,
-      timeZone: calendarSettings.timezone,
+      timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
     },
     attendees: email ? [{
       email: email,

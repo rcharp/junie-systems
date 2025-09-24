@@ -13,6 +13,7 @@ interface AddressData {
 interface AddressInputProps {
   value: AddressData;
   onChange: (value: AddressData) => void;
+  onAddressComplete?: (fullAddress: string) => void;
   label?: string;
   className?: string;
   required?: boolean;
@@ -22,6 +23,7 @@ interface AddressInputProps {
 export const AddressInput = ({ 
   value, 
   onChange, 
+  onAddressComplete,
   label = "Business Address",
   className,
   required = false,
@@ -87,10 +89,18 @@ export const AddressInput = ({
       fieldValue = fieldValue.replace(/[^\d-]/g, '');
     }
     
-    onChange({
+    const newValue = {
       ...value,
       [field]: fieldValue
-    });
+    };
+    
+    onChange(newValue);
+    
+    // Call onAddressComplete if all required fields are filled
+    if (onAddressComplete && newValue.street && newValue.city && newValue.state && newValue.zip) {
+      const fullAddress = `${newValue.street}, ${newValue.city}, ${newValue.state} ${newValue.zip}`;
+      onAddressComplete(fullAddress);
+    }
   };
 
   const isFieldEmpty = (field: keyof AddressData) => {

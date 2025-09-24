@@ -163,10 +163,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Get business settings for the user
+    // Get business settings for the user (including timezone)
     const { data: businessSettings } = await supabase
       .from('business_settings')
-      .select('business_name, business_phone, business_address')
+      .select('business_name, business_phone, business_address, business_timezone, business_timezone_offset')
       .eq('user_id', userId)
       .single()
 
@@ -189,11 +189,11 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
       `.trim(),
       start: {
         dateTime: startTime,
-        timeZone: calendarSettings.timezone,
+        timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
       },
       end: {
         dateTime: endTime,
-        timeZone: calendarSettings.timezone,
+        timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
       },
       attendees: [
         {

@@ -115,6 +115,8 @@ export type Database = {
           business_hours: string | null
           business_name: string | null
           business_phone: string | null
+          business_timezone: string | null
+          business_timezone_offset: string | null
           business_type: string | null
           business_type_full_name: string | null
           business_website: string | null
@@ -146,6 +148,8 @@ export type Database = {
           business_hours?: string | null
           business_name?: string | null
           business_phone?: string | null
+          business_timezone?: string | null
+          business_timezone_offset?: string | null
           business_type?: string | null
           business_type_full_name?: string | null
           business_website?: string | null
@@ -177,6 +181,8 @@ export type Database = {
           business_hours?: string | null
           business_name?: string | null
           business_phone?: string | null
+          business_timezone?: string | null
+          business_timezone_offset?: string | null
           business_type?: string | null
           business_type_full_name?: string | null
           business_website?: string | null

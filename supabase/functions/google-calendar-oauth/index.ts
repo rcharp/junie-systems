@@ -10,6 +10,19 @@ const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
 
+// Helper function to get timezone offset
+function getTimezoneOffset(timezone: string): string {
+  const now = new Date();
+  const utc = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
+  const targetTime = new Date(utc.toLocaleString("en-US", {timeZone: timezone}));
+  const offset = (targetTime.getTime() - utc.getTime()) / (1000 * 60 * 60);
+  const sign = offset >= 0 ? '+' : '-';
+  const absOffset = Math.abs(offset);
+  const hours = Math.floor(absOffset);
+  const minutes = Math.round((absOffset - hours) * 60);
+  return `${sign}${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
 Deno.serve(async (req) => {
   console.log('google-calendar-oauth function called with method:', req.method)
   console.log('Request headers:', Object.fromEntries(req.headers.entries()))
@@ -178,6 +191,25 @@ Deno.serve(async (req) => {
       if (upsertError) {
         console.error('Error saving calendar settings:', upsertError)
         throw new Error('Failed to save calendar settings')
+      }
+
+      // Update business timezone if not already set
+      const calendarTimezone = calendarData.timeZone || 'America/New_York';
+      console.log('Updating business timezone to:', calendarTimezone);
+      
+      const { error: businessUpdateError } = await supabase
+        .from('business_settings')
+        .update({
+          business_timezone: calendarTimezone,
+          business_timezone_offset: getTimezoneOffset(calendarTimezone),
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', state)
+        .is('business_timezone', null); // Only update if not already set
+
+      if (businessUpdateError) {
+        console.warn('Could not update business timezone:', businessUpdateError);
+        // Don't throw error, this is not critical
       }
 
       return new Response(JSON.stringify({ 
