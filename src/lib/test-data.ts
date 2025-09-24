@@ -1,40 +1,38 @@
 export const DEFAULT_TEST_CALL_DATA = {
   "data": {
-    "status": "done",
-    "user_id": "test_user_id",
-    "agent_id": "test_agent",
+    "agent_id": "agent_1601k5fak9jsfrzsk06455d9f98j",
     "analysis": {
       "call_successful": "success",
-      "call_summary_title": "Test A/C Repair Appointment",
-      "transcript_summary": "Test customer called to schedule an A/C repair appointment. The agent collected the customer's information and scheduled the appointment.",
+      "call_summary_title": "A/C Repair Appointment",
+      "transcript_summary": "The user called to schedule an A/C repair appointment. The agent collected the user's name, address, phone number, email, and details about the issue. An appointment was scheduled for Wednesday, September 24th, from 10:30 AM to 11:30 AM. The agent confirmed all the information with the user, including a gate code, before ending the call.",
       "data_collection_results": {
-        "business_name": {
-          "value": "Test A/C",
-          "data_collection_id": "business_name"
-        },
-        "customer_name": {
-          "value": "Test Customer",
-          "data_collection_id": "customer_name"
-        },
-        "phone_number": {
-          "value": "5551234567",
-          "data_collection_id": "phone_number"
-        },
-        "email_address": {
-          "value": "test@example.com",
-          "data_collection_id": "email_address"
-        },
-        "service_address": {
-          "value": "123 Test Street, Test City, FL 12345",
-          "data_collection_id": "service_address"
+        "appointment_scheduled": {
+          "data_collection_id": "appointment_scheduled",
+          "value": true
         },
         "appointment_time": {
-          "value": "Wednesday, September twenty-fourth, two thousand twenty-five, from ten thirty a.m. to eleven thirty a.m.",
-          "data_collection_id": "appointment_time"
+          "data_collection_id": "appointment_time",
+          "value": "Wednesday, September twenty-fourth, from ten thirty a.m. to eleven thirty a.m."
         },
-        "appointment_scheduled": {
-          "value": true,
-          "data_collection_id": "appointment_scheduled"
+        "business_name": {
+          "data_collection_id": "business_name",
+          "value": "Test A/C"
+        },
+        "customer_name": {
+          "data_collection_id": "customer_name",
+          "value": "Ricky Charpentier"
+        },
+        "email_address": {
+          "data_collection_id": "email_address",
+          "value": "test_user@gmail.com"
+        },
+        "phone_number": {
+          "data_collection_id": "phone_number",
+          "value": 1234567890
+        },
+        "service_address": {
+          "data_collection_id": "service_address",
+          "value": "123 Main St., Tampa, FL 33637"
         }
       }
     }
