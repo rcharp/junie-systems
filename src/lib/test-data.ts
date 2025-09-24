@@ -81,7 +81,7 @@ export const DEFAULT_TEST_CALL_DATA = {
           "data_collection_id": "service_address"
         },
         "appointment_time": {
-          "value": "Wednesday, September 24, 2025, from 10:30 a.m. to 11:30 a.m.",
+          "value": "Friday, September 26, 2025, from 10:30 a.m. to 11:30 a.m.",
           "rationale": "The agent confirms the appointment time with the user as 'Wednesday, September 24, 2025, from 10:30 a.m. to 11:30 a.m.' This is the date and time of the appointment.",
           "json_schema": {
             "enum": null,
