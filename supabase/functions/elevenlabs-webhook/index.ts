@@ -250,12 +250,14 @@ serve(async (req) => {
 
     console.log('Extracted caller info:', callerInfo);
 
-    // Get business_id and user_id from webhook owner's business settings
-    let businessId = null;
+    // Get business_id and user_id - first try from webhook data, then from business settings
+    let businessId = webhookData.data?.analysis?.data_collection_results?.business_id?.value || 
+                    webhookData.variables?.business_id || null;
     let businessUserId = userId; // Default to webhook user_id
     
-    if (userId) {
-      // Get business settings for the webhook owner
+    // If no business_id in webhook data, get from business settings
+    if (!businessId && userId) {
+      console.log('No business_id in webhook data, fetching from business_settings for user:', userId);
       const { data: businessData } = await supabase
         .from('business_settings')
         .select('id, user_id')
@@ -265,7 +267,12 @@ serve(async (req) => {
       if (businessData) {
         businessId = businessData.id;
         businessUserId = businessData.user_id;
+        console.log('Found business_id from settings:', businessId);
+      } else {
+        console.log('No business_settings found for user:', userId);
       }
+    } else if (businessId) {
+      console.log('Using business_id from webhook data:', businessId);
     }
 
     // Extract call summary from webhook data
