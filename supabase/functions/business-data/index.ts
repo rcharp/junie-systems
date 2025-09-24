@@ -138,13 +138,13 @@ serve(async (req) => {
       } else {
         console.log('Unknown request type - checking headers for business_id');
         requestSource = 'elevenlabs';
-        businessId = req.headers.get('business_id') || req.headers.get('x-business-id');
+        businessId = req.headers.get('business_id') || req.headers.get('x-business-id') || undefined;
         console.log('Fallback to headers - business_id:', businessId);
       }
     } else {
       // GET request
       const url = new URL(req.url);
-      businessId = url.searchParams.get('business_id');
+      businessId = url.searchParams.get('business_id') || undefined;
       requestSource = 'api';
       console.log('API request detected - Query parameters:', Object.fromEntries(url.searchParams));
     }

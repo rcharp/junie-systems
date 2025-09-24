@@ -529,7 +529,7 @@ Thank you for calling ${business.name}! Have a wonderful day!`
     console.error("Error creating pathway:", error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

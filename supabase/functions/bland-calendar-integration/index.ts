@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error in bland-calendar-integration function:', error)
     return new Response(JSON.stringify({ 
-      error: error.message 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -135,7 +135,7 @@ async function handleAvailabilityRequest(supabase: any, userId: string) {
   const current = new Date(startDate)
 
   while (current <= endDate) {
-    const dayName = current.toLocaleLowerCase('en-US', { weekday: 'long' })
+    const dayName = current.toLocaleDateString('en-US', { weekday: 'long' })
     
     // Find business hours for this day
     const dayBusinessHours = businessHours.find((bh: any) => bh.day === dayName && bh.isOpen)

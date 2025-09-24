@@ -609,7 +609,7 @@ Thank you for choosing ${business.name}! We appreciate your business and look fo
           type: node.type === "conversation" ? "Default" : node.type === "end_call" ? "End Call" : "Default",
           data: {
             name: node.name,
-            prompt: node.prompt || node.data?.prompt,
+            prompt: node.prompt || (node as any).data?.prompt,
             isStart: node.id === "greeting"
           }
         })),
@@ -656,7 +656,7 @@ Thank you for choosing ${business.name}! We appreciate your business and look fo
     console.error("Error updating pathway:", error);
     return new Response(JSON.stringify({ 
       success: false,
-      error: error.message 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

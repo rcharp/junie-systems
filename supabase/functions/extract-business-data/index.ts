@@ -533,7 +533,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: false,
           error: 'Unable to connect to webpage',
-          details: fetchError.message,
+          details: fetchError instanceof Error ? fetchError.message : 'Unknown fetch error',
           suggestions: ['Check your internet connection', 'Verify the URL is correct', 'Try again later'],
           data: {}
         }),
@@ -916,14 +916,14 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('=== EXTRACTION ERROR ===');
-    console.error('Error:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('Error:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Stack:', error instanceof Error ? error.stack : 'No stack trace');
     
     return new Response(
       JSON.stringify({ 
         success: false,
         error: 'Failed to extract business data',
-        details: error.message
+        details: error instanceof Error ? error.message : 'Unknown error'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );

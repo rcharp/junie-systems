@@ -412,7 +412,7 @@ Deno.serve(async (req) => {
     console.error('Error in google-calendar-availability function:', error)
     return new Response(JSON.stringify({ 
       available: false, 
-      error: error.message 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -46,7 +46,7 @@ Generate only the description text, no extra formatting or quotes.`;
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': Deno.env.get('ANTHROPIC_API_KEY'),
+        'x-api-key': Deno.env.get('ANTHROPIC_API_KEY') || '',
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
@@ -82,7 +82,7 @@ Generate only the description text, no extra formatting or quotes.`;
   } catch (error) {
     console.error('Error in generate-business-description function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message || 'Failed to generate business description' 
+      error: (error instanceof Error ? error.message : 'Unknown error') || 'Failed to generate business description' 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

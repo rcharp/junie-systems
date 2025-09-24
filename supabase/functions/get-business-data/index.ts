@@ -67,7 +67,7 @@ const normalizeState = (state: string): string => {
     'DC': 'District of Columbia'
   };
 
-  return stateMap[state.toUpperCase()] || state;
+  return (stateMap as any)[state.toUpperCase()] || state;
 };
 
 const normalizeAddressWithFullState = (address: string, fullStateName?: string): string => {
@@ -294,14 +294,14 @@ serve(async (req) => {
       
       // Filter calendar slots to only include those within business hours
       const filteredSlots = businessHours 
-        ? calendarAvailability.slots.filter(slot => 
+        ? calendarAvailability.slots.filter((slot: any) => 
             isWithinBusinessHours(slot.start, businessHours) && 
             isWithinBusinessHours(slot.end, businessHours)
           )
         : calendarAvailability.slots;
       
       // Format as start/end time pairs
-      const timeSlots = filteredSlots.map(slot => ({
+      const timeSlots = filteredSlots.map((slot: any) => ({
         start: slot.start,
         end: slot.end
       }));
@@ -312,11 +312,11 @@ serve(async (req) => {
       try {
         const availabilityHours = calendarSettings.availability_hours;
         const timeSlots = Object.entries(availabilityHours)
-          .filter(([day, settings]) => settings.enabled)
+          .filter(([day, settings]: [string, any]) => settings.enabled)
           .map(([day, settings]) => ({
             day: day,
-            start: settings.start,
-            end: settings.end
+            start: (settings as any).start,
+            end: (settings as any).end
           }));
         availableHours = JSON.stringify(timeSlots);
       } catch (e) {
@@ -366,7 +366,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in get-business-data function:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
