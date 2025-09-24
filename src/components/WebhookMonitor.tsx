@@ -173,12 +173,12 @@ export const WebhookMonitor = () => {
               serviceRequested = results.service_type.value.toLowerCase();
             }
             
-            // Use the properly parsed appointment_date_time from database first
-            if (log.appointment_date_time) {
-              appointmentDetails = log.appointment_date_time;
-            } else if (results.appointment_time && results.appointment_time.value) {
-              // Fallback to raw webhook data for existing records
+            // Prioritize the raw webhook data with correct timezone info
+            if (results.appointment_time && results.appointment_time.value) {
+              // Use the timezone-aware value from the webhook data
               appointmentDetails = results.appointment_time.value;
+            } else if (log.appointment_date_time) {
+              appointmentDetails = log.appointment_date_time;
             } else {
               appointmentDetails = 'Not scheduled';
             }
