@@ -211,6 +211,7 @@ export type Database = {
           call_duration: number | null
           call_id: string | null
           call_status: string | null
+          call_summary: string | null
           call_type: string
           caller_name: string
           created_at: string
@@ -238,6 +239,7 @@ export type Database = {
           call_duration?: number | null
           call_id?: string | null
           call_status?: string | null
+          call_summary?: string | null
           call_type: string
           caller_name: string
           created_at?: string
@@ -265,6 +267,7 @@ export type Database = {
           call_duration?: number | null
           call_id?: string | null
           call_status?: string | null
+          call_summary?: string | null
           call_type?: string
           caller_name?: string
           created_at?: string
@@ -339,50 +342,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      content_suggestions: {
-        Row: {
-          confidence_score: number | null
-          created_at: string | null
-          description: string | null
-          id: string
-          is_dismissed: boolean | null
-          suggestion_type: string
-          title: string
-          trending_data: Json | null
-          user_id: string
-        }
-        Insert: {
-          confidence_score?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_dismissed?: boolean | null
-          suggestion_type: string
-          title: string
-          trending_data?: Json | null
-          user_id: string
-        }
-        Update: {
-          confidence_score?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          is_dismissed?: boolean | null
-          suggestion_type?: string
-          title?: string
-          trending_data?: Json | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "content_suggestions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       google_calendar_settings: {
         Row: {
@@ -512,77 +471,6 @@ export type Database = {
           },
         ]
       }
-      tiktok_accounts: {
-        Row: {
-          bio: string | null
-          created_at: string | null
-          display_name: string | null
-          follower_count: number | null
-          following_count: number | null
-          id: string
-          is_active: boolean | null
-          is_verified: boolean | null
-          last_sync_at: string | null
-          likes_count: number | null
-          profile_image_url: string | null
-          tiktok_user_id: string | null
-          tiktok_username: string
-          token_expires_at: string | null
-          updated_at: string | null
-          user_id: string
-          vault_key_id: string | null
-          video_count: number | null
-        }
-        Insert: {
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          follower_count?: number | null
-          following_count?: number | null
-          id?: string
-          is_active?: boolean | null
-          is_verified?: boolean | null
-          last_sync_at?: string | null
-          likes_count?: number | null
-          profile_image_url?: string | null
-          tiktok_user_id?: string | null
-          tiktok_username: string
-          token_expires_at?: string | null
-          updated_at?: string | null
-          user_id: string
-          vault_key_id?: string | null
-          video_count?: number | null
-        }
-        Update: {
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          follower_count?: number | null
-          following_count?: number | null
-          id?: string
-          is_active?: boolean | null
-          is_verified?: boolean | null
-          last_sync_at?: string | null
-          likes_count?: number | null
-          profile_image_url?: string | null
-          tiktok_user_id?: string | null
-          tiktok_username?: string
-          token_expires_at?: string | null
-          updated_at?: string | null
-          user_id?: string
-          vault_key_id?: string | null
-          video_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tiktok_accounts_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "user_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       todos: {
         Row: {
           completed: boolean
@@ -613,54 +501,6 @@ export type Database = {
           text?: string
           updated_at?: string
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      trending_analysis: {
-        Row: {
-          analysis_date: string
-          average_engagement_rate: number | null
-          category: string | null
-          created_at: string | null
-          growth_rate: number | null
-          hashtag: string
-          id: string
-          peak_date: string | null
-          region: string | null
-          total_likes: number | null
-          total_views: number | null
-          trend_score: number | null
-          video_count: number | null
-        }
-        Insert: {
-          analysis_date: string
-          average_engagement_rate?: number | null
-          category?: string | null
-          created_at?: string | null
-          growth_rate?: number | null
-          hashtag: string
-          id?: string
-          peak_date?: string | null
-          region?: string | null
-          total_likes?: number | null
-          total_views?: number | null
-          trend_score?: number | null
-          video_count?: number | null
-        }
-        Update: {
-          analysis_date?: string
-          average_engagement_rate?: number | null
-          category?: string | null
-          created_at?: string | null
-          growth_rate?: number | null
-          hashtag?: string
-          id?: string
-          peak_date?: string | null
-          region?: string | null
-          total_likes?: number | null
-          total_views?: number | null
-          trend_score?: number | null
-          video_count?: number | null
         }
         Relationships: []
       }
@@ -758,139 +598,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      video_analytics: {
-        Row: {
-          comment_count: number | null
-          created_at: string | null
-          download_count: number | null
-          engagement_rate: number | null
-          id: string
-          like_count: number | null
-          play_count: number | null
-          share_count: number | null
-          snapshot_date: string
-          video_id: string
-          view_count: number | null
-        }
-        Insert: {
-          comment_count?: number | null
-          created_at?: string | null
-          download_count?: number | null
-          engagement_rate?: number | null
-          id?: string
-          like_count?: number | null
-          play_count?: number | null
-          share_count?: number | null
-          snapshot_date: string
-          video_id: string
-          view_count?: number | null
-        }
-        Update: {
-          comment_count?: number | null
-          created_at?: string | null
-          download_count?: number | null
-          engagement_rate?: number | null
-          id?: string
-          like_count?: number | null
-          play_count?: number | null
-          share_count?: number | null
-          snapshot_date?: string
-          video_id?: string
-          view_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "video_analytics_video_id_fkey"
-            columns: ["video_id"]
-            isOneToOne: false
-            referencedRelation: "videos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      videos: {
-        Row: {
-          comment_count: number | null
-          created_at: string | null
-          description: string | null
-          download_count: number | null
-          duration: number | null
-          hashtags: string[] | null
-          id: string
-          like_count: number | null
-          mentions: string[] | null
-          music_author: string | null
-          music_id: string | null
-          music_title: string | null
-          play_count: number | null
-          published_at: string | null
-          share_count: number | null
-          thumbnail_url: string | null
-          tiktok_account_id: string
-          tiktok_video_id: string
-          title: string | null
-          updated_at: string | null
-          video_url: string | null
-          view_count: number | null
-        }
-        Insert: {
-          comment_count?: number | null
-          created_at?: string | null
-          description?: string | null
-          download_count?: number | null
-          duration?: number | null
-          hashtags?: string[] | null
-          id?: string
-          like_count?: number | null
-          mentions?: string[] | null
-          music_author?: string | null
-          music_id?: string | null
-          music_title?: string | null
-          play_count?: number | null
-          published_at?: string | null
-          share_count?: number | null
-          thumbnail_url?: string | null
-          tiktok_account_id: string
-          tiktok_video_id: string
-          title?: string | null
-          updated_at?: string | null
-          video_url?: string | null
-          view_count?: number | null
-        }
-        Update: {
-          comment_count?: number | null
-          created_at?: string | null
-          description?: string | null
-          download_count?: number | null
-          duration?: number | null
-          hashtags?: string[] | null
-          id?: string
-          like_count?: number | null
-          mentions?: string[] | null
-          music_author?: string | null
-          music_id?: string | null
-          music_title?: string | null
-          play_count?: number | null
-          published_at?: string | null
-          share_count?: number | null
-          thumbnail_url?: string | null
-          tiktok_account_id?: string
-          tiktok_video_id?: string
-          title?: string | null
-          updated_at?: string | null
-          video_url?: string | null
-          view_count?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "videos_tiktok_account_id_fkey"
-            columns: ["tiktok_account_id"]
-            isOneToOne: false
-            referencedRelation: "tiktok_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {

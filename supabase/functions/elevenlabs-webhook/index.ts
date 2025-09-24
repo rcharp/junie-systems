@@ -250,25 +250,47 @@ serve(async (req) => {
 
     console.log('Extracted caller info:', callerInfo);
 
+    // Get business_id from business_name if available
+    let businessId = null;
+    const businessName = webhookData.data?.analysis?.data_collection_results?.business_name?.value || 
+                        webhookData.variables?.business_name;
+    
+    if (businessName && userId) {
+      const { data: businessData } = await supabase
+        .from('business_settings')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('business_name', businessName)
+        .maybeSingle();
+      
+      businessId = businessData?.id || null;
+    }
+
+    // Extract call summary from webhook data
+    const callSummary = webhookData.data?.analysis?.transcript_summary || 
+                       webhookData.data?.summary || 
+                       '';
+
     // Insert or update call log with extracted data
     const { error: upsertError } = await supabase
       .from('call_logs')
       .upsert({
         call_id: call_id || crypto.randomUUID(),
         user_id: userId,
+        business_id: businessId,
         caller_name: callerInfo.caller_name,
         phone_number: callerInfo.phone_number,
         email: callerInfo.email,
         call_status: status || 'completed',
         call_duration: duration || 0,
         transcript: fullTranscript || '',
+        call_summary: callSummary,
         recording_url: recording_url || '',
         message: callerInfo.message,
         urgency_level: callerInfo.urgency_level,
         call_type: callerInfo.call_type,
         ended_at: new Date().toISOString(),
-        business_name: webhookData.data?.analysis?.data_collection_results?.business_name?.value || 
-                      webhookData.variables?.business_name || '',
+        business_name: businessName || '',
         business_type: webhookData.variables?.business_type || '',
         appointment_scheduled: callerInfo.appointment_scheduled,
         service_address: callerInfo.service_address,
