@@ -315,8 +315,9 @@ serve(async (req) => {
     
     if (rawAppointmentTime) {
       try {
-        // Parse natural language appointment time
-        parsedAppointmentDateTime = parseAppointmentTime(rawAppointmentTime);
+        // Parse natural language appointment time with timezone consideration
+        // Default to Eastern timezone for now, but this should be retrieved from user profile
+        parsedAppointmentDateTime = parseAppointmentTime(rawAppointmentTime, 'America/New_York');
         console.log('Parsed appointment time:', rawAppointmentTime, '→', parsedAppointmentDateTime);
       } catch (error) {
         console.error('Error parsing appointment time:', rawAppointmentTime, error);
@@ -655,11 +656,11 @@ function getNextWeekday(date: Date, targetDay: number): Date {
 }
 
 // Function to parse natural language appointment time into ISO datetime
-function parseAppointmentTime(appointmentTimeString: string): string | null {
+function parseAppointmentTime(appointmentTimeString: string, userTimezone: string = 'America/New_York'): string | null {
   if (!appointmentTimeString) return null;
   
   const lowerText = appointmentTimeString.toLowerCase();
-  console.log('Parsing appointment time:', lowerText);
+  console.log('Parsing appointment time:', lowerText, 'for timezone:', userTimezone);
   
   // Current date for reference
   const now = new Date();
@@ -765,6 +766,11 @@ function parseAppointmentTime(appointmentTimeString: string): string | null {
   
   // Set the time
   targetDate.setHours(hour, minute, 0, 0);
+  
+  // Convert to UTC by adjusting for the timezone offset
+  // EDT is UTC-4, so we need to add 4 hours to convert local time to UTC
+  const timezoneOffset = userTimezone === 'America/New_York' ? 4 : 0; // Assuming EDT for now
+  targetDate.setHours(targetDate.getHours() + timezoneOffset);
   
   return targetDate.toISOString();
 }
