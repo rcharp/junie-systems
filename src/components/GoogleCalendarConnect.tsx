@@ -119,12 +119,27 @@ const GoogleCalendarConnect = () => {
 
   const handleDisconnect = async () => {
     try {
-      const { error } = await supabase
+      // First, update the record to clear tokens and set is_connected to false
+      const { error: updateError } = await supabase
         .from('google_calendar_settings')
-        .delete()
+        .update({
+          is_connected: false,
+          encrypted_access_token: null,
+          encrypted_refresh_token: null,
+          expires_at: null
+        })
         .eq('user_id', user?.id);
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating calendar settings:', updateError);
+        // If update fails, try to delete the record
+        const { error: deleteError } = await supabase
+          .from('google_calendar_settings')
+          .delete()
+          .eq('user_id', user?.id);
+        
+        if (deleteError) throw deleteError;
+      }
 
       setCalendarSettings(null);
       toast({
