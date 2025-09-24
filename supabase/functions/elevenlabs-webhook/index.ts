@@ -114,33 +114,58 @@ serve(async (req) => {
       }
     }
 
-    // Extract caller info - prioritize data_collection_results from webhook analysis
+    // Extract caller info - use the same logic as the admin dashboard
     let callerInfo = {
       caller_name: 'Unknown Caller',
       phone_number: 'Unknown',
       email: null,
       message: 'Webhook data received',
       urgency_level: 'medium',
-      call_type: 'other'
+      call_type: 'other',
+      service_address: null,
+      appointment_details: null,
+      appointment_scheduled: false
     };
 
-    // First try to extract from analysis.data_collection_results (this is the structured data)
+    // First try to extract from analysis.data_collection_results (same as admin dashboard)
     if (webhookData.data?.analysis?.data_collection_results) {
       const results = webhookData.data.analysis.data_collection_results;
       console.log('Data collection results found:', results);
       
-      // Extract caller details from data collection results
+      // Extract customer name and format properly
       if (results.customer_name?.value) {
-        callerInfo.caller_name = results.customer_name.value;
+        callerInfo.caller_name = results.customer_name.value.split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
       }
       
+      // Extract phone number
       if (results.phone_number?.value) {
-        // Handle both string and number formats
         callerInfo.phone_number = String(results.phone_number.value);
       }
       
+      // Extract email
       if (results.email_address?.value) {
         callerInfo.email = results.email_address.value;
+      } else if (results.email?.value) {
+        callerInfo.email = results.email.value;
+      }
+      
+      // Extract service address
+      if (results.service_address?.value) {
+        callerInfo.service_address = results.service_address.value;
+      }
+      
+      // Extract appointment time
+      if (results.appointment_time?.value) {
+        callerInfo.appointment_details = results.appointment_time.value;
+      }
+      
+      // Extract appointment scheduled status
+      if (results.appointment_scheduled?.value) {
+        callerInfo.appointment_scheduled = results.appointment_scheduled.value === true || 
+                                         results.appointment_scheduled.value.toString().toLowerCase() === 'true' || 
+                                         results.appointment_scheduled.value.toString().toLowerCase() === 'yes';
       }
       
       // Use the transcript summary as the message
@@ -149,7 +174,7 @@ serve(async (req) => {
       }
       
       // Determine call type from appointment data
-      if (results.appointment_scheduled?.value === true) {
+      if (callerInfo.appointment_scheduled) {
         callerInfo.call_type = 'appointment';
       } else {
         callerInfo.call_type = 'inquiry';
@@ -157,36 +182,53 @@ serve(async (req) => {
       
       console.log('Caller info extracted from data collection results:', callerInfo);
     }
-    // Fallback to variables if available
+    // Fallback to variables if available (legacy structure)
     else if (webhookData.variables) {
       const vars = webhookData.variables;
       
       console.log('Variables found:', vars);
       
-      // Extract caller details from variables - this is the REAL caller data
-      callerInfo.caller_name = vars.name || `${vars.first_name || ''} ${vars.last_name || ''}`.trim() || 'Unknown Caller';
-      callerInfo.phone_number = vars.phone_number ? String(vars.phone_number) : 'Unknown';
-      callerInfo.email = vars.email || null;
-      
-      // Clean up the last_name if it has comma-separated characters
-      if (vars.last_name && vars.last_name.includes(',')) {
-        const lastName = vars.last_name.split(',').join('');
-        callerInfo.caller_name = `${vars.first_name || ''} ${lastName}`.trim();
+      // Extract name (prefer full name, fallback to first/last) and capitalize
+      if (vars.name) {
+        callerInfo.caller_name = vars.name.split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(' ');
+      } else if (vars.first_name || vars.last_name) {
+        const firstName = vars.first_name ? 
+          vars.first_name.charAt(0).toUpperCase() + vars.first_name.slice(1).toLowerCase() : '';
+        const lastName = vars.last_name ? 
+          vars.last_name.charAt(0).toUpperCase() + vars.last_name.slice(1).toLowerCase() : '';
+        callerInfo.caller_name = `${firstName} ${lastName}`.trim();
       }
       
-      // Create a clean message from the conversation
-      if (fullTranscript) {
+      // Extract contact info
+      if (vars.phone_number) callerInfo.phone_number = String(vars.phone_number);
+      if (vars.email) callerInfo.email = vars.email;
+      if (vars.address) callerInfo.service_address = vars.address;
+      
+      // Extract appointment info
+      if (vars.appointment_details) {
+        callerInfo.appointment_details = vars.appointment_details;
+      }
+      
+      // Extract service notes/requirements
+      if (vars.service_requested) {
+        callerInfo.message = vars.service_requested.substring(0, 500);
+      } else if (vars.notes) {
+        callerInfo.message = vars.notes.substring(0, 500);
+      } else if (fullTranscript) {
         const lines = fullTranscript.split('\n');
         const callerLines = lines.filter(line => 
           line.toLowerCase().includes('caller:')
         ).map(line => line.replace(/^Caller:\s*/i, '').trim()).join(' ');
         
-        callerInfo.message = callerLines.substring(0, 500) || vars.notes || 'Customer called for service';
+        callerInfo.message = callerLines.substring(0, 500) || 'Customer called for service';
       }
       
       // Determine call type
       if (vars.appointment_scheduled || vars.appointment_details) {
         callerInfo.call_type = 'appointment';
+        callerInfo.appointment_scheduled = true;
       } else {
         callerInfo.call_type = 'inquiry';
       }
@@ -225,16 +267,21 @@ serve(async (req) => {
         urgency_level: callerInfo.urgency_level,
         call_type: callerInfo.call_type,
         ended_at: new Date().toISOString(),
-        business_name: webhookData.variables?.business_name || '',
+        business_name: webhookData.data?.analysis?.data_collection_results?.business_name?.value || 
+                      webhookData.variables?.business_name || '',
         business_type: webhookData.variables?.business_type || '',
+        appointment_scheduled: callerInfo.appointment_scheduled,
+        service_address: callerInfo.service_address,
+        appointment_date_time: callerInfo.appointment_details ? new Date().toISOString() : null, // This would need proper date parsing
         metadata: {
           ...metadata,
           webhook_received_at: new Date().toISOString(),
-          caller_address: webhookData.variables?.address || '',
+          caller_address: callerInfo.service_address || '',
           caller_zip: webhookData.variables?.zip_code || '',
-          appointment_scheduled: webhookData.variables?.appointment_scheduled || false,
-          appointment_details: webhookData.variables?.appointment_details || null,
-          service_requested: webhookData.variables?.service_requested || '',
+          appointment_scheduled: callerInfo.appointment_scheduled,
+          appointment_details: callerInfo.appointment_details,
+          service_requested: webhookData.data?.analysis?.data_collection_results?.service_type?.value || 
+                           webhookData.variables?.service_requested || '',
           raw_webhook_data: webhookData
         }
       }, {
