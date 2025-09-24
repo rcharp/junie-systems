@@ -198,8 +198,12 @@ const CallDetails = () => {
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-sm font-medium text-muted-foreground">Company Name</span>
-                    <p className="mt-1">{callData.business_name || callData.caller_name || 'Unknown'}</p>
+                    <span className="text-sm font-medium text-muted-foreground">Caller Name</span>
+                    <p className="mt-1">{callData.caller_name || 'Unknown Caller'}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-muted-foreground">Phone Number</span>
+                    <p className="mt-1">{callData.phone_number || 'Unknown'}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Email Address</span>
@@ -217,16 +221,8 @@ const CallDetails = () => {
                     </div>
                   )}
                   <div>
-                    <span className="text-sm font-medium text-muted-foreground">Caller Name</span>
-                    <p className="mt-1">{callData.caller_name || 'Unknown Caller'}</p>
-                  </div>
-                  <div>
                     <span className="text-sm font-medium text-muted-foreground">Appointment Scheduled</span>
                     <p className="mt-1">{callData.appointment_scheduled ? 'Yes' : 'No'}</p>
-                  </div>
-                  <div>
-                    <span className="text-sm font-medium text-muted-foreground">Phone Number</span>
-                    <p className="mt-1">{callData.phone_number || 'Unknown'}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Appointment Date/Time</span>
