@@ -462,9 +462,9 @@ export const WebhookMonitor = () => {
       
       console.log('🧪 Attempting to call elevenlabs-webhook function...');
       
-      // Simple test - just call with empty body first
+      // Call with comprehensive test data from test-data.ts
       const { data: result, error: functionError } = await supabase.functions.invoke('elevenlabs-webhook', {
-        body: { test: true, webhook_id: profileData.webhook_id }
+        body: { ...testData, webhook_id: profileData.webhook_id }
       });
 
       if (functionError) {
