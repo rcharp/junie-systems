@@ -172,9 +172,15 @@ export const WebhookMonitor = () => {
               serviceRequested = results.service_type.value.toLowerCase();
             }
             
-            // Use the properly parsed appointment_date_time from database instead of text
-            // The appointment time text is already parsed and stored as ISO datetime in the database
-            appointmentDetails = log.appointment_date_time || 'Not scheduled';
+            // Use the properly parsed appointment_date_time from database first
+            if (log.appointment_date_time) {
+              appointmentDetails = log.appointment_date_time;
+            } else if (results.appointment_time && results.appointment_time.value) {
+              // Fallback to raw webhook data for existing records
+              appointmentDetails = results.appointment_time.value;
+            } else {
+              appointmentDetails = 'Not scheduled';
+            }
             
             // Extract appointment scheduled status
             if (results.appointment_scheduled && results.appointment_scheduled.value) {
