@@ -536,6 +536,9 @@ serve(async (req) => {
       business_name: businessName,
       business_type: '',
       provider: 'elevenlabs',
+      appointment_scheduled: isAppointmentScheduled,
+      appointment_date_time: parsedAppointmentDateTime,
+      service_address: serviceAddress,
       metadata: {
         caller_zip: '',
         caller_address: serviceAddress || '',
