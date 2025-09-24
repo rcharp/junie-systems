@@ -346,8 +346,10 @@ serve(async (req) => {
     const callerInfo = extractCallerInfo(fullTranscript);
     console.log(`Extracted caller info:`, JSON.stringify(callerInfo, null, 2));
 
-    // Get business_id - first check webhook data, then fallback to business_settings
+    // Initialize businessId early since it's used throughout
     let businessId = null;
+
+    // Get business_id - first check webhook data, then data collection results, then fallback to business_settings
     if (webhookData.business_id) {
       businessId = webhookData.business_id;
       console.log('Using business_id from webhook data:', businessId);
@@ -356,16 +358,34 @@ serve(async (req) => {
       
       const { data: settingsData, error: settingsError } = await supabase
         .from('business_settings')
-        .select('business_id')
+        .select('id')
         .eq('user_id', businessUserId)
         .single();
 
-      if (settingsData?.business_id) {
-        businessId = settingsData.business_id;
+      if (settingsData?.id) {
+        businessId = settingsData.id;
         console.log('Found business_id from settings:', businessId);
       } else {
         console.error('Error fetching business_id from settings:', settingsError);
         console.log('No business_id found in settings for user:', businessUserId);
+      }
+    }
+
+    // If we have a business_id but no businessUserId, look up the user_id from business_settings
+    if (businessId && !businessUserId) {
+      console.log('Looking up user_id for business_id:', businessId);
+      const { data: businessSettings, error: businessError } = await supabase
+        .from('business_settings')
+        .select('user_id')
+        .eq('id', businessId)
+        .single();
+
+      if (businessSettings?.user_id) {
+        businessUserId = businessSettings.user_id;
+        console.log('Found user_id from business_id:', businessUserId);
+      } else {
+        console.error('Error fetching user_id from business_id:', businessError);
+        console.log('No user_id found for business_id:', businessId);
       }
     }
 
@@ -464,6 +484,12 @@ serve(async (req) => {
       
       if (results.appointment_time && results.appointment_time.value) {
         appointmentDetails = results.appointment_time.value;
+      }
+
+      // Extract business_id from data collection results
+      if (results.business_id && results.business_id.value) {
+        businessId = results.business_id.value;
+        console.log('Using business_id from data collection results:', businessId);
       }
 
       // Use transcript summary as service requested if available
@@ -672,8 +698,8 @@ Example:
       appointment_scheduled: isAppointmentScheduled,
       appointment_date_time: parsedAppointmentDateTime,
       service_address: serviceAddress,
-      // Set business_id for manual test calls when no businessUserId is found
-      business_id: businessUserId ? null : '5a8a338e-d401-4a14-a109-6974859ce5b8',
+      // Set business_id - use the extracted businessId or fallback for manual test calls
+      business_id: businessId || (businessUserId ? null : '5a8a338e-d401-4a14-a109-6974859ce5b8'),
       metadata: {
         caller_zip: '',
         caller_address: serviceAddress || '',
