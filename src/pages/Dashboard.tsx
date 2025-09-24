@@ -26,12 +26,28 @@ interface RecentActivity {
   created_at: string;
 }
 
+interface DashboardStats {
+  totalCalls: number;
+  totalMessages: number;
+  hoursSaved: number;
+  leadsCount: number;
+  successRate: number;
+}
+
 const Dashboard = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    totalCalls: 0,
+    totalMessages: 0,
+    hoursSaved: 0,
+    leadsCount: 0,
+    successRate: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -42,6 +58,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (user) {
       fetchRecentActivity();
+      fetchDashboardStats();
     }
   }, [user]);
 
@@ -49,59 +66,117 @@ const Dashboard = () => {
     try {
       setActivityLoading(true);
       
-      // Get user's business_id first
-      const { data: businessData, error: businessError } = await supabase
-        .from('business_settings')
-        .select('id')
+      // Fetch from call_logs first (most comprehensive data)
+      const { data: callLogs, error: logsError } = await supabase
+        .from('call_logs')
+        .select('*')
         .eq('user_id', user?.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(3);
 
-      if (businessError) throw businessError;
+      // Fetch from call_messages as well
+      const { data: callMessages, error: messagesError } = await supabase
+        .from('call_messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(2);
 
-      if (businessData) {
-        // Fetch recent business_data_requests for this business
-        const { data: businessRequests, error: requestError } = await supabase
-          .from('business_data_requests')
-          .select('*')
-          .eq('business_id', businessData.id)
-          .order('created_at', { ascending: false })
-          .limit(5);
+      const activities: RecentActivity[] = [];
 
-        if (requestError) throw requestError;
-
-        // Transform business_data_requests into recent activity
-        const activities: RecentActivity[] = (businessRequests || []).map(request => {
-          const requestData = request.request_data as any || {};
-          const responseData = request.response_data as any || {};
-          
-          let action = "called";
-          let callerName = "A customer";
-          
-          if (responseData.caller_name) {
-            callerName = responseData.caller_name;
-          }
-          
-          if (request.request_type === 'conversation_initiation') {
-            action = "started a conversation";
-          }
-          
-          return {
-            id: request.id,
-            time: formatDistanceToNow(new Date(request.created_at), { addSuffix: true }),
-            action: `${callerName} ${action}`,
-            type: 'success' as const,
-            caller_name: responseData.caller_name || 'Unknown',
-            call_type: request.request_type || 'inquiry',
-            created_at: request.created_at,
-          };
+      // Transform call_logs into recent activity
+      if (callLogs) {
+        callLogs.forEach(log => {
+          activities.push({
+            id: log.id,
+            time: formatDistanceToNow(new Date(log.created_at), { addSuffix: true }),
+            action: `${log.caller_name} called`,
+            type: log.urgency_level === 'urgent' ? 'error' : 
+                  log.urgency_level === 'high' ? 'warning' : 'success',
+            caller_name: log.caller_name,
+            call_type: log.call_type,
+            created_at: log.created_at,
+          });
         });
-
-        setRecentActivity(activities);
       }
+
+      // Transform call_messages into recent activity
+      if (callMessages) {
+        callMessages.forEach(message => {
+          activities.push({
+            id: message.id,
+            time: formatDistanceToNow(new Date(message.created_at), { addSuffix: true }),
+            action: `${message.caller_name} left a message`,
+            type: message.urgency_level === 'urgent' ? 'error' : 
+                  message.urgency_level === 'high' ? 'warning' : 'success',
+            caller_name: message.caller_name,
+            call_type: message.call_type,
+            created_at: message.created_at,
+          });
+        });
+      }
+
+      // Sort by created_at and take the most recent 5
+      activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      setRecentActivity(activities.slice(0, 5));
+
     } catch (error: any) {
       console.error('Error fetching recent activity:', error);
     } finally {
       setActivityLoading(false);
+    }
+  };
+
+  const fetchDashboardStats = async () => {
+    try {
+      setStatsLoading(true);
+      
+      // Fetch all call logs for the user
+      const { data: callLogs, error: logsError } = await supabase
+        .from('call_logs')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      // Fetch all call messages for the user
+      const { data: callMessages, error: messagesError } = await supabase
+        .from('call_messages')
+        .select('*')
+        .eq('user_id', user?.id);
+
+      if (logsError) throw logsError;
+      if (messagesError) throw messagesError;
+
+      const logs = callLogs || [];
+      const messages = callMessages || [];
+
+      // Calculate stats
+      const totalCalls = logs.length;
+      const totalMessages = messages.length;
+      
+      // Calculate hours saved (assuming 5 minutes per call saved on average)
+      const totalDuration = logs.reduce((sum, call) => sum + (call.call_duration || 300), 0);
+      const hoursSaved = Math.round((totalDuration / 3600) * 10) / 10;
+      
+      // Count leads (appointments and sales calls)
+      const leadsCount = [...logs, ...messages].filter(item => 
+        item.call_type === 'appointment' || item.call_type === 'sales'
+      ).length;
+      
+      // Calculate success rate (completed calls vs total calls)
+      const completedCalls = logs.filter(call => call.call_status === 'completed').length;
+      const successRate = totalCalls > 0 ? Math.round((completedCalls / totalCalls) * 100) : 100;
+
+      setDashboardStats({
+        totalCalls,
+        totalMessages,
+        hoursSaved,
+        leadsCount,
+        successRate,
+      });
+    } catch (error: any) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setStatsLoading(false);
     }
   };
 
@@ -217,8 +292,8 @@ const Dashboard = () => {
                   <Phone className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">24</div>
-                  <p className="text-xs text-muted-foreground">+20% from last month</p>
+                  <div className="text-2xl font-bold">{statsLoading ? '...' : dashboardStats.totalCalls}</div>
+                  <p className="text-xs text-muted-foreground">Calls handled by AI</p>
                 </CardContent>
               </Card>
               <Card>
@@ -227,8 +302,8 @@ const Dashboard = () => {
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">12.5</div>
-                  <p className="text-xs text-muted-foreground">+15% from last month</p>
+                  <div className="text-2xl font-bold">{statsLoading ? '...' : dashboardStats.hoursSaved}</div>
+                  <p className="text-xs text-muted-foreground">Time saved with AI assistant</p>
                 </CardContent>
               </Card>
               <Card>
@@ -237,8 +312,8 @@ const Dashboard = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">142</div>
-                  <p className="text-xs text-muted-foreground">+5 new this week</p>
+                  <div className="text-2xl font-bold">{statsLoading ? '...' : dashboardStats.leadsCount}</div>
+                  <p className="text-xs text-muted-foreground">Appointments & sales inquiries</p>
                 </CardContent>
               </Card>
               <Card>
@@ -247,8 +322,8 @@ const Dashboard = () => {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">98%</div>
-                  <p className="text-xs text-muted-foreground">+2% from last month</p>
+                  <div className="text-2xl font-bold">{statsLoading ? '...' : `${dashboardStats.successRate}%`}</div>
+                  <p className="text-xs text-muted-foreground">Call completion rate</p>
                 </CardContent>
               </Card>
             </div>
