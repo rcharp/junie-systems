@@ -60,7 +60,7 @@ const CallList = () => {
     try {
       setLoading(true);
       
-      // Get user's business_id first
+      // Get user's business_id first to find associated data
       const { data: businessData, error: businessError } = await supabase
         .from('business_settings')
         .select('id')
@@ -69,71 +69,71 @@ const CallList = () => {
 
       if (businessError) throw businessError;
 
-      if (!businessData) {
-        console.log('No business settings found for user');
-        setCallLogs([]);
-        setCallMessages([]);
-        setLoading(false);
-        return;
+      let logs: CallLog[] = [];
+      let messages: CallMessage[] = [];
+
+      // If user has business settings, fetch business data requests (this is where the actual call data is)
+      if (businessData) {
+        const { data: businessRequests, error: requestsError } = await supabase
+          .from('business_data_requests')
+          .select('*')
+          .eq('business_id', businessData.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (requestsError) throw requestsError;
+
+        // Transform business_data_requests to match CallLog interface
+        logs = (businessRequests || []).map(request => {
+          const requestData = request.request_data as any || {};
+          const responseData = request.response_data as any || {};
+          
+          return {
+            id: request.id,
+            call_id: requestData.call_sid || request.id,
+            caller_name: responseData.caller_name || requestData.caller_id || 'Unknown Caller',
+            phone_number: requestData.caller_id || 'Unknown',
+            call_status: 'completed',
+            call_type: request.request_type === 'conversation_initiation_client_data' ? 'inquiry' : 'other',
+            urgency_level: 'medium',
+            message: `Business data request - ${request.request_type}`,
+            email: responseData.caller_email || '',
+            call_duration: 0,
+            recording_url: '',
+            transcript: '',
+            created_at: request.created_at,
+            updated_at: request.updated_at,
+            best_time_to_call: '',
+          };
+        });
       }
 
-      // Fetch call logs that match this business through business_data_requests
-      const { data: businessRequests, error: requestsError } = await supabase
-        .from('business_data_requests')
-        .select('*')
-        .eq('business_id', businessData.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (requestsError) throw requestsError;
-
-      // Transform business_data_requests to match CallLog interface
-      const transformedLogs: CallLog[] = (businessRequests || []).map(request => {
-        const requestData = request.request_data as any || {};
-        const responseData = request.response_data as any || {};
-        
-        return {
-          id: request.id,
-          call_id: requestData.call_sid || request.id,
-          caller_name: responseData.caller_name || 'Unknown Caller',
-          phone_number: requestData.caller_id || 'Unknown',
-          call_status: 'completed',
-          call_type: request.request_type === 'conversation_initiation' ? 'inquiry' : 'other',
-          urgency_level: 'medium',
-          message: `Call from ${responseData.caller_name || 'customer'} - ${request.request_type}`,
-          email: responseData.caller_email || '',
-          call_duration: 0,
-          recording_url: '',
-          transcript: '',
-          created_at: request.created_at,
-          updated_at: request.updated_at,
-          best_time_to_call: '',
-        };
-      });
-
-      // Also fetch actual call_logs if they exist with proper user_id
-      const { data: logs, error: logsError } = await supabase
+      // Also try to fetch direct call_logs and call_messages with user_id
+      const { data: directLogs, error: logsError } = await supabase
         .from('call_logs')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      // Combine the data sources
-      const allLogs = [...transformedLogs, ...(logs || [])];
-
-      // Fetch call messages that match this business or user
-      const { data: messages, error: messagesError } = await supabase
+      const { data: directMessages, error: messagesError } = await supabase
         .from('call_messages')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(50);
 
-      if (messagesError) throw messagesError;
+      // Combine all logs
+      if (directLogs && directLogs.length > 0) {
+        logs = [...logs, ...directLogs];
+      }
 
-      setCallLogs(allLogs);
-      setCallMessages(messages || []);
+      if (directMessages && directMessages.length > 0) {
+        messages = directMessages;
+      }
+
+      setCallLogs(logs);
+      setCallMessages(messages);
     } catch (error: any) {
       console.error('Error fetching call data:', error);
       toast({

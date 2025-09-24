@@ -66,7 +66,47 @@ const Dashboard = () => {
     try {
       setActivityLoading(true);
       
-      // Fetch from call_logs first (most comprehensive data)
+      // Get user's business_id first
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_settings')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (businessError) throw businessError;
+
+      const activities: RecentActivity[] = [];
+
+      if (businessData) {
+        // Fetch from business_data_requests (where actual call data is stored)
+        const { data: businessRequests, error: requestsError } = await supabase
+          .from('business_data_requests')
+          .select('*')
+          .eq('business_id', businessData.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (requestsError) throw requestsError;
+
+        if (businessRequests) {
+          businessRequests.forEach(request => {
+            const requestData = request.request_data as any || {};
+            const responseData = request.response_data as any || {};
+            
+            activities.push({
+              id: request.id,
+              time: formatDistanceToNow(new Date(request.created_at), { addSuffix: true }),
+              action: `Call from ${requestData.caller_id || 'Unknown caller'}`,
+              type: 'success',
+              caller_name: responseData.caller_name || requestData.caller_id || 'Unknown',
+              call_type: request.request_type || 'inquiry',
+              created_at: request.created_at,
+            });
+          });
+        }
+      }
+
+      // Also fetch from call_logs if they have user_id
       const { data: callLogs, error: logsError } = await supabase
         .from('call_logs')
         .select('*')
@@ -74,17 +114,6 @@ const Dashboard = () => {
         .order('created_at', { ascending: false })
         .limit(3);
 
-      // Fetch from call_messages as well
-      const { data: callMessages, error: messagesError } = await supabase
-        .from('call_messages')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(2);
-
-      const activities: RecentActivity[] = [];
-
-      // Transform call_logs into recent activity
       if (callLogs) {
         callLogs.forEach(log => {
           activities.push({
@@ -100,7 +129,14 @@ const Dashboard = () => {
         });
       }
 
-      // Transform call_messages into recent activity
+      // Fetch call messages
+      const { data: callMessages, error: messagesError } = await supabase
+        .from('call_messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(2);
+
       if (callMessages) {
         callMessages.forEach(message => {
           activities.push({
@@ -131,40 +167,76 @@ const Dashboard = () => {
     try {
       setStatsLoading(true);
       
-      // Fetch all call logs for the user
+      // Get user's business_id first
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_settings')
+        .select('id')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (businessError) throw businessError;
+
+      let totalCalls = 0;
+      let totalMessages = 0;
+      let hoursSaved = 0;
+      let leadsCount = 0;
+      let successRate = 100;
+
+      if (businessData) {
+        // Fetch business_data_requests for this business
+        const { data: businessRequests, error: requestsError } = await supabase
+          .from('business_data_requests')
+          .select('*')
+          .eq('business_id', businessData.id);
+
+        if (requestsError) throw requestsError;
+
+        const requests = businessRequests || [];
+        totalCalls = requests.length;
+        
+        // Calculate hours saved (assuming 5 minutes per call saved on average)
+        hoursSaved = Math.round((totalCalls * 5 / 60) * 10) / 10;
+        
+        // Count leads (any successful business data requests could be leads)
+        leadsCount = requests.filter(request => request.response_status < 400).length;
+        
+        // Calculate success rate based on response status
+        const successfulRequests = requests.filter(r => r.response_status < 400).length;
+        successRate = totalCalls > 0 ? Math.round((successfulRequests / totalCalls) * 100) : 100;
+      }
+
+      // Also add data from call_logs and call_messages if they exist with user_id
       const { data: callLogs, error: logsError } = await supabase
         .from('call_logs')
         .select('*')
         .eq('user_id', user?.id);
 
-      // Fetch all call messages for the user
       const { data: callMessages, error: messagesError } = await supabase
         .from('call_messages')
         .select('*')
         .eq('user_id', user?.id);
 
-      if (logsError) throw logsError;
-      if (messagesError) throw messagesError;
+      if (callLogs && callLogs.length > 0) {
+        totalCalls += callLogs.length;
+        
+        // Add to hours saved calculation
+        const totalDuration = callLogs.reduce((sum, call) => sum + (call.call_duration || 300), 0);
+        hoursSaved += Math.round((totalDuration / 3600) * 10) / 10;
+        
+        // Add to leads count
+        leadsCount += callLogs.filter(call => 
+          call.call_type === 'appointment' || call.call_type === 'sales'
+        ).length;
+      }
 
-      const logs = callLogs || [];
-      const messages = callMessages || [];
-
-      // Calculate stats
-      const totalCalls = logs.length;
-      const totalMessages = messages.length;
-      
-      // Calculate hours saved (assuming 5 minutes per call saved on average)
-      const totalDuration = logs.reduce((sum, call) => sum + (call.call_duration || 300), 0);
-      const hoursSaved = Math.round((totalDuration / 3600) * 10) / 10;
-      
-      // Count leads (appointments and sales calls)
-      const leadsCount = [...logs, ...messages].filter(item => 
-        item.call_type === 'appointment' || item.call_type === 'sales'
-      ).length;
-      
-      // Calculate success rate (completed calls vs total calls)
-      const completedCalls = logs.filter(call => call.call_status === 'completed').length;
-      const successRate = totalCalls > 0 ? Math.round((completedCalls / totalCalls) * 100) : 100;
+      if (callMessages && callMessages.length > 0) {
+        totalMessages = callMessages.length;
+        
+        // Add to leads count
+        leadsCount += callMessages.filter(message => 
+          message.call_type === 'appointment' || message.call_type === 'sales'
+        ).length;
+      }
 
       setDashboardStats({
         totalCalls,
