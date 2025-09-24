@@ -482,40 +482,73 @@ serve(async (req) => {
     console.log('status:', webhookData.data?.status);
 
     // Check appointment booking conditions
-    console.log('=== MAIN APPOINTMENT BOOKING CHECK ===');
-    console.log('callerInfo.caller_name:', callerInfo.caller_name);
+    console.log('=== CHECKING AUTOMATIC CALENDAR BOOKING ===');
+    console.log('businessUserId:', businessUserId);
+    console.log('appointmentBookingEnabled:', appointmentBookingEnabled);
+    console.log('isAppointmentScheduled:', isAppointmentScheduled);
+    console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
 
-    if (businessUserId && appointmentBookingEnabled && isAppointmentScheduled && parsedAppointmentDateTime && webhookData.data?.status === 'done') {
-      console.log('✅ All appointment booking conditions met, attempting to book appointment...');
+    // Automatic calendar booking logic - works for both manual test calls and real webhooks
+    // Only requires: appointment scheduled, valid date/time, and either business user OR manual test scenario
+    const shouldCreateCalendarEvent = isAppointmentScheduled && parsedAppointmentDateTime && (
+      (businessUserId && appointmentBookingEnabled) || // Real business user with booking enabled
+      (!businessUserId) // Manual test call scenario
+    );
+
+    if (shouldCreateCalendarEvent) {
+      console.log('✅ Creating automatic calendar event...');
       
       try {
-        const bookingResult = await supabase.functions.invoke('google-calendar-book', {
-          body: {
-            userId: businessUserId,
-            appointmentDateTime: parsedAppointmentDateTime,
-            customerName: customerName,
-            customerPhone: customerPhone,
-            customerEmail: customerEmail,
-            serviceAddress: serviceAddress,
-            serviceRequested: serviceRequested
+        // For manual test calls, check if there's any connected Google Calendar
+        let targetUserId = businessUserId;
+        
+        if (!businessUserId) {
+          // For manual test calls, find a user with Google Calendar connected
+          console.log('Manual test call - looking for connected Google Calendar user...');
+          const { data: calendarUsers, error: calendarError } = await supabase
+            .from('google_calendar_settings')
+            .select('user_id')
+            .eq('is_connected', true)
+            .limit(1);
+          
+          if (calendarError) {
+            console.error('Error checking calendar connections:', calendarError);
+          } else if (calendarUsers && calendarUsers.length > 0) {
+            targetUserId = calendarUsers[0].user_id;
+            console.log('Found connected calendar user:', targetUserId);
+          } else {
+            console.log('No connected Google Calendar found for manual test call');
           }
-        });
+        }
 
-        if (bookingResult.error) {
-          console.error('❌ Google Calendar booking failed:', bookingResult.error);
-        } else {
-          console.log('✅ Google Calendar appointment booked successfully:', bookingResult.data);
+        if (targetUserId) {
+          const bookingResult = await supabase.functions.invoke('google-calendar-book', {
+            body: {
+              userId: targetUserId,
+              appointmentDateTime: parsedAppointmentDateTime,
+              customerName: customerName,
+              customerPhone: customerPhone,
+              customerEmail: customerEmail,
+              serviceAddress: serviceAddress,
+              serviceRequested: serviceRequested
+            }
+          });
+
+          if (bookingResult.error) {
+            console.error('❌ Automatic calendar booking failed:', bookingResult.error);
+          } else {
+            console.log('✅ Automatic calendar appointment created successfully:', bookingResult.data);
+          }
         }
       } catch (bookingError) {
-        console.error('❌ Error during Google Calendar booking:', bookingError);
+        console.error('❌ Error during automatic calendar booking:', bookingError);
       }
     } else {
-      console.log('❌ Main appointment booking conditions not met:');
-      console.log('  - businessUserId:', businessUserId ? 'present' : 'missing');
-      console.log('  - appointmentBookingEnabled:', appointmentBookingEnabled);
+      console.log('❌ Automatic calendar booking conditions not met:');
       console.log('  - isAppointmentScheduled:', isAppointmentScheduled);
       console.log('  - parsedAppointmentDateTime:', parsedAppointmentDateTime ? 'present' : 'null/empty');
-      console.log('  - status:', webhookData.data?.status || 'undefined');
+      console.log('  - businessUserId:', businessUserId ? 'present' : 'missing');
+      console.log('  - appointmentBookingEnabled:', appointmentBookingEnabled);
     }
 
     // Save the call log to the database
