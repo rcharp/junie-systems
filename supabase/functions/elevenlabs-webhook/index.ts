@@ -12,6 +12,8 @@ serve(async (req) => {
   console.log('Timestamp:', new Date().toISOString());
   console.log('Method:', req.method);
   console.log('URL:', req.url);
+  console.log('User-Agent:', req.headers.get('user-agent'));
+  console.log('Content-Type:', req.headers.get('content-type'));
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -57,11 +59,9 @@ serve(async (req) => {
         });
       }
       console.log('Webhook signature verified successfully');
-    } else if (ELEVENLABS_WEBHOOK_SIGNATURE && !providedSignature) {
-      console.warn('No webhook signature provided, but signature verification is enabled');
-      // For debugging, let's continue processing but log the warning
     } else {
       console.log('Webhook signature verification disabled or not configured');
+      // Allow the request to continue without signature verification for debugging
     }
 
     // Extract webhook_id from URL query params
