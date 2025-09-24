@@ -280,10 +280,34 @@ const CallDetails = () => {
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Appointment Date/Time</span>
                     <p className="mt-1">
-                      {callData.appointment_date_time 
-                        ? formatInTimeZone(new Date(callData.appointment_date_time), 'America/New_York', 'EEEE, MMM do \'at\' h:mma')
-                        : 'Not scheduled'
-                      }
+                      {(() => {
+                        if (!callData.appointment_date_time) {
+                          return 'Not scheduled';
+                        }
+                        
+                        try {
+                          let dateString = String(callData.appointment_date_time);
+                          
+                          // Handle postgres timestamp format "2025-09-26 13:00:00+00"
+                          if (dateString.includes(' ') && !dateString.includes('T')) {
+                            // Convert postgres format to ISO: "2025-09-26 13:00:00+00" -> "2025-09-26T13:00:00+00:00"
+                            dateString = dateString.replace(' ', 'T');
+                            if (dateString.endsWith('+00')) {
+                              dateString = dateString.replace('+00', '+00:00');
+                            }
+                          }
+                          
+                          const appointmentDate = new Date(dateString);
+                          
+                          if (!isNaN(appointmentDate.getTime())) {
+                            return formatInTimeZone(appointmentDate, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
+                          }
+                        } catch (error) {
+                          console.error('Date parsing error:', error, callData.appointment_date_time);
+                        }
+                        
+                        return 'Invalid date';
+                      })()}
                     </p>
                   </div>
                 </div>
