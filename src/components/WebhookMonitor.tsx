@@ -343,19 +343,30 @@ export const WebhookMonitor = () => {
         
         const cleanSummary = createCallSummary();
         
-        // Format appointment datetime for display - expects ISO datetime from database
+        // Format appointment datetime for display - handles PostgreSQL timestamp format
         const formatDisplayDateTime = (appointmentDateTime: string) => {
           if (!appointmentDateTime || appointmentDateTime === 'Not scheduled') return 'Not scheduled';
           
           try {
-            const date = new Date(appointmentDateTime);
+            let dateString = String(appointmentDateTime);
+            
+            // Handle PostgreSQL timestamp format "2025-09-26 13:00:00+00"
+            if (dateString.includes(' ') && !dateString.includes('T')) {
+              dateString = dateString.replace(' ', 'T');
+              if (dateString.endsWith('+00')) {
+                dateString = dateString.replace('+00', 'Z');
+              }
+            }
+            
+            const date = new Date(dateString);
             if (isNaN(date.getTime())) {
+              console.error('Invalid date after parsing:', dateString);
               return 'Invalid date';
             }
             return formatInTimeZone(date, 'America/New_York', 'EEEE, MMM do \'at\' h:mma');
           } catch (error) {
-            console.warn('Error formatting appointment date:', error);
-            return appointmentDateTime;
+            console.error('Date parsing error:', error, 'Input:', appointmentDateTime);
+            return 'Invalid date';
           }
         };
         
