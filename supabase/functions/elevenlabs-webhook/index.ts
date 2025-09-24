@@ -802,8 +802,13 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
     console.log(`Parsing appointment time: "${appointmentTimeString}"`);
     console.log(`Lowercase string: "${lowerStr}"`);
     
-    const wordTimeMatch = lowerStr.match(/\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?\s+(in\s+the\s+)?(morning|afternoon|evening|am|pm)/i);
-    console.log('Word time match:', wordTimeMatch);
+    // Test the specific regex pattern
+    const testPattern = /\bat\s+(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(\s+(thirty|fifteen|forty-five))?\s+(in\s+the\s+)?(morning|afternoon|evening|am|pm)/i;
+    console.log('Testing regex pattern on:', lowerStr);
+    console.log('Regex pattern:', testPattern);
+    
+    const wordTimeMatch = lowerStr.match(testPattern);
+    console.log('Word time match result:', wordTimeMatch);
     
     if (wordTimeMatch) {
       hour = timeWords[wordTimeMatch[1]];
@@ -916,16 +921,17 @@ function parseAppointmentTime(appointmentTimeString: string, userTimezone: strin
       appointmentDate.setDate(appointmentDate.getDate() + 1);
     }
 
-    // Convert to timezone-aware ISO string
-    // The appointmentDate is currently treated as UTC, but represents local time
+    // Convert to UTC properly - the appointmentDate represents local time
     // We need to convert local time to UTC by adding the timezone offset
     const timezoneOffset = getTimezoneOffset(userTimezone);
     console.log(`Timezone offset for ${userTimezone}: ${timezoneOffset} minutes`);
+    console.log(`Local appointment time: ${appointmentDate.toISOString()} (${hour}:${minute < 10 ? '0' + minute : minute})`);
     
     // For EST (UTC-4), offset is -240 minutes
-    // To convert local time to UTC, we need to subtract the negative offset (add 240 minutes)
-    // This converts 10am EST to 2pm UTC
-    const utcDate = new Date(appointmentDate.getTime() + (Math.abs(timezoneOffset) * 60 * 1000));
+    // To convert 10:00 AM EST to UTC: 10:00 + 4 hours = 14:00 UTC
+    // So we add the absolute value of the negative offset
+    const offsetMs = Math.abs(timezoneOffset) * 60 * 1000;
+    const utcDate = new Date(appointmentDate.getTime() + offsetMs);
     const isoString = utcDate.toISOString();
     
     console.log(`Final UTC time: ${isoString}`);
