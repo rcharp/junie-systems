@@ -202,7 +202,10 @@ export type Database = {
       }
       call_logs: {
         Row: {
+          appointment_date_time: string | null
+          appointment_scheduled: boolean | null
           best_time_to_call: string | null
+          business_id: string | null
           business_name: string | null
           business_type: string | null
           call_duration: number | null
@@ -219,13 +222,17 @@ export type Database = {
           phone_number: string
           provider: string | null
           recording_url: string | null
+          service_address: string | null
           transcript: string | null
           updated_at: string
           urgency_level: string
           user_id: string | null
         }
         Insert: {
+          appointment_date_time?: string | null
+          appointment_scheduled?: boolean | null
           best_time_to_call?: string | null
+          business_id?: string | null
           business_name?: string | null
           business_type?: string | null
           call_duration?: number | null
@@ -242,13 +249,17 @@ export type Database = {
           phone_number: string
           provider?: string | null
           recording_url?: string | null
+          service_address?: string | null
           transcript?: string | null
           updated_at?: string
           urgency_level: string
           user_id?: string | null
         }
         Update: {
+          appointment_date_time?: string | null
+          appointment_scheduled?: boolean | null
           best_time_to_call?: string | null
+          business_id?: string | null
           business_name?: string | null
           business_type?: string | null
           call_duration?: number | null
@@ -265,12 +276,21 @@ export type Database = {
           phone_number?: string
           provider?: string | null
           recording_url?: string | null
+          service_address?: string | null
           transcript?: string | null
           updated_at?: string
           urgency_level?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_call_logs_business_id"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_settings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       call_messages: {
         Row: {

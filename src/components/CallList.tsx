@@ -72,50 +72,20 @@ const CallList = () => {
       let logs: CallLog[] = [];
       let messages: CallMessage[] = [];
 
-      // If user has business settings, fetch business data requests (this is where the actual call data is)
+      // If user has business settings, fetch call_logs using business_id
       if (businessData) {
-        const { data: businessRequests, error: requestsError } = await supabase
-          .from('business_data_requests')
+        const { data: callLogs, error: logsError } = await supabase
+          .from('call_logs')
           .select('*')
           .eq('business_id', businessData.id)
           .order('created_at', { ascending: false })
           .limit(50);
 
-        if (requestsError) throw requestsError;
-
-        // Transform business_data_requests to match CallLog interface
-        logs = (businessRequests || []).map(request => {
-          const requestData = request.request_data as any || {};
-          const responseData = request.response_data as any || {};
-          
-          return {
-            id: request.id,
-            call_id: requestData.call_sid || request.id,
-            caller_name: responseData.caller_name || requestData.caller_id || 'Unknown Caller',
-            phone_number: requestData.caller_id || 'Unknown',
-            call_status: 'completed',
-            call_type: request.request_type === 'conversation_initiation_client_data' ? 'inquiry' : 'other',
-            urgency_level: 'medium',
-            message: `Business data request - ${request.request_type}`,
-            email: responseData.caller_email || '',
-            call_duration: 0,
-            recording_url: '',
-            transcript: '',
-            created_at: request.created_at,
-            updated_at: request.updated_at,
-            best_time_to_call: '',
-          };
-        });
+        if (logsError) throw logsError;
+        logs = callLogs || [];
       }
 
-      // Also try to fetch direct call_logs and call_messages with user_id
-      const { data: directLogs, error: logsError } = await supabase
-        .from('call_logs')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
+      // Fetch call messages with user_id
       const { data: directMessages, error: messagesError } = await supabase
         .from('call_messages')
         .select('*')
@@ -123,14 +93,8 @@ const CallList = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      // Combine all logs
-      if (directLogs && directLogs.length > 0) {
-        logs = [...logs, ...directLogs];
-      }
-
-      if (directMessages && directMessages.length > 0) {
-        messages = directMessages;
-      }
+      if (messagesError) throw messagesError;
+      messages = directMessages || [];
 
       setCallLogs(logs);
       setCallMessages(messages);
