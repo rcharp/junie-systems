@@ -168,9 +168,9 @@ const CallDetails = () => {
           </Button>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Call Details</h1>
+              <h1 className="text-2xl font-bold">{callData.call_type} - {callData.caller_name}</h1>
               <p className="text-muted-foreground">
-                Call from {callData.caller_name} on {format(new Date(callData.created_at), 'MMM d, yyyy at h:mm a')}
+                Call Time: {format(new Date(callData.created_at), 'M/d/yyyy, h:mm:ss a')}
               </p>
             </div>
             <div className="flex items-center space-x-3">
@@ -180,11 +180,6 @@ const CallDetails = () => {
               <Badge className={getCallTypeColor(callData.call_type)}>
                 {callData.call_type}
               </Badge>
-              {callData.status && (
-                <Badge variant={callData.status === 'new' ? 'default' : 'secondary'}>
-                  {callData.status}
-                </Badge>
-              )}
             </div>
           </div>
         </div>
@@ -193,77 +188,74 @@ const CallDetails = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
-          {/* Call Details Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Call Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {callData.business_id && (
+          {/* Call Details and Summary Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Call Details Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Call Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
                   <div>
-                    <span className="text-sm font-medium text-muted-foreground">Business ID</span>
-                    <p className="mt-1 font-mono text-sm">{callData.business_id}</p>
+                    <span className="text-sm font-medium text-muted-foreground">Company Name</span>
+                    <p className="mt-1">{callData.business_name || callData.caller_name || 'Unknown'}</p>
                   </div>
-                )}
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Email Address</span>
-                  <p className="mt-1">{callData.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Company Name</span>
-                  <p className="mt-1">{callData.business_name || callData.caller_name || 'Unknown'}</p>
-                </div>
-                {callData.service_address ? (
                   <div>
-                    <span className="text-sm font-medium text-muted-foreground">Service Address</span>
-                    <p className="mt-1">{callData.service_address}</p>
+                    <span className="text-sm font-medium text-muted-foreground">Email Address</span>
+                    <p className="mt-1">{callData.email || 'N/A'}</p>
                   </div>
-                ) : (
+                  {callData.service_address ? (
+                    <div>
+                      <span className="text-sm font-medium text-muted-foreground">Service Address</span>
+                      <p className="mt-1">{callData.service_address}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-sm font-medium text-muted-foreground">Service Address</span>
+                      <p className="mt-1">N/A</p>
+                    </div>
+                  )}
                   <div>
-                    <span className="text-sm font-medium text-muted-foreground">Service Address</span>
-                    <p className="mt-1">N/A</p>
+                    <span className="text-sm font-medium text-muted-foreground">Caller Name</span>
+                    <p className="mt-1">{callData.caller_name || 'Unknown Caller'}</p>
                   </div>
-                )}
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Caller Name</span>
-                  <p className="mt-1">{callData.caller_name || 'Unknown Caller'}</p>
+                  <div>
+                    <span className="text-sm font-medium text-muted-foreground">Appointment Scheduled</span>
+                    <p className="mt-1">{callData.appointment_scheduled ? 'Yes' : 'No'}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-muted-foreground">Phone Number</span>
+                    <p className="mt-1">{callData.phone_number || 'Unknown'}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-muted-foreground">Appointment Date/Time</span>
+                    <p className="mt-1">
+                      {callData.appointment_date_time 
+                        ? format(new Date(callData.appointment_date_time), 'PPp')
+                        : 'Not scheduled'
+                      }
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Appointment Scheduled</span>
-                  <p className="mt-1">{callData.appointment_scheduled ? 'Yes' : 'No'}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Phone Number</span>
-                  <p className="mt-1">{callData.phone_number || 'Unknown'}</p>
-                </div>
-                <div>
-                  <span className="text-sm font-medium text-muted-foreground">Appointment Date/Time</span>
-                  <p className="mt-1">
-                    {callData.appointment_date_time 
-                      ? format(new Date(callData.appointment_date_time), 'PPp')
-                      : 'Not scheduled'
-                    }
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          {/* Call Summary Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <MessageSquare className="w-5 h-5" />
-                <span>Call Summary</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                <p className="whitespace-pre-wrap">{callData.call_summary || callData.message}</p>
-              </div>
-            </CardContent>
-          </Card>
+            {/* Call Summary Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <MessageSquare className="w-5 h-5" />
+                  <span>Call Summary</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                  <p className="whitespace-pre-wrap">{callData.call_summary || callData.message}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Transcript */}
           {callData.transcript && (
