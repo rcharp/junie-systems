@@ -415,6 +415,44 @@ export const WebhookMonitor = () => {
 
   const handleTestPostCallData = async () => {
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "User not authenticated",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get the user's webhook_id first
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('webhook_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error fetching webhook_id:', profileError);
+        toast({
+          title: "Error",
+          description: "Failed to fetch webhook ID",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!profileData?.webhook_id) {
+        toast({
+          title: "Error",
+          description: "No webhook ID found. Please regenerate your webhook.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const latestCall = webhookData[0];
       
       // Use stored test data when no historical data is available
@@ -424,8 +462,8 @@ export const WebhookMonitor = () => {
       
       setLoading(true);
       
-      // Make a direct HTTP call to the elevenlabs-webhook endpoint
-      const response = await fetch(`https://urkoxlolimjjadbdckco.supabase.co/functions/v1/elevenlabs-webhook`, {
+      // Make a direct HTTP call to the elevenlabs-webhook endpoint with webhook_id parameter
+      const response = await fetch(`https://urkoxlolimjjadbdckco.supabase.co/functions/v1/elevenlabs-webhook?webhook_id=${profileData.webhook_id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
