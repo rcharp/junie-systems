@@ -252,18 +252,22 @@ serve(async (req) => {
 
     // Get business_id from business_name if available
     let businessId = null;
+    let businessUserId = userId; // Default to webhook user_id
     const businessName = webhookData.data?.analysis?.data_collection_results?.business_name?.value || 
                         webhookData.variables?.business_name;
     
     if (businessName && userId) {
       const { data: businessData } = await supabase
         .from('business_settings')
-        .select('id')
+        .select('id, user_id')
         .eq('user_id', userId)
         .eq('business_name', businessName)
         .maybeSingle();
       
-      businessId = businessData?.id || null;
+      if (businessData) {
+        businessId = businessData.id;
+        businessUserId = businessData.user_id;
+      }
     }
 
     // Extract call summary from webhook data
@@ -276,7 +280,7 @@ serve(async (req) => {
       .from('call_logs')
       .upsert({
         call_id: call_id || crypto.randomUUID(),
-        user_id: userId,
+        user_id: businessUserId,
         business_id: businessId,
         caller_name: callerInfo.caller_name,
         phone_number: callerInfo.phone_number,
