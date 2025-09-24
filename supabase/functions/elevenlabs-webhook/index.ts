@@ -371,8 +371,8 @@ serve(async (req) => {
       }
     }
 
-    // If we have a business_id but no businessUserId, look up the user_id from business_settings
-    if (businessId && !businessUserId) {
+    // If we have a business_id, always look up the user_id from business_settings to ensure it's set correctly
+    if (businessId) {
       console.log('Looking up user_id for business_id:', businessId);
       const { data: businessSettings, error: businessError } = await supabase
         .from('business_settings')
