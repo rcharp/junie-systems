@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut } from 'lucide-react';
+import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut, Clock, RefreshCw } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { UserWebhookList } from '@/components/UserWebhookList';
@@ -33,6 +33,8 @@ const AdminDashboard = () => {
   });
   const [users, setUsers] = useState<any[]>([]);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [calendarAvailability, setCalendarAvailability] = useState<any>(null);
+  const [calendarLoading, setCalendarLoading] = useState(false);
   
 
   useEffect(() => {
@@ -107,6 +109,40 @@ const AdminDashboard = () => {
       setUsers(usersData || []);
     } catch (error) {
       console.error('Error fetching stats:', error);
+    }
+  };
+
+  const testGoogleCalendarAvailability = async () => {
+    setCalendarLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('google-calendar-availability', {
+        body: { user_id: '54b21009-f5f0-45bf-b126-d11094178719' }
+      });
+
+      if (error) {
+        console.error('Error calling calendar availability:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch calendar availability",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setCalendarAvailability(data);
+      toast({
+        title: "Success",
+        description: "Calendar availability fetched successfully",
+      });
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error", 
+        description: "Failed to call calendar availability function",
+        variant: "destructive",
+      });
+    } finally {
+      setCalendarLoading(false);
     }
   };
 
@@ -286,6 +322,91 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Google Calendar Availability Testing */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      Google Calendar Availability Test
+                    </CardTitle>
+                    <CardDescription>
+                      Test the Google Calendar availability endpoint to see current results
+                    </CardDescription>
+                  </div>
+                  <Button 
+                    onClick={testGoogleCalendarAvailability}
+                    disabled={calendarLoading}
+                    size="sm"
+                    variant="outline"
+                  >
+                    {calendarLoading ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Test Availability
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {calendarAvailability ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <Badge variant={calendarAvailability.available ? "default" : "destructive"}>
+                        {calendarAvailability.available ? "Available" : "Unavailable"}
+                      </Badge>
+                      {calendarAvailability.timezone && (
+                        <Badge variant="outline">
+                          {calendarAvailability.timezone}
+                        </Badge>
+                      )}
+                      {calendarAvailability.duration && (
+                        <Badge variant="secondary">
+                          {calendarAvailability.duration} min slots
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {calendarAvailability.slots && calendarAvailability.slots.length > 0 ? (
+                      <div>
+                        <h4 className="font-medium mb-3">Available Time Slots ({calendarAvailability.slots.length})</h4>
+                        <div className="grid gap-2 max-h-60 overflow-y-auto">
+                          {calendarAvailability.slots.map((slot: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <div>
+                                <p className="font-medium">{slot.humanReadable}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {slot.startTime} - {slot.endTime}
+                                </p>
+                              </div>
+                              <Badge variant="outline" className="capitalize">
+                                {slot.timeOfDay}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No available slots found</p>
+                    )}
+                    
+                    {calendarAvailability.error && (
+                      <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                        <p className="text-sm text-destructive font-medium">Error:</p>
+                        <p className="text-sm text-destructive">{calendarAvailability.error}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">
+                    Click "Test Availability" to check Google Calendar availability endpoint
+                  </p>
+                )}
+              </CardContent>
+            </Card>
 
             {/* User Business IDs - Paginated */}
             <UserWebhookList />
