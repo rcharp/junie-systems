@@ -1261,7 +1261,7 @@ const Settings = () => {
                       size="sm"
                       onClick={generateBusinessDescription}
                       disabled={generatingDescription}
-                      className="mt-2 text-sm"
+                      className="mt-2 text-sm bg-gradient-primary hover:opacity-90 text-white border-none"
                     >
                       <Zap className={`w-4 h-4 mr-2 ${generatingDescription ? 'animate-pulse' : ''}`} />
                       {generatingDescription ? 'Generating...' : 'Generate with AI'}
@@ -1409,7 +1409,7 @@ const Settings = () => {
                     <div className="text-sm text-muted-foreground">
                       {isAutoSaving ? "Auto-saving changes..." : "Changes are automatically saved"}
                     </div>
-                    <Button onClick={() => saveSettings("Business")} disabled={saving || isAutoSaving} variant="outline" size="sm">
+                    <Button onClick={() => saveSettings("Business")} disabled={saving || isAutoSaving} variant="outline" size="sm" className="bg-gradient-primary hover:opacity-90 text-white border-none">
                       <Save className="w-4 h-4 mr-2" />
                       {saving ? "Saving..." : "Save Now"}
                     </Button>
@@ -1519,7 +1519,7 @@ const Settings = () => {
                     <div className="text-sm text-muted-foreground">
                       {isAutoSaving ? "Auto-saving changes..." : "Changes are automatically saved"}
                     </div>
-                    <Button onClick={() => saveSettings("Calls")} disabled={saving || isAutoSaving} variant="outline" size="sm">
+                    <Button onClick={() => saveSettings("Calls")} disabled={saving || isAutoSaving} variant="outline" size="sm" className="bg-gradient-primary hover:opacity-90 text-white border-none">
                       <Save className="w-4 h-4 mr-2" />
                       {saving ? "Saving..." : "Save Now"}
                     </Button>

@@ -282,6 +282,7 @@ const NotificationSettings = () => {
               disabled={saving || isAutoSaving}
               variant="outline"
               size="sm"
+              className="bg-gradient-primary hover:opacity-90 text-white border-none"
             >
               <Save className="w-4 h-4 mr-2" />
               {saving ? "Saving..." : "Save Now"}

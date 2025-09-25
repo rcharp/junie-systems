@@ -253,7 +253,7 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
         <Button 
           onClick={handleImport}
           disabled={isLoading || !websiteUrl.trim()}
-          className="w-full"
+          className="w-full bg-gradient-primary hover:opacity-90 text-white border-none"
         >
           {isLoading ? (
             <>
