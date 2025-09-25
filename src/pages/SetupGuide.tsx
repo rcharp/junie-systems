@@ -25,6 +25,7 @@ import {
   Copy,
   Clock
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const SetupGuide = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -33,6 +34,7 @@ const SetupGuide = () => {
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -45,6 +47,7 @@ const SetupGuide = () => {
       
       setUser(session.user);
       setLoading(false);
+      fetchRecentActivity();
     };
 
     checkAuth();
@@ -91,6 +94,22 @@ const SetupGuide = () => {
         title: "Step completed! ✅",
         description: `Step ${stepNumber} has been marked as complete.`,
       });
+    }
+  };
+
+  const fetchRecentActivity = async () => {
+    try {
+      const { data: callMessages, error } = await supabase
+        .from('call_messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+      setRecentActivity(callMessages || []);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
     }
   };
 
@@ -179,9 +198,29 @@ const SetupGuide = () => {
               <Settings className="w-4 h-4" />
               <span>Settings</span>
             </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="w-5 h-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Bell className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                {recentActivity.length > 0 ? (
+                  recentActivity.slice(0, 3).map((activity) => (
+                    <DropdownMenuItem key={activity.id} className="cursor-pointer">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{activity.caller_name} - {activity.call_type}</p>
+                        <p className="text-xs text-muted-foreground">{activity.message.substring(0, 60)}...</p>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <p className="text-sm text-muted-foreground">No recent notifications</p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <div className="text-right">
               <p className="text-sm font-medium">{completedSteps.length} of {setupSteps.length} completed</p>
               <Progress value={progress} className="w-32" />

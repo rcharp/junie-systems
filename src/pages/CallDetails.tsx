@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Phone, Clock, User, Calendar, Mail, Play, Download, MessageSquare, Settings, Bell, LogOut, Shield } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { Link } from "react-router-dom";
@@ -46,6 +47,7 @@ const CallDetails = () => {
   const { user, isAdmin } = useAuth();
   const [callData, setCallData] = useState<CallData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   const handleSignOut = async () => {
     try {
@@ -58,8 +60,25 @@ const CallDetails = () => {
   useEffect(() => {
     if (callId && user) {
       fetchCallDetails();
+      fetchRecentActivity();
     }
   }, [callId, user]);
+
+  const fetchRecentActivity = async () => {
+    try {
+      const { data: callMessages, error } = await supabase
+        .from('call_messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+      setRecentActivity(callMessages || []);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+    }
+  };
 
   const fetchCallDetails = async () => {
     try {
@@ -272,9 +291,29 @@ const CallDetails = () => {
               <Settings className="w-4 h-4" />
               <span>Settings</span>
             </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="w-5 h-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Bell className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                {recentActivity.length > 0 ? (
+                  recentActivity.slice(0, 3).map((activity) => (
+                    <DropdownMenuItem key={activity.id} className="cursor-pointer">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{activity.caller_name} - {activity.call_type}</p>
+                        <p className="text-xs text-muted-foreground">{activity.message.substring(0, 60)}...</p>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <p className="text-sm text-muted-foreground">No recent notifications</p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out

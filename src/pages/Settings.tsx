@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Calendar, Zap, CheckCircle, XCircle, X, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
@@ -102,11 +103,15 @@ const Settings = () => {
     services: false
   });
 
+  // Notifications state
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+
   useEffect(() => {
     if (!loading && !user) {
       navigate("/login");
     } else if (user) {
       loadUserSettings(user.id);
+      fetchRecentActivity();
     }
     
     // Handle URL parameters for tab selection and calendar status
@@ -136,6 +141,22 @@ const Settings = () => {
       setSearchParams(newSearchParams, { replace: true });
     }
   }, [loading, user, navigate, searchParams, setSearchParams]);
+
+  const fetchRecentActivity = async () => {
+    try {
+      const { data: callMessages, error } = await supabase
+        .from('call_messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (error) throw error;
+      setRecentActivity(callMessages || []);
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+    }
+  };
 
   const loadUserSettings = async (userId: string) => {
     try {
@@ -888,9 +909,29 @@ const Settings = () => {
               <ArrowLeft className="w-4 h-4" />
               <span>Dashboard</span>
             </Button>
-            <Button variant="ghost" size="icon">
-              <Bell className="w-5 h-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Bell className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                {recentActivity.length > 0 ? (
+                  recentActivity.slice(0, 3).map((activity) => (
+                    <DropdownMenuItem key={activity.id} className="cursor-pointer">
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium">{activity.caller_name} - {activity.call_type}</p>
+                        <p className="text-xs text-muted-foreground">{activity.message.substring(0, 60)}...</p>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                ) : (
+                  <DropdownMenuItem disabled>
+                    <p className="text-sm text-muted-foreground">No recent notifications</p>
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="ghost" onClick={async () => {
               try {
                 await handleRobustSignOut(supabase);
