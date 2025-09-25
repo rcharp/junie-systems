@@ -68,11 +68,18 @@ Deno.serve(async (req) => {
 
     console.log('Fetching calendar availability for user:', userId)
 
-    // Get user's calendar settings
+    // Get user's calendar settings and profile timezone
     const { data: calendarData, error: settingsError } = await supabase
       .from('google_calendar_settings')
       .select('*')
       .eq('user_id', userId)
+      .maybeSingle()
+
+    // Also get user profile timezone as backup
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('timezone')
+      .eq('id', userId)
       .maybeSingle()
 
     if (settingsError || !calendarData) {
@@ -129,6 +136,9 @@ Deno.serve(async (req) => {
       has_refresh_token: !!refreshToken,
       is_connected: calendarSettings.is_connected
     })
+
+    console.log('User profile timezone:', userProfile?.timezone)
+    console.log('Will use timezone:', calendarSettings.timezone || userProfile?.timezone || 'America/New_York')
 
     if (!calendarSettings.is_connected) {
       console.log('Calendar not connected for user:', userId)
@@ -212,6 +222,23 @@ Deno.serve(async (req) => {
     // Use primary calendar if no specific calendar_id is set
     const calendarId = calendarSettings.calendar_id || 'primary'
     
+    // Get calendar timezone from Google Calendar API
+    const calendarInfoResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}`, {
+      headers: {
+        'Authorization': `Bearer ${currentAccessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+
+    let googleCalendarTimezone = null
+    if (calendarInfoResponse.ok) {
+      const calendarInfo = await calendarInfoResponse.json()
+      googleCalendarTimezone = calendarInfo.timeZone
+      console.log('Google Calendar timezone:', googleCalendarTimezone)
+    } else {
+      console.log('Failed to get calendar info, using stored timezone')
+    }
+    
     // Fetch busy times from Google Calendar
     const freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
       method: 'POST',
@@ -241,10 +268,15 @@ Deno.serve(async (req) => {
 
     // Generate available time slots
     let availableSlots = []
-    const userTimezone = calendarSettings.timezone || 'America/New_York'
+    // Use Google Calendar timezone first, then stored calendar timezone, then user profile timezone, then default
+    const userTimezone = googleCalendarTimezone || calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
 
     console.log('=== STARTING SLOT GENERATION ===')
-    console.log('User timezone:', userTimezone)
+    console.log('Final timezone resolution:')
+    console.log('  - Google Calendar timezone:', googleCalendarTimezone)
+    console.log('  - Stored calendar timezone:', calendarSettings.timezone)
+    console.log('  - User profile timezone:', userProfile?.timezone)
+    console.log('  - Final chosen timezone:', userTimezone)
     console.log('Appointment duration:', appointmentDuration, 'minutes')
     console.log('Availability hours:', JSON.stringify(availabilityHours))
     console.log('Current time (now):', now.toISOString())
