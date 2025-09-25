@@ -302,22 +302,23 @@ serve(async (req) => {
     const responseData = {
       businessData: {
         user_id: businessData.user_id,
+        business_id: businessId, // Include the business_id that was requested
+        lead_capture: businessData.lead_capture || true,
         business_name: businessData.business_name || 'N/A',
         business_type: businessData.business_type || 'N/A',
         business_type_full_name: businessData.business_type_full_name || 'N/A',
+        ai_personality: businessData.ai_personality || 'professional',
+        business_hours: businessData.business_hours || 'N/A',
         business_phone: businessData.business_phone || 'N/A',
+        custom_greeting: businessData.custom_greeting || '',
         business_address: businessData.business_address || 'N/A',
         business_address_state_full: businessData.business_address_state_full || 'N/A',
-        business_hours: businessData.business_hours || 'N/A',
-        business_description: businessData.business_description || 'N/A',
         business_website: businessData.business_website || 'N/A',
+        common_questions: businessData.common_questions || '',
         services_offered: businessData.services_offered || 'N/A',
         pricing_structure: businessData.pricing_structure || 'N/A',
-        custom_greeting: businessData.custom_greeting || '',
-        common_questions: businessData.common_questions || '',
-        ai_personality: businessData.ai_personality || 'professional',
         appointment_booking: businessData.appointment_booking || false,
-        lead_capture: businessData.lead_capture || true
+        business_description: businessData.business_description || 'N/A'
       },
       available_times: availableTimes,
       error: null
