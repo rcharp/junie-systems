@@ -654,7 +654,7 @@ const SetupGuide = () => {
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                       <h3 className="font-semibold text-yellow-900 mb-2">⚠️ Important</h3>
                       <p className="text-yellow-800 text-sm">
-                        Make sure to whitelist our email address (notifications@junie.com) and SMS number 
+                        Make sure to whitelist our email address (notifications@getjunie.com) and SMS number 
                         to ensure you receive all important alerts.
                       </p>
                     </div>
