@@ -95,7 +95,7 @@ Deno.serve(async (req) => {
       try {
         console.log('Attempting to decrypt access token...')
         const { data: decryptedAccess, error: decryptError } = await supabase.rpc('decrypt_token', {
-          encrypted_token: calendarSettings.encrypted_access_token
+          encoded_token: calendarSettings.encrypted_access_token
         })
         console.log('Decryption result:', { success: !!decryptedAccess, hasError: !!decryptError })
         if (decryptedAccess) {
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
       try {
         console.log('Attempting to decrypt refresh token...')
         const { data: decryptedRefresh, error: decryptError } = await supabase.rpc('decrypt_token', {
-          encrypted_token: calendarSettings.encrypted_refresh_token
+          encoded_token: calendarSettings.encrypted_refresh_token
         })
         console.log('Refresh decryption result:', { success: !!decryptedRefresh, hasError: !!decryptError })
         if (decryptedRefresh) {
