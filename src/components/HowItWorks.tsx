@@ -35,7 +35,7 @@ const HowItWorks = () => {
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-16">
           <Badge variant="outline" className="text-primary">How it Works</Badge>
-          <h2 className="text-4xl lg:text-5xl font-bold">
+          <h2 className="text-4xl lg:text-5xl font-semibold text-muted-foreground">
             Powerful, yet super easy to 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> set up and get started</span>
           </h2>
@@ -56,7 +56,7 @@ const HowItWorks = () => {
                     <Badge variant="secondary" className="text-xs font-medium">
                       {step.step}
                     </Badge>
-                    <h3 className="text-lg font-semibold leading-tight">
+                    <h3 className="text-lg font-medium leading-tight text-muted-foreground">
                       {step.title}
                     </h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">

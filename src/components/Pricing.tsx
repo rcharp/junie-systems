@@ -62,7 +62,7 @@ const Pricing = () => {
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-16">
           <Badge variant="outline" className="text-primary">Simple, transparent pricing</Badge>
-          <h2 className="text-4xl lg:text-5xl font-bold">
+          <h2 className="text-4xl lg:text-5xl font-semibold text-muted-foreground">
             Get your AI answering service 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> today</span>
           </h2>
@@ -91,7 +91,7 @@ const Pricing = () => {
                     {plan.name}
                   </h3>
                   <div className="flex items-baseline justify-center">
-                    <span className="text-4xl font-bold">{plan.price}</span>
+                    <span className="text-4xl font-medium text-muted-foreground">{plan.price}</span>
                     <span className="text-muted-foreground ml-1">{plan.period}</span>
                   </div>
                   <p className="text-sm text-muted-foreground leading-relaxed">

@@ -25,7 +25,7 @@ const Benefits = () => {
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-16">
-          <h2 className="text-4xl lg:text-5xl font-bold">
+          <h2 className="text-4xl lg:text-5xl font-semibold text-muted-foreground">
             Transform every missed call into a 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> business opportunity</span>
           </h2>
@@ -39,7 +39,7 @@ const Benefits = () => {
                   <div className="p-4 rounded-full bg-gradient-hero text-white group-hover:shadow-glow transition-all duration-300">
                     {benefit.icon}
                   </div>
-                  <h3 className="text-xl font-bold">
+                  <h3 className="text-xl font-medium text-muted-foreground">
                     {benefit.title}
                   </h3>
                   <p className="text-muted-foreground leading-relaxed">

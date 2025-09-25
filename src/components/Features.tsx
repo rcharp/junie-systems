@@ -61,7 +61,7 @@ const Features = () => {
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-16">
           <Badge variant="outline" className="text-primary">Features</Badge>
-          <h2 className="text-4xl lg:text-5xl font-bold">
+          <h2 className="text-4xl lg:text-5xl font-semibold text-muted-foreground">
             Everything you need to 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> never miss a call</span>
           </h2>
@@ -80,7 +80,7 @@ const Features = () => {
                   </div>
                   <Badge variant="secondary" className="text-xs">{feature.badge}</Badge>
                 </div>
-                <CardTitle className="text-xl font-semibold">{feature.title}</CardTitle>
+                <CardTitle className="text-xl font-medium text-muted-foreground">{feature.title}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">{feature.description}</p>

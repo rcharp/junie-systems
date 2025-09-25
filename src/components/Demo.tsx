@@ -37,7 +37,7 @@ const Demo = () => {
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-16">
           <Badge variant="outline" className="text-primary">Live Demo</Badge>
-          <h2 className="text-4xl lg:text-5xl font-bold">
+          <h2 className="text-4xl lg:text-5xl font-semibold text-muted-foreground">
             See Junie 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> in action</span>
           </h2>
@@ -93,7 +93,7 @@ const Demo = () => {
                     <CheckCircle className="w-6 h-6 text-success" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-lg">100% Success Rate</h3>
+                    <h3 className="font-medium text-lg text-muted-foreground">100% Success Rate</h3>
                     <p className="text-muted-foreground">Every demo call results in a captured lead or booked appointment</p>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ const Demo = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               <div className="absolute bottom-6 left-6 right-6">
                 <div className="bg-white/90 backdrop-blur-sm rounded-lg p-4">
-                  <h4 className="font-semibold text-lg mb-2">Real-time Analytics</h4>
+                  <h4 className="font-medium text-lg mb-2 text-muted-foreground">Real-time Analytics</h4>
                   <div className="grid grid-cols-3 gap-4 text-sm">
                     <div>
                       <div className="text-2xl font-bold text-success">247</div>
