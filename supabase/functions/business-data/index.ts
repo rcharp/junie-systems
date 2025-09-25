@@ -110,6 +110,8 @@ serve(async (req) => {
                 body: { user_id: businessDataForInit.user_id }
               });
               
+              console.log('Availability response for conversation initiation:', JSON.stringify(availabilityResponse, null, 2));
+              
               if (availabilityResponse.data && !availabilityResponse.error && availabilityResponse.data.slots?.length > 0) {
                 const slots = availabilityResponse.data.slots.slice(0, 3); // Show first 3 available slots
                 dynamicAvailableTimes = slots.map((slot: any) => {
@@ -345,6 +347,8 @@ serve(async (req) => {
         const availabilityResponse = await supabase.functions.invoke('google-calendar-availability', {
           body: { user_id: businessData.user_id }
         });
+        
+        console.log('Availability response for manual request:', JSON.stringify(availabilityResponse, null, 2));
         
         if (availabilityResponse.data && !availabilityResponse.error) {
           availableTimes = availabilityResponse.data.slots || [];
