@@ -6,9 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Phone, Clock, User, Calendar, Mail, Play, Download, MessageSquare } from "lucide-react";
+import { ArrowLeft, Phone, Clock, User, Calendar, Mail, Play, Download, MessageSquare, Settings, Bell, LogOut, Shield } from "lucide-react";
 import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
+import { Link } from "react-router-dom";
+import { handleRobustSignOut } from "@/lib/auth-utils";
 
 interface CallData {
   id: string;
@@ -41,9 +43,17 @@ const CallDetails = () => {
   const { callId } = useParams<{ callId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [callData, setCallData] = useState<CallData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleSignOut = async () => {
+    try {
+      await handleRobustSignOut(supabase);
+    } catch (error: any) {
+      window.location.href = '/';
+    }
+  };
 
   useEffect(() => {
     if (callId && user) {
@@ -226,20 +236,57 @@ const CallDetails = () => {
     <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-border">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <Button variant="ghost" onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Dashboard</span>
+            </Button>
+            <Link to="/" className="flex items-center">
+              <img 
+                src="/lovable-uploads/junie-logo.png" 
+                alt="Junie Logo" 
+                className="h-8 w-8"
+              />
+            </Link>
+            <h1 className="text-xl font-bold text-primary">Call Details</h1>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            {isAdmin && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/admin")}
+                className="text-primary hover:bg-primary/10"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Admin
+              </Button>
+            )}
+            <Button variant="ghost" size="icon">
+              <Bell className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/settings")} className="flex items-center gap-2">
+              <Settings className="w-4 h-4" />
+              <span>Settings</span>
+            </Button>
+            <Button variant="ghost" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Call Info Header */}
+      <div className="bg-white/60 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/dashboard')}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">
+              <h2 className="text-2xl font-bold">
                 {callData.phone_number || 'Unknown'} - {getCallReason(callData)}
-              </h1>
+              </h2>
               <p className="text-muted-foreground">
                 Call Time: {format(new Date(callData.created_at), 'M/d/yyyy, h:mm:ss a')}
               </p>
@@ -254,7 +301,7 @@ const CallDetails = () => {
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
