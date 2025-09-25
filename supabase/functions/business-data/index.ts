@@ -185,7 +185,8 @@ serve(async (req) => {
             "appointment_booking": businessDataForInit?.appointment_booking || false,
             "available_times": dynamicAvailableTimes,
             "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
-            "forwarding_number": businessDataForInit?.forwarding_number || ""
+            "forwarding_number": businessDataForInit?.forwarding_number || "",
+            "callback_timeframe": "within 24 hours"
           }
         };
         
@@ -370,7 +371,8 @@ serve(async (req) => {
         pricing_structure: businessData.pricing_structure || 'N/A',
         appointment_booking: businessData.appointment_booking || false,
         business_description: businessData.business_description || 'N/A',
-        forwarding_number: businessData.forwarding_number || 'N/A'
+        forwarding_number: businessData.forwarding_number || 'N/A',
+        callback_timeframe: 'within 24 hours'
       },
       available_times: availableTimes,
       error: null
