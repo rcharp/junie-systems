@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Brand Colors - Calming Blue Theme */
-    --background: 0 0% 100%;
+    --background: 210 20% 98%;
     --foreground: 215 15% 35%;  /* Softer, less harsh than the original 15% */
 
     --card: 0 0% 100%;
