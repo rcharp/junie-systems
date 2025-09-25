@@ -390,17 +390,10 @@ Deno.serve(async (req) => {
         console.log(`    Time of day for ${startHour}:xx = ${timeOfDay}`)
         
         availableSlots.push({
-          start: displayStartTime.toISOString(),
-          end: displayEndTime.toISOString(),
-          display: displayStartTime.toLocaleString('en-US', {
-            weekday: 'long',
-            month: 'short', 
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit'
-          }),
-          humanReadable: humanReadable,
-          timeOfDay: timeOfDay
+          startTime: block.start.toISOString(),
+          endTime: block.end.toISOString(),
+          timeOfDay: timeOfDay,
+          humanReadable: humanReadable
         })
       }
       
