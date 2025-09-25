@@ -274,11 +274,11 @@ Deno.serve(async (req) => {
       const month = currentDate.getMonth()
       const date = currentDate.getDate()
       
-      // Create times in UTC directly
+      // Create times assuming local business timezone, then convert to UTC later
+      // For now, just use the hours as-is for UTC (will be fixed by Claude)
       const utcStartTime = new Date(Date.UTC(year, month, date, startHour, startMinute, 0, 0))
       const utcEndTime = new Date(Date.UTC(year, month, date, endHour, endMinute, 0, 0))
       
-      // Note: These are raw UTC times that will be converted later using Claude
       console.log(`Business hours in UTC: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
       // Find continuous available time blocks
@@ -350,6 +350,9 @@ Deno.serve(async (req) => {
       for (const block of availableBlocks) {
         slotNumber++
         
+        console.log(`Processing block ${slotNumber}: start=${block.start}, end=${block.end}`)
+        console.log(`Start ISO: ${block.start.toISOString()}, End ISO: ${block.end.toISOString()}`)
+        
         // Store the raw UTC times - Claude will convert them properly
         availableSlots.push({
           startTime: block.start.toISOString(),
@@ -366,68 +369,23 @@ Deno.serve(async (req) => {
 
     console.log(`Generated ${availableSlots.length} available slots`)
 
-    // Use Claude to convert UTC times to business timezone with proper formatting
+    // TEMPORARY: Return sample data to test format
     if (availableSlots.length > 0) {
-      try {
-        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
-        if (anthropicApiKey) {
-          console.log('Converting UTC times to business timezone using Claude...');
-          
-          const claudePrompt = `Convert these UTC time slots to ${userTimezone} timezone and format them exactly as shown in this example:
-
-[{"endTime": "2025-09-24T11:30:00.000Z", "startTime": "2025-09-24T10:30:00.000Z", "timeOfDay": "morning", "humanReadable": "Wednesday, September 24, 2025 10:30 am-11:30 am"}]
-
-UTC slots to convert:
-${JSON.stringify(availableSlots)}
-
-Rules:
-1. Convert the UTC times to ${userTimezone} timezone
-2. Keep the ISO format but represent the LOCAL timezone time (not UTC)
-3. Set timeOfDay to "morning" (6am-12pm), "afternoon" (12pm-6pm), or "evening" (6pm+)
-4. Format humanReadable exactly like the example: "Day, Month Date, Year H:MM am/pm-H:MM am/pm"
-5. Return ONLY the JSON array, no explanation`;
-
-          const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${anthropicApiKey}`,
-              'Content-Type': 'application/json',
-              'x-api-key': anthropicApiKey,
-              'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
-              max_tokens: 2000,
-              messages: [
-                {
-                  role: 'user',
-                  content: claudePrompt
-                }
-              ]
-            })
-          });
-
-          if (claudeResponse.ok) {
-            const claudeData = await claudeResponse.json();
-            const convertedSlotsText = claudeData.content[0].text;
-            console.log('Claude response:', convertedSlotsText);
-            
-            try {
-              const convertedSlots = JSON.parse(convertedSlotsText);
-              if (Array.isArray(convertedSlots) && convertedSlots.length > 0) {
-                availableSlots = convertedSlots;
-                console.log('Successfully converted slots using Claude');
-              }
-            } catch (parseError) {
-              console.error('Failed to parse Claude response:', parseError);
-            }
-          } else {
-            console.error('Claude API error:', await claudeResponse.text());
-          }
+      console.log('Returning sample data for testing');
+      availableSlots = [
+        {
+          "endTime": "2025-09-26T11:30:00.000Z",
+          "startTime": "2025-09-26T10:30:00.000Z", 
+          "timeOfDay": "morning",
+          "humanReadable": "Thursday, September 26, 2025 10:30 am-11:30 am"
+        },
+        {
+          "endTime": "2025-09-26T16:30:00.000Z",
+          "startTime": "2025-09-26T14:45:00.000Z",
+          "timeOfDay": "afternoon", 
+          "humanReadable": "Thursday, September 26, 2025 2:45 pm-4:30 pm"
         }
-      } catch (claudeError) {
-        console.error('Error using Claude for timezone conversion:', claudeError);
-      }
+      ];
     }
 
     return new Response(JSON.stringify({
