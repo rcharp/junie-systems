@@ -394,7 +394,7 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-foreground mb-2">
+          <h2 className="text-3xl font-bold text-muted-foreground mb-2">
             Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}! 
           </h2>
           <p className="text-muted-foreground">

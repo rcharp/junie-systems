@@ -24,7 +24,7 @@ const RotatingText = ({ words, className = "" }: RotatingTextProps) => {
     <>
       <div className="text-5xl sm:text-6xl lg:text-5xl xl:text-6xl font-bold leading-tight">
         <div>Never miss {article}</div>
-        <div className="text-foreground">
+        <div className="text-muted-foreground">
           <span className={className}>
             {currentWord}
           </span>{" "}
@@ -36,7 +36,7 @@ const RotatingText = ({ words, className = "" }: RotatingTextProps) => {
       <noscript>
         <div className="text-4xl lg:text-5xl font-bold leading-tight">
           <div>Never miss a</div>
-          <div className="text-foreground">
+          <div className="text-muted-foreground">
             <span className={className}>lead</span> again
           </div>
         </div>

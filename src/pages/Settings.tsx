@@ -841,7 +841,7 @@ const Settings = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-foreground mb-2">Account Settings</h2>
+            <h2 className="text-3xl font-bold text-muted-foreground mb-2">Account Settings</h2>
             <p className="text-muted-foreground">
               Configure your Junie assistant and account preferences.
             </p>
