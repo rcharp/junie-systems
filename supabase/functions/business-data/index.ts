@@ -71,17 +71,67 @@ serve(async (req) => {
         console.log('ElevenLabs business_id from body:', parsedBody?.business_id);
         console.log('Final business_id used:', conversationBusinessId);
         
+        // Get actual business data and available times for conversation initiation
+        const { data: businessDataForInit, error: businessError } = await supabase
+          .from('business_settings')
+          .select(`
+            user_id,
+            business_name,
+            business_phone,
+            business_address,
+            business_hours,
+            services_offered,
+            appointment_booking
+          `)
+          .eq('id', conversationBusinessId)
+          .maybeSingle();
+
+        // Fetch calendar settings and available times if appointment booking is enabled
+        let dynamicAvailableTimes = "Please call to schedule";
+        if (businessDataForInit?.appointment_booking) {
+          const { data: calendarSettings } = await supabase
+            .from('google_calendar_settings')
+            .select('*')
+            .eq('user_id', businessDataForInit.user_id)
+            .single();
+
+          if (calendarSettings && calendarSettings.is_connected) {
+            try {
+              console.log('Fetching calendar availability for conversation initiation');
+              const availabilityResponse = await supabase.functions.invoke('google-calendar-availability', {
+                body: { user_id: businessDataForInit.user_id }
+              });
+              
+              if (availabilityResponse.data && !availabilityResponse.error && availabilityResponse.data.slots?.length > 0) {
+                const slots = availabilityResponse.data.slots.slice(0, 3); // Show first 3 available slots
+                dynamicAvailableTimes = slots.map((slot: any) => {
+                  const date = new Date(slot.start);
+                  return date.toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                  });
+                }).join(', ');
+              }
+            } catch (error) {
+              console.error('Error fetching calendar availability for conversation initiation:', error);
+            }
+          }
+        }
+        
         // Return the conversation initiation format that ElevenLabs expects
         const conversationInitData = {
           "type": "conversation_initiation_client_data",
           "dynamic_variables": {
             "business_id": conversationBusinessId,
-            "business_name": "Charpentier Air Conditioning",
-            "business_phone": "7278714862",
-            "business_address": "5605 Trevesta Place, Palmetto, Florida, 34221",
-            "available_hours": "Monday-Friday 9am-5pm",
-            "available_times": "Please call to schedule",
-            "services": "HVAC service, A/C repair, thermostat fix, refrigerant refill"
+            "business_name": businessDataForInit?.business_name || "Charpentier Air Conditioning",
+            "business_phone": businessDataForInit?.business_phone || "7278714862",
+            "business_address": businessDataForInit?.business_address || "5605 Trevesta Place, Palmetto, Florida, 34221",
+            "available_hours": businessDataForInit?.business_hours || "Monday-Friday 9am-5pm",
+            "available_times": dynamicAvailableTimes,
+            "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill"
           }
         };
         
