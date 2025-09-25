@@ -269,17 +269,16 @@ Deno.serve(async (req) => {
       
       console.log(`Processing ${dayName}: ${startHour}:${startMinute} to ${endHour}:${endMinute} in ${userTimezone}`)
       
-      // Create business hours in UTC for Google Calendar API
+      // Create business hours for Google Calendar query (will be converted by Claude later)
       const year = currentDate.getFullYear()
       const month = currentDate.getMonth()
       const date = currentDate.getDate()
       
-      // Create times assuming local business timezone, then convert to UTC later
-      // For now, just use the hours as-is for UTC (will be fixed by Claude)
-      const utcStartTime = new Date(Date.UTC(year, month, date, startHour, startMinute, 0, 0))
-      const utcEndTime = new Date(Date.UTC(year, month, date, endHour, endMinute, 0, 0))
+      // Create times that represent business hours (Claude will handle timezone conversion)
+      const utcStartTime = new Date(year, month, date, startHour, startMinute, 0, 0)
+      const utcEndTime = new Date(year, month, date, endHour, endMinute, 0, 0)
       
-      console.log(`Business hours in UTC: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
+      console.log(`Business hours: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
       // Find continuous available time blocks
       const availableBlocks = []
@@ -345,7 +344,7 @@ Deno.serve(async (req) => {
         }
       }
       
-      // Store UTC blocks for Claude conversion
+      // Store blocks for Claude to convert properly
       let slotNumber = 0
       for (const block of availableBlocks) {
         slotNumber++
@@ -353,7 +352,7 @@ Deno.serve(async (req) => {
         console.log(`Processing block ${slotNumber}: start=${block.start}, end=${block.end}`)
         console.log(`Start ISO: ${block.start.toISOString()}, End ISO: ${block.end.toISOString()}`)
         
-        // Store the raw UTC times - Claude will convert them properly
+        // Store the raw times - Claude will convert them properly
         availableSlots.push({
           startTime: block.start.toISOString(),
           endTime: block.end.toISOString(),
@@ -361,7 +360,7 @@ Deno.serve(async (req) => {
           humanReadable: "pending" // Will be formatted by Claude
         })
         
-        console.log(`  Block ${slotNumber}: ${block.start.toISOString()} to ${block.end.toISOString()} (UTC)`)
+        console.log(`  Block ${slotNumber}: ${block.start.toISOString()} to ${block.end.toISOString()}`)
       }
       
       console.log(`Generated ${availableSlots.length} total slots so far`)
@@ -369,23 +368,90 @@ Deno.serve(async (req) => {
 
     console.log(`Generated ${availableSlots.length} available slots`)
 
-    // TEMPORARY: Return sample data to test format
+    // Use Claude to convert timezone and format properly
     if (availableSlots.length > 0) {
-      console.log('Returning sample data for testing');
-      availableSlots = [
-        {
-          "endTime": "2025-09-26T11:30:00.000Z",
-          "startTime": "2025-09-26T10:30:00.000Z", 
-          "timeOfDay": "morning",
-          "humanReadable": "Thursday, September 26, 2025 10:30 am-11:30 am"
-        },
-        {
-          "endTime": "2025-09-26T16:30:00.000Z",
-          "startTime": "2025-09-26T14:45:00.000Z",
-          "timeOfDay": "afternoon", 
-          "humanReadable": "Thursday, September 26, 2025 2:45 pm-4:30 pm"
+      console.log(`Converting ${availableSlots.length} slots using Claude for timezone ${userTimezone}`)
+      console.log('Raw slots before Claude:', JSON.stringify(availableSlots))
+      
+      try {
+        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+        console.log('Anthropic API key available:', !!anthropicApiKey)
+        
+        if (anthropicApiKey) {
+          const claudePrompt = `You are helping convert time slots to the correct timezone and format.
+
+Business timezone: ${userTimezone}
+
+Convert these time slots from whatever timezone they're in to ${userTimezone} timezone and format them EXACTLY like this example:
+[{"endTime": "2025-09-24T11:30:00.000Z", "startTime": "2025-09-24T10:30:00.000Z", "timeOfDay": "morning", "humanReadable": "Wednesday, September 24, 2025 10:30 am-11:30 am"}]
+
+Time slots to convert:
+${JSON.stringify(availableSlots)}
+
+Rules:
+1. Convert ALL times to ${userTimezone} timezone 
+2. The startTime and endTime should be ISO strings but representing ${userTimezone} time (not UTC)
+3. Set timeOfDay: "morning" (6am-12pm), "afternoon" (12pm-6pm), or "evening" (6pm+) based on LOCAL time
+4. Format humanReadable exactly: "Weekday, Month Date, Year H:MM am/pm-H:MM am/pm"
+5. Return ONLY the JSON array, no explanation`;
+
+          console.log('Calling Claude with prompt for timezone conversion...')
+          
+          const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${anthropicApiKey}`,
+              'Content-Type': 'application/json',
+              'x-api-key': anthropicApiKey,
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 3000,
+              messages: [
+                {
+                  role: 'user',
+                  content: claudePrompt
+                }
+              ]
+            })
+          });
+
+          console.log('Claude response status:', claudeResponse.status)
+          
+          if (claudeResponse.ok) {
+            const claudeData = await claudeResponse.json();
+            const convertedSlotsText = claudeData.content[0].text;
+            console.log('Claude response text:', convertedSlotsText);
+            
+            try {
+              // Clean up the response in case Claude adds markdown formatting
+              const cleanText = convertedSlotsText.replace(/```json\n?|\n?```/g, '').trim();
+              const convertedSlots = JSON.parse(cleanText);
+              
+              if (Array.isArray(convertedSlots) && convertedSlots.length > 0) {
+                availableSlots = convertedSlots;
+                console.log('Successfully converted slots using Claude:', convertedSlots);
+              } else {
+                console.log('Claude returned invalid format:', convertedSlots);
+              }
+            } catch (parseError) {
+              console.error('Failed to parse Claude response:', parseError);
+              console.log('Raw Claude response text:', convertedSlotsText);
+            }
+          } else {
+            const errorText = await claudeResponse.text();
+            console.error('Claude API error status:', claudeResponse.status);
+            console.error('Claude API error:', errorText);
+          }
+        } else {
+          console.log('No Anthropic API key found - skipping Claude conversion');
         }
-      ];
+      } catch (claudeError) {
+        console.error('Error using Claude for timezone conversion:', claudeError);
+      }
+    } else {
+      console.log('No available slots to convert');
     }
 
     return new Response(JSON.stringify({
