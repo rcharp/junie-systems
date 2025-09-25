@@ -89,6 +89,34 @@ const Login = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to sign in with Google",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "An error occurred during Google sign in",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background decoration */}
@@ -180,12 +208,8 @@ const Login = () => {
           <Button
             variant="outline"
             className="w-full h-12 transition-all duration-300"
-            onClick={() => {
-              toast({
-                title: "Coming Soon",
-                description: "Social login will be available soon!",
-              });
-            }}
+            onClick={handleGoogleSignIn}
+            disabled={loading}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
