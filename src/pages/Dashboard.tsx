@@ -570,15 +570,15 @@ const Dashboard = () => {
                           activity.type === 'success' ? 'bg-green-500' :
                           activity.type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
                         }`} />
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-1">
-                            <p className="text-sm font-medium text-muted-foreground">{activity.action}</p>
-                            <Badge variant="secondary" className="text-xs">
-                              {activity.call_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
-                        </div>
+                         <div className="flex-1">
+                           <div className="flex items-center justify-between mb-1">
+                             <p className="text-sm font-medium text-muted-foreground flex-1">{activity.action}</p>
+                             <Badge variant="secondary" className="text-xs ml-2">
+                               {activity.call_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                             </Badge>
+                           </div>
+                           <p className="text-xs text-muted-foreground">{activity.time}</p>
+                         </div>
                       </div>
                     ))
                   ) : (
