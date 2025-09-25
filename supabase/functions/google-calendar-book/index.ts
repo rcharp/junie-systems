@@ -172,44 +172,108 @@ Deno.serve(async (req) => {
 
     const businessName = businessSettings?.business_name || 'Business'
 
-    // Extract a concise service type from the full service description using business type categories
+    // Extract a concise service type from the service description
     let conciseServiceType = serviceType;
     
-    // Try to extract service type using business type patterns from dropdown
-    if (serviceType && serviceType.length > 30) {
+    if (serviceType && serviceType.length > 0) {
       const lowerServiceType = serviceType.toLowerCase();
       
-      // Match against business type categories from the dropdown
-      if (lowerServiceType.includes('electric') || lowerServiceType.includes('electrical')) {
-        conciseServiceType = 'Electric Services';
-      } else if (lowerServiceType.includes('garage door') || lowerServiceType.includes('garage-door')) {
-        conciseServiceType = 'Garage Door Services';
-      } else if (lowerServiceType.includes('handyman') || lowerServiceType.includes('general repair')) {
-        conciseServiceType = 'Handyman Services';
-      } else if (lowerServiceType.includes('hvac') || lowerServiceType.includes('a/c') || lowerServiceType.includes('air condition') || lowerServiceType.includes('heating') || lowerServiceType.includes('cooling')) {
-        conciseServiceType = 'HVAC & Air Conditioning';
-      } else if (lowerServiceType.includes('landscaping') || lowerServiceType.includes('lawn') || lowerServiceType.includes('garden') || lowerServiceType.includes('yard')) {
-        conciseServiceType = 'Landscaping';
-      } else if (lowerServiceType.includes('pest control') || lowerServiceType.includes('pest') || lowerServiceType.includes('exterminator') || lowerServiceType.includes('bug') || lowerServiceType.includes('termite')) {
-        conciseServiceType = 'Pest Control';
-      } else if (lowerServiceType.includes('plumb') || lowerServiceType.includes('pipe') || lowerServiceType.includes('drain') || lowerServiceType.includes('leak')) {
-        conciseServiceType = 'Plumbing';
-      } else if (lowerServiceType.includes('pool') || lowerServiceType.includes('spa') || lowerServiceType.includes('hot tub')) {
-        conciseServiceType = 'Pool & Spa Services';
-      } else if (lowerServiceType.includes('cleaning') || lowerServiceType.includes('clean') || lowerServiceType.includes('maid') || lowerServiceType.includes('janitorial')) {
-        conciseServiceType = 'Professional Cleaning';
+      // First try to extract specific service types from common patterns
+      if (lowerServiceType.includes('a/c') || lowerServiceType.includes('air condition') || lowerServiceType.includes('hvac') || lowerServiceType.includes('ac ')) {
+        if (lowerServiceType.includes('repair') || lowerServiceType.includes('fix') || lowerServiceType.includes('not working') || lowerServiceType.includes('broken')) {
+          conciseServiceType = 'A/C Repair';
+        } else if (lowerServiceType.includes('install') || lowerServiceType.includes('replacement')) {
+          conciseServiceType = 'A/C Installation';
+        } else if (lowerServiceType.includes('maintenance') || lowerServiceType.includes('service') || lowerServiceType.includes('check') || lowerServiceType.includes('inspect')) {
+          conciseServiceType = 'A/C Service';
+        } else if (lowerServiceType.includes('clean')) {
+          conciseServiceType = 'A/C Cleaning';
+        } else {
+          conciseServiceType = 'A/C Service';
+        }
+      } else if (lowerServiceType.includes('plumb') || lowerServiceType.includes('pipe') || lowerServiceType.includes('drain') || lowerServiceType.includes('leak') || lowerServiceType.includes('toilet') || lowerServiceType.includes('faucet')) {
+        if (lowerServiceType.includes('repair') || lowerServiceType.includes('fix')) {
+          conciseServiceType = 'Plumbing Repair';
+        } else if (lowerServiceType.includes('install')) {
+          conciseServiceType = 'Plumbing Installation';
+        } else if (lowerServiceType.includes('clean') || lowerServiceType.includes('unclog')) {
+          conciseServiceType = 'Drain Cleaning';
+        } else {
+          conciseServiceType = 'Plumbing Service';
+        }
+      } else if (lowerServiceType.includes('electric') || lowerServiceType.includes('electrical') || lowerServiceType.includes('outlet') || lowerServiceType.includes('wire') || lowerServiceType.includes('breaker')) {
+        if (lowerServiceType.includes('repair')) {
+          conciseServiceType = 'Electrical Repair';
+        } else if (lowerServiceType.includes('install')) {
+          conciseServiceType = 'Electrical Installation';
+        } else {
+          conciseServiceType = 'Electrical Service';
+        }
       } else if (lowerServiceType.includes('roof') || lowerServiceType.includes('shingle') || lowerServiceType.includes('gutter')) {
-        conciseServiceType = 'Roofing';
-      } else if (lowerServiceType.includes('repair')) {
-        conciseServiceType = 'Repair Service';
-      } else if (lowerServiceType.includes('install') || lowerServiceType.includes('installation')) {
-        conciseServiceType = 'Installation Service';
-      } else if (lowerServiceType.includes('maintenance') || lowerServiceType.includes('service')) {
-        conciseServiceType = 'Maintenance Service';
+        if (lowerServiceType.includes('repair') || lowerServiceType.includes('leak')) {
+          conciseServiceType = 'Roof Repair';
+        } else if (lowerServiceType.includes('clean')) {
+          conciseServiceType = 'Gutter Cleaning';
+        } else if (lowerServiceType.includes('install')) {
+          conciseServiceType = 'Roof Installation';
+        } else {
+          conciseServiceType = 'Roofing Service';
+        }
+      } else if (lowerServiceType.includes('clean') || lowerServiceType.includes('maid') || lowerServiceType.includes('janitorial') || lowerServiceType.includes('carpet')) {
+        if (lowerServiceType.includes('carpet')) {
+          conciseServiceType = 'Carpet Cleaning';
+        } else if (lowerServiceType.includes('house') || lowerServiceType.includes('home')) {
+          conciseServiceType = 'House Cleaning';
+        } else {
+          conciseServiceType = 'Cleaning Service';
+        }
+      } else if (lowerServiceType.includes('pest') || lowerServiceType.includes('bug') || lowerServiceType.includes('termite') || lowerServiceType.includes('exterminator')) {
+        conciseServiceType = 'Pest Control';
+      } else if (lowerServiceType.includes('lawn') || lowerServiceType.includes('landscap') || lowerServiceType.includes('garden') || lowerServiceType.includes('yard') || lowerServiceType.includes('tree')) {
+        if (lowerServiceType.includes('mow') || lowerServiceType.includes('cut')) {
+          conciseServiceType = 'Lawn Mowing';
+        } else if (lowerServiceType.includes('tree')) {
+          conciseServiceType = 'Tree Service';
+        } else {
+          conciseServiceType = 'Landscaping';
+        }
+      } else if (lowerServiceType.includes('pool') || lowerServiceType.includes('spa') || lowerServiceType.includes('hot tub')) {
+        if (lowerServiceType.includes('clean')) {
+          conciseServiceType = 'Pool Cleaning';
+        } else if (lowerServiceType.includes('repair')) {
+          conciseServiceType = 'Pool Repair';
+        } else {
+          conciseServiceType = 'Pool Service';
+        }
+      } else if (lowerServiceType.includes('handyman') || lowerServiceType.includes('general repair')) {
+        conciseServiceType = 'Handyman Service';
+      } else if (lowerServiceType.includes('garage door')) {
+        if (lowerServiceType.includes('repair')) {
+          conciseServiceType = 'Garage Door Repair';
+        } else if (lowerServiceType.includes('install')) {
+          conciseServiceType = 'Garage Door Installation';
+        } else {
+          conciseServiceType = 'Garage Door Service';
+        }
       } else {
-        // Fallback: take first few words or use generic term
-        const words = serviceType.split(' ').slice(0, 3);
-        conciseServiceType = words.length > 0 ? words.join(' ') : 'Service Appointment';
+        // Generic patterns for any service
+        if (lowerServiceType.includes('repair') || lowerServiceType.includes('fix')) {
+          conciseServiceType = 'Repair Service';
+        } else if (lowerServiceType.includes('install') || lowerServiceType.includes('installation')) {
+          conciseServiceType = 'Installation Service';
+        } else if (lowerServiceType.includes('maintenance') || lowerServiceType.includes('service')) {
+          conciseServiceType = 'Maintenance Service';
+        } else if (lowerServiceType.includes('clean')) {
+          conciseServiceType = 'Cleaning Service';
+        } else if (lowerServiceType.includes('inspect') || lowerServiceType.includes('check')) {
+          conciseServiceType = 'Inspection Service';
+        } else if (lowerServiceType.includes('estimate') || lowerServiceType.includes('quote')) {
+          conciseServiceType = 'Service Estimate';
+        } else {
+          // Fallback: take first meaningful words or use generic term
+          const words = serviceType.split(' ').slice(0, 3);
+          conciseServiceType = words.length > 0 ? words.join(' ') : 'Service Appointment';
+        }
       }
     }
 
