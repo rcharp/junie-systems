@@ -128,6 +128,43 @@ serve(async (req) => {
           }
         }
         
+        // Parse common_questions from text format to structured Q&A pairs
+        const parseCommonQuestions = (questionsText: string): Array<{question: string, answer: string}> => {
+          if (!questionsText) return [];
+          
+          const pairs: Array<{question: string, answer: string}> = [];
+          const lines = questionsText.split('\n').filter(line => line.trim());
+          
+          let currentQuestion = '';
+          let currentAnswer = '';
+          
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine.startsWith('Q:')) {
+              // If we have a previous Q&A pair, save it
+              if (currentQuestion && currentAnswer) {
+                pairs.push({ question: currentQuestion, answer: currentAnswer });
+              }
+              currentQuestion = trimmedLine.substring(2).trim();
+              currentAnswer = '';
+            } else if (trimmedLine.startsWith('A:')) {
+              currentAnswer = trimmedLine.substring(2).trim();
+            } else if (currentAnswer && trimmedLine) {
+              // Continue building the answer if there are multiple lines
+              currentAnswer += ' ' + trimmedLine;
+            }
+          }
+          
+          // Don't forget the last pair
+          if (currentQuestion && currentAnswer) {
+            pairs.push({ question: currentQuestion, answer: currentAnswer });
+          }
+          
+          return pairs;
+        };
+        
+        const parsedCommonQuestions = parseCommonQuestions(businessDataForInit?.common_questions || '');
+        
         // Return the conversation initiation format that ElevenLabs expects
         const conversationInitData = {
           "type": "conversation_initiation_client_data",
@@ -142,7 +179,7 @@ serve(async (req) => {
             "business_website": businessDataForInit?.business_website || "",
             "business_hours": businessDataForInit?.business_hours || "Monday-Friday 9am-5pm",
             "business_description": businessDataForInit?.business_description || "",
-            "common_questions": businessDataForInit?.common_questions || "",
+            "common_questions": parsedCommonQuestions,
             "pricing_structure": businessDataForInit?.pricing_structure || "",
             "appointment_booking": businessDataForInit?.appointment_booking || false,
             "available_times": dynamicAvailableTimes,
