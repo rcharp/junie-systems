@@ -1338,7 +1338,7 @@ const Settings = () => {
                             <div className="flex gap-2 items-start">
                               <div className="flex-1">
                                 <Label htmlFor={`service-name-${index}`} className="text-sm font-medium">
-                                  Service Name *
+                                  Service Name <span className="text-red-500">*</span>
                                 </Label>
                                 <Input
                                   id={`service-name-${index}`}
@@ -1354,7 +1354,7 @@ const Settings = () => {
                               </div>
                               <div className="w-32">
                                 <Label htmlFor={`service-price-${index}`} className="text-sm font-medium">
-                                  Price *
+                                  Price <span className="text-red-500">*</span>
                                 </Label>
                                 <div className="relative">
                                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
