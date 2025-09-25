@@ -861,8 +861,9 @@ const Settings = () => {
       <header className="bg-white/80 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="w-5 h-5" />
+            <Button variant="ghost" onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Dashboard</span>
             </Button>
             <Link to="/" className="flex items-center">
               <img 
