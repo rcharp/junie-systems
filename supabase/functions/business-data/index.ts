@@ -86,9 +86,9 @@ serve(async (req) => {
             business_hours,
             business_description,
             common_questions,
-            services_offered,
             pricing_structure,
-            appointment_booking
+            appointment_booking,
+            services_offered
           `)
           .eq('id', conversationBusinessId)
           .maybeSingle();
@@ -143,7 +143,6 @@ serve(async (req) => {
             "business_hours": businessDataForInit?.business_hours || "Monday-Friday 9am-5pm",
             "business_description": businessDataForInit?.business_description || "",
             "common_questions": businessDataForInit?.common_questions || "",
-            "services_offered": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
             "pricing_structure": businessDataForInit?.pricing_structure || "",
             "appointment_booking": businessDataForInit?.appointment_booking || false,
             "available_hours": businessDataForInit?.business_hours || "Monday-Friday 9am-5pm",
