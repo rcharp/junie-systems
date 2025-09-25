@@ -103,34 +103,37 @@ export const UserWebhookList = () => {
             <>
               <div className="space-y-3">
                 {users.map((user) => (
-                  <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{user.email}</p>
+                  <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border rounded-lg bg-muted/30 space-y-3 sm:space-y-0">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+                        <p className="font-medium text-sm sm:text-base truncate">{user.email}</p>
                         {user.full_name && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs w-fit">
                             {user.full_name}
                           </Badge>
                         )}
                       </div>
                       {user.company_name && (
-                        <p className="text-sm text-muted-foreground">{user.company_name}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.company_name}</p>
                       )}
                       <p className="text-xs text-muted-foreground">
                         Joined: {new Date(user.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono text-sm bg-background px-3 py-1 rounded border">
-                        {user.business_id || 'No business ID'}
-                      </span>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 flex-shrink-0">
+                      <div className="w-full sm:w-auto">
+                        <span className="font-mono text-xs sm:text-sm bg-background px-2 sm:px-3 py-1 rounded border block truncate max-w-[200px] sm:max-w-[300px]" title={user.business_id || 'No business ID'}>
+                          {user.business_id || 'No business ID'}
+                        </span>
+                      </div>
                       {user.business_id && (
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleCopyBusinessId(user.business_id)}
+                          className="w-full sm:w-auto text-xs sm:text-sm"
                         >
-                          <Copy className="h-4 w-4 mr-1" />
+                          <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
                           Copy
                         </Button>
                       )}
@@ -141,41 +144,55 @@ export const UserWebhookList = () => {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 border-t space-y-3 sm:space-y-0">
+                  <div className="text-xs sm:text-sm text-muted-foreground">
                     Showing {((currentPage - 1) * usersPerPage) + 1} to {Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers} users
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 w-full sm:w-auto justify-center sm:justify-end">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
+                      className="text-xs sm:text-sm"
                     >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Previous
+                      <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                      Prev
                     </Button>
                     <div className="flex items-center space-x-1">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                        <Button
-                          key={page}
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setCurrentPage(page)}
-                          className="w-8 h-8 p-0"
-                        >
-                          {page}
-                        </Button>
-                      ))}
+                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                        let page;
+                        if (totalPages <= 5) {
+                          page = i + 1;
+                        } else if (currentPage <= 3) {
+                          page = i + 1;
+                        } else if (currentPage >= totalPages - 2) {
+                          page = totalPages - 4 + i;
+                        } else {
+                          page = currentPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(page)}
+                            className="w-6 h-6 sm:w-8 sm:h-8 p-0 text-xs sm:text-sm"
+                          >
+                            {page}
+                          </Button>
+                        );
+                      })}
                     </div>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
+                      className="text-xs sm:text-sm"
                     >
                       Next
-                      <ChevronRight className="h-4 w-4 ml-1" />
+                      <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
                     </Button>
                   </div>
                 </div>

@@ -187,76 +187,144 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gradient-subtle">
       {/* Header Navigation */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <a href="/" className="flex items-center">
-              <img 
-                src="/lovable-uploads/junie-logo.png" 
-                alt="Junie Logo" 
-                className="h-8 w-8"
-              />
-            </a>
-            <h1 className="text-xl font-bold text-primary">Admin Dashboard</h1>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
-              <Settings className="w-5 h-5" />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Bell className="w-5 h-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                {recentActivity.length > 0 ? (
-                  recentActivity.slice(0, 3).map((activity) => (
-                    <DropdownMenuItem key={activity.id} className="cursor-pointer">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium">{activity.caller_name} - {activity.call_type}</p>
-                        <p className="text-xs text-muted-foreground">{activity.message.substring(0, 60)}...</p>
-                      </div>
+        <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+          {/* Mobile Layout */}
+          <div className="md:hidden flex items-center justify-between">
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <a href="/" className="flex items-center flex-shrink-0">
+                <img 
+                  src="/lovable-uploads/junie-logo.png" 
+                  alt="Junie Logo" 
+                  className="h-6 w-6"
+                />
+              </a>
+              <h1 className="text-sm font-bold text-primary truncate">Admin Dashboard</h1>
+            </div>
+            
+            <div className="flex items-center space-x-1">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Bell className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 3).map((activity) => (
+                      <DropdownMenuItem key={activity.id} className="cursor-pointer">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium">{activity.caller_name} - {activity.call_type}</p>
+                          <p className="text-xs text-muted-foreground">{activity.message.substring(0, 60)}...</p>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <DropdownMenuItem disabled>
+                      <p className="text-sm text-muted-foreground">No recent notifications</p>
                     </DropdownMenuItem>
-                  ))
-                ) : (
-                  <DropdownMenuItem disabled>
-                    <p className="text-sm text-muted-foreground">No recent notifications</p>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Badge variant="secondary" className="flex items-center gap-2">
-              <Shield className="h-4 w-4" />
-              Admin Access
-            </Badge>
-            <Badge variant="outline">
-              {user?.email}
-            </Badge>
-            <Button variant="ghost" onClick={async () => {
-              try {
-                await handleRobustSignOut(supabase);
-              } catch (error: any) {
-                window.location.href = '/';
-              }
-            }}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="ghost" onClick={async () => {
+                try {
+                  await handleRobustSignOut(supabase);
+                } catch (error: any) {
+                  window.location.href = '/';
+                }
+              }} className="h-8 w-8 p-0">
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <a href="/" className="flex items-center">
+                <img 
+                  src="/lovable-uploads/junie-logo.png" 
+                  alt="Junie Logo" 
+                  className="h-8 w-8"
+                />
+              </a>
+              <h1 className="text-xl font-bold text-primary">Admin Dashboard</h1>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/settings")}>
+                <Settings className="w-5 h-5" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Bell className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 3).map((activity) => (
+                      <DropdownMenuItem key={activity.id} className="cursor-pointer">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium">{activity.caller_name} - {activity.call_type}</p>
+                          <p className="text-xs text-muted-foreground">{activity.message.substring(0, 60)}...</p>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <DropdownMenuItem disabled>
+                      <p className="text-sm text-muted-foreground">No recent notifications</p>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Badge variant="secondary" className="flex items-center gap-2">
+                <Shield className="h-4 w-4" />
+                Admin Access
+              </Badge>
+              <Badge variant="outline" className="max-w-48 truncate">
+                {user?.email}
+              </Badge>
+              <Button variant="ghost" onClick={async () => {
+                try {
+                  await handleRobustSignOut(supabase);
+                } catch (error: any) {
+                  window.location.href = '/';
+                }
+              }}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
+
+          {/* Mobile User Info Bar */}
+          <div className="md:hidden mt-2 pt-2 border-t border-border/50">
+            <div className="flex items-center justify-between">
+              <Badge variant="secondary" className="text-xs">
+                <Shield className="h-3 w-3 mr-1" />
+                Admin
+              </Badge>
+              <Badge variant="outline" className="text-xs max-w-[200px] truncate">
+                {user?.email}
+              </Badge>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-muted-foreground mb-2">
+      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-muted-foreground mb-2">
             Admin Dashboard
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Monitor platform performance and manage development tasks
           </p>
         </div>
@@ -269,14 +337,14 @@ const AdminDashboard = () => {
           
           <TabsContent value="overview" className="space-y-8">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalUsers}</div>
+                <CardContent className="pt-2">
+                  <div className="text-xl sm:text-2xl font-bold">{stats.totalUsers}</div>
                   <p className="text-xs text-muted-foreground">
                     Registered users on platform
                   </p>
@@ -285,11 +353,11 @@ const AdminDashboard = () => {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Calls</CardTitle>
+                  <CardTitle className="text-xs sm:text-sm font-medium">Total Calls</CardTitle>
                   <Phone className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalCalls}</div>
+                <CardContent className="pt-2">
+                  <div className="text-xl sm:text-2xl font-bold">{stats.totalCalls}</div>
                   <p className="text-xs text-muted-foreground">
                     Calls handled by AI
                   </p>
@@ -298,11 +366,11 @@ const AdminDashboard = () => {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Appointments</CardTitle>
+                  <CardTitle className="text-xs sm:text-sm font-medium">Appointments</CardTitle>
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.totalAppointments}</div>
+                <CardContent className="pt-2">
+                  <div className="text-xl sm:text-2xl font-bold">{stats.totalAppointments}</div>
                   <p className="text-xs text-muted-foreground">
                     Appointments booked
                   </p>
@@ -311,11 +379,11 @@ const AdminDashboard = () => {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                  <CardTitle className="text-xs sm:text-sm font-medium">Active Users</CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.activeUsers}</div>
+                <CardContent className="pt-2">
+                  <div className="text-xl sm:text-2xl font-bold">{stats.activeUsers}</div>
                   <p className="text-xs text-muted-foreground">
                     Active in last 30 days
                   </p>
