@@ -49,8 +49,18 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
-    const url = new URL(req.url)
-    const userId = url.pathname.split('/').pop()
+    // Try to get user_id from request body first, then fall back to URL path
+    let userId;
+    try {
+      const body = await req.json();
+      userId = body.user_id;
+      console.log('Extracted user_id from request body:', userId);
+    } catch (error) {
+      // If no body or JSON parsing fails, try URL path
+      const url = new URL(req.url);
+      userId = url.pathname.split('/').pop();
+      console.log('Extracted user_id from URL path:', userId);
+    }
 
     if (!userId) {
       throw new Error('User ID is required')

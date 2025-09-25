@@ -106,16 +106,12 @@ serve(async (req) => {
           if (calendarSettings && calendarSettings.is_connected) {
             try {
               console.log('Fetching calendar availability for conversation initiation');
-              const availabilityResponse = await fetch(`${supabaseUrl}/functions/v1/google-calendar-availability/${businessDataForInit.user_id}`, {
-                method: 'GET',
-                headers: {
-                  'Authorization': `Bearer ${supabaseKey}`
-                }
+              const availabilityResponse = await supabase.functions.invoke('google-calendar-availability', {
+                body: { user_id: businessDataForInit.user_id }
               });
               
-              const responseData = await availabilityResponse.json();
-              if (responseData && !responseData.error && responseData.slots?.length > 0) {
-                const slots = responseData.slots.slice(0, 3); // Show first 3 available slots
+              if (availabilityResponse.data && !availabilityResponse.error && availabilityResponse.data.slots?.length > 0) {
+                const slots = availabilityResponse.data.slots.slice(0, 3); // Show first 3 available slots
                 dynamicAvailableTimes = slots.map((slot: any) => {
                   const date = new Date(slot.start);
                   return date.toLocaleDateString('en-US', { 
@@ -346,16 +342,12 @@ serve(async (req) => {
     if (calendarSettings && calendarSettings.is_connected) {
       try {
         console.log('Fetching calendar availability for user_id:', businessData.user_id);
-        const availabilityResponse = await fetch(`${supabaseUrl}/functions/v1/google-calendar-availability/${businessData.user_id}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${supabaseKey}`
-          }
+        const availabilityResponse = await supabase.functions.invoke('google-calendar-availability', {
+          body: { user_id: businessData.user_id }
         });
         
-        const responseData = await availabilityResponse.json();
-        if (responseData && !responseData.error) {
-          availableTimes = responseData.slots || [];
+        if (availabilityResponse.data && !availabilityResponse.error) {
+          availableTimes = availabilityResponse.data.slots || [];
         }
       } catch (error) {
         console.error('Error fetching calendar availability:', error);
