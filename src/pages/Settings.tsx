@@ -986,19 +986,19 @@ const Settings = () => {
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-4 bg-muted border border-border">
-              <TabsTrigger value="business" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:border data-[state=active]:border-border">
+              <TabsTrigger value="business" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 <span className="hidden sm:inline">Business Info</span>
               </TabsTrigger>
-              <TabsTrigger value="calls" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:border data-[state=active]:border-border">
+              <TabsTrigger value="calls" className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
                 <span className="hidden sm:inline">Calls</span>
               </TabsTrigger>
-              <TabsTrigger value="setup" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:border data-[state=active]:border-border">
+              <TabsTrigger value="setup" className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">Calendar</span>
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:border data-[state=active]:border-border">
+              <TabsTrigger value="notifications" className="flex items-center gap-2">
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Notifications</span>
               </TabsTrigger>
