@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
+import { fromZonedTime, toZonedTime } from 'https://esm.sh/date-fns-tz@3.2.0'
 
 // Helper function to get timezone offset in milliseconds
 function getTimezoneOffsetMs(timezone: string, date: Date): number {
@@ -269,20 +270,18 @@ Deno.serve(async (req) => {
       
       console.log(`Processing ${dayName}: ${startHour}:${startMinute} to ${endHour}:${endMinute} in ${userTimezone}`)
       
-      // Create business hours in EDT/EST and convert to UTC
-      // EDT = UTC-4, so 9:00 AM EDT becomes 13:00 UTC
+      // Create business hours in the user's timezone
       const year = currentDate.getFullYear()
       const month = currentDate.getMonth()
       const date = currentDate.getDate()
       
-      // Create dates in the local timezone (this creates them in the server's timezone, but we'll adjust)
+      // Create dates in the user's timezone
       const localStartTime = new Date(year, month, date, startHour, startMinute, 0, 0)
       const localEndTime = new Date(year, month, date, endHour, endMinute, 0, 0)
       
-      // Convert to UTC by treating them as if they were already in the target timezone
-      // For America/New_York, add 4 hours during EDT season (or 5 during EST)
-      const utcStartTime = new Date(localStartTime.getTime() + (4 * 60 * 60 * 1000))
-      const utcEndTime = new Date(localEndTime.getTime() + (4 * 60 * 60 * 1000))
+      // Convert to UTC using proper timezone conversion
+      const utcStartTime = fromZonedTime(localStartTime, userTimezone)
+      const utcEndTime = fromZonedTime(localEndTime, userTimezone)
       
       console.log(`Business hours in UTC: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
@@ -355,9 +354,9 @@ Deno.serve(async (req) => {
       for (const block of availableBlocks) {
         slotNumber++
         
-        // Convert back to local time for display
-        const displayStartTime = new Date(block.start.getTime() - (4 * 60 * 60 * 1000))
-        const displayEndTime = new Date(block.end.getTime() - (4 * 60 * 60 * 1000))
+        // Convert back to business timezone for display
+        const displayStartTime = toZonedTime(block.start, userTimezone)
+        const displayEndTime = toZonedTime(block.end, userTimezone)
         
         const humanReadable = `${displayStartTime.toLocaleDateString('en-US', { 
           weekday: 'long', 
