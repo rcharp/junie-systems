@@ -187,7 +187,7 @@ serve(async (req) => {
             "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
             "forwarding_number": businessDataForInit?.forwarding_number || "",
             "callback_timeframe": "within 24 hours",
-            "pronunciations": "[{\"HVAC\":\"H vac\", \"hvac\":\"H vac\"}]"
+            "pronunciations": "HVAC: H vac, hvac: H vac"
           }
         };
         
