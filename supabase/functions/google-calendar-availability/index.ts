@@ -410,25 +410,24 @@ Deno.serve(async (req) => {
         console.log('Anthropic API key available:', !!anthropicApiKey)
         
         if (anthropicApiKey) {
-      const claudePrompt = `You are helping convert time slots to the correct timezone and format.
+      const claudePrompt = `You are helping format time slots for a business calendar.
 
 Business timezone: ${userTimezone}
 
-Convert these UTC time slots to ${userTimezone} timezone and format them EXACTLY like this example:
-[{"endTime": "2025-09-24T15:30:00.000Z", "startTime": "2025-09-24T14:30:00.000Z", "timeOfDay": "afternoon", "humanReadable": "Tuesday, September 24, 2025 10:30 am-11:30 am"}]
+The input times are UTC business hours that need to be converted to show the LOCAL business time.
 
-Time slots to convert:
+Input slots (UTC times representing business hours):
 ${JSON.stringify(availableSlots)}
 
 CRITICAL RULES:
-1. Input times are in UTC, convert them to ${userTimezone} local time
-2. Keep startTime and endTime as valid ISO strings (YYYY-MM-DDTHH:MM:SS.000Z format)
-3. The times should represent the LOCAL ${userTimezone} time but keep the Z suffix
-4. Set timeOfDay based on LOCAL ${userTimezone} time: "morning" (6am-12pm), "afternoon" (12pm-6pm), "evening" (6pm+)
-5. Format humanReadable: "Weekday, Month Date, Year H:MM am/pm-H:MM am/pm" in ${userTimezone} time
+1. Convert each UTC time to ${userTimezone} local time 
+2. Return times as ISO strings but representing the LOCAL time (remove the timezone offset)
+3. If input is "2025-09-26T13:00:00.000Z" and timezone is America/New_York, the local time would be 9:00 AM, so return "2025-09-26T09:00:00.000Z"
+4. Set timeOfDay based on LOCAL time: "morning" (6am-12pm), "afternoon" (12pm-6pm), "evening" (6pm+)
+5. Format humanReadable: "Weekday, Month Date, Year H:MM am/pm-H:MM am/pm" in local time
 6. Return ONLY valid JSON array, no markdown or explanation
 
-Example: If input is "2025-09-26T13:00:00.000Z" and timezone is America/New_York, convert to local time (9am) and format as "2025-09-26T09:00:00.000Z"`;
+Example: Input "2025-09-26T13:00:00.000Z" for America/New_York → Output "2025-09-26T09:00:00.000Z" with humanReadable "Friday, September 26, 2025 9:00 am"`;
 
           console.log('Calling Claude with prompt for timezone conversion...')
           
