@@ -810,7 +810,7 @@ const Settings = () => {
             </Button>
             <Link to="/" className="flex items-center">
               <img 
-                src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
+                src="/lovable-uploads/junie-logo.png" 
                 alt="Junie Logo" 
                 className="h-8 w-8"
               />

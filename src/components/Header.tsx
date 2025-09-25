@@ -7,7 +7,7 @@ const Header = () => {
         <div className="flex items-center">
           <a href="/" className="flex items-center">
             <img 
-              src="/lovable-uploads/f549978f-b787-41df-b6f2-3f0235d3d6ed.png" 
+              src="/lovable-uploads/junie-logo.png" 
               alt="Junie Logo" 
               className="h-10 w-10"
             />

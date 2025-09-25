@@ -130,7 +130,7 @@ const Signup = () => {
       <div className="absolute top-6 left-6 flex items-center space-x-3 z-10">
         <a href="/" className="flex items-center space-x-3">
           <img 
-            src="/lovable-uploads/f549978f-b787-41df-b6f2-3f0235d3d6ed.png" 
+            src="/lovable-uploads/junie-logo.png" 
             alt="Junie Logo" 
             className="h-8 w-8"
           />
