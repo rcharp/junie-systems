@@ -8,13 +8,13 @@
   :root {
     /* Brand Colors - Calming Blue Theme */
     --background: 0 0% 100%;
-    --foreground: 215 25% 15%;
+    --foreground: 215 15% 35%;  /* Softer, less harsh than the original 15% */
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 215 15% 35%;  /* Consistent with foreground */
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 215 15% 35%;  /* Consistent with foreground */
 
     /* Primary - Soft Blue */
     --primary: 210 85% 55%;
@@ -23,11 +23,11 @@
     
     /* Secondary - Light Blue */
     --secondary: 210 40% 96%;
-    --secondary-foreground: 215 25% 15%;
+    --secondary-foreground: 215 15% 35%;  /* Consistent with foreground */
 
     /* Muted - Soft Neutrals */
     --muted: 210 20% 95%;
-    --muted-foreground: 215 15% 50%;
+    --muted-foreground: 215 12% 55%;  /* Softer, more muted */
 
     /* Accent - Deeper Blue */
     --accent: 220 75% 50%;
