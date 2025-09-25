@@ -358,7 +358,7 @@ const Dashboard = () => {
             <a href="/" className="flex items-center">
               <img 
                 src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-                alt="Availabee Logo" 
+                alt="Junie Logo" 
                 className="h-8 w-8"
               />
             </a>
@@ -408,7 +408,7 @@ const Dashboard = () => {
         {showSetupGuide && (
           <Card className="mb-8 bg-gradient-hero text-white border-0">
             <CardHeader>
-              <CardTitle className="text-white">🎉 Welcome to Availabee!</CardTitle>
+              <CardTitle className="text-white">🎉 Welcome to Junie!</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-white/90 mb-4">

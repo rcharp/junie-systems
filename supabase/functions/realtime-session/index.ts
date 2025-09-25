@@ -22,12 +22,12 @@ serve(async (req) => {
     const { businessName, businessType, customGreeting, commonQuestions, businessHours } = await req.json();
 
     // Create system instructions based on business configuration
-    const systemInstructions = `You are Availabee, an AI assistant for ${businessName || 'this business'}. You are a professional, friendly phone answering service.
+    const systemInstructions = `You are Junie, an AI assistant for ${businessName || 'this business'}. You are a professional, friendly phone answering service.
 
 Business Type: ${businessType || 'General Business'}
 Business Hours: ${businessHours || 'Please ask for business hours'}
 
-${customGreeting ? `Use this greeting: ${customGreeting}` : `Greeting: "Thank you for calling ${businessName || 'our business'}. This is Availabee, your AI assistant. How can I help you today?"`}
+${customGreeting ? `Use this greeting: ${customGreeting}` : `Greeting: "Thank you for calling ${businessName || 'our business'}. This is Junie, your AI assistant. How can I help you today?"`}
 
 ${commonQuestions ? `Here are common questions and answers for this business:
 ${commonQuestions}` : ''}

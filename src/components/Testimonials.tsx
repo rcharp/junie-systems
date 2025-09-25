@@ -5,19 +5,19 @@ import { Quote } from "lucide-react";
 const Testimonials = () => {
   const testimonials = [
     {
-      quote: "As someone with 50 years of business experience, I've hired many live receptionists and used answering services over the years. One of the biggest challenges I faced was inconsistency in customer interactions, high costs, and employee turnover. After using Availabee, I fired my live answering service yesterday because Availabee provides more accuracy, faster responses, and 24/7 availability—all at a fraction of the cost.",
+      quote: "As someone with 50 years of business experience, I've hired many live receptionists and used answering services over the years. One of the biggest challenges I faced was inconsistency in customer interactions, high costs, and employee turnover. After using Junie, I fired my live answering service yesterday because Junie provides more accuracy, faster responses, and 24/7 availability—all at a fraction of the cost.",
       name: "James Hanner",
       title: "Owner Southern Indiana Driving School",
       image: "/lovable-uploads/6c473fae-e0b3-44ab-bb60-c373e617ab26.png"
     },
     {
-      quote: "My colleagues in the industry call our number and talk to Availabee and they can't believe how good it is. I've already recommended two friends to Availabee.",
+      quote: "My colleagues in the industry call our number and talk to Junie and they can't believe how good it is. I've already recommended two friends to Junie.",
       name: "Classic City Transportation",
       title: "Owner",
       image: "/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png"
     },
     {
-      quote: "Availabee is the real deal. We've tried all the others and Availabee is the only one that is easy to set up and sounds so realistic.",
+      quote: "Junie is the real deal. We've tried all the others and Junie is the only one that is easy to set up and sounds so realistic.",
       name: "Crunch Fitness",
       title: "Franchisee",
       image: "/lovable-uploads/6c473fae-e0b3-44ab-bb60-c373e617ab26.png"

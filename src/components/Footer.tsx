@@ -9,21 +9,21 @@ const Footer = () => {
             <div className="flex items-center space-x-3">
               <img 
                 src="/lovable-uploads/2c8f89e8-0c88-4986-956d-eb3fde70715c.png" 
-                alt="Availabee Logo" 
+                alt="Junie Logo" 
                 className="w-10 h-10"
               />
-              <span className="text-2xl font-bold lowercase">availabee</span>
+              <span className="text-2xl font-bold lowercase">junie</span>
             </div>
             <p className="text-primary-foreground/80 leading-relaxed">
               The AI answering service that never sleeps, never misses a call, and always captures your leads.
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
-                <span>📞 1-800-AVAILABEE</span>
+                <span>📞 1-800-JUNIE</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
-                <span>hello@availabee.com</span>
+                <span>hello@junie.com</span>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4" />
@@ -65,7 +65,7 @@ const Footer = () => {
         
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center">
           <p className="text-primary-foreground/60">
-            © 2024 Availabee. All rights reserved. Built with 🐝 for small businesses.
+            © 2024 Junie. All rights reserved. Built with ❤️ for small businesses.
           </p>
         </div>
       </div>

@@ -100,7 +100,7 @@ const Signup = () => {
         // Auto-confirm the user and sign them in immediately
         toast({
           title: "Account created! 🎉",
-          description: "Welcome to Availabee! Redirecting to your dashboard...",
+          description: "Welcome to Junie! Redirecting to your dashboard...",
         });
         
         // Redirect to dashboard immediately
@@ -131,10 +131,10 @@ const Signup = () => {
         <a href="/" className="flex items-center space-x-3">
           <img 
             src="/lovable-uploads/f549978f-b787-41df-b6f2-3f0235d3d6ed.png" 
-            alt="Availabee Logo" 
+            alt="Junie Logo" 
             className="h-8 w-8"
           />
-          <span className="text-xl font-bold text-muted-foreground">Availabee</span>
+          <span className="text-xl font-bold text-muted-foreground">Junie</span>
         </a>
       </div>
 

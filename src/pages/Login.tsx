@@ -101,10 +101,10 @@ const Login = () => {
         <a href="/" className="flex items-center space-x-3">
           <img 
             src="/lovable-uploads/f549978f-b787-41df-b6f2-3f0235d3d6ed.png" 
-            alt="Availabee Logo" 
+            alt="Junie Logo" 
             className="h-8 w-8"
           />
-          <span className="text-xl font-bold text-muted-foreground">Availabee</span>
+          <span className="text-xl font-bold text-muted-foreground">Junie</span>
         </a>
       </div>
 
@@ -112,10 +112,10 @@ const Login = () => {
       <Card className="w-full max-w-md relative z-10 bg-card border shadow-2xl">
         <CardHeader className="text-center space-y-2">
           <CardTitle className="text-2xl font-bold text-muted-foreground">
-            Login to Availabee
+            Login to Junie
           </CardTitle>
           <CardDescription className="text-muted-foreground">
-            Welcome back to Availabee
+            Welcome back to Junie
           </CardDescription>
         </CardHeader>
         

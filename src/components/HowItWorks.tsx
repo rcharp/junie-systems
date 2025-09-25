@@ -8,25 +8,25 @@ const HowItWorks = () => {
       icon: <Settings className="w-8 h-8" />,
       step: "STEP 1",
       title: "Connect your business line",
-      description: "Set up call forwarding from your existing business number to Availabee in under 5 minutes. No new phone system required."
+      description: "Set up call forwarding from your existing business number to Junie in under 5 minutes. No new phone system required."
     },
     {
       icon: <CheckCircle className="w-8 h-8" />,
       step: "STEP 2", 
       title: "Train your AI assistant",
-      description: "Configure Availabee with your business information, FAQs, appointment booking rules, and preferred communication style."
+      description: "Configure Junie with your business information, FAQs, appointment booking rules, and preferred communication style."
     },
     {
       icon: <Phone className="w-8 h-8" />,
       step: "STEP 3",
       title: "Customize call handling",
-      description: "Set when Availabee should answer, what information to collect, and how to route urgent calls to you."
+      description: "Set when Junie should answer, what information to collect, and how to route urgent calls to you."
     },
     {
       icon: <MessageSquare className="w-8 h-8" />,
       step: "STEP 4",
       title: "Never miss another call",
-      description: "Availabee handles incoming calls 24/7, captures leads, schedules appointments, and forwards urgent matters instantly via text or email."
+      description: "Junie handles incoming calls 24/7, captures leads, schedules appointments, and forwards urgent matters instantly via text or email."
     }
   ];
 

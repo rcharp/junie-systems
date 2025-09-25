@@ -93,7 +93,7 @@ export const BlandCallInterface = () => {
             <Label htmlFor="business_name">Business Name</Label>
             <Input
               id="business_name"
-              placeholder="Availabee"
+              placeholder="Junie"
               value={formData.business_name}
               onChange={(e) => handleInputChange('business_name', e.target.value)}
             />
@@ -125,7 +125,7 @@ export const BlandCallInterface = () => {
           <Label htmlFor="custom_greeting">Custom Greeting</Label>
           <Textarea
             id="custom_greeting"
-            placeholder="Thank you for calling [Business Name]. This is Availabee, your AI assistant..."
+            placeholder="Thank you for calling [Business Name]. This is Junie, your AI assistant..."
             value={formData.custom_greeting}
             onChange={(e) => handleInputChange('custom_greeting', e.target.value)}
             rows={3}

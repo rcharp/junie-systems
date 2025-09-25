@@ -141,7 +141,7 @@ const AdminDashboard = () => {
             <a href="/" className="flex items-center">
               <img 
                 src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-                alt="Availabee Logo" 
+                alt="Junie Logo" 
                 className="h-8 w-8"
               />
             </a>
@@ -258,11 +258,11 @@ const AdminDashboard = () => {
             {/* Business Data Requests */}
             <BusinessDataMonitor />
 
-            {/* Availabee Info */}
+            {/* Junie Info */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>About Availabee</CardTitle>
+                  <CardTitle>About Junie</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">

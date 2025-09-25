@@ -32,7 +32,7 @@ serve(async (req) => {
       let sessionCreated = false;
 
       socket.onopen = () => {
-        console.log("Client connected to Availabee voice service");
+        console.log("Client connected to Junie voice service");
         
         // Connect to OpenAI Realtime API
         openaiWs = new WebSocket("wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17", {
@@ -58,7 +58,7 @@ serve(async (req) => {
               type: "session.update",
               session: {
                 modalities: ["text", "audio"],
-                instructions: "You are Availabee, an AI assistant that answers phone calls for small businesses. Be professional, friendly, and helpful. Always get the caller's name and phone number. Take detailed messages and identify urgent calls.",
+                instructions: "You are Junie, an AI assistant that answers phone calls for small businesses. Be professional, friendly, and helpful. Always get the caller's name and phone number. Take detailed messages and identify urgent calls.",
                 voice: "alloy",
                 input_audio_format: "pcm16",
                 output_audio_format: "pcm16",

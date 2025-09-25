@@ -7,32 +7,32 @@ const Comparison = () => {
     {
       feature: "Missed calls go to voicemail.",
       voicemail: false,
-      availabee: true,
-      availabeeText: "Every call answered."
+      junie: true,
+      junieText: "Every call answered."
     },
     {
       feature: "Up to 80% of calls going to voicemail are hung up on.",
       voicemail: false,
-      availabee: true,
-      availabeeText: "Eliminates voicemail hang ups."
+      junie: true,
+      junieText: "Eliminates voicemail hang ups."
     },
     {
       feature: "Voicemails rarely have the information you need.",
       voicemail: false,
-      availabee: true,
-      availabeeText: "You determine the key info for a successful message."
+      junie: true,
+      junieText: "You determine the key info for a successful message."
     },
     {
       feature: "Calls from advertising going unanswered means wasted money.",
       voicemail: false,
-      availabee: true,
-      availabeeText: "Maximizes ROI on ads and allows for advertising during closed hours."
+      junie: true,
+      junieText: "Maximizes ROI on ads and allows for advertising during closed hours."
     },
     {
       feature: "Calls often missed during the day if you're on the other line or busy at a job.",
       voicemail: false,
-      availabee: true,
-      availabeeText: "Answer every call, even several at once."
+      junie: true,
+      junieText: "Answer every call, even several at once."
     }
   ];
 
@@ -42,7 +42,7 @@ const Comparison = () => {
         <div className="text-center space-y-4 mb-16">
           <Badge variant="outline" className="text-primary">Let's Compare</Badge>
           <h2 className="text-4xl lg:text-5xl font-bold">
-            See how Availabee compares to 
+            See how Junie compares to 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> traditional solutions</span>
           </h2>
         </div>
@@ -64,16 +64,16 @@ const Comparison = () => {
               </CardContent>
             </Card>
 
-            {/* Availabee Column */}
+            {/* Junie Column */}
             <Card className="border-success/20 bg-success/5">
               <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl font-bold text-success">Availabee</CardTitle>
+                <CardTitle className="text-2xl font-bold text-success">Junie</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {comparisons.map((item, index) => (
                   <div key={index} className="flex items-start space-x-3 p-3 rounded-lg bg-success/10">
                     <Check className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-                    <span className="text-sm font-medium">{item.availabeeText}</span>
+                    <span className="text-sm font-medium">{item.junieText}</span>
                   </div>
                 ))}
               </CardContent>

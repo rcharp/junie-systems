@@ -16,7 +16,7 @@ export const PathwaySetup = () => {
   const [pathwayCreated, setPathwayCreated] = useState(false);
   const [pathwayId, setPathwayId] = useState('');
   const [formData, setFormData] = useState({
-    business_name: 'Availabee',
+    business_name: 'Junie',
     business_type: 'AI Answering Service',
     business_hours: '24/7 - Always Available',
     business_address: 'Available Nationwide',
@@ -172,7 +172,7 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
             <Label htmlFor="business_name">Business Name *</Label>
             <Input
               id="business_name"
-              placeholder="Availabee"
+              placeholder="Junie"
               value={formData.business_name}
               onChange={(e) => handleInputChange('business_name', e.target.value)}
             />
@@ -240,7 +240,7 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
             rows={8}
           />
           <p className="text-sm text-muted-foreground">
-            Pre-loaded with Availabee service information. Customize for your business.
+            Pre-loaded with Junie service information. Customize for your business.
           </p>
         </div>
 

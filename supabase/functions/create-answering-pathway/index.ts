@@ -57,7 +57,7 @@ serve(async (req) => {
       .single();
 
     const business = {
-      name: pathwayData.business_name || businessSettings?.business_name || 'Availabee',
+      name: pathwayData.business_name || businessSettings?.business_name || 'Junie',
       type: pathwayData.business_type || businessSettings?.business_type || 'AI Answering Service',
       hours: pathwayData.business_hours || businessSettings?.business_hours || '24/7',
       address: pathwayData.business_address || businessSettings?.business_address || 'Available nationwide',

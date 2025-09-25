@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Brain, Bell, MessageSquare, FileText } from "lucide-react";
 
-const WhyAvailabee = () => {
+const WhyJunie = () => {
   const features = [
     {
       icon: <Brain className="w-8 h-8" />,
@@ -17,7 +17,7 @@ const WhyAvailabee = () => {
     {
       icon: <MessageSquare className="w-8 h-8" />,
       title: "Intelligent information gathering",
-      description: "Configure exactly what information matters most for your business. Availabee asks the right questions and captures complete, actionable details from every caller."
+      description: "Configure exactly what information matters most for your business. Junie asks the right questions and captures complete, actionable details from every caller."
     },
     {
       icon: <FileText className="w-8 h-8" />,
@@ -30,7 +30,7 @@ const WhyAvailabee = () => {
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
         <div className="text-center space-y-4 mb-16">
-          <Badge variant="outline" className="text-primary">Why Availabee</Badge>
+          <Badge variant="outline" className="text-primary">Why Junie</Badge>
           <h2 className="text-4xl lg:text-5xl font-bold">
             Built specifically for 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> growing businesses</span>
@@ -62,4 +62,4 @@ const WhyAvailabee = () => {
   );
 };
 
-export default WhyAvailabee;
+export default WhyJunie;

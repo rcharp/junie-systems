@@ -30,7 +30,7 @@ const EmailCapture = () => {
       if (data.success) {
         toast({
           title: "Success! 🎉",
-          description: "You're on the waitlist! We'll notify you when Availabee is ready.",
+          description: "You're on the waitlist! We'll notify you when Junie is ready.",
         });
         setEmail("");
       } else {
@@ -64,7 +64,7 @@ const EmailCapture = () => {
               </Badge>
               <CardTitle className="text-3xl lg:text-4xl font-bold">
                 Be the first to experience
-                <span className="bg-gradient-hero bg-clip-text text-transparent"> Availabee</span>
+                <span className="bg-gradient-hero bg-clip-text text-transparent"> Junie</span>
               </CardTitle>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Join our exclusive early access program and get 3 months free when we launch. 

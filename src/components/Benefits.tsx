@@ -12,7 +12,7 @@ const Benefits = () => {
     {
       icon: <PhoneOff className="w-12 h-12" />,
       title: "Real conversations, not voicemail",
-      description: "Customers prefer talking to someone who can help immediately. Availabee engages callers in natural conversation and captures detailed messages you actually need."
+      description: "Customers prefer talking to someone who can help immediately. Junie engages callers in natural conversation and captures detailed messages you actually need."
     },
     {
       icon: <DollarSign className="w-12 h-12" />,

@@ -31,7 +31,7 @@ const Hero = () => {
       if (response.ok) {
         toast({
           title: "Success! 🎉",
-          description: "You're on the waitlist! We'll notify you when Availabee is ready.",
+          description: "You're on the waitlist! We'll notify you when Junie is ready.",
         });
         setEmail("");
       } else {
@@ -108,7 +108,7 @@ const Hero = () => {
             <div className="relative flex justify-center lg:block">
               <img 
                 src="/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png" 
-                alt="Availabee call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
+                alt="Junie call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
                 className="w-80 sm:w-96 lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto lg:mx-0"
               />
               <div className="absolute inset-0 from-primary/20 to-transparent rounded-2xl" />

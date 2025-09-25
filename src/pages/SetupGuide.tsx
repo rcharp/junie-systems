@@ -163,7 +163,7 @@ const SetupGuide = () => {
             <a href="/" className="flex items-center">
               <img 
                 src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-                alt="Availabee Logo" 
+                alt="Junie Logo" 
                 className="h-8 w-8"
               />
             </a>
@@ -306,14 +306,14 @@ const SetupGuide = () => {
                       Step 2: Phone Configuration
                     </CardTitle>
                     <CardDescription>
-                      Connect your business phone number to Availabee
+                      Connect your business phone number to Junie
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <h3 className="font-semibold text-blue-900 mb-2">📞 Call Forwarding Setup</h3>
                       <p className="text-blue-800 text-sm mb-3">
-                        Forward your business calls to Availabee when you can't answer. No new phone system required!
+                        Forward your business calls to Junie when you can't answer. No new phone system required!
                       </p>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between bg-white rounded p-2">
@@ -439,7 +439,7 @@ const SetupGuide = () => {
                               How should your AI greet callers?
                             </p>
                             <div className="text-xs bg-muted p-2 rounded">
-                              "Thank you for calling [Business Name]. This is Availabee, your AI assistant. How can I help you today?"
+                              "Thank you for calling [Business Name]. This is Junie, your AI assistant. How can I help you today?"
                             </div>
                           </div>
                           
@@ -654,7 +654,7 @@ const SetupGuide = () => {
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                       <h3 className="font-semibold text-yellow-900 mb-2">⚠️ Important</h3>
                       <p className="text-yellow-800 text-sm">
-                        Make sure to whitelist our email address (notifications@availabee.com) and SMS number 
+                        Make sure to whitelist our email address (notifications@junie.com) and SMS number 
                         to ensure you receive all important alerts.
                       </p>
                     </div>

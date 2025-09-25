@@ -811,7 +811,7 @@ const Settings = () => {
             <Link to="/" className="flex items-center">
               <img 
                 src="/lovable-uploads/ee3492f3-d22d-476c-a1e1-bbdf4bf6f644.png" 
-                alt="Availabee Logo" 
+                alt="Junie Logo" 
                 className="h-8 w-8"
               />
             </Link>
@@ -843,7 +843,7 @@ const Settings = () => {
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-foreground mb-2">Account Settings</h2>
             <p className="text-muted-foreground">
-              Configure your Availabee assistant and account preferences.
+              Configure your Junie assistant and account preferences.
             </p>
           </div>
 
