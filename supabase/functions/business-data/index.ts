@@ -77,10 +77,17 @@ serve(async (req) => {
           .select(`
             user_id,
             business_name,
+            business_type,
+            business_type_full_name,
             business_phone,
             business_address,
+            business_address_state_full,
+            business_website,
             business_hours,
+            business_description,
+            common_questions,
             services_offered,
+            pricing_structure,
             appointment_booking
           `)
           .eq('id', conversationBusinessId)
@@ -127,8 +134,18 @@ serve(async (req) => {
           "dynamic_variables": {
             "business_id": conversationBusinessId,
             "business_name": businessDataForInit?.business_name || "Charpentier Air Conditioning",
+            "business_type": businessDataForInit?.business_type || "hvac",
+            "business_type_full_name": businessDataForInit?.business_type_full_name || "HVAC & Air Conditioning",
             "business_phone": businessDataForInit?.business_phone || "7278714862",
             "business_address": businessDataForInit?.business_address || "5605 Trevesta Place, Palmetto, Florida, 34221",
+            "business_address_state_full": businessDataForInit?.business_address_state_full || "Florida",
+            "business_website": businessDataForInit?.business_website || "",
+            "business_hours": businessDataForInit?.business_hours || "Monday-Friday 9am-5pm",
+            "business_description": businessDataForInit?.business_description || "",
+            "common_questions": businessDataForInit?.common_questions || "",
+            "services_offered": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
+            "pricing_structure": businessDataForInit?.pricing_structure || "",
+            "appointment_booking": businessDataForInit?.appointment_booking || false,
             "available_hours": businessDataForInit?.business_hours || "Monday-Friday 9am-5pm",
             "available_times": dynamicAvailableTimes,
             "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill"
