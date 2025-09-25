@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 const Header = () => {
   return (
     <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
         <div className="flex items-center">
           <a href="/" className="flex items-center">
             <img 
               src="/lovable-uploads/junie-logo.png" 
               alt="Junie Logo" 
-              className="h-10 w-10"
+              className="h-8 w-8 sm:h-10 sm:w-10"
             />
           </a>
         </div>

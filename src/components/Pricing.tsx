@@ -60,23 +60,23 @@ const Pricing = () => {
   return (
     <section id="pricing" className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center space-y-4 mb-16">
+        <div className="text-center space-y-4 mb-12 sm:mb-16 px-4 sm:px-0">
           <Badge variant="outline" className="text-primary">Simple, transparent pricing</Badge>
-          <h2 className="text-4xl lg:text-5xl font-semibold text-muted-foreground">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-muted-foreground leading-tight">
             Get your AI answering service 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> today</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             Free for the first 30 minutes. No credit card required to start. Cancel anytime.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto px-4 sm:px-0">
           {plans.map((plan, index) => (
             <Card 
               key={index} 
               className={`relative group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 ${
-                plan.popular ? 'border-primary shadow-lg scale-105' : 'border-border/50'
+                plan.popular ? 'border-primary shadow-lg md:scale-105' : 'border-border/50'
               }`}
             >
               {plan.popular && (
@@ -85,33 +85,33 @@ const Pricing = () => {
                 </div>
               )}
               
-              <CardHeader className="text-center pb-6">
+              <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6 pt-4 sm:pt-6">
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold uppercase tracking-wide text-muted-foreground">
+                  <h3 className="text-base sm:text-lg font-semibold uppercase tracking-wide text-muted-foreground">
                     {plan.name}
                   </h3>
                   <div className="flex items-baseline justify-center">
-                    <span className="text-4xl font-medium text-muted-foreground">{plan.price}</span>
+                    <span className="text-3xl sm:text-4xl font-medium text-muted-foreground">{plan.price}</span>
                     <span className="text-muted-foreground ml-1">{plan.period}</span>
                   </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                     {plan.description}
                   </p>
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-6">
-                <ul className="space-y-3">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
+                <ul className="space-y-2 sm:space-y-3">
                   {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
+                    <li key={featureIndex} className="flex items-start gap-2 sm:gap-3">
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-xs sm:text-sm">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 
                 <Button 
-                  className="w-full bg-primary hover:bg-primary/90"
+                  className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base"
                   size="lg"
                 >
                   {plan.ctaText}

@@ -24,25 +24,25 @@ const Benefits = () => {
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center space-y-4 mb-16">
-          <h2 className="text-4xl lg:text-5xl font-semibold text-muted-foreground">
+        <div className="text-center space-y-4 mb-12 sm:mb-16 px-4 sm:px-0">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-muted-foreground leading-tight">
             Transform every missed call into a 
             <span className="bg-gradient-hero bg-clip-text text-transparent"> business opportunity</span>
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto px-4 sm:px-0">
           {benefits.map((benefit, index) => (
             <Card key={index} className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 border-border/50 text-center">
-              <CardContent className="pt-8 pb-6">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="p-4 rounded-full bg-gradient-hero text-white group-hover:shadow-glow transition-all duration-300">
+              <CardContent className="pt-6 sm:pt-8 pb-4 sm:pb-6 px-4 sm:px-6">
+                <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+                  <div className="p-3 sm:p-4 rounded-full bg-gradient-hero text-white group-hover:shadow-glow transition-all duration-300">
                     {benefit.icon}
                   </div>
-                  <h3 className="text-xl font-medium text-muted-foreground">
+                  <h3 className="text-lg sm:text-xl font-medium text-muted-foreground leading-tight">
                     {benefit.title}
                   </h3>
-                  <p className="text-muted-foreground leading-relaxed">
+                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                     {benefit.description}
                   </p>
                 </div>
