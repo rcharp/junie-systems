@@ -88,7 +88,8 @@ serve(async (req) => {
             common_questions,
             pricing_structure,
             appointment_booking,
-            services_offered
+            services_offered,
+            forwarding_number
           `)
           .eq('id', conversationBusinessId)
           .maybeSingle();
@@ -183,7 +184,8 @@ serve(async (req) => {
             "pricing_structure": businessDataForInit?.pricing_structure || "",
             "appointment_booking": businessDataForInit?.appointment_booking || false,
             "available_times": dynamicAvailableTimes,
-            "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill"
+            "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
+            "forwarding_number": businessDataForInit?.forwarding_number || ""
           }
         };
         
@@ -296,7 +298,8 @@ serve(async (req) => {
         common_questions,
         ai_personality,
         appointment_booking,
-        lead_capture
+        lead_capture,
+        forwarding_number
       `)
       .eq('id', businessId)
       .maybeSingle();
@@ -366,7 +369,8 @@ serve(async (req) => {
         services_offered: businessData.services_offered || 'N/A',
         pricing_structure: businessData.pricing_structure || 'N/A',
         appointment_booking: businessData.appointment_booking || false,
-        business_description: businessData.business_description || 'N/A'
+        business_description: businessData.business_description || 'N/A',
+        forwarding_number: businessData.forwarding_number || 'N/A'
       },
       available_times: availableTimes,
       error: null
