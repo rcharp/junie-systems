@@ -113,17 +113,13 @@ serve(async (req) => {
               console.log('Availability response for conversation initiation:', JSON.stringify(availabilityResponse, null, 2));
               
               if (availabilityResponse.data && !availabilityResponse.error && availabilityResponse.data.slots?.length > 0) {
-                const slots = availabilityResponse.data.slots.slice(0, 3); // Show first 3 available slots
-                dynamicAvailableTimes = slots.map((slot: any) => {
-                  const date = new Date(slot.start);
-                  return date.toLocaleDateString('en-US', { 
-                    weekday: 'long', 
-                    month: 'short', 
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit'
-                  });
-                }).join(', ');
+                const slots = availabilityResponse.data.slots.slice(0, 5); // Show first 5 available slots
+                // Format as JSON string similar to business_hours format
+                const timeSlots = slots.map((slot: any) => {
+                  // Use the humanReadable field which should already be properly formatted
+                  return slot.humanReadable || `${slot.startTime} - ${slot.endTime}`;
+                });
+                dynamicAvailableTimes = JSON.stringify(timeSlots);
               }
             } catch (error) {
               console.error('Error fetching calendar availability for conversation initiation:', error);
