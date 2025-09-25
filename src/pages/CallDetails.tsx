@@ -264,12 +264,16 @@ const CallDetails = () => {
                 Admin
               </Button>
             )}
-            <Button variant="ghost" size="icon">
-              <Bell className="w-5 h-5" />
+            <Button variant="ghost" onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Dashboard</span>
             </Button>
             <Button variant="ghost" onClick={() => navigate("/settings")} className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
               <span>Settings</span>
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Bell className="w-5 h-5" />
             </Button>
             <Button variant="ghost" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />

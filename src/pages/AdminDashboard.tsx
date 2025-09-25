@@ -11,7 +11,7 @@ import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { UserWebhookList } from '@/components/UserWebhookList';
 import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { TodoChecklist } from '@/components/TodoChecklist';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
 interface Stats {

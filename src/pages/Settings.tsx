@@ -14,13 +14,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Calendar, Zap, CheckCircle, XCircle, X } from "lucide-react";
+import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Calendar, Zap, CheckCircle, XCircle, X, Settings as SettingsIcon, LogOut } from "lucide-react";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
 import { AddressInput } from "@/components/AddressAutocomplete";
 import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
 import { getUserTimezone, getTimezoneFromAddress, getCommonTimezones } from "@/lib/timezone-utils";
+import { handleRobustSignOut } from "@/lib/auth-utils";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -861,10 +862,6 @@ const Settings = () => {
       <header className="bg-white/80 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Button variant="ghost" onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              <span>Dashboard</span>
-            </Button>
             <Link to="/" className="flex items-center">
               <img 
                 src="/lovable-uploads/junie-logo.png" 
@@ -887,9 +884,23 @@ const Settings = () => {
                 Admin
               </Button>
             )}
-            <Badge variant="outline">
-              {user?.email}
-            </Badge>
+            <Button variant="ghost" onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Dashboard</span>
+            </Button>
+            <Button variant="ghost" size="icon">
+              <Bell className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" onClick={async () => {
+              try {
+                await handleRobustSignOut(supabase);
+              } catch (error: any) {
+                window.location.href = '/';
+              }
+            }}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
           </div>
         </div>
       </header>
