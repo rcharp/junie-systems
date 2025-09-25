@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Bell, Mail, MessageSquare, Phone, AlertTriangle, Save } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,8 @@ const NotificationSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -59,6 +61,37 @@ const NotificationSettings = () => {
     }
   };
 
+  // Auto-save function with debouncing
+  const debouncedAutoSave = useCallback(() => {
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+    
+    const timeout = setTimeout(async () => {
+      if (!businessSettingsId) return;
+      
+      setIsAutoSaving(true);
+      try {
+        await saveNotificationSettingsInternal();
+        toast({
+          title: "Settings saved",
+          description: "Your notification preferences have been automatically saved.",
+        });
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+        toast({
+          title: "Auto-save failed",
+          description: "There was an error saving your notification settings. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsAutoSaving(false);
+      }
+    }, 3000);
+    
+    setAutoSaveTimeout(timeout);
+  }, [autoSaveTimeout, businessSettingsId, toast]);
+
   const saveNotificationSettings = async () => {
     if (!businessSettingsId) {
       toast({
@@ -71,20 +104,7 @@ const NotificationSettings = () => {
 
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('business_settings')
-        .update({
-          email_notifications: emailNotifications,
-          sms_notifications: smsNotifications,
-          push_notifications: pushNotifications,
-          instant_alerts: instantAlerts
-        })
-        .eq('id', businessSettingsId);
-
-      if (error) {
-        throw error;
-      }
-
+      await saveNotificationSettingsInternal();
       toast({
         title: "Settings Saved",
         description: "Your notification preferences have been updated successfully.",
@@ -98,6 +118,23 @@ const NotificationSettings = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveNotificationSettingsInternal = async () => {
+    if (!businessSettingsId) return;
+    const { error } = await supabase
+      .from('business_settings')
+      .update({
+        email_notifications: emailNotifications,
+        sms_notifications: smsNotifications,
+        push_notifications: pushNotifications,
+        instant_alerts: instantAlerts
+      })
+      .eq('id', businessSettingsId);
+
+    if (error) {
+      throw error;
     }
   };
 
@@ -174,7 +211,10 @@ const NotificationSettings = () => {
               <Switch
                 id="email-notifications"
                 checked={emailNotifications}
-                onCheckedChange={setEmailNotifications}
+                onCheckedChange={(checked) => {
+                  setEmailNotifications(checked);
+                  debouncedAutoSave();
+                }}
               />
             </div>
 
@@ -189,7 +229,10 @@ const NotificationSettings = () => {
               <Switch
                 id="sms-notifications"
                 checked={smsNotifications}
-                onCheckedChange={setSmsNotifications}
+                onCheckedChange={(checked) => {
+                  setSmsNotifications(checked);
+                  debouncedAutoSave();
+                }}
               />
             </div>
 
@@ -204,7 +247,10 @@ const NotificationSettings = () => {
               <Switch
                 id="push-notifications"
                 checked={pushNotifications}
-                onCheckedChange={setPushNotifications}
+                onCheckedChange={(checked) => {
+                  setPushNotifications(checked);
+                  debouncedAutoSave();
+                }}
               />
             </div>
 
@@ -219,19 +265,28 @@ const NotificationSettings = () => {
               <Switch
                 id="instant-alerts"
                 checked={instantAlerts}
-                onCheckedChange={setInstantAlerts}
+                onCheckedChange={(checked) => {
+                  setInstantAlerts(checked);
+                  debouncedAutoSave();
+                }}
               />
             </div>
           </div>
 
-          <Button 
-            onClick={saveNotificationSettings}
-            disabled={saving}
-            className="w-full"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {saving ? "Saving..." : "Save Notification Settings"}
-          </Button>
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-muted-foreground">
+              {isAutoSaving ? "Auto-saving changes..." : "Changes are automatically saved"}
+            </div>
+            <Button 
+              onClick={saveNotificationSettings}
+              disabled={saving || isAutoSaving}
+              variant="outline"
+              size="sm"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {saving ? "Saving..." : "Save Now"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

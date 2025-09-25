@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -86,6 +86,10 @@ const Settings = () => {
   const [smsNotifications, setSmsNotifications] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [instantAlerts, setInstantAlerts] = useState(true);
+
+  // Auto-save functionality
+  const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
 
   // Validation error states for visual feedback
   const [validationErrors, setValidationErrors] = useState<{[key: string]: boolean}>({
@@ -441,10 +445,62 @@ const Settings = () => {
     saturday: "Saturday"
   };
 
+  // Auto-save function with debouncing
+  const debouncedAutoSave = useCallback((section: string) => {
+    if (autoSaveTimeout) {
+      clearTimeout(autoSaveTimeout);
+    }
+    
+    const timeout = setTimeout(async () => {
+      if (!user) return;
+      
+      setIsAutoSaving(true);
+      try {
+        await saveSettingsInternal(section);
+        toast({
+          title: "Settings saved",
+          description: "Your changes have been automatically saved.",
+        });
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+        toast({
+          title: "Auto-save failed",
+          description: "There was an error saving your settings. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsAutoSaving(false);
+      }
+    }, 3000);
+    
+    setAutoSaveTimeout(timeout);
+  }, [autoSaveTimeout, user, toast]);
+
   const saveSettings = async (section: string) => {
     if (!user) return;
     
     setSaving(true);
+    try {
+      await saveSettingsInternal(section);
+      toast({
+        title: "Settings saved successfully!",
+        description: `Your ${section.toLowerCase()} settings have been updated.`,
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Error saving settings",
+        description: "There was an error saving your settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveSettingsInternal = async (section: string) => {
+    if (!user) return;
+    
     try {
       let updateData: any = {};
 
@@ -933,6 +989,7 @@ const Settings = () => {
                         onChange={(e) => {
                           const newName = e.target.value;
                           setBusinessName(newName);
+                          debouncedAutoSave("Business");
                           // Auto-update description when business name changes (with debounce)
                           if (newName && businessType && businessSettingsId) {
                             if (descriptionUpdateTimeout) {
@@ -967,6 +1024,7 @@ const Settings = () => {
                         <Select value={businessType} onValueChange={(value) => {
                           console.log("Business type changed to:", value);
                           setBusinessType(value);
+                          debouncedAutoSave("Business");
                         }}>
                           <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
                             <SelectValue placeholder="Select business type" />
@@ -1011,6 +1069,7 @@ const Settings = () => {
                         // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                         const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, '');
                         setBusinessPhone(phoneValue);
+                        debouncedAutoSave("Business");
                       }}
                       placeholder="+1 (555) 123-4567"
                       className={validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
@@ -1135,7 +1194,10 @@ const Settings = () => {
                     <Textarea
                       id="businessDescription"
                       value={businessDescription}
-                      onChange={(e) => setBusinessDescription(e.target.value)}
+                      onChange={(e) => {
+                        setBusinessDescription(e.target.value);
+                        debouncedAutoSave("Business");
+                      }}
                       placeholder="Brief description of your business and services..."
                       rows={4}
                       className={validationErrors.businessDescription ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
@@ -1158,7 +1220,10 @@ const Settings = () => {
                     <Input
                       id="businessWebsite"
                       value={businessWebsite}
-                      onChange={(e) => setBusinessWebsite(e.target.value)}
+                      onChange={(e) => {
+                        setBusinessWebsite(e.target.value);
+                        debouncedAutoSave("Business");
+                      }}
                       placeholder="https://www.yourbusiness.com"
                     />
                   </div>
@@ -1172,6 +1237,7 @@ const Settings = () => {
                         if (tz) {
                           setBusinessTimezone(tz.value);
                           setBusinessTimezoneOffset(tz.offset);
+                          debouncedAutoSave("Business");
                         }
                       }}
                     >
@@ -1226,7 +1292,10 @@ const Settings = () => {
                                   ref={(el) => serviceInputRefs.current[index] = el}
                                   placeholder="Service name (e.g., Consultation)"
                                   value={service.name}
-                                  onChange={(e) => updateService(index, 'name', e.target.value)}
+                                  onChange={(e) => {
+                                    updateService(index, 'name', e.target.value);
+                                    debouncedAutoSave("Business");
+                                  }}
                                   className={service.name.trim() === '' && validationErrors.services ? "border-red-500" : ""}
                                 />
                               </div>
@@ -1240,7 +1309,10 @@ const Settings = () => {
                                     id={`service-price-${index}`}
                                     placeholder="0.00"
                                     value={service.price}
-                                    onChange={(e) => updateService(index, 'price', e.target.value)}
+                                  onChange={(e) => {
+                                    updateService(index, 'price', e.target.value);
+                                    debouncedAutoSave("Business");
+                                  }}
                                     className={`pl-6 ${priceErrorClass}`}
                                   />
                                 </div>
@@ -1265,7 +1337,10 @@ const Settings = () => {
                                 id={`service-description-${index}`}
                                 placeholder="Brief description of the service"
                                 value={service.description || ""}
-                                onChange={(e) => updateService(index, 'description', e.target.value)}
+                                onChange={(e) => {
+                                  updateService(index, 'description', e.target.value);
+                                  debouncedAutoSave("Business");
+                                }}
                               />
                             </div>
                           </div>
@@ -1277,10 +1352,15 @@ const Settings = () => {
                     </p>
                   </div>
 
-                  <Button onClick={() => saveSettings("Business")} disabled={saving}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {saving ? "Saving..." : "Save Business Info"}
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      {isAutoSaving ? "Auto-saving changes..." : "Changes are automatically saved"}
+                    </div>
+                    <Button onClick={() => saveSettings("Business")} disabled={saving || isAutoSaving} variant="outline" size="sm">
+                      <Save className="w-4 h-4 mr-2" />
+                      {saving ? "Saving..." : "Save Now"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1300,7 +1380,10 @@ const Settings = () => {
                     <Input
                       id="forwardingNumber"
                       value={forwardingNumber}
-                      onChange={(e) => setForwardingNumber(e.target.value)}
+                      onChange={(e) => {
+                        setForwardingNumber(e.target.value);
+                        debouncedAutoSave("Calls");
+                      }}
                       placeholder="+1 (555) 987-6543"
                     />
                     <p className="text-sm text-muted-foreground">
@@ -1313,7 +1396,10 @@ const Settings = () => {
                     <Textarea
                       id="urgentKeywords"
                       value={urgentKeywords}
-                      onChange={(e) => setUrgentKeywords(e.target.value)}
+                      onChange={(e) => {
+                        setUrgentKeywords(e.target.value);
+                        debouncedAutoSave("Calls");
+                      }}
                       placeholder="emergency, urgent, asap, immediately"
                       rows={2}
                     />
@@ -1324,7 +1410,10 @@ const Settings = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="maxCallDuration">Maximum Call Duration (minutes)</Label>
-                    <Select value={maxCallDuration} onValueChange={setMaxCallDuration}>
+                    <Select value={maxCallDuration} onValueChange={(value) => {
+                      setMaxCallDuration(value);
+                      debouncedAutoSave("Calls");
+                    }}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -1349,7 +1438,10 @@ const Settings = () => {
                       </div>
                       <Switch
                         checked={autoForward}
-                        onCheckedChange={setAutoForward}
+                        onCheckedChange={(checked) => {
+                          setAutoForward(checked);
+                          debouncedAutoSave("Calls");
+                        }}
                       />
                     </div>
 
@@ -1362,15 +1454,23 @@ const Settings = () => {
                       </div>
                       <Switch
                         checked={recordCalls}
-                        onCheckedChange={setRecordCalls}
+                        onCheckedChange={(checked) => {
+                          setRecordCalls(checked);
+                          debouncedAutoSave("Calls");
+                        }}
                       />
                     </div>
                   </div>
 
-                  <Button onClick={() => saveSettings("Call")} disabled={saving}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {saving ? "Saving..." : "Save Call Settings"}
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground">
+                      {isAutoSaving ? "Auto-saving changes..." : "Changes are automatically saved"}
+                    </div>
+                    <Button onClick={() => saveSettings("Calls")} disabled={saving || isAutoSaving} variant="outline" size="sm">
+                      <Save className="w-4 h-4 mr-2" />
+                      {saving ? "Saving..." : "Save Now"}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -1395,38 +1495,9 @@ const Settings = () => {
                       </div>
                       <Switch
                         checked={appointmentBooking}
-                        onCheckedChange={async (checked) => {
+                         onCheckedChange={(checked) => {
                           setAppointmentBooking(checked);
-                          // Auto-save appointment booking setting
-                          if (businessSettingsId) {
-                            try {
-                              const { error } = await supabase
-                                .from('business_settings')
-                                .update({ appointment_booking: checked })
-                                .eq('id', businessSettingsId);
-                              
-                              if (error) {
-                                console.error('Error saving appointment booking setting:', error);
-                                toast({
-                                  title: "Error",
-                                  description: "Failed to save appointment booking setting",
-                                  variant: "destructive",
-                                });
-                                // Revert the state if save failed
-                                setAppointmentBooking(!checked);
-                              } else {
-                                toast({
-                                  title: checked ? "Appointment Booking Enabled" : "Appointment Booking Disabled",
-                                  description: checked 
-                                    ? "AI can now schedule appointments when Google Calendar is connected"
-                                    : "AI will no longer schedule appointments automatically",
-                                });
-                              }
-                            } catch (error) {
-                              console.error('Error updating appointment booking:', error);
-                              setAppointmentBooking(!checked);
-                            }
-                          }
+                          debouncedAutoSave("Calendar");
                         }}
                       />
                     </div>
