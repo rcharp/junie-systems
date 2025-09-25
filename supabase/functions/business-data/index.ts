@@ -186,7 +186,8 @@ serve(async (req) => {
             "available_times": dynamicAvailableTimes,
             "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
             "forwarding_number": businessDataForInit?.forwarding_number || "",
-            "callback_timeframe": "within 24 hours"
+            "callback_timeframe": "within 24 hours",
+            "pronunciations": {"hvac": "H vac"}
           }
         };
         
