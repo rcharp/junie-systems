@@ -117,13 +117,17 @@ const Login = () => {
 
       {/* Main Card */}
       <Card className="w-full max-w-md relative z-10 bg-card border shadow-2xl">
-        <CardHeader className="text-center space-y-2">
+        <CardHeader className="text-center space-y-4">
+          <div className="flex justify-center">
+            <img 
+              src="/lovable-uploads/junie-logo.png" 
+              alt="Junie Logo" 
+              className="h-12 w-12"
+            />
+          </div>
           <CardTitle className="text-2xl font-bold text-muted-foreground">
-            Login to Junie
+            Login
           </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Welcome back to Junie
-          </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
