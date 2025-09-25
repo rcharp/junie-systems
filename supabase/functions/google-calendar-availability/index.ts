@@ -240,7 +240,7 @@ Deno.serve(async (req) => {
     const appointmentDuration = calendarSettings.appointment_duration || 60 // minutes
 
     // Generate available time slots
-    const availableSlots = []
+    let availableSlots = []
     const userTimezone = calendarSettings.timezone || 'America/New_York'
 
     console.log('=== STARTING SLOT GENERATION ===')
@@ -269,20 +269,16 @@ Deno.serve(async (req) => {
       
       console.log(`Processing ${dayName}: ${startHour}:${startMinute} to ${endHour}:${endMinute} in ${userTimezone}`)
       
-      // Simple timezone conversion for America/New_York
+      // Create business hours in UTC for Google Calendar API
       const year = currentDate.getFullYear()
       const month = currentDate.getMonth()
       const date = currentDate.getDate()
       
-      // Create times in local server time first
-      const localStart = new Date(year, month, date, startHour, startMinute, 0, 0)
-      const localEnd = new Date(year, month, date, endHour, endMinute, 0, 0)
+      // Create times in UTC directly
+      const utcStartTime = new Date(Date.UTC(year, month, date, startHour, startMinute, 0, 0))
+      const utcEndTime = new Date(Date.UTC(year, month, date, endHour, endMinute, 0, 0))
       
-      // Convert to UTC by adding 4 hours (EDT) or 5 hours (EST)
-      // For simplicity, we'll use 4 hours (EDT)
-      const utcStartTime = new Date(localStart.getTime() + (4 * 60 * 60 * 1000))
-      const utcEndTime = new Date(localEnd.getTime() + (4 * 60 * 60 * 1000))
-      
+      // Note: These are raw UTC times that will be converted later using Claude
       console.log(`Business hours in UTC: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
       // Find continuous available time blocks
@@ -349,61 +345,90 @@ Deno.serve(async (req) => {
         }
       }
       
-      // Convert blocks to slots in business timezone
+      // Store UTC blocks for Claude conversion
       let slotNumber = 0
       for (const block of availableBlocks) {
         slotNumber++
         
-        // Convert UTC back to Eastern Time by subtracting 4 hours (EDT)
-        const localStartTime = new Date(block.start.getTime() - (4 * 60 * 60 * 1000))
-        const localEndTime = new Date(block.end.getTime() - (4 * 60 * 60 * 1000))
-        
-        // Create proper ISO strings in business timezone
-        const startTimeStr = localStartTime.toISOString()
-        const endTimeStr = localEndTime.toISOString()
-        
-        const humanReadable = `${localStartTime.toLocaleDateString('en-US', { 
-          weekday: 'long', 
-          month: 'long', 
-          day: 'numeric', 
-          year: 'numeric' 
-        })} ${localStartTime.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: localStartTime.getMinutes() === 0 ? undefined : '2-digit' 
-        }).toLowerCase()}-${localEndTime.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: localEndTime.getMinutes() === 0 ? undefined : '2-digit' 
-        }).toLowerCase()}`
-        
-        console.log(`  Block ${slotNumber}: ${humanReadable}`)
-        console.log(`    UTC: ${block.start.toISOString()} to ${block.end.toISOString()}`)
-        console.log(`    Local timezone: ${startTimeStr} to ${endTimeStr}`)
-        
-        // Determine time of day tag based on the START time of the slot
-        const startHour = localStartTime.getHours()
-        let timeOfDay: string
-        if (startHour >= 6 && startHour < 12) {
-          timeOfDay = "morning"
-        } else if (startHour >= 12 && startHour < 18) {
-          timeOfDay = "afternoon" 
-        } else {
-          timeOfDay = "evening"
-        }
-        
-        console.log(`    Time of day for ${startHour}:xx = ${timeOfDay}`)
-        
+        // Store the raw UTC times - Claude will convert them properly
         availableSlots.push({
-          startTime: startTimeStr,
-          endTime: endTimeStr,
-          timeOfDay: timeOfDay,
-          humanReadable: humanReadable
+          startTime: block.start.toISOString(),
+          endTime: block.end.toISOString(),
+          timeOfDay: "pending", // Will be determined after timezone conversion
+          humanReadable: "pending" // Will be formatted by Claude
         })
+        
+        console.log(`  Block ${slotNumber}: ${block.start.toISOString()} to ${block.end.toISOString()} (UTC)`)
       }
       
       console.log(`Generated ${availableSlots.length} total slots so far`)
     }
 
     console.log(`Generated ${availableSlots.length} available slots`)
+
+    // Use Claude to convert UTC times to business timezone with proper formatting
+    if (availableSlots.length > 0) {
+      try {
+        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+        if (anthropicApiKey) {
+          console.log('Converting UTC times to business timezone using Claude...');
+          
+          const claudePrompt = `Convert these UTC time slots to ${userTimezone} timezone and format them exactly as shown in this example:
+
+[{"endTime": "2025-09-24T11:30:00.000Z", "startTime": "2025-09-24T10:30:00.000Z", "timeOfDay": "morning", "humanReadable": "Wednesday, September 24, 2025 10:30 am-11:30 am"}]
+
+UTC slots to convert:
+${JSON.stringify(availableSlots)}
+
+Rules:
+1. Convert the UTC times to ${userTimezone} timezone
+2. Keep the ISO format but represent the LOCAL timezone time (not UTC)
+3. Set timeOfDay to "morning" (6am-12pm), "afternoon" (12pm-6pm), or "evening" (6pm+)
+4. Format humanReadable exactly like the example: "Day, Month Date, Year H:MM am/pm-H:MM am/pm"
+5. Return ONLY the JSON array, no explanation`;
+
+          const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${anthropicApiKey}`,
+              'Content-Type': 'application/json',
+              'x-api-key': anthropicApiKey,
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 2000,
+              messages: [
+                {
+                  role: 'user',
+                  content: claudePrompt
+                }
+              ]
+            })
+          });
+
+          if (claudeResponse.ok) {
+            const claudeData = await claudeResponse.json();
+            const convertedSlotsText = claudeData.content[0].text;
+            console.log('Claude response:', convertedSlotsText);
+            
+            try {
+              const convertedSlots = JSON.parse(convertedSlotsText);
+              if (Array.isArray(convertedSlots) && convertedSlots.length > 0) {
+                availableSlots = convertedSlots;
+                console.log('Successfully converted slots using Claude');
+              }
+            } catch (parseError) {
+              console.error('Failed to parse Claude response:', parseError);
+            }
+          } else {
+            console.error('Claude API error:', await claudeResponse.text());
+          }
+        }
+      } catch (claudeError) {
+        console.error('Error using Claude for timezone conversion:', claudeError);
+      }
+    }
 
     return new Response(JSON.stringify({
       available: availableSlots.length > 0,
