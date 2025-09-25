@@ -442,7 +442,7 @@ const Dashboard = () => {
                   <Phone className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{statsLoading ? '...' : dashboardStats.totalCalls}</div>
+                  <div className="text-2xl font-bold text-muted-foreground">{statsLoading ? '...' : dashboardStats.totalCalls}</div>
                   <p className="text-xs text-muted-foreground">Calls handled by AI</p>
                 </CardContent>
               </Card>
@@ -452,7 +452,7 @@ const Dashboard = () => {
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{statsLoading ? '...' : dashboardStats.hoursSaved}</div>
+                  <div className="text-2xl font-bold text-muted-foreground">{statsLoading ? '...' : dashboardStats.hoursSaved}</div>
                   <p className="text-xs text-muted-foreground">Time saved with AI assistant</p>
                 </CardContent>
               </Card>
@@ -462,7 +462,7 @@ const Dashboard = () => {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{statsLoading ? '...' : dashboardStats.leadsCount}</div>
+                  <div className="text-2xl font-bold text-muted-foreground">{statsLoading ? '...' : dashboardStats.leadsCount}</div>
                   <p className="text-xs text-muted-foreground">Appointments & sales inquiries</p>
                 </CardContent>
               </Card>
@@ -472,7 +472,7 @@ const Dashboard = () => {
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{statsLoading ? '...' : `${dashboardStats.successRate}%`}</div>
+                  <div className="text-2xl font-bold text-muted-foreground">{statsLoading ? '...' : `${dashboardStats.successRate}%`}</div>
                   <p className="text-xs text-muted-foreground">Call completion rate</p>
                 </CardContent>
               </Card>
@@ -502,7 +502,7 @@ const Dashboard = () => {
                         }`} />
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <p className="text-sm font-medium">{activity.action}</p>
+                            <p className="text-sm font-medium text-muted-foreground">{activity.action}</p>
                             <Badge variant="secondary" className="text-xs">
                               {activity.call_type}
                             </Badge>

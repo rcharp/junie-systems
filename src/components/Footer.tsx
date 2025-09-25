@@ -12,7 +12,7 @@ const Footer = () => {
                 alt="Junie Logo" 
                 className="w-10 h-10"
               />
-              <span className="text-2xl font-bold lowercase">junie</span>
+              <span className="text-2xl font-bold lowercase text-primary-foreground/90">junie</span>
             </div>
             <p className="text-primary-foreground/80 leading-relaxed">
               The AI answering service that never sleeps, never misses a call, and always captures your leads.
@@ -33,7 +33,7 @@ const Footer = () => {
           </div>
           
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Product</h4>
+            <h4 className="text-lg font-semibold text-primary-foreground/90">Product</h4>
             <ul className="space-y-2 text-primary-foreground/80">
               <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
@@ -43,7 +43,7 @@ const Footer = () => {
           </div>
           
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Company</h4>
+            <h4 className="text-lg font-semibold text-primary-foreground/90">Company</h4>
             <ul className="space-y-2 text-primary-foreground/80">
               <li><a href="#" className="hover:text-white transition-colors">About</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
@@ -53,7 +53,7 @@ const Footer = () => {
           </div>
           
           <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Support</h4>
+            <h4 className="text-lg font-semibold text-primary-foreground/90">Support</h4>
             <ul className="space-y-2 text-primary-foreground/80">
               <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>

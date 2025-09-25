@@ -165,7 +165,7 @@ const CallAnalytics = () => {
       <Card>
         <CardContent className="p-6 text-center">
           <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-          <h3 className="text-lg font-semibold mb-2">No analytics data</h3>
+          <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No analytics data</h3>
           <p className="text-muted-foreground">
             Analytics will appear here once your AI assistant starts handling calls.
           </p>
@@ -201,7 +201,7 @@ const CallAnalytics = () => {
             <Phone className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalCalls}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{metrics.totalCalls}</div>
             <p className="text-xs text-muted-foreground">
               AI assistant handled calls
             </p>
@@ -214,7 +214,7 @@ const CallAnalytics = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalMessages}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{metrics.totalMessages}</div>
             <p className="text-xs text-muted-foreground">
               Leads and inquiries
             </p>
@@ -227,7 +227,7 @@ const CallAnalytics = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Math.floor(metrics.averageDuration / 60)}m {metrics.averageDuration % 60}s</div>
+            <div className="text-2xl font-bold text-muted-foreground">{Math.floor(metrics.averageDuration / 60)}m {metrics.averageDuration % 60}s</div>
             <p className="text-xs text-muted-foreground">
               Average time per call
             </p>
@@ -240,7 +240,7 @@ const CallAnalytics = () => {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.urgentCalls}</div>
+            <div className="text-2xl font-bold text-muted-foreground">{metrics.urgentCalls}</div>
             <p className="text-xs text-muted-foreground">
               Requiring immediate attention
             </p>

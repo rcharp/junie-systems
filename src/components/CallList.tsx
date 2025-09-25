@@ -209,7 +209,7 @@ const CallList = () => {
             <Card>
               <CardContent className="p-6 text-center">
                 <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No messages yet</h3>
+                <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No messages yet</h3>
                 <p className="text-muted-foreground">
                   When someone calls your AI assistant, their messages will appear here.
                 </p>
@@ -227,7 +227,7 @@ const CallList = () => {
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">{message.caller_name}</span>
+                        <span className="font-semibold text-muted-foreground">{message.caller_name}</span>
                       </div>
                       <Badge className={getUrgencyColor(message.urgency_level)}>
                         {message.urgency_level}
@@ -297,7 +297,7 @@ const CallList = () => {
             <Card>
               <CardContent className="p-6 text-center">
                 <Phone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No call logs yet</h3>
+                <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No call logs yet</h3>
                 <p className="text-muted-foreground">
                   Your AI assistant's call history will appear here.
                 </p>
@@ -315,7 +315,7 @@ const CallList = () => {
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold">{call.caller_name}</span>
+                        <span className="font-semibold text-muted-foreground">{call.caller_name}</span>
                       </div>
                       <Badge variant={call.call_status === 'completed' ? 'default' : 'secondary'}>
                         {call.call_status}
