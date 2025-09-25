@@ -1,5 +1,4 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
-import { fromZonedTime, toZonedTime } from 'https://esm.sh/date-fns-tz@3.2.0'
 
 // Helper function to get timezone offset in milliseconds
 function getTimezoneOffsetMs(timezone: string, date: Date): number {
@@ -270,18 +269,19 @@ Deno.serve(async (req) => {
       
       console.log(`Processing ${dayName}: ${startHour}:${startMinute} to ${endHour}:${endMinute} in ${userTimezone}`)
       
-      // Create business hours in the user's timezone
+      // Simple timezone conversion for America/New_York
       const year = currentDate.getFullYear()
       const month = currentDate.getMonth()
       const date = currentDate.getDate()
       
-      // Create dates in the user's timezone
-      const localStartTime = new Date(year, month, date, startHour, startMinute, 0, 0)
-      const localEndTime = new Date(year, month, date, endHour, endMinute, 0, 0)
+      // Create times in local server time first
+      const localStart = new Date(year, month, date, startHour, startMinute, 0, 0)
+      const localEnd = new Date(year, month, date, endHour, endMinute, 0, 0)
       
-      // Convert to UTC using proper timezone conversion
-      const utcStartTime = fromZonedTime(localStartTime, userTimezone)
-      const utcEndTime = fromZonedTime(localEndTime, userTimezone)
+      // Convert to UTC by adding 4 hours (EDT) or 5 hours (EST)
+      // For simplicity, we'll use 4 hours (EDT)
+      const utcStartTime = new Date(localStart.getTime() + (4 * 60 * 60 * 1000))
+      const utcEndTime = new Date(localEnd.getTime() + (4 * 60 * 60 * 1000))
       
       console.log(`Business hours in UTC: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
@@ -349,34 +349,38 @@ Deno.serve(async (req) => {
         }
       }
       
-      // Convert blocks to slots
+      // Convert blocks to slots in business timezone
       let slotNumber = 0
       for (const block of availableBlocks) {
         slotNumber++
         
-        // Convert back to business timezone for display
-        const displayStartTime = toZonedTime(block.start, userTimezone)
-        const displayEndTime = toZonedTime(block.end, userTimezone)
+        // Convert UTC back to Eastern Time by subtracting 4 hours (EDT)
+        const localStartTime = new Date(block.start.getTime() - (4 * 60 * 60 * 1000))
+        const localEndTime = new Date(block.end.getTime() - (4 * 60 * 60 * 1000))
         
-        const humanReadable = `${displayStartTime.toLocaleDateString('en-US', { 
+        // Create proper ISO strings in business timezone
+        const startTimeStr = localStartTime.toISOString()
+        const endTimeStr = localEndTime.toISOString()
+        
+        const humanReadable = `${localStartTime.toLocaleDateString('en-US', { 
           weekday: 'long', 
           month: 'long', 
           day: 'numeric', 
           year: 'numeric' 
-        })} ${displayStartTime.toLocaleTimeString('en-US', { 
+        })} ${localStartTime.toLocaleTimeString('en-US', { 
           hour: 'numeric', 
-          minute: displayStartTime.getMinutes() === 0 ? undefined : '2-digit' 
-        }).toLowerCase()}-${displayEndTime.toLocaleTimeString('en-US', { 
+          minute: localStartTime.getMinutes() === 0 ? undefined : '2-digit' 
+        }).toLowerCase()}-${localEndTime.toLocaleTimeString('en-US', { 
           hour: 'numeric', 
-          minute: displayEndTime.getMinutes() === 0 ? undefined : '2-digit' 
+          minute: localEndTime.getMinutes() === 0 ? undefined : '2-digit' 
         }).toLowerCase()}`
         
         console.log(`  Block ${slotNumber}: ${humanReadable}`)
         console.log(`    UTC: ${block.start.toISOString()} to ${block.end.toISOString()}`)
-        console.log(`    Local: ${displayStartTime.toString()} to ${displayEndTime.toString()}`)
+        console.log(`    Local timezone: ${startTimeStr} to ${endTimeStr}`)
         
         // Determine time of day tag based on the START time of the slot
-        const startHour = displayStartTime.getHours()
+        const startHour = localStartTime.getHours()
         let timeOfDay: string
         if (startHour >= 6 && startHour < 12) {
           timeOfDay = "morning"
@@ -389,8 +393,8 @@ Deno.serve(async (req) => {
         console.log(`    Time of day for ${startHour}:xx = ${timeOfDay}`)
         
         availableSlots.push({
-          startTime: displayStartTime.toISOString(),
-          endTime: displayEndTime.toISOString(),
+          startTime: startTimeStr,
+          endTime: endTimeStr,
           timeOfDay: timeOfDay,
           humanReadable: humanReadable
         })

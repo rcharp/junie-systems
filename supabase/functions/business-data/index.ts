@@ -339,7 +339,7 @@ serve(async (req) => {
       .single();
 
     // Generate available times based on business hours or calendar availability
-    let availableTimes = [];
+    let availableTimes = "Please call to schedule"; // Default fallback
 
     if (calendarSettings && calendarSettings.is_connected) {
       try {
@@ -348,14 +348,40 @@ serve(async (req) => {
           body: { user_id: businessData.user_id }
         });
         
-        console.log('Availability response for manual request:', JSON.stringify(availabilityResponse, null, 2));
+        console.log('Full availability response:', JSON.stringify(availabilityResponse, null, 2));
         
-        if (availabilityResponse.data && !availabilityResponse.error) {
-          availableTimes = availabilityResponse.data.slots || [];
+        if (availabilityResponse.data && !availabilityResponse.error && availabilityResponse.data.available) {
+          const slots = availabilityResponse.data.slots || [];
+          console.log('Calendar slots received:', slots);
+          console.log('Number of slots:', slots.length);
+          console.log('First slot sample:', slots[0]);
+          
+          if (slots.length > 0) {
+            // Format the slots exactly as requested in your example
+            const formattedSlots = slots.map((slot: any) => ({
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              timeOfDay: slot.timeOfDay,
+              humanReadable: slot.humanReadable
+            }));
+            
+            console.log('Formatted slots:', formattedSlots);
+            availableTimes = formattedSlots;
+          } else {
+            console.log('No slots returned from calendar');
+          }
+        } else {
+          console.log('Calendar not available or error:', {
+            hasData: !!availabilityResponse.data,
+            error: availabilityResponse.error,
+            available: availabilityResponse.data?.available
+          });
         }
       } catch (error) {
         console.error('Error fetching calendar availability:', error);
       }
+    } else {
+      console.log('Calendar not connected or settings not found');
     }
 
     // Format the response
