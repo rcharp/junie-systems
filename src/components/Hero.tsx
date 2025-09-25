@@ -53,10 +53,10 @@ const Hero = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,hsl(var(--primary-glow))_0%,transparent_50%)] opacity-20 pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,hsl(var(--accent))_0%,transparent_50%)] opacity-10 pointer-events-none" />
       
-      <div className="container mx-auto px-4 py-32">
-        <div className="grid lg:grid-cols-3 gap-12 items-center animate-slide-up">
+      <div className="container mx-auto px-4 py-16">
+        <div className="grid lg:grid-cols-2 gap-8 items-center animate-slide-up">
           {/* Left Column - Text Content */}
-          <div className="space-y-8 text-center lg:text-left lg:col-span-2">
+          <div className="space-y-8 text-center lg:text-left">
             <div className="space-y-6">
               <h1>
                 <RotatingText 
@@ -104,12 +104,12 @@ const Hero = () => {
           </div>
 
           {/* Right Column - Phone Image */}
-          <div className="lg:flex lg:justify-end lg:col-span-1">
-            <div className="relative flex justify-center lg:block">
+          <div className="flex justify-center lg:justify-end">
+            <div className="relative">
               <img 
                 src="/lovable-uploads/junie-hero-phone.png" 
                 alt="Junie AI answering service interface showing customer Olivia Wilson booking an air conditioning appointment with automatic AI responses"
-                className="w-80 sm:w-96 lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto lg:mx-0"
+                className="w-full max-w-md lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl h-auto"
               />
               <div className="absolute inset-0 from-primary/20 to-transparent rounded-2xl" />
             </div>
