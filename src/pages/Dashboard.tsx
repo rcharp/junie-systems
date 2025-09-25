@@ -114,59 +114,107 @@ const Dashboard = () => {
     }
   };
 
-  const extractCallAction = (message: string, callType: string) => {
-    if (!message) return 'called';
+  const extractCallAction = (message: string, callType: string, callSummary?: string) => {
+    if (!message && !callSummary) return 'called';
     
-    // Convert to lowercase for easier matching
-    const lowerMessage = message.toLowerCase();
+    // Combine message and summary for better context
+    const fullText = `${message} ${callSummary || ''}`.toLowerCase();
     const lowerCallType = callType.toLowerCase();
     
-    // Define action patterns based on call type and message content
-    if (lowerCallType === 'appointment') {
-      if (lowerMessage.includes('scheduled') || lowerMessage.includes('appointment')) {
-        return 'scheduled an appointment';
+    // Service type patterns - more specific
+    const servicePatterns = {
+      'hvac|a/c|air conditioning|heating|cooling|furnace|ac unit': 'A/C repair',
+      'plumbing|plumber|leak|drain|pipe|toilet|sink|water heater': 'plumbing services', 
+      'electrical|electrician|wiring|power|outlet|breaker': 'electrical work',
+      'roofing|roof|shingle|gutter': 'roofing services',
+      'cleaning|clean|maid|house cleaning': 'cleaning services',
+      'lawn|landscaping|yard|garden|grass': 'landscaping',
+      'pest|exterminator|bug|termite|ant': 'pest control',
+      'locksmith|lock|key|security': 'locksmith services',
+      'moving|mover|relocation': 'moving services',
+      'painting|paint|painter': 'painting services',
+      'flooring|carpet|tile|hardwood': 'flooring installation',
+      'appliance|washer|dryer|refrigerator': 'appliance repair'
+    };
+    
+    let detectedService = '';
+    for (const [pattern, service] of Object.entries(servicePatterns)) {
+      if (new RegExp(pattern, 'i').test(fullText)) {
+        detectedService = service;
+        break;
       }
-      return 'called about scheduling';
     }
     
-    if (lowerCallType === 'sales') {
-      if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('quote')) {
-        return 'asked about pricing';
+    // Define detailed action patterns based on call type and message content
+    if (lowerCallType === 'appointment') {
+      if (fullText.includes('scheduled') || fullText.includes('appointment')) {
+        return detectedService ? `scheduled an appointment for ${detectedService}` : 'scheduled a service appointment';
       }
-      if (lowerMessage.includes('service') || lowerMessage.includes('product')) {
-        return 'inquired about services';
+      if (fullText.includes('reschedule') || fullText.includes('change')) {
+        return detectedService ? `requested to reschedule their ${detectedService} appointment` : 'requested to reschedule their appointment';
       }
-      return 'made a sales inquiry';
+      return detectedService ? `called about scheduling ${detectedService}` : 'called about scheduling an appointment';
+    }
+    
+    if (lowerCallType === 'sales' || lowerCallType === 'inquiry') {
+      if (fullText.includes('price') || fullText.includes('cost') || fullText.includes('quote') || fullText.includes('estimate')) {
+        return detectedService ? `inquired about ${detectedService} pricing` : 'inquired about pricing';
+      }
+      if (fullText.includes('service') || fullText.includes('available')) {
+        return detectedService ? `asked about ${detectedService} availability` : 'inquired about services';
+      }
+      if (fullText.includes('information') || fullText.includes('details')) {
+        return detectedService ? `requested information about ${detectedService}` : 'requested service information';
+      }
+      return detectedService ? `inquired about ${detectedService}` : 'made a service inquiry';
     }
     
     if (lowerCallType === 'support') {
-      if (lowerMessage.includes('problem') || lowerMessage.includes('issue') || lowerMessage.includes('help')) {
-        return 'requested support';
+      if (fullText.includes('problem') || fullText.includes('issue') || fullText.includes('not working')) {
+        return detectedService ? `reported an issue with their ${detectedService.replace(' services', ' system')}` : 'reported a service issue';
       }
-      return 'called for assistance';
+      if (fullText.includes('help') || fullText.includes('assistance')) {
+        return detectedService ? `requested help with ${detectedService}` : 'requested technical support';
+      }
+      return detectedService ? `called for ${detectedService} support` : 'called for technical assistance';
     }
     
     if (lowerCallType === 'complaint') {
-      return 'filed a complaint';
+      return detectedService ? `filed a complaint about ${detectedService}` : 'filed a service complaint';
+    }
+    
+    if (lowerCallType === 'emergency') {
+      return detectedService ? `called with an emergency ${detectedService.replace(' services', '')} issue` : 'called with an emergency issue';
     }
     
     // General patterns for any call type
-    if (lowerMessage.includes('price') || lowerMessage.includes('cost') || lowerMessage.includes('quote')) {
-      return 'asked about pricing';
+    if (fullText.includes('emergency') || fullText.includes('urgent')) {
+      return detectedService ? `called with an urgent ${detectedService} request` : 'called with an urgent request';
     }
-    if (lowerMessage.includes('appointment') || lowerMessage.includes('schedule')) {
-      return 'inquired about scheduling';
+    if (fullText.includes('price') || fullText.includes('cost') || fullText.includes('quote')) {
+      return detectedService ? `asked about ${detectedService} pricing` : 'asked about pricing';
     }
-    if (lowerMessage.includes('service') || lowerMessage.includes('help')) {
-      return 'asked about services';
+    if (fullText.includes('appointment') || fullText.includes('schedule')) {
+      return detectedService ? `inquired about scheduling ${detectedService}` : 'inquired about scheduling';
     }
-    if (lowerMessage.includes('information') || lowerMessage.includes('details')) {
-      return 'requested information';
+    if (fullText.includes('service') || fullText.includes('help')) {
+      return detectedService ? `asked about ${detectedService}` : 'asked about services';
+    }
+    if (fullText.includes('information') || fullText.includes('details')) {
+      return detectedService ? `requested ${detectedService} information` : 'requested information';
+    }
+    if (fullText.includes('cancel')) {
+      return detectedService ? `cancelled their ${detectedService} appointment` : 'cancelled their appointment';
     }
     
-    // Extract first few words as fallback
-    const words = message.split(' ').slice(0, 4).join(' ');
-    return words ? `called (${words.length > 30 ? words.substring(0, 30) + '...' : words})` : 'called';
+    // If we detected a service but no specific action, provide generic but detailed message
+    if (detectedService) {
+      return `called about ${detectedService}`;
+    }
+    
+    // Extract first few words as fallback but make it more descriptive
+    const words = message.split(' ').slice(0, 6).join(' ');
+    return words && words.length > 5 ? `called regarding: "${words.length > 40 ? words.substring(0, 40) + '...' : words}"` : 'called for service';
   };
 
   const fetchRecentActivity = async () => {
@@ -199,7 +247,7 @@ const Dashboard = () => {
           callLogs.forEach(log => {
             // Extract key action from message or call_summary
             const fullMessage = log.call_summary || log.message || '';
-            const actionDescription = extractCallAction(fullMessage, log.call_type);
+            const actionDescription = extractCallAction(log.message, log.call_type, log.call_summary);
             const displayName = getContextualCallerName(log.caller_name, log.call_type);
             
             activities.push({
