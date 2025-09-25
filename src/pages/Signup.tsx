@@ -152,7 +152,7 @@ const Signup = () => {
             <img 
               src="/lovable-uploads/junie-logo.png" 
               alt="Junie Logo" 
-              className="h-12 w-12"
+              className="h-16 w-16"
             />
           </div>
           <CardTitle className="text-2xl font-bold text-muted-foreground">
