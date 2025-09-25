@@ -1480,23 +1480,6 @@ const Settings = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="customGreeting">Custom Greeting</Label>
-                    <Textarea
-                      id="customGreeting"
-                      value={customGreeting}
-                      onChange={(e) => {
-                        setCustomGreeting(e.target.value);
-                        debouncedAutoSave("Calls");
-                      }}
-                      placeholder="Thank you for calling [Business Name]. This is Junie, your AI assistant..."
-                      rows={3}
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Leave blank to use the default professional greeting
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
                     <Label htmlFor="commonQuestions">Common Questions & Answers</Label>
                     <Textarea
                       id="commonQuestions"
@@ -1505,8 +1488,9 @@ const Settings = () => {
                         setCommonQuestions(e.target.value);
                         debouncedAutoSave("Calls");
                       }}
-                      placeholder="Q: What are your hours? A: We're open 9 AM to 5 PM EST..."
-                      rows={4}
+                      placeholder="Q: What services do you offer?&#10;A: We provide 24/7 AI answering services, appointment booking, lead capture, and customer service support.&#10;&#10;Q: How does your AI answering service work?&#10;A: Our AI assistant answers your calls professionally, captures customer information, books appointments, and handles inquiries naturally.&#10;&#10;Q: What are your rates?&#10;A: We offer flexible pricing plans starting from basic call handling to comprehensive business solutions. I can schedule a consultation to discuss pricing."
+                      rows={12}
+                      className="min-h-[300px]"
                     />
                     <p className="text-sm text-muted-foreground">
                       Pre-program frequently asked questions and their answers
