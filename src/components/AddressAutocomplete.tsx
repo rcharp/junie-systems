@@ -111,7 +111,13 @@ export const AddressInput = ({
     <div className={`space-y-4 ${className}`}>
       {label && (
         <Label className="text-sm font-medium">
-          {label}
+          {label.includes('*') ? (
+            <>
+              {label.replace(' *', '')} <span className="text-red-500">*</span>
+            </>
+          ) : (
+            label
+          )}
         </Label>
       )}
       
