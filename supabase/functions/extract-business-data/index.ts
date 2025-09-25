@@ -18,6 +18,114 @@ interface BusinessData {
   business_type?: string;
 }
 
+// Use Claude AI to intelligently extract business data from webpage content
+async function extractBusinessDataWithClaude(websiteContent: string, url: string): Promise<BusinessData> {
+  try {
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!anthropicApiKey) {
+      console.log('No Anthropic API key found, falling back to basic extraction');
+      return {};
+    }
+    
+    console.log('Using Claude AI to extract business data from webpage...');
+    
+    // Clean and prepare content for Claude
+    const cleanContent = websiteContent
+      .replace(/<script[^>]*>.*?<\/script>/gis, '')
+      .replace(/<style[^>]*>.*?<\/style>/gis, '')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .substring(0, 8000); // Limit content to prevent token overflow
+
+    const prompt = `You are an expert business data extraction specialist. Analyze the following webpage content and extract structured business information.
+
+Website URL: ${url}
+Webpage Content: ${cleanContent}
+
+Please extract the following information and return it as a JSON object. If any field cannot be determined from the content, use null for that field:
+
+{
+  "business_name": "exact business name",
+  "business_phone": "primary phone number in standard format",
+  "business_email": "primary email address", 
+  "business_address": "complete physical address including street, city, state, zip",
+  "business_hours": "operating hours (e.g., Mon-Fri: 9AM-5PM, Sat: 10AM-3PM)",
+  "services_offered": "list of main services/products offered",
+  "pricing_structure": "pricing information, rates, or cost details if available",
+  "business_description": "compelling 2-3 sentence description highlighting unique value proposition",
+  "business_type": "industry category (e.g., hvac, plumbing, restaurant, retail, etc.)"
+}
+
+Guidelines:
+- Extract exact information from the webpage - don't make assumptions
+- For business_name: use the official business name, not domain name
+- For business_phone: format as (XXX) XXX-XXXX if US number
+- For business_address: include full address with street, city, state, ZIP
+- For business_hours: standardize format (Mon-Fri: 9AM-5PM)
+- For services_offered: list 3-5 main services/products
+- For business_description: write a compelling, professional description based on the content
+- For business_type: categorize into specific industry type
+
+Return only the JSON object, no additional text.`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${anthropicApiKey}`,
+        'Content-Type': 'application/json',
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-3-5-haiku-20241022',
+        max_tokens: 1000,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Claude API error:', response.status, response.statusText);
+      const errorText = await response.text();
+      console.error('Claude error details:', errorText);
+      return {};
+    }
+
+    const result = await response.json();
+    
+    if (result.content && result.content[0] && result.content[0].text) {
+      const extractedText = result.content[0].text.trim();
+      console.log('Claude extracted text:', extractedText);
+      
+      try {
+        // Parse the JSON response from Claude
+        const jsonMatch = extractedText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const businessData = JSON.parse(jsonMatch[0]);
+          console.log('Successfully extracted business data with Claude:', businessData);
+          return businessData;
+        } else {
+          console.error('No valid JSON found in Claude response');
+          return {};
+        }
+      } catch (parseError) {
+        console.error('Error parsing Claude JSON response:', parseError);
+        console.error('Raw response:', extractedText);
+        return {};
+      }
+    }
+    
+    return {};
+  } catch (error) {
+    console.error('Claude business data extraction error:', error);
+    return {};
+  }
+}
+
 // Extract business name from URL patterns (for social media pages)
 function extractBusinessNameFromUrl(url: string): string | null {
   try {
@@ -70,328 +178,13 @@ function validateAddress(address: string): boolean {
   return hasNumber && (hasStreetType || hasStateZip);
 }
 
-// Search for business data using web search
-async function searchBusinessData(businessName: string, domain: string): Promise<{ address?: string; services?: string; phone?: string; pricing?: string; businessType?: string }> {
-  const results = { 
-    address: undefined as string | undefined, 
-    services: undefined as string | undefined, 
-    phone: undefined as string | undefined,
-    pricing: undefined as string | undefined,
-    businessType: undefined as string | undefined
-  };
-  
-  try {
-    console.log('Searching for business data: ' + businessName);
-    
-    // Search for business information with more specific queries
-    const queries = [
-      '"' + businessName + '" address phone contact location',
-      '"' + businessName + '" services pricing rates cost type industry',
-      '"' + businessName + '" hours reviews contact info what do they do',
-      '"' + businessName + '" hvac plumbing electrical contractor restaurant business type'
-    ];
-    
-    for (const searchQuery of queries) {
-      const searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(searchQuery + ' -site:' + domain);
-      
-      try {
-        const response = await Promise.race([
-          fetch(searchUrl, {
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-          }),
-          new Promise<Response>((_, reject) => 
-            setTimeout(() => reject(new Error('Search timeout')), 8000)
-          )
-        ]);
-        
-        if (!response.ok) continue;
-        
-        const html = await response.text();
-        
-        // Extract addresses if not found yet
-        if (!results.address) {
-          const addressPatterns = [
-            /(\d+\s+[A-Za-z0-9\s,.-]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way|Court|Ct\.?|Place|Pl\.?)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/ig,
-            /(\d+[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/ig,
-            /([A-Za-z0-9\s,.-]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2})/ig
-          ];
-          
-          for (const pattern of addressPatterns) {
-            const matches = html.match(pattern);
-            if (matches) {
-              for (const match of matches) {
-                const cleanAddress = match.replace(/<[^>]*>/g, '').trim();
-                if (validateAddress(cleanAddress) && cleanAddress.length < 200) {
-                  results.address = cleanAddress;
-                  console.log('Found valid address from search:', cleanAddress);
-                  break;
-                }
-              }
-              if (results.address) break;
-            }
-          }
-        }
-        
-        // Extract phone numbers if not found yet
-        if (!results.phone) {
-          const phonePattern = /\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
-          const phoneMatches = html.match(phonePattern);
-          if (phoneMatches && phoneMatches.length > 0) {
-            results.phone = phoneMatches[0];
-            console.log('Found phone from search:', results.phone);
-          }
-        }
-        
-        // Extract services information
-        if (!results.services) {
-          const serviceKeywords = [
-            /(?:services?|specializ[es]|offer[s]?|provide[s]?)[\s\S]{0,200}?(?:hvac|heating|cooling|air conditioning|ac repair|furnace|ductwork|plumbing|electrical|roofing|construction|repair|maintenance|installation)/gi,
-            /(?:hvac|heating|cooling|air conditioning|ac repair|furnace|ductwork|plumbing|electrical|roofing|construction|repair|maintenance|installation)[\s\S]{0,100}?(?:services?|work|solutions)/gi
-          ];
-          
-          for (const pattern of serviceKeywords) {
-            const serviceMatches = html.match(pattern);
-            if (serviceMatches && serviceMatches.length > 0) {
-              const servicesText = serviceMatches.slice(0, 3).join(', ').replace(/<[^>]*>/g, '').trim();
-              if (servicesText.length > 10 && servicesText.length < 300) {
-                results.services = servicesText;
-                console.log('Found services from search:', results.services);
-                break;
-              }
-            }
-          }
-        }
-        
-        // Extract pricing information
-        if (!results.pricing) {
-          const pricingPatterns = [
-            /(?:pricing|rates?|cost[s]?|price[s]?|fee[s]?)[\s\S]{0,200}?(?:\$\d+|\d+\s*dollars?|free|starting|consultation|estimate)/gi,
-            /(?:\$\d+|\d+\s*dollars?|free consultation|free estimate|starting at|from \$)/gi
-          ];
-          
-          for (const pattern of pricingPatterns) {
-            const pricingMatches = html.match(pattern);
-            if (pricingMatches && pricingMatches.length > 0) {
-              const pricingText = pricingMatches.slice(0, 2).join(', ').replace(/<[^>]*>/g, '').trim();
-              if (pricingText.length > 5 && pricingText.length < 200) {
-                results.pricing = pricingText;
-                console.log('Found pricing from search:', results.pricing);
-                break;
-              }
-            }
-          }
-        }
-        
-        // Extract business type information
-        if (!results.businessType) {
-          const businessTypeKeywords = {
-            'HVAC': /hvac|heating|cooling|air conditioning|ac repair|furnace|ductwork|air handler|heat pump/gi,
-            'Construction': /construction|contractor|building|remodeling|renovation|general contractor/gi,
-            'Plumbing': /plumber|plumbing|pipe|drain|water heater|sewer|plumbing contractor/gi,
-            'Electrical': /electrician|electrical|wiring|electric|power|electrical contractor/gi,
-            'Restaurant': /restaurant|food|dining|menu|eat|cuisine|food service/gi,
-            'Retail': /store|shop|buy|sell|retail|merchandise|shopping/gi,
-            'Automotive': /auto|car|vehicle|mechanic|tire|brake|transmission|auto repair/gi,
-            'Healthcare': /medical|health|doctor|clinic|dental|physician|healthcare/gi,
-            'Professional': /law|legal|accounting|consulting|professional services/gi,
-            'Real Estate': /real estate|property|homes|realtor|mortgage|real estate agent/gi,
-            'Beauty': /salon|spa|beauty|hair|nail|massage|beauty salon/gi,
-            'Fitness': /gym|fitness|workout|personal training|yoga|fitness center/gi,
-            'Education': /school|education|training|classes|tutoring|educational/gi,
-            'Service': /service|repair|maintenance|cleaning|service provider/gi
-          };
-          
-          for (const [type, pattern] of Object.entries(businessTypeKeywords)) {
-            if (pattern.test(html)) {
-              results.businessType = type;
-              console.log('Found business type from search:', type);
-              break;
-            }
-          }
-        }
-        
-        // Break if we have all the info we need
-        if (results.address && results.phone && results.services && results.pricing && results.businessType) {
-          break;
-        }
-        
-      } catch (searchError) {
-        console.error('Error in individual search:', searchError);
-        continue;
-      }
-    }
-    
-    return results;
-  } catch (error) {
-    console.error('Error searching business data:', error);
-    return results;
-  }
-}
-
-// Parse services from HTML content
-function parseServices(html: string): string[] {
-  const services: string[] = [];
-  
-  // Service-related keywords by category
-  const servicePatterns = [
-    // HVAC & Home Services (more comprehensive)
-    /(?:air conditioning|hvac|heating|cooling|ac repair|furnace|ductwork|heat pump|central air|mini split|thermostat|air handler|refrigeration)/gi,
-    // Construction & Trades
-    /(?:plumbing|electrical|roofing|flooring|painting|carpentry|renovation|contracting|installation)/gi,
-    // Professional Services
-    /(?:consulting|accounting|legal|marketing|design|development|tax preparation|business services)/gi,
-    // Automotive
-    /(?:auto repair|mechanic|tire|brake|transmission|oil change|car service|vehicle maintenance)/gi,
-    // Healthcare
-    /(?:dental|medical|physical therapy|massage|chiropractic|health services|wellness)/gi,
-    // Cleaning Services
-    /(?:cleaning|janitorial|housekeeping|carpet cleaning|pressure washing|maintenance)/gi
-  ];
-  
-  // Look for services in specific HTML sections
-  const sectionPatterns = [
-    /<(?:section|div)[^>]*(?:service|offer|what-we-do)[^>]*>(.*?)<\/(?:section|div)>/gis,
-    /<ul[^>]*(?:service|menu)[^>]*>(.*?)<\/ul>/gis,
-    /<li[^>]*>(.*?)(?:service|repair|install|maintain)(.*?)<\/li>/gis
-  ];
-  
-  sectionPatterns.forEach(pattern => {
-    const matches = html.match(pattern);
-    if (matches) {
-      matches.forEach(match => {
-        servicePatterns.forEach(servicePattern => {
-          const serviceMatches = match.match(servicePattern);
-          if (serviceMatches) {
-            services.push(...serviceMatches.map(s => s.toLowerCase()));
-          }
-        });
-      });
-    }
-  });
-  
-  // Direct pattern matching in full HTML
-  servicePatterns.forEach(pattern => {
-    const matches = html.match(pattern);
-    if (matches) {
-      services.push(...matches.map(s => s.toLowerCase()));
-    }
-  });
-  
-  // Remove duplicates and clean up
-  const uniqueServices = [...new Set(services)]
-    .map(service => service.trim())
-    .filter(service => service.length > 2)
-    .slice(0, 10); // Limit to 10 services
-  
-  return uniqueServices;
-}
-
-// Generate AI description using Perplexity
-async function generateAIDescription(businessData: BusinessData, websiteContent: string, url: string): Promise<string> {
-  try {
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-    if (!perplexityApiKey) {
-      console.log('No Perplexity API key found, skipping AI description generation');
-      return businessData.business_description || '';
-    }
-    
-    console.log('Generating dynamic AI description using Perplexity...');
-    
-    // Create a comprehensive and dynamic prompt for the AI
-    const businessName = businessData.business_name || 'Business';
-    const services = businessData.services_offered || 'various services';
-    const location = businessData.business_address || 'local area';
-    const businessType = businessData.business_type || 'business';
-    const pricing = businessData.pricing_structure || 'competitive rates';
-    
-    // Extract key content snippets from website for context
-    const contentSnippet = websiteContent
-      .replace(/<[^>]*>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .substring(0, 800)
-      .trim();
-    
-    const prompt = `Write a compelling, professional, and dynamic business description for ${businessName}, a ${businessType.toLowerCase()} business. 
-
-Key Details:
-- Business Name: ${businessName}
-- Services: ${services}
-- Location: ${location}
-- Pricing: ${pricing}
-- Business Type: ${businessType}
-
-Website Content Context: ${contentSnippet}
-
-Requirements:
-- Write 2-3 engaging sentences that highlight what makes this business unique
-- Focus on customer benefits and value proposition
-- Include specific services and specialties
-- Make it sound trustworthy and professional
-- Avoid generic language - be specific and compelling
-- Include location context if available
-- Mention competitive advantages or unique selling points
-- Make it SEO-friendly with relevant keywords naturally integrated
-- Sound human and authentic, not robotic
-
-Create a description that would convince potential customers to choose this business over competitors.`;
-    
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Bearer ' + perplexityApiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-small-128k-online',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert business copywriter specializing in creating compelling, authentic business descriptions that convert visitors into customers. Write descriptions that are professional yet engaging, specific yet accessible.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 300,
-        top_p: 0.9,
-        return_images: false,
-        return_related_questions: false,
-        frequency_penalty: 1,
-        presence_penalty: 0
-      }),
-    });
-    
-    if (!response.ok) {
-      console.error('Perplexity API error:', response.status, response.statusText);
-      return businessData.business_description || '';
-    }
-    
-    const result = await response.json();
-    
-    if (result.choices && result.choices[0] && result.choices[0].message && result.choices[0].message.content) {
-      const aiDescription = result.choices[0].message.content.trim();
-      console.log('Generated dynamic AI description:', aiDescription);
-      return aiDescription;
-    }
-    
-    return businessData.business_description || '';
-  } catch (error) {
-    console.error('Perplexity AI description generation error:', error);
-    return businessData.business_description || '';
-  }
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('=== Starting enhanced business data extraction ===');
+    console.log('=== Starting Claude-powered business data extraction ===');
     
     const { url } = await req.json();
     console.log('URL:', url);
@@ -451,20 +244,6 @@ serve(async (req) => {
       if (!fetchResponse.ok) {
         console.error('Failed to fetch webpage:', fetchResponse.status, fetchResponse.statusText);
         
-        // Provide specific error messages for different status codes
-        let errorMessage = 'Failed to fetch webpage (' + fetchResponse.status + ')';
-        if (fetchResponse.status === 403) {
-          errorMessage = isSocialMedia 
-            ? 'Access denied. Social media pages often restrict automated access. Try using the business website instead.'
-            : 'Access denied. The website is blocking automated requests.';
-        } else if (fetchResponse.status === 404) {
-          errorMessage = 'Page not found. Please check the URL is correct.';
-        } else if (fetchResponse.status === 429) {
-          errorMessage = 'Too many requests. Please try again later.';
-        } else if (fetchResponse.status >= 500) {
-          errorMessage = 'Server error. The website might be temporarily unavailable.';
-        }
-        
         // For social media, try to provide fallback data based on URL
         if (isSocialMedia && urlBusinessName) {
           console.log('Providing fallback data for social media page');
@@ -475,7 +254,7 @@ serve(async (req) => {
               data: {
                 business_name: urlBusinessName,
                 business_description: urlBusinessName + ' - Professional service provider. Contact us for more information about our services.',
-                business_type: 'Local Business',
+                business_type: 'other',
                 services_offered: 'Professional Services',
                 source: 'URL Analysis (Limited Access)',
                 note: 'Limited information available due to social media access restrictions. Please provide the business website for complete details.'
@@ -491,10 +270,6 @@ serve(async (req) => {
           JSON.stringify({ 
             success: false,
             error: 'Unable to access webpage. ' + (isSocialMedia ? 'Social media pages often restrict automated access. Try using the business website instead.' : 'Please check the URL and try again.'),
-            details: errorMessage,
-            suggestions: isSocialMedia 
-              ? ['Try using the business\'s main website instead', 'Check if the social media page is public', 'Verify the URL is correct']
-              : ['Verify the URL is correct', 'Check if the website is accessible', 'Try again later if the site is temporarily down'],
             data: {}
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
@@ -517,7 +292,7 @@ serve(async (req) => {
             data: {
               business_name: urlBusinessName,
               business_description: urlBusinessName + ' - Professional service provider. Contact us for more information about our services.',
-              business_type: 'Local Business', 
+              business_type: 'other', 
               services_offered: 'Professional Services',
               source: 'URL Analysis (Connection Failed)',
               note: 'Unable to access the social media page. Please provide the business website for complete details.'
@@ -534,17 +309,22 @@ serve(async (req) => {
           success: false,
           error: 'Unable to connect to webpage',
           details: fetchError instanceof Error ? fetchError.message : 'Unknown fetch error',
-          suggestions: ['Check your internet connection', 'Verify the URL is correct', 'Try again later'],
           data: {}
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
-    // Extract business information from the content
-    console.log('=== EXTRACTING BUSINESS DATA ===');
+    // Extract business information using Claude AI
+    console.log('=== EXTRACTING BUSINESS DATA WITH CLAUDE AI ===');
 
-    // Extract business name
+    // Use Claude AI extraction for accurate structured data
+    const claudeData = await extractBusinessDataWithClaude(websiteContent, url);
+    
+    // Merge Claude data with any existing data (e.g., from URL analysis)
+    businessData = { ...businessData, ...claudeData };
+
+    // Fallback extraction if Claude didn't capture everything
     if (!businessData.business_name) {
       const namePatterns = [
         /<title[^>]*>([^<]+)<\/title>/i,
@@ -562,354 +342,51 @@ serve(async (req) => {
           
           if (name.length > 3 && name.length < 100 && !name.toLowerCase().includes('home')) {
             businessData.business_name = name;
-            console.log('Found business name:', name);
+            console.log('Found business name (fallback):', name);
             break;
           }
         }
       }
     }
 
-    // Extract phone numbers with better formatting
-    const phonePatterns = [
-      /(?:phone|call|tel|contact)[\s:]*(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/gi,
-      /(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g
-    ];
+    // Fallback phone extraction if Claude missed it
+    if (!businessData.business_phone) {
+      const phonePatterns = [
+        /(?:phone|call|tel|contact)[\s:]*(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/gi,
+        /(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})/g
+      ];
 
-    for (const pattern of phonePatterns) {
-      const matches = websiteContent.match(pattern);
-      if (matches) {
-        for (const match of matches) {
-          let phone = match.replace(/[^\d]/g, '');
-          if (phone.length === 11 && phone.startsWith('1')) {
-            phone = phone.substring(1);
+      for (const pattern of phonePatterns) {
+        const matches = websiteContent.match(pattern);
+        if (matches) {
+          for (const match of matches) {
+            let phone = match.replace(/[^\d]/g, '');
+            if (phone.length === 11 && phone.startsWith('1')) {
+              phone = phone.substring(1);
+            }
+            if (phone.length === 10) {
+              businessData.business_phone = '(' + phone.substring(0,3) + ') ' + phone.substring(3,6) + '-' + phone.substring(6);
+              break;
+            }
           }
-          if (phone.length === 10) {
-            businessData.business_phone = '(' + phone.substring(0,3) + ') ' + phone.substring(3,6) + '-' + phone.substring(6);
-            break;
-          }
-        }
-        if (businessData.business_phone) break;
-      }
-    }
-
-    // Extract business addresses directly from webpage content
-    const addressPatterns = [
-      // Complete address with street, city, state, zip
-      /(\d+\s+[A-Za-z0-9\s,.-]+(?:Street|St\.?|Avenue|Ave\.?|Road|Rd\.?|Drive|Dr\.?|Lane|Ln\.?|Boulevard|Blvd\.?|Way|Court|Ct\.?|Place|Pl\.?)[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/gi,
-      // Address with just street and state/zip
-      /(\d+[^,\n]*,\s*[A-Za-z\s]+,\s*[A-Z]{2}\s*\d{5}(?:-\d{4})?)/gi,
-      // Address in structured format (span, div, etc.)
-      /<(?:span|div|p)[^>]*(?:address|location)[^>]*>([^<]*\d+[^<]*(?:St|Street|Ave|Avenue|Rd|Road|Dr|Drive|Ln|Lane|Blvd|Boulevard)[^<]*)<\/(?:span|div|p)>/gi,
-      // Schema.org address markup
-      /<[^>]*itemprop="(?:address|streetAddress)"[^>]*>([^<]+)<\/[^>]*>/gi
-    ];
-
-    for (const pattern of addressPatterns) {
-      const matches = websiteContent.match(pattern);
-      if (matches) {
-        for (const match of matches) {
-          const cleanAddress = match.replace(/<[^>]*>/g, '').trim();
-          if (validateAddress(cleanAddress) && cleanAddress.length < 200) {
-            businessData.business_address = cleanAddress;
-            console.log('Found address from website:', cleanAddress);
-            break;
-          }
-        }
-        if (businessData.business_address) break;
-      }
-    }
-
-    // Extract email addresses
-    const emailPattern = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-    const emailMatches = websiteContent.match(emailPattern);
-    if (emailMatches) {
-      const validEmails = emailMatches.filter(email => 
-        !email.includes('example.com') && 
-        !email.includes('test.com') &&
-        !email.includes('placeholder')
-      );
-      if (validEmails.length > 0) {
-        businessData.business_email = validEmails[0];
-      }
-    }
-
-    // Extract business hours
-    const hoursPattern = /(?:hours|open|closed)[\s\S]{0,200}?(?:monday|mon|tuesday|tue|wednesday|wed|thursday|thu|friday|fri|saturday|sat|sunday|sun)[\s\S]{0,300}?(?:\d{1,2}:\d{2}|\d{1,2}\s*(?:am|pm))/gi;
-    const hoursMatch = websiteContent.match(hoursPattern);
-    if (hoursMatch) {
-      const hours = hoursMatch[0].replace(/<[^>]*>/g, '').trim();
-      if (hours.length < 500) {
-        businessData.business_hours = hours;
-      }
-    }
-
-    // Extract services
-    const services = parseServices(websiteContent);
-    if (services.length > 0) {
-      businessData.services_offered = services.join(', ');
-    }
-
-    // Extract pricing information from website content
-    const pricingPatterns = [
-      /(?:pricing|rates?|cost[s]?|price[s]?|fee[s]?)[\s\S]{0,300}?(?:\$\d+|\d+\s*dollars?|free|starting|consultation|estimate|affordable|competitive)/gi,
-      /(?:\$\d+|\d+\s*dollars?|free consultation|free estimate|starting at|from \$|competitive rates|affordable pricing)/gi,
-      /<[^>]*(?:price|cost|rate|fee)[^>]*>([^<]*(?:\$|\d+|free|estimate)[^<]*)<\/[^>]*>/gi
-    ];
-
-    for (const pattern of pricingPatterns) {
-      const pricingMatches = websiteContent.match(pattern);
-      if (pricingMatches && pricingMatches.length > 0) {
-        const cleanPricing = pricingMatches.slice(0, 2).join(', ')
-          .replace(/<[^>]*>/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        if (cleanPricing.length > 5 && cleanPricing.length < 200) {
-          businessData.pricing_structure = cleanPricing;
-          console.log('Found pricing from website:', cleanPricing);
-          break;
+          if (businessData.business_phone) break;
         }
       }
     }
-
-    // Extract business description
-    const descriptionPatterns = [
-      /<meta[^>]*name="description"[^>]*content="([^"]+)"/i,
-      /<meta[^>]*property="og:description"[^>]*content="([^"]+)"/i,
-      /<p[^>]*class="[^"]*(?:description|about|intro)[^"]*"[^>]*>([^<]+)<\/p>/i
-    ];
-
-    for (const pattern of descriptionPatterns) {
-      const match = websiteContent.match(pattern);
-      if (match && match[1]) {
-        const description = match[1].trim();
-        if (description.length > 20 && description.length < 500) {
-          businessData.business_description = description;
-          break;
-        }
-      }
-    }
-
-    // Try to search for additional business data if we have a business name but missing key info
-    const domain = new URL(url).hostname;
-    if (businessData.business_name && (!businessData.business_address || !businessData.business_phone || !businessData.services_offered || !businessData.pricing_structure || !businessData.business_type)) {
-      console.log('Searching for additional business data...');
-      const searchResults = await searchBusinessData(businessData.business_name, domain);
-      
-      if (!businessData.business_address && searchResults.address) {
-        businessData.business_address = searchResults.address;
-      }
-      if (!businessData.business_phone && searchResults.phone) {
-        businessData.business_phone = searchResults.phone;
-      }
-      if (!businessData.services_offered && searchResults.services) {
-        businessData.services_offered = searchResults.services;
-      }
-      if (!businessData.pricing_structure && searchResults.pricing) {
-        businessData.pricing_structure = searchResults.pricing;
-      }
-      if (!businessData.business_type && searchResults.businessType) {
-        businessData.business_type = searchResults.businessType;
-      }
-    }
-
-    // Generate AI-enhanced description if we have Perplexity API access
-    if (businessData.business_name) {
-      const aiDescription = await generateAIDescription(businessData, websiteContent, url);
-      if (aiDescription && aiDescription.length > (businessData.business_description?.length || 0)) {
-        businessData.business_description = aiDescription;
-      }
-    }
-
-    // Determine business type based on content
-    const businessTypeKeywords = {
-      'HVAC': /hvac|heating|cooling|air conditioning|ac repair|furnace|ductwork|air handler|heat pump/gi,
-      'Construction': /construction|contractor|building|remodeling|renovation/gi,
-      'Plumbing': /plumber|plumbing|pipe|drain|water heater|sewer/gi,
-      'Electrical': /electrician|electrical|wiring|electric|power/gi,
-      'Restaurant': /restaurant|food|dining|menu|eat|cuisine/gi,
-      'Retail': /store|shop|buy|sell|retail|merchandise/gi,
-      'Automotive': /auto|car|vehicle|mechanic|tire|brake|transmission/gi,
-      'Healthcare': /medical|health|doctor|clinic|dental|physician/gi,
-      'Professional': /law|legal|accounting|consulting|professional/gi,
-      'Real Estate': /real estate|property|homes|realtor|mortgage/gi,
-      'Beauty': /salon|spa|beauty|hair|nail|massage/gi,
-      'Fitness': /gym|fitness|workout|personal training|yoga/gi,
-      'Education': /school|education|training|classes|tutoring/gi,
-      'Service': /service|repair|maintenance|cleaning/gi
-    };
-
-    for (const [type, pattern] of Object.entries(businessTypeKeywords)) {
-      if (pattern.test(websiteContent)) {
-        businessData.business_type = type;
-        break;
-      }
-    }
-
-    // Don't set automatic fallback - let validation handle missing business type
 
     console.log('=== FINAL BUSINESS DATA ===');
     console.log(JSON.stringify(businessData, null, 2));
 
-    // Strict validation for ALL required fields before saving
-    const requiredFields = {
-      business_name: businessData.business_name,
-      business_phone: businessData.business_phone,
-      business_type: businessData.business_type,
-      business_address: businessData.business_address,
-      business_website: url,
-      business_description: businessData.business_description,
-      services_offered: businessData.services_offered,
-      pricing_structure: businessData.pricing_structure
-    };
-
-    // Check for missing or empty required fields
-    const missingFields = Object.entries(requiredFields)
-      .filter(([key, value]) => {
-        if (!value) {
-          console.log(`Missing field: ${key} - value is ${value}`);
-          return true;
-        }
-        if (typeof value === 'string') {
-          const trimmed = value.trim();
-          // Check for placeholder/fallback values that shouldn't be considered valid
-          const invalidValues = [
-            'Business Name Not Found',
-            'Address Not Available', 
-            'Contact for Pricing',
-            'Professional Services',
-            'Local Business'
-          ];
-          if (trimmed.length === 0) {
-            console.log(`Empty field: ${key} - value is empty string`);
-            return true;
-          }
-          if (invalidValues.includes(trimmed)) {
-            console.log(`Invalid placeholder field: ${key} - value is "${trimmed}"`);
-            return true;
-          }
-        }
-        return false;
-      })
-      .map(([key]) => key);
-
-    if (missingFields.length > 0) {
-      console.log('❌ Missing required fields - cannot save:', missingFields);
-      
-      // Special handling for business type
-      let businessTypeMessage = '';
-      if (missingFields.includes('business_type')) {
-        businessTypeMessage = ' Business type could not be automatically detected from the website content or search results. This may indicate the website lacks clear information about what type of business this is.';
-      }
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'Incomplete business data - missing required fields',
-          message: `All business information must be complete before saving. Please ensure all required fields are filled.${businessTypeMessage}`,
-          missingFields: missingFields,
-          detailedErrors: missingFields.map(field => {
-            switch(field) {
-              case 'business_type': return 'Business type could not be determined from website or search results';
-              case 'business_phone': return 'Phone number not found on website or in search results'; 
-              case 'business_address': return 'Complete business address not found';
-              case 'business_description': return 'Business description not found or too short';
-              case 'services_offered': return 'Services offered could not be identified';
-              case 'pricing_structure': return 'Pricing information not available';
-              default: return `${field} is missing or invalid`;
-            }
-          }),
-          requiredFields: [
-            'Business Name',
-            'Phone Number', 
-            'Business Type',
-            'Business Address',
-            'Website URL',
-            'Business Description',
-            'Services Offered',
-            'Pricing Structure'
-          ],
-          suggestions: [
-            'Try using the business\'s main website instead of social media pages',
-            'Check if the website has a contact or about page with complete information',
-            'Look for a "Services" or "What We Do" page for business type and services',
-            'Search for the business on Google to find missing details',
-            'Manually enter any missing information after import'
-          ],
-          data: {
-            ...businessData,
-            business_website: url
-          }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    // Additional validation for phone number format
-    if (businessData.business_phone) {
-      const phoneRegex = /^\(\d{3}\)\s\d{3}-\d{4}$/;
-      if (!phoneRegex.test(businessData.business_phone)) {
-        console.log('Invalid phone number format:', businessData.business_phone);
-        return new Response(
-          JSON.stringify({ 
-            success: false,
-            error: 'Invalid phone number format',
-            message: 'Phone number must be in format: (XXX) XXX-XXXX',
-            data: {
-              ...businessData,
-              business_website: url
-            }
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-        );
-      }
-    }
-
-    // Additional validation for address format
-    if (businessData.business_address && !validateAddress(businessData.business_address)) {
-      console.log('Invalid address format:', businessData.business_address);
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'Invalid address format',
-          message: 'Address must include street number, street name, city, state, and ZIP code',
-          data: {
-            ...businessData,
-            business_website: url
-          }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    // Validation for minimum description length
-    if (businessData.business_description && businessData.business_description.length < 20) {
-      console.log('Business description too short:', businessData.business_description);
-      return new Response(
-        JSON.stringify({ 
-          success: false,
-          error: 'Business description too short',
-          message: 'Business description must be at least 20 characters long',
-          data: {
-            ...businessData,
-            business_website: url
-          }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
-    }
-
-    console.log('✅ All required fields validated successfully');
-
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: 'Business data extracted and validated successfully',
+        message: 'Business data extracted successfully using Claude AI',
         data: {
           ...businessData,
           business_website: url
         },
-        url: url
+        url: url,
+        extractionMethod: 'claude-ai'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
