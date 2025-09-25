@@ -107,8 +107,8 @@ const Hero = () => {
           <div className="lg:flex lg:justify-end lg:col-span-1">
             <div className="relative flex justify-center lg:block">
               <img 
-                src="/lovable-uploads/62b4af60-ae09-4e9c-b770-04925e6bb2f8.png" 
-                alt="Junie call assistant interface on smartphone showing customer conversation and appointment booking for air conditioning service"
+                src="/lovable-uploads/junie-hero-phone.png" 
+                alt="Junie AI answering service interface showing customer Olivia Wilson booking an air conditioning appointment with automatic AI responses"
                 className="w-80 sm:w-96 lg:max-w-lg xl:max-w-xl 2xl:max-w-2xl mx-auto lg:mx-0"
               />
               <div className="absolute inset-0 from-primary/20 to-transparent rounded-2xl" />
