@@ -1252,7 +1252,7 @@ const Settings = () => {
                         debouncedAutoSave("Business");
                       }}
                       placeholder="Brief description of your business and services..."
-                      rows={4}
+                      rows={6}
                       className={validationErrors.businessDescription ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                     />
                     <Button
