@@ -145,7 +145,6 @@ serve(async (req) => {
             "common_questions": businessDataForInit?.common_questions || "",
             "pricing_structure": businessDataForInit?.pricing_structure || "",
             "appointment_booking": businessDataForInit?.appointment_booking || false,
-            "available_hours": businessDataForInit?.business_hours || "Monday-Friday 9am-5pm",
             "available_times": dynamicAvailableTimes,
             "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill"
           }
