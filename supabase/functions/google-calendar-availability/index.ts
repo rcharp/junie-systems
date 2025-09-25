@@ -306,11 +306,20 @@ Deno.serve(async (req) => {
       const month = currentDate.getMonth()
       const date = currentDate.getDate()
       
-      // Create times that represent business hours (Claude will handle timezone conversion)
-      const utcStartTime = new Date(year, month, date, startHour, startMinute, 0, 0)
-      const utcEndTime = new Date(year, month, date, endHour, endMinute, 0, 0)
+      // Create business hours in the user's timezone, then convert to UTC
+      // We need to account for the timezone offset when creating the dates
+      const localDate = new Date(year, month, date, startHour, startMinute, 0, 0)
+      const localEndDate = new Date(year, month, date, endHour, endMinute, 0, 0)
       
-      console.log(`Business hours: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
+      // Get the timezone offset for this specific date (handles DST)
+      const offsetMs = getTimezoneOffsetMs(userTimezone, localDate)
+      
+      // Convert local business hours to UTC by subtracting the timezone offset
+      const utcStartTime = new Date(localDate.getTime() - offsetMs)
+      const utcEndTime = new Date(localEndDate.getTime() - offsetMs)
+      
+      console.log(`Local business hours: ${localDate.toISOString()} to ${localEndDate.toISOString()}`)
+      console.log(`UTC business hours: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
       // Find continuous available time blocks
       const availableBlocks = []
@@ -414,20 +423,18 @@ Deno.serve(async (req) => {
 
 Business timezone: ${userTimezone}
 
-The input times are UTC business hours that need to be converted to show the LOCAL business time.
+Convert these UTC business hours back to local ${userTimezone} time for display.
 
-Input slots (UTC times representing business hours):
+Input slots (UTC times that need to be converted to local time):
 ${JSON.stringify(availableSlots)}
 
-CRITICAL RULES:
-1. Convert each UTC time to ${userTimezone} local time 
-2. Return times as ISO strings but representing the LOCAL time (remove the timezone offset)
-3. If input is "2025-09-26T13:00:00.000Z" and timezone is America/New_York, the local time would be 9:00 AM, so return "2025-09-26T09:00:00.000Z"
+RULES:
+1. Convert each UTC time to ${userTimezone} local time
+2. Return times as ISO strings representing the LOCAL time (add timezone offset back)
+3. If input is "2025-09-26T13:00:00.000Z" (1 PM UTC) and timezone is America/New_York, convert to 9:00 AM local, return "2025-09-26T09:00:00.000Z"
 4. Set timeOfDay based on LOCAL time: "morning" (6am-12pm), "afternoon" (12pm-6pm), "evening" (6pm+)
-5. Format humanReadable: "Weekday, Month Date, Year H:MM am/pm-H:MM am/pm" in local time
-6. Return ONLY valid JSON array, no markdown or explanation
-
-Example: Input "2025-09-26T13:00:00.000Z" for America/New_York → Output "2025-09-26T09:00:00.000Z" with humanReadable "Friday, September 26, 2025 9:00 am"`;
+5. Format humanReadable: "Weekday, Month Date, Year H:MM am/pm-H:MM am/pm" showing the LOCAL time
+6. Return ONLY valid JSON array, no markdown or explanation`;
 
           console.log('Calling Claude with prompt for timezone conversion...')
           
