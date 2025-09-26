@@ -40,7 +40,7 @@ export const WebhookMonitor = () => {
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [expandedRawData, setExpandedRawData] = useState<Record<string, boolean>>({});
-  const [isMinimized, setIsMinimized] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
