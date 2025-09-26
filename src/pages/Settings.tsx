@@ -1239,7 +1239,7 @@ const Settings = () => {
                                   onCheckedChange={(checked) => 
                                     updateBusinessHours(hour.id, 'isOpen', !!checked)
                                   }
-                                  className="h-3 w-3"
+                                  className="h-4 w-4"
                                 />
                               </div>
                               <div className="col-span-3">
