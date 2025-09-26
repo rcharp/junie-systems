@@ -219,6 +219,19 @@ serve(async (req) => {
         userId = userId || body.conversation_context.user_id;
       }
       
+      // If no call_sid found, try to find active calls in our tracking
+      if (!callSid && activeCalls.size > 0) {
+        console.log("[Webhook] No call_sid in request, checking active calls...");
+        const activeCallEntries = Array.from(activeCalls.entries());
+        console.log(`[Webhook] Found ${activeCallEntries.length} active calls`);
+        
+        // Use the most recent active call
+        if (activeCallEntries.length > 0) {
+          callSid = activeCallEntries[activeCallEntries.length - 1][0];
+          console.log(`[Webhook] Using most recent active call: ${callSid}`);
+        }
+      }
+      
       console.log(`[Webhook] Extracted parameters - callSid: ${callSid}, businessId: ${businessId}, userId: ${userId}, agentNumber: ${agentNumber}`);
       
       if (!callSid) {
