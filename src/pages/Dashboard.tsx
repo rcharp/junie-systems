@@ -399,69 +399,128 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <div className="min-h-screen bg-gradient-subtle overflow-x-hidden">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <a href="/" className="flex items-center">
-              <img 
-                src="/lovable-uploads/junie-logo.png" 
-                alt="Junie Logo" 
-                className="h-8 w-8"
-              />
-            </a>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            {isAdmin && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate("/admin")}
-                className="text-primary hover:bg-primary/10"
-              >
-                <Shield className="w-4 h-4 mr-2" />
-                Admin
-              </Button>
-            )}
-            <Button variant="ghost" onClick={() => navigate("/settings")} className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Bell className="w-5 h-5" />
+        <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
+          {/* Mobile Layout */}
+          <div className="md:hidden flex items-center justify-between">
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
+              <a href="/" className="flex items-center flex-shrink-0">
+                <img 
+                  src="/lovable-uploads/junie-logo.png" 
+                  alt="Junie Logo" 
+                  className="h-6 w-6 sm:h-8 sm:w-8"
+                />
+              </a>
+              <h1 className="text-sm sm:text-base font-bold text-primary truncate">Dashboard</h1>
+            </div>
+            
+            <div className="flex items-center space-x-1">
+              {isAdmin && (
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={() => navigate("/admin")}
+                  className="text-primary hover:bg-primary/10 h-8 w-8"
+                >
+                  <Shield className="w-4 h-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                {recentActivity.length > 0 ? (
-                  recentActivity.slice(0, 3).map((activity) => (
-                    <DropdownMenuItem key={activity.id} className="cursor-pointer">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium">{activity.action}</p>
-                        <p className="text-xs text-muted-foreground">{activity.time}</p>
-                      </div>
+              )}
+              <Button variant="ghost" onClick={() => navigate("/settings")} className="h-8 w-8 p-0">
+                <Settings className="w-4 h-4" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Bell className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 3).map((activity) => (
+                      <DropdownMenuItem key={activity.id} className="cursor-pointer">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium">{activity.action}</p>
+                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <DropdownMenuItem disabled>
+                      <p className="text-sm text-muted-foreground">No recent notifications</p>
                     </DropdownMenuItem>
-                  ))
-                ) : (
-                  <DropdownMenuItem disabled>
-                    <p className="text-sm text-muted-foreground">No recent notifications</p>
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button variant="ghost" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="ghost" onClick={handleSignOut} className="h-8 w-8 p-0">
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Desktop Layout */}
+          <div className="hidden md:flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <a href="/" className="flex items-center">
+                <img 
+                  src="/lovable-uploads/junie-logo.png" 
+                  alt="Junie Logo" 
+                  className="h-8 w-8"
+                />
+              </a>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {isAdmin && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigate("/admin")}
+                  className="text-primary hover:bg-primary/10"
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin
+                </Button>
+              )}
+              <Button variant="ghost" onClick={() => navigate("/settings")} className="flex items-center gap-2">
+                <Settings className="w-4 h-4" />
+                <span>Settings</span>
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Bell className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-80">
+                  {recentActivity.length > 0 ? (
+                    recentActivity.slice(0, 3).map((activity) => (
+                      <DropdownMenuItem key={activity.id} className="cursor-pointer">
+                        <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-medium">{activity.action}</p>
+                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        </div>
+                      </DropdownMenuItem>
+                    ))
+                  ) : (
+                    <DropdownMenuItem disabled>
+                      <p className="text-sm text-muted-foreground">No recent notifications</p>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="ghost" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-muted-foreground mb-2">
