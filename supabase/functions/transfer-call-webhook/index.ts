@@ -182,8 +182,8 @@ serve(async (req) => {
   const url = new URL(req.url);
   const pathname = url.pathname;
 
-  // NEW: Handle webhook requests for transfer_call tool
-  if (pathname === "/transfer-call" && req.method === "POST") {
+  // Handle webhook requests for transfer_call tool - match the expected path
+  if (pathname === "/incoming-call-eleven" && req.method === "POST") {
     try {
       console.log("[Webhook] Transfer call webhook request received");
       
