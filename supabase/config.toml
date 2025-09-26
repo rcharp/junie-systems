@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.elevenlabs-webhook]
 verify_jwt = false
+
+[functions.transfer-call-webhook]
+verify_jwt = false
