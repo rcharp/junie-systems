@@ -549,11 +549,8 @@ export const WebhookMonitor = () => {
   };
 
   const handleDeleteSingle = async (callLogId: string) => {
-    // Remove the item from UI immediately (optimistic update)
-    setWebhookData(prev => prev.filter(item => item.id !== callLogId));
-    
     try {
-      // Temporarily disable auto-refresh during deletion
+      // Temporarily disable auto-refresh during deletion to prevent interference
       const wasAutoRefreshOn = autoRefresh;
       if (autoRefresh) {
         setAutoRefresh(false);
