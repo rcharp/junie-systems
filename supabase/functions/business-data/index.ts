@@ -7,6 +7,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to add +1 country code to US phone numbers
+const addUSCountryCode = (phoneNumber: string): string => {
+  if (!phoneNumber || phoneNumber.trim() === '') return '';
+  
+  const cleaned = phoneNumber.replace(/\D/g, ''); // Remove all non-digits
+  
+  // If it's already an 11-digit number starting with 1, return it with +
+  if (cleaned.length === 11 && cleaned.startsWith('1')) {
+    return `+${cleaned}`;
+  }
+  
+  // If it's a 10-digit US number, add +1
+  if (cleaned.length === 10) {
+    return `+1${cleaned}`;
+  }
+  
+  // For other formats, return as-is with + if not already present
+  return phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+};
+
 serve(async (req) => {
   console.log('=== BUSINESS-DATA FUNCTION CALLED ===');
   console.log('business-data function called with method:', req.method);
@@ -183,7 +203,7 @@ serve(async (req) => {
             "appointment_booking": String(businessDataForInit?.appointment_booking || false),
             "available_times": dynamicAvailableTimes,
             "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
-            "forwarding_number": businessDataForInit?.forwarding_number || "",
+            "forwarding_number": addUSCountryCode(businessDataForInit?.forwarding_number || ""),
             "callback_timeframe": "within 24 hours",
             "pronunciations": "HVAC: H vac, hvac: H vac"
           }
@@ -397,7 +417,7 @@ serve(async (req) => {
         pricing_structure: businessData.pricing_structure || 'N/A',
         appointment_booking: businessData.appointment_booking || false,
         business_description: businessData.business_description || 'N/A',
-        forwarding_number: businessData.forwarding_number || 'N/A',
+        forwarding_number: addUSCountryCode(businessData.forwarding_number || 'N/A'),
         callback_timeframe: 'within 24 hours'
       },
       available_times: availableTimes,
