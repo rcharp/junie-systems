@@ -703,8 +703,50 @@ export const WebhookMonitor = () => {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
+      <CardHeader className="pb-4">
+        {/* Mobile Layout */}
+        <div className="md:hidden space-y-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Webhook className="h-4 w-4" />
+            Post-Call Data
+          </CardTitle>
+          <CardDescription className="text-sm">
+            Real-time monitoring of completed call summaries and transcripts
+          </CardDescription>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleTestPostCallData}
+              disabled={loading}
+              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 text-xs"
+            >
+              <Activity className="h-3 w-3 mr-1" />
+              Test Latest Call
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="flex items-center gap-1 text-xs"
+            >
+              {isMinimized ? (
+                <>
+                  <Maximize2 className="h-3 w-3" />
+                  Expand
+                </>
+              ) : (
+                <>
+                  <Minimize2 className="h-3 w-3" />
+                  Minimize
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden md:flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Webhook className="h-5 w-5" />
@@ -743,6 +785,27 @@ export const WebhookMonitor = () => {
                 </>
               )}
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className="text-xs whitespace-nowrap"
+            >
+              {autoRefresh ? 'Auto ON' : 'Auto OFF'}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="text-xs"
+            >
+              <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {/* Desktop Auto-refresh and Refresh buttons */}
+          <div className="hidden md:flex">
             <Button
               variant="outline"
               size="sm"

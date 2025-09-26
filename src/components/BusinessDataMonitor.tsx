@@ -226,8 +226,50 @@ export const BusinessDataMonitor: React.FC = () => {
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <div className="flex justify-between items-start">
+      <CardHeader className="pb-4">
+        {/* Mobile Layout */}
+        <div className="md:hidden space-y-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Database className="h-4 w-4 text-primary" />
+            Business Data Requests
+          </CardTitle>
+          <CardDescription className="text-sm">
+            Monitor POST requests to the get-business-data endpoint
+          </CardDescription>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualRequest}
+              disabled={loading}
+              className="flex items-center gap-1 text-xs"
+            >
+              <Send className="h-3 w-3" />
+              Test Request
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsMinimized(!isMinimized)}
+              className="flex items-center gap-1 text-xs"
+            >
+              {isMinimized ? (
+                <>
+                  <Maximize2 className="h-3 w-3" />
+                  Expand
+                </>
+              ) : (
+                <>
+                  <Minimize2 className="h-3 w-3" />
+                  Minimize
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden md:flex justify-between items-start">
           <div>
             <CardTitle className="flex items-center gap-2">
               <Database className="h-5 w-5 text-primary" />

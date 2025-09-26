@@ -330,12 +330,12 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="overview">System Overview</TabsTrigger>
-            <TabsTrigger value="todos">Development Todos</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">System Overview</TabsTrigger>
+            <TabsTrigger value="todos" className="text-xs sm:text-sm">Development Todos</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="overview" className="space-y-8">
+          <TabsContent value="overview" className="space-y-6 sm:space-y-8">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card>
@@ -393,8 +393,34 @@ const AdminDashboard = () => {
 
             {/* Google Calendar Availability Testing */}
             <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
+              <CardHeader className="pb-4">
+                {/* Mobile Layout */}
+                <div className="md:hidden space-y-3">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Clock className="h-4 w-4" />
+                    Google Calendar Availability Test
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    Test the Google Calendar availability endpoint to see current results
+                  </CardDescription>
+                  <Button 
+                    onClick={testGoogleCalendarAvailability}
+                    disabled={calendarLoading}
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {calendarLoading ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Test Availability
+                  </Button>
+                </div>
+
+                {/* Desktop Layout */}
+                <div className="hidden md:flex items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Clock className="h-5 w-5" />
@@ -422,17 +448,17 @@ const AdminDashboard = () => {
               <CardContent>
                 {calendarAvailability ? (
                   <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <Badge variant={calendarAvailability.available ? "default" : "destructive"}>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4">
+                      <Badge variant={calendarAvailability.available ? "default" : "destructive"} className="text-xs">
                         {calendarAvailability.available ? "Available" : "Unavailable"}
                       </Badge>
                       {calendarAvailability.timezone && (
-                        <Badge variant="outline">
+                        <Badge variant="outline" className="text-xs truncate max-w-[120px] sm:max-w-none">
                           {calendarAvailability.timezone}
                         </Badge>
                       )}
                       {calendarAvailability.duration && (
-                        <Badge variant="secondary">
+                        <Badge variant="secondary" className="text-xs">
                           {calendarAvailability.duration} min slots
                         </Badge>
                       )}
@@ -440,17 +466,17 @@ const AdminDashboard = () => {
                     
                     {calendarAvailability.slots && calendarAvailability.slots.length > 0 ? (
                       <div>
-                        <h4 className="font-medium mb-3">Available Time Slots ({calendarAvailability.slots.length})</h4>
+                        <h4 className="font-medium mb-3 text-sm sm:text-base">Available Time Slots ({calendarAvailability.slots.length})</h4>
                         <div className="grid gap-2 max-h-60 overflow-y-auto">
                           {calendarAvailability.slots.map((slot: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                              <div>
-                                <p className="font-medium">{slot.humanReadable}</p>
-                                <p className="text-sm text-muted-foreground">
+                            <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-muted rounded-lg space-y-2 sm:space-y-0">
+                              <div className="min-w-0 flex-1">
+                                <p className="font-medium text-sm sm:text-base truncate">{slot.humanReadable}</p>
+                                <p className="text-xs sm:text-sm text-muted-foreground">
                                   {slot.startTime} - {slot.endTime}
                                 </p>
                               </div>
-                              <Badge variant="outline" className="capitalize">
+                              <Badge variant="outline" className="capitalize text-xs w-fit">
                                 {slot.timeOfDay}
                               </Badge>
                             </div>
@@ -458,18 +484,18 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-muted-foreground">No available slots found</p>
+                      <p className="text-muted-foreground text-sm">No available slots found</p>
                     )}
                     
                     {calendarAvailability.error && (
                       <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                         <p className="text-sm text-destructive font-medium">Error:</p>
-                        <p className="text-sm text-destructive">{calendarAvailability.error}</p>
+                        <p className="text-sm text-destructive break-words">{calendarAvailability.error}</p>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Click "Test Availability" to check Google Calendar availability endpoint
                   </p>
                 )}
