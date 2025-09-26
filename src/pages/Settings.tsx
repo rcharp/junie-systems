@@ -72,7 +72,7 @@ const Settings = () => {
   const [urgentKeywords, setUrgentKeywords] = useState("");
   const [autoForward, setAutoForward] = useState(false);
   const [recordCalls, setRecordCalls] = useState(true);
-  const [maxCallDuration, setMaxCallDuration] = useState("5");
+  
 
   // AI Settings State
   const [aiPersonality, setAiPersonality] = useState("professional");
@@ -200,7 +200,7 @@ const Settings = () => {
         setUrgentKeywords(data.urgent_keywords || "");
         setAutoForward(data.auto_forward || false);
         setRecordCalls(data.record_calls !== false);
-        setMaxCallDuration(data.max_call_duration?.toString() || "5");
+        
         setAiPersonality(data.ai_personality || "professional");
         setCustomGreeting(data.custom_greeting || "");
         setCommonQuestions(data.common_questions || "");
@@ -696,7 +696,7 @@ const Settings = () => {
           urgent_keywords: urgentKeywords,
           auto_forward: autoForward,
           record_calls: recordCalls,
-          max_call_duration: parseInt(maxCallDuration)
+          
         };
       } else if (section === "AI Assistant") {
         updateData = {
@@ -1526,23 +1526,6 @@ const Settings = () => {
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="maxCallDuration">Maximum Call Duration (minutes)</Label>
-                    <Select value={maxCallDuration} onValueChange={(value) => {
-                      setMaxCallDuration(value);
-                      debouncedAutoSave("Calls");
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2">2 minutes</SelectItem>
-                        <SelectItem value="3">3 minutes</SelectItem>
-                        <SelectItem value="5">5 minutes</SelectItem>
-                        <SelectItem value="10">10 minutes</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="commonQuestions">Common Questions & Answers</Label>
