@@ -874,8 +874,21 @@ export const WebhookMonitor = () => {
                         <div className="text-2xl font-bold text-foreground">
                           Incoming - {formatPhoneNumber(incomingCall)}
                         </div>
-                        <div>
+                        <div className="flex items-center gap-2">
                           <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
+                          {/* Test/Real Call Detection */}
+                          {(() => {
+                            const textOnly = data.raw_webhook_data?.text_only;
+                            const hasCallerId = data.raw_webhook_data?.caller_id || 
+                                              data.raw_webhook_data?.data?.metadata?.phone_call?.external_number ||
+                                              data.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value;
+                            
+                            if (textOnly === true || !hasCallerId) {
+                              return <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">Manual</Badge>;
+                            } else {
+                              return <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Real Call</Badge>;
+                            }
+                          })()}
                         </div>
                       </>
                     );
