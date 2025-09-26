@@ -549,9 +549,10 @@ export const WebhookMonitor = () => {
   };
 
   const handleDeleteSingle = async (callLogId: string) => {
+    // Remove the item from UI immediately (optimistic update)
+    setWebhookData(prev => prev.filter(item => item.id !== callLogId));
+    
     try {
-      setLoading(true);
-      
       // Temporarily disable auto-refresh during deletion
       const wasAutoRefreshOn = autoRefresh;
       if (autoRefresh) {
@@ -569,9 +570,6 @@ export const WebhookMonitor = () => {
       }
 
       console.log('Delete result:', { count, callLogId });
-
-      // Remove the deleted item from local state immediately
-      setWebhookData(prev => prev.filter(item => item.id !== callLogId));
       
       toast({
         title: "Call Log Deleted",
@@ -588,6 +586,9 @@ export const WebhookMonitor = () => {
     } catch (error) {
       console.error('Error deleting call log:', error);
       
+      // If deletion failed, we should restore the item
+      await fetchWebhookData();
+      
       // Show detailed error information
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       
@@ -596,8 +597,6 @@ export const WebhookMonitor = () => {
         title: "Error",
         description: `Failed to delete call log: ${errorMessage}`
       });
-    } finally {
-      setLoading(false);
     }
   };
 
