@@ -202,6 +202,11 @@ serve(async (req) => {
         businessId = body.parameters.business_id || body.parameters.businessId;
         userId = body.parameters.user_id || body.parameters.userId;
         agentNumber = body.parameters.agent_number || body.parameters.phone_number || body.parameters.forwarding_number;
+        
+        // Handle ElevenLabs template variables
+        if (agentNumber === "{{forwarding_number}}" || agentNumber === "{{phone_number}}") {
+          agentNumber = null; // Will fetch from database later
+        }
       }
       
       // Check if it's in the root of the body
@@ -210,6 +215,11 @@ serve(async (req) => {
         businessId = body.business_id || body.businessId || body.BusinessId;
         userId = body.user_id || body.userId || body.UserId;
         agentNumber = body.agent_number || body.phone_number || body.forwarding_number;
+        
+        // Handle ElevenLabs template variables
+        if (agentNumber === "{{forwarding_number}}" || agentNumber === "{{phone_number}}") {
+          agentNumber = null; // Will fetch from database later
+        }
       }
       
       // Check if it's in conversation_context or metadata
