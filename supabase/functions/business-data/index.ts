@@ -7,24 +7,24 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper function to add +1 country code to US phone numbers
+// Helper function to add 1 country code to US phone numbers (without +)
 const addUSCountryCode = (phoneNumber: string): string => {
   if (!phoneNumber || phoneNumber.trim() === '') return '';
   
   const cleaned = phoneNumber.replace(/\D/g, ''); // Remove all non-digits
   
-  // If it's already an 11-digit number starting with 1, return it with +
+  // If it's already an 11-digit number starting with 1, return as-is
   if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    return `+${cleaned}`;
+    return cleaned;
   }
   
-  // If it's a 10-digit US number, add +1
+  // If it's a 10-digit US number, add 1
   if (cleaned.length === 10) {
-    return `+1${cleaned}`;
+    return `1${cleaned}`;
   }
   
-  // For other formats, return as-is with + if not already present
-  return phoneNumber.startsWith('+') ? phoneNumber : `+${phoneNumber}`;
+  // For other formats, return the cleaned digits
+  return cleaned || phoneNumber;
 };
 
 serve(async (req) => {
