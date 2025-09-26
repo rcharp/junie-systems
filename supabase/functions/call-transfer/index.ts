@@ -289,8 +289,8 @@ serve(async (req) => {
             console.log(`[II] Tool parameters: ${JSON.stringify(message.tool_request?.params || {})}`);
             console.log(`[II] Event ID: ${message.tool_request?.event_id}`);
 
-            if (message.tool_request?.tool_name === "transfer_to_agent" && callSid) {
-              console.log(`[II] Processing transfer_to_agent tool request for call ${callSid}`);
+            if (message.tool_request?.tool_name === "transfer_call" && callSid) {
+              console.log(`[II] Processing transfer_call tool request for call ${callSid}`);
 
               // Get business context from active call tracking
               const callContext = activeCalls.get(callSid);
@@ -308,7 +308,7 @@ serve(async (req) => {
               const toolResponse = {
                 type: "tool_response",
                 event_id: message.tool_request.event_id,
-                tool_name: "transfer_to_agent",
+                tool_name: "transfer_call",
                 result: transferResult,
               };
               console.log(`[II] Tool response payload: ${JSON.stringify(toolResponse)}`);
@@ -322,8 +322,8 @@ serve(async (req) => {
             console.log(`[II] Tool call ID: ${message.client_tool_call?.tool_call_id}`);
             console.log(`[II] Parameters: ${JSON.stringify(message.client_tool_call?.parameters || {})}`);
 
-            if (message.client_tool_call?.tool_name === "transfer_to_agent" && callSid) {
-              console.log(`[II] Processing transfer_to_agent client tool call for call ${callSid}`);
+            if (message.client_tool_call?.tool_name === "transfer_call" && callSid) {
+              console.log(`[II] Processing transfer_call client tool call for call ${callSid}`);
 
               // Get business context from active call tracking
               const callContext = activeCalls.get(callSid);
@@ -345,7 +345,7 @@ serve(async (req) => {
               };
               console.log(`[II] Client tool response payload: ${JSON.stringify(toolResponse)}`);
               elevenLabsWs.send(JSON.stringify(toolResponse));
-            } else if (message.client_tool_call?.tool_name === "transfer_to_agent") {
+            } else if (message.client_tool_call?.tool_name === "transfer_call") {
               console.error(`[II] Transfer requested but callSid is missing. Current callSid: ${callSid}`);
             }
             break;
