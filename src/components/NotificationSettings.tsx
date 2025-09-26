@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { Bell, Mail, MessageSquare, Phone, AlertTriangle, Save } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 const NotificationSettings = () => {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(false);
+  const [smsOptIn, setSmsOptIn] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [instantAlerts, setInstantAlerts] = useState(true);
   const [loading, setLoading] = useState(true);
@@ -218,22 +221,50 @@ const NotificationSettings = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-base font-medium">SMS Notifications</span>
+            <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/20">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-base font-medium">SMS Notifications</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Get instant text messages for important calls</p>
                 </div>
-                <p className="text-sm text-muted-foreground">Get instant text messages for important calls</p>
+                <Switch
+                  id="sms-notifications"
+                  checked={smsNotifications}
+                  disabled={!smsOptIn}
+                  onCheckedChange={(checked) => {
+                    setSmsNotifications(checked);
+                    debouncedAutoSave();
+                  }}
+                />
               </div>
-              <Switch
-                id="sms-notifications"
-                checked={smsNotifications}
-                onCheckedChange={(checked) => {
-                  setSmsNotifications(checked);
-                  debouncedAutoSave();
-                }}
-              />
+              
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="sms-opt-in"
+                  checked={smsOptIn}
+                  onCheckedChange={(checked) => {
+                    setSmsOptIn(checked as boolean);
+                    if (!checked) {
+                      setSmsNotifications(false);
+                    }
+                    debouncedAutoSave();
+                  }}
+                />
+                <div className="grid gap-1.5 leading-none">
+                  <Label
+                    htmlFor="sms-opt-in"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I agree to receive text messages about potential customer inquiries
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    By checking this box, you consent to receive SMS notifications about new leads and customer messages. Standard messaging rates may apply. You can opt out at any time.
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center justify-between">
