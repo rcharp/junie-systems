@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, RefreshCw, Database, Minimize2, Maximize2, Send } from 'lucide-react';
+import { Trash2, RefreshCw, Database, Minimize2, Maximize2, Send, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
@@ -182,46 +182,68 @@ export const BusinessDataMonitor: React.FC = () => {
   const actualEndIndex = Math.min(endIndex, requestData.length);
 
   const renderPagination = () => (
-    <Pagination>
-      <PaginationContent>
-        <PaginationItem>
-          <PaginationPrevious 
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              if (currentPage > 1) setCurrentPage(currentPage - 1);
-            }}
-            className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
-          />
-        </PaginationItem>
+    <div className="flex flex-col space-y-3 pt-4 border-t">
+      <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
+        Showing {startIndex + 1}-{actualEndIndex} of {requestData.length}
+      </div>
+      <div className="flex items-center justify-center space-x-1 sm:space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="text-xs px-2 sm:px-3 flex-shrink-0"
+        >
+          <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+          <span className="hidden sm:inline ml-1">Previous</span>
+        </Button>
         
-        {Array.from({ length: totalPages }, (_, i) => (
-          <PaginationItem key={i + 1}>
-            <PaginationLink
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                setCurrentPage(i + 1);
-              }}
-              isActive={currentPage === i + 1}
-            >
-              {i + 1}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
+        {/* Mobile: Show only current page and total */}
+        <div className="flex items-center sm:hidden">
+          <span className="text-xs text-muted-foreground px-2">
+            {currentPage} of {totalPages}
+          </span>
+        </div>
         
-        <PaginationItem>
-          <PaginationNext 
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-            }}
-            className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
-          />
-        </PaginationItem>
-      </PaginationContent>
-    </Pagination>
+        {/* Desktop: Show limited page numbers */}
+        <div className="hidden sm:flex items-center space-x-1">
+          {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
+            let page;
+            if (totalPages <= 3) {
+              page = i + 1;
+            } else if (currentPage === 1) {
+              page = i + 1;
+            } else if (currentPage === totalPages) {
+              page = totalPages - 2 + i;
+            } else {
+              page = currentPage - 1 + i;
+            }
+            return (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCurrentPage(page)}
+                className="w-8 h-8 p-0 text-sm"
+              >
+                {page}
+              </Button>
+            );
+          })}
+        </div>
+        
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className="text-xs px-2 sm:px-3 flex-shrink-0"
+        >
+          <span className="hidden sm:inline mr-1">Next</span>
+          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+        </Button>
+      </div>
+    </div>
   );
 
   return (

@@ -144,32 +144,41 @@ export const UserWebhookList = () => {
 
               {/* Pagination Controls */}
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 border-t space-y-3 sm:space-y-0">
-                  <div className="text-xs sm:text-sm text-muted-foreground">
+                <div className="flex flex-col space-y-3 pt-4 border-t">
+                  <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                     Showing {((currentPage - 1) * usersPerPage) + 1} to {Math.min(currentPage * usersPerPage, totalUsers)} of {totalUsers} users
                   </div>
-                  <div className="flex items-center space-x-2 w-full sm:w-auto justify-center sm:justify-end">
+                  <div className="flex items-center justify-center space-x-1 sm:space-x-2 overflow-x-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={goToPreviousPage}
                       disabled={currentPage === 1}
-                      className="text-xs sm:text-sm"
+                      className="text-xs px-2 sm:px-3 flex-shrink-0"
                     >
-                      <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                      Prev
+                      <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="hidden sm:inline ml-1">Prev</span>
                     </Button>
-                    <div className="flex items-center space-x-1">
-                      {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    
+                    {/* Mobile: Show only current page and total */}
+                    <div className="flex items-center sm:hidden">
+                      <span className="text-xs text-muted-foreground px-2">
+                        {currentPage} of {totalPages}
+                      </span>
+                    </div>
+                    
+                    {/* Desktop: Show page numbers */}
+                    <div className="hidden sm:flex items-center space-x-1">
+                      {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
                         let page;
-                        if (totalPages <= 5) {
+                        if (totalPages <= 3) {
                           page = i + 1;
-                        } else if (currentPage <= 3) {
+                        } else if (currentPage === 1) {
                           page = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          page = totalPages - 4 + i;
+                        } else if (currentPage === totalPages) {
+                          page = totalPages - 2 + i;
                         } else {
-                          page = currentPage - 2 + i;
+                          page = currentPage - 1 + i;
                         }
                         return (
                           <Button
@@ -177,22 +186,23 @@ export const UserWebhookList = () => {
                             variant={currentPage === page ? "default" : "outline"}
                             size="sm"
                             onClick={() => setCurrentPage(page)}
-                            className="w-6 h-6 sm:w-8 sm:h-8 p-0 text-xs sm:text-sm"
+                            className="w-8 h-8 p-0 text-sm"
                           >
                             {page}
                           </Button>
                         );
                       })}
                     </div>
+                    
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
-                      className="text-xs sm:text-sm"
+                      className="text-xs px-2 sm:px-3 flex-shrink-0"
                     >
-                      Next
-                      <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
+                      <span className="hidden sm:inline mr-1">Next</span>
+                      <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </div>

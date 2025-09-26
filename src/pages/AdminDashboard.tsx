@@ -184,7 +184,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-subtle">
+    <div className="min-h-screen bg-gradient-subtle overflow-x-hidden">
       {/* Header Navigation */}
       <header className="bg-white/80 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
@@ -319,7 +319,7 @@ const AdminDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-muted-foreground mb-2">
             Admin Dashboard
