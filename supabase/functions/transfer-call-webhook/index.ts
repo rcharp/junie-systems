@@ -183,6 +183,7 @@ serve(async (req) => {
   const pathname = url.pathname;
 
   console.log(`[Debug] Request pathname: ${pathname}, method: ${req.method}`);
+  console.log(`[Debug] Request headers:`, JSON.stringify(Object.fromEntries(req.headers.entries()), null, 2));
 
   // Handle webhook requests for transfer_call tool
   if ((pathname === "/transfer-call" || pathname === "/transfer-call-webhook/transfer-call") && req.method === "POST") {
@@ -191,6 +192,12 @@ serve(async (req) => {
       
       const body = await req.json();
       console.log("[Webhook] Request body:", JSON.stringify(body, null, 2));
+      
+      // Log all possible locations where call info might be
+      console.log("[Webhook] Body keys:", Object.keys(body));
+      if (body.data) console.log("[Webhook] Data keys:", Object.keys(body.data));
+      if (body.metadata) console.log("[Webhook] Metadata keys:", Object.keys(body.metadata));
+      if (body.conversation) console.log("[Webhook] Conversation keys:", Object.keys(body.conversation));
       
       // Extract parameters from the webhook request
       // ElevenLabs webhook sends different formats, so we need to handle multiple possibilities
