@@ -1,16 +1,62 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Active call tracking
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+// Active call tracking with business context
 const activeCalls = new Map<string, any>();
 
-// Function to handle call transfer request from ElevenLabs
-async function handleCallTransfer(callSid: string, agentNumber = "+12345") {
+// Function to get forwarding number for a business
+async function getForwardingNumber(businessId?: string, userId?: string): Promise<string> {
   try {
+    console.log(`[Transfer] Fetching forwarding number for businessId: ${businessId}, userId: ${userId}`);
+    
+    let query = supabase
+      .from('business_settings')
+      .select('forwarding_number')
+      .limit(1);
+    
+    if (businessId) {
+      query = query.eq('id', businessId);
+    } else if (userId) {
+      query = query.eq('user_id', userId);
+    } else {
+      console.log("[Transfer] No businessId or userId provided, using default number");
+      return "+12345";
+    }
+    
+    const { data, error } = await query.maybeSingle();
+    
+    if (error) {
+      console.error("[Transfer] Error fetching forwarding number:", error);
+      return "+12345";
+    }
+    
+    if (!data || !data.forwarding_number) {
+      console.log("[Transfer] No forwarding number found, using default");
+      return "+12345";
+    }
+    
+    console.log(`[Transfer] Found forwarding number: ${data.forwarding_number}`);
+    return data.forwarding_number;
+  } catch (error) {
+    console.error("[Transfer] Exception fetching forwarding number:", error);
+    return "+12345";
+  }
+}
+// Function to handle call transfer request from ElevenLabs
+async function handleCallTransfer(callSid: string, businessId?: string, userId?: string, providedAgentNumber?: string) {
+  try {
+    // Get the forwarding number - use provided number first, then fetch from database
+    const agentNumber = providedAgentNumber || await getForwardingNumber(businessId, userId);
     console.log(`[Transfer] Initiating transfer for call ${callSid} to ${agentNumber}`);
 
     const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -140,10 +186,15 @@ serve(async (req) => {
         from: body.get('From'),
         to: body.get('To'),
         started: new Date(),
+        // Extract business context from form data if available
+        businessId: body.get('BusinessId') as string || undefined,
+        userId: body.get('UserId') as string || undefined,
       });
       console.log(`[Twilio] Call tracked: ${JSON.stringify({
         from: body.get('From'),
-        to: body.get('To')
+        to: body.get('To'),
+        businessId: body.get('BusinessId'),
+        userId: body.get('UserId')
       })}`);
     }
 
@@ -241,14 +292,16 @@ serve(async (req) => {
             if (message.tool_request?.tool_name === "transfer_to_agent" && callSid) {
               console.log(`[II] Processing transfer_to_agent tool request for call ${callSid}`);
 
-              let agentNumber = "+12345";
-              if (message.tool_request.params?.agent_number) {
-                agentNumber = message.tool_request.params.agent_number;
-              }
-              console.log(`[II] Agent number for transfer: ${agentNumber}`);
+              // Get business context from active call tracking
+              const callContext = activeCalls.get(callSid);
+              const businessId = message.tool_request.params?.business_id || callContext?.businessId;
+              const userId = message.tool_request.params?.user_id || callContext?.userId;
+              const providedAgentNumber = message.tool_request.params?.agent_number || message.tool_request.params?.phone_number;
+              
+              console.log(`[II] Business context - businessId: ${businessId}, userId: ${userId}, providedNumber: ${providedAgentNumber}`);
 
               console.log(`[II] Initiating call transfer from tool request`);
-              const transferResult = await handleCallTransfer(callSid, agentNumber);
+              const transferResult = await handleCallTransfer(callSid, businessId, userId, providedAgentNumber);
               console.log(`[II] Transfer result: ${JSON.stringify(transferResult)}`);
 
               console.log(`[II] Sending tool response to ElevenLabs with event ID: ${message.tool_request.event_id}`);
@@ -272,14 +325,16 @@ serve(async (req) => {
             if (message.client_tool_call?.tool_name === "transfer_to_agent" && callSid) {
               console.log(`[II] Processing transfer_to_agent client tool call for call ${callSid}`);
 
-              let agentNumber = "+12345";
-              if (message.client_tool_call.parameters?.phone_number) {
-                agentNumber = message.client_tool_call.parameters.phone_number;
-              }
-              console.log(`[II] Agent number for transfer: ${agentNumber}`);
+              // Get business context from active call tracking
+              const callContext = activeCalls.get(callSid);
+              const businessId = message.client_tool_call.parameters?.business_id || callContext?.businessId;
+              const userId = message.client_tool_call.parameters?.user_id || callContext?.userId;
+              const providedAgentNumber = message.client_tool_call.parameters?.phone_number || message.client_tool_call.parameters?.agent_number;
+              
+              console.log(`[II] Business context - businessId: ${businessId}, userId: ${userId}, providedNumber: ${providedAgentNumber}`);
 
               console.log(`[II] Initiating call transfer from client tool call`);
-              const transferResult = await handleCallTransfer(callSid, agentNumber);
+              const transferResult = await handleCallTransfer(callSid, businessId, userId, providedAgentNumber);
               console.log(`[II] Transfer result: ${JSON.stringify(transferResult)}`);
 
               console.log(`[II] Sending client tool response to ElevenLabs with tool call ID: ${message.client_tool_call.tool_call_id}`);
@@ -387,7 +442,7 @@ serve(async (req) => {
   if (pathname === "/transfer-call" && req.method === "POST") {
     try {
       const body = await req.json();
-      const { callSid, agentNumber } = body;
+      const { callSid, agentNumber, businessId, userId } = body;
 
       if (!callSid) {
         console.log("[API] Transfer request missing callSid");
@@ -400,8 +455,8 @@ serve(async (req) => {
         );
       }
 
-      console.log(`[API] Manual transfer requested for call ${callSid} to ${agentNumber || "+12345"}`);
-      const result = await handleCallTransfer(callSid, agentNumber || "+12345");
+      console.log(`[API] Manual transfer requested for call ${callSid}, businessId: ${businessId}, userId: ${userId}, agentNumber: ${agentNumber}`);
+      const result = await handleCallTransfer(callSid, businessId, userId, agentNumber);
       console.log(`[API] Manual transfer result: ${JSON.stringify(result)}`);
 
       return new Response(
