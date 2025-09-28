@@ -131,7 +131,7 @@ function SortableItem({ item, onToggle, onDelete, onPriorityChange }: SortableIt
           e.stopPropagation();
           onDelete(item.id);
         }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        className="transition-opacity"
       >
         <Trash2 className="h-4 w-4 text-destructive" />
       </Button>
