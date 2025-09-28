@@ -101,7 +101,7 @@ function SortableItem({ item, onToggle, onDelete, onPriorityChange }: SortableIt
       </label>
       
       <Select value={item.priority} onValueChange={(priority: 'high' | 'medium' | 'low') => onPriorityChange(item.id, priority)}>
-        <SelectTrigger className="w-28 h-8 text-xs">
+        <SelectTrigger className="w-32 h-8 text-xs">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
