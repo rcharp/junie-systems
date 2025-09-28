@@ -156,6 +156,7 @@ export function TodoChecklist() {
       const { data, error } = await supabase
         .from('todos')
         .select('*')
+        .order('completed', { ascending: true })
         .order('display_order', { ascending: true });
 
       if (error) throw error;
@@ -201,18 +202,40 @@ export function TodoChecklist() {
     const todo = todos.find(t => t.id === id);
     if (!todo) return;
 
+    const newCompletedStatus = !todo.completed;
+    let newDisplayOrder = todo.display_order;
+
     try {
+      // If marking as completed, move to bottom
+      if (newCompletedStatus) {
+        const maxOrder = Math.max(...todos.map(t => t.display_order), 0);
+        newDisplayOrder = maxOrder + 1;
+      } else {
+        // If unmarking as completed, move back to appropriate position among uncompleted items
+        const uncompletedTodos = todos.filter(t => !t.completed && t.id !== id);
+        newDisplayOrder = uncompletedTodos.length > 0 ? Math.min(...uncompletedTodos.map(t => t.display_order)) : 1;
+      }
+
       const { error } = await supabase
         .from('todos')
-        .update({ completed: !todo.completed })
+        .update({ 
+          completed: newCompletedStatus,
+          display_order: newDisplayOrder
+        })
         .eq('id', id);
 
       if (error) throw error;
 
       setTodos((items) =>
         items.map((item) =>
-          item.id === id ? { ...item, completed: !item.completed } : item
-        )
+          item.id === id ? { ...item, completed: newCompletedStatus, display_order: newDisplayOrder } : item
+        ).sort((a, b) => {
+          // Sort by completion status first (uncompleted first), then by display_order
+          if (a.completed !== b.completed) {
+            return a.completed ? 1 : -1;
+          }
+          return a.display_order - b.display_order;
+        })
       );
 
       toast({
