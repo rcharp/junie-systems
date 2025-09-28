@@ -13,6 +13,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { Link } from "react-router-dom";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { cleanTranscript } from "@/lib/transcript-utils";
+import { cleanCallerName } from "@/lib/caller-utils";
 
 interface CallData {
   id: string;
@@ -369,7 +370,7 @@ const CallDetails = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Caller Name</span>
-                    <p className="mt-1">{callData.caller_name || 'Unknown Caller'}</p>
+                    <p className="mt-1">{cleanCallerName(callData.caller_name)}</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Phone Number</span>

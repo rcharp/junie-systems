@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Phone, Clock, User, Calendar, Play, Download, MessageSquare, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
+import { cleanCallerName } from "@/lib/caller-utils";
 
 interface CallLog {
   id: string;
@@ -235,7 +236,7 @@ const CallList = () => {
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-muted-foreground">{message.caller_name}</span>
+                        <span className="font-semibold text-muted-foreground">{cleanCallerName(message.caller_name)}</span>
                       </div>
                       <Badge className={getUrgencyColor(message.urgency_level)}>
                         {message.urgency_level}
@@ -323,7 +324,7 @@ const CallList = () => {
                     <div className="flex items-center space-x-3">
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-muted-foreground">{call.caller_name}</span>
+                        <span className="font-semibold text-muted-foreground">{cleanCallerName(call.caller_name)}</span>
                       </div>
                       <Badge variant={call.call_status === 'completed' ? 'default' : 'secondary'}>
                         {call.call_status}
