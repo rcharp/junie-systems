@@ -781,23 +781,6 @@ export const WebhookMonitor = () => {
                 </>
               )}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className="text-xs whitespace-nowrap"
-            >
-              {autoRefresh ? 'Auto ON' : 'Auto OFF'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="text-xs"
-            >
-              <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
           </div>
 
           {/* Desktop Auto-refresh and Refresh buttons */}
