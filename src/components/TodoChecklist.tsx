@@ -72,11 +72,20 @@ function SortableItem({ item, onToggle, onDelete, onPriorityChange }: SortableIt
     }
   };
 
+  const getPriorityBorderClass = (priority: string) => {
+    switch (priority) {
+      case 'high': return 'border-l-4 border-l-red-500';
+      case 'medium': return 'border-l-4 border-l-yellow-500';
+      case 'low': return 'border-l-4 border-l-gray-300';
+      default: return 'border-l-4 border-l-gray-300';
+    }
+  };
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center space-x-3 p-3 border rounded-lg bg-card transition-colors ${
+      className={`group flex items-center space-x-3 p-3 border rounded-lg bg-card transition-colors ${getPriorityBorderClass(item.priority)} ${
         item.completed ? 'opacity-60 bg-muted/50' : 'hover:bg-muted/50'
       }`}
     >
