@@ -44,9 +44,10 @@ interface SortableItemProps {
   item: TodoItem;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  onPriorityChange: (id: string, priority: 'high' | 'medium' | 'low') => void;
 }
 
-function SortableItem({ item, onToggle, onDelete }: SortableItemProps) {
+function SortableItem({ item, onToggle, onDelete, onPriorityChange }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -99,9 +100,16 @@ function SortableItem({ item, onToggle, onDelete }: SortableItemProps) {
         {item.text}
       </label>
       
-      <Badge variant={getPriorityColor(item.priority)} className="text-xs">
-        {item.priority}
-      </Badge>
+      <Select value={item.priority} onValueChange={(priority: 'high' | 'medium' | 'low') => onPriorityChange(item.id, priority)}>
+        <SelectTrigger className="w-20 h-6 text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="high">High</SelectItem>
+          <SelectItem value="medium">Medium</SelectItem>
+          <SelectItem value="low">Low</SelectItem>
+        </SelectContent>
+      </Select>
       
       {item.completed && (
         <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -299,6 +307,35 @@ export function TodoChecklist() {
     }
   };
 
+  const updateTodoPriority = async (id: string, priority: 'high' | 'medium' | 'low') => {
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ priority })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setTodos((items) =>
+        items.map((item) =>
+          item.id === id ? { ...item, priority } : item
+        )
+      );
+
+      toast({
+        title: "Priority updated",
+        description: `Todo priority changed to ${priority}`,
+      });
+    } catch (error: any) {
+      console.error('Error updating todo priority:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update todo priority",
+        variant: "destructive",
+      });
+    }
+  };
+
   const completedCount = todos.filter(todo => todo.completed).length;
   const totalCount = todos.length;
 
@@ -365,7 +402,7 @@ export function TodoChecklist() {
             <SortableContext items={todos} strategy={verticalListSortingStrategy}>
               <div className="space-y-2">
                 {todos.map((todo) => (
-                  <SortableItem key={todo.id} item={todo} onToggle={toggleTodo} onDelete={deleteTodo} />
+                  <SortableItem key={todo.id} item={todo} onToggle={toggleTodo} onDelete={deleteTodo} onPriorityChange={updateTodoPriority} />
                 ))}
               </div>
             </SortableContext>
