@@ -71,7 +71,7 @@ const Settings = () => {
   const [forwardingNumber, setForwardingNumber] = useState("");
   const [urgentKeywords, setUrgentKeywords] = useState("");
   const [autoForward, setAutoForward] = useState(false);
-  const [recordCalls, setRecordCalls] = useState(true);
+  
   
 
   // AI Settings State
@@ -199,7 +199,7 @@ const Settings = () => {
         setForwardingNumber(data.forwarding_number || "");
         setUrgentKeywords(data.urgent_keywords || "");
         setAutoForward(data.auto_forward || false);
-        setRecordCalls(data.record_calls !== false);
+        
         
         setAiPersonality(data.ai_personality || "professional");
         setCustomGreeting(data.custom_greeting || "");
@@ -695,7 +695,7 @@ const Settings = () => {
           forwarding_number: forwardingNumber,
           urgent_keywords: urgentKeywords,
           auto_forward: autoForward,
-          record_calls: recordCalls,
+          
           
         };
       } else if (section === "AI Assistant") {
@@ -1564,21 +1564,6 @@ const Settings = () => {
                       />
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Record All Calls</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Keep recordings of all answered calls
-                        </p>
-                      </div>
-                      <Switch
-                        checked={recordCalls}
-                        onCheckedChange={(checked) => {
-                          setRecordCalls(checked);
-                          debouncedAutoSave("Calls");
-                        }}
-                      />
-                    </div>
                   </div>
 
                   <div className="flex items-center justify-between">
