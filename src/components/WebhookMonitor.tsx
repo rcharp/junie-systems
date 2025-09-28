@@ -822,18 +822,63 @@ export const WebhookMonitor = () => {
       </CardHeader>
       {!isMinimized && (
       <CardContent>
-        <div className="space-y-4 min-h-[400px] max-h-[1200px] overflow-y-auto">{/* Minimum height prevents flashing */}
-          {/* Top Pagination and Info */}
-          {webhookData.length > 0 && (
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1}-{actualEndIndex} of {webhookData.length}
-              </div>
-              <div className="flex-shrink-0">
-                {renderPagination()}
-              </div>
+        {/* Top Pagination and Info */}
+        {webhookData.length > 0 && (
+          <div className="flex items-center justify-between mb-4 pb-4 border-b">
+            <div className="text-sm text-muted-foreground">
+              Showing {startIndex + 1}-{actualEndIndex} of {webhookData.length}
             </div>
-          )}
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="text-xs px-2 sm:px-3"
+              >
+                Previous
+              </Button>
+              
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
+                  let page;
+                  if (totalPages <= 3) {
+                    page = i + 1;
+                  } else if (currentPage === 1) {
+                    page = i + 1;
+                  } else if (currentPage === totalPages) {
+                    page = totalPages - 2 + i;
+                  } else {
+                    page = currentPage - 1 + i;
+                  }
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(page)}
+                      className="w-8 h-8 p-0 text-sm"
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="text-xs px-2 sm:px-3"
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        <div className="space-y-4">{/* Removed min-h and max-h with overflow */}
           
           {currentData.map((data) => {
             const isItemExpanded = expandedItems[data.id] || false;
@@ -1079,8 +1124,57 @@ export const WebhookMonitor = () => {
           
           {/* Bottom Pagination Controls */}
           {webhookData.length > 0 && (
-            <div className="flex justify-center mt-6">
-              {renderPagination()}
+            <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1}-{actualEndIndex} of {webhookData.length}
+              </div>
+              <div className="flex items-center space-x-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  disabled={currentPage === 1}
+                  className="text-xs px-2 sm:px-3"
+                >
+                  Previous
+                </Button>
+                
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
+                    let page;
+                    if (totalPages <= 3) {
+                      page = i + 1;
+                    } else if (currentPage === 1) {
+                      page = i + 1;
+                    } else if (currentPage === totalPages) {
+                      page = totalPages - 2 + i;
+                    } else {
+                      page = currentPage - 1 + i;
+                    }
+                    return (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                        className="w-8 h-8 p-0 text-sm"
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                  disabled={currentPage === totalPages}
+                  className="text-xs px-2 sm:px-3"
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           )}
           
