@@ -718,7 +718,7 @@ export const WebhookMonitor = () => {
               className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 text-xs"
             >
               <Activity className="h-3 w-3 mr-1" />
-              Test Latest Call
+              Manual Data Call
             </Button>
             <Button
               variant="outline"
@@ -752,8 +752,7 @@ export const WebhookMonitor = () => {
               Real-time monitoring of completed call summaries and transcripts
             </CardDescription>
           </div>
-          {/* Mobile buttons */}
-          <div className="flex md:hidden items-center gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
@@ -762,7 +761,7 @@ export const WebhookMonitor = () => {
               className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
             >
               <Activity className="h-4 w-4 mr-1" />
-              Test Latest Call
+              Manual Data Call
             </Button>
             <Button
               variant="outline"
@@ -801,36 +800,8 @@ export const WebhookMonitor = () => {
             </Button>
           </div>
 
-          {/* Desktop buttons */}
-          <div className="hidden md:flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTestPostCallData}
-              disabled={loading}
-              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-            >
-              <Activity className="h-4 w-4 mr-1" />
-              Test Latest Call
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="flex items-center gap-2"
-            >
-              {isMinimized ? (
-                <>
-                  <Maximize2 className="h-4 w-4" />
-                  Expand
-                </>
-              ) : (
-                <>
-                  <Minimize2 className="h-4 w-4" />
-                  Minimize
-                </>
-              )}
-            </Button>
+          {/* Desktop Auto-refresh and Refresh buttons */}
+          <div className="hidden md:flex">
             <Button
               variant="outline"
               size="sm"
