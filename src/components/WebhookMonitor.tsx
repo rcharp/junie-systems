@@ -752,7 +752,7 @@ export const WebhookMonitor = () => {
               Real-time monitoring of completed call summaries and transcripts
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <Button
               variant="outline"
               size="sm"
@@ -781,10 +781,6 @@ export const WebhookMonitor = () => {
                 </>
               )}
             </Button>
-          </div>
-
-          {/* Desktop Auto-refresh and Refresh buttons */}
-          <div className="hidden md:flex">
             <Button
               variant="outline"
               size="sm"
