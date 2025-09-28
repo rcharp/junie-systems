@@ -394,33 +394,7 @@ const AdminDashboard = () => {
             {/* Google Calendar Availability Testing */}
             <Card>
               <CardHeader className="pb-4">
-                {/* Mobile Layout */}
-                <div className="md:hidden space-y-3">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Clock className="h-4 w-4" />
-                    Google Calendar Availability Test
-                  </CardTitle>
-                  <CardDescription className="text-sm">
-                    Test the Google Calendar availability endpoint to see current results
-                  </CardDescription>
-                  <Button 
-                    onClick={testGoogleCalendarAvailability}
-                    disabled={calendarLoading}
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                  >
-                    {calendarLoading ? (
-                      <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                    )}
-                    Test Availability
-                  </Button>
-                </div>
-
-                {/* Desktop Layout */}
-                <div className="hidden md:flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <Clock className="h-5 w-5" />
@@ -435,6 +409,7 @@ const AdminDashboard = () => {
                     disabled={calendarLoading}
                     size="sm"
                     variant="outline"
+                    className="md:w-auto w-full"
                   >
                     {calendarLoading ? (
                       <RefreshCw className="h-4 w-4 animate-spin mr-2" />
