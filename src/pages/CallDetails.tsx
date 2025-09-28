@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { formatInTimeZone } from "date-fns-tz";
 import { Link } from "react-router-dom";
 import { handleRobustSignOut } from "@/lib/auth-utils";
+import { cleanTranscript } from "@/lib/transcript-utils";
 
 interface CallData {
   id: string;
@@ -495,7 +496,7 @@ const CallDetails = () => {
               </CardHeader>
               <CardContent>
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-96 overflow-y-auto">
-                  <p className="whitespace-pre-wrap text-sm">{callData.transcript}</p>
+                  <p className="whitespace-pre-wrap text-sm">{cleanTranscript(callData.transcript)}</p>
                 </div>
               </CardContent>
             </Card>
