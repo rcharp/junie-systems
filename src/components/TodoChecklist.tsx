@@ -371,10 +371,10 @@ export function TodoChecklist() {
               value={newTodoText}
               onChange={(e) => setNewTodoText(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addTodo()}
-              className="flex-1"
+              className="flex-1 max-w-md"
             />
             <Select value={newTodoPriority} onValueChange={(value: 'high' | 'medium' | 'low') => setNewTodoPriority(value)}>
-              <SelectTrigger className="w-32">
+              <SelectTrigger className="w-36">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
