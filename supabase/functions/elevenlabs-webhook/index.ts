@@ -742,6 +742,11 @@ async function parseAppointmentTime(
     console.log('Found connected calendar user:', calendarUser.user_id);
 
     try {
+      const requestPayload = {
+        user_id: calendarUser.user_id
+      };
+      console.log('Calling availability function with payload:', requestPayload);
+      
       // Call the availability function
       const availabilityResponse = await fetch(`${supabaseUrl}/functions/v1/google-calendar-availability`, {
         method: 'POST',
@@ -749,9 +754,7 @@ async function parseAppointmentTime(
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
         },
-        body: JSON.stringify({
-          user_id: calendarUser.user_id
-        })
+        body: JSON.stringify(requestPayload)
       });
 
       if (availabilityResponse.ok) {
