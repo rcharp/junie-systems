@@ -762,11 +762,13 @@ async function parseAppointmentTime(
         console.log('Availability function response:', availabilityData);
         console.log('Availability response received');
         
-        if (availabilityData.data?.available && availabilityData.data.slots?.length > 0) {
-          const firstSlot = availabilityData.data.slots[0];
+        if (availabilityData.available && availabilityData.slots?.length > 0) {
+          const firstSlot = availabilityData.slots[0];
           console.log('✅ Using next available slot:', firstSlot.startTime);
           console.log('Slot details:', firstSlot.humanReadable);
           return firstSlot.startTime;
+        } else {
+          console.log('❌ No available slots found in response');
         }
       }
     } catch (error) {
