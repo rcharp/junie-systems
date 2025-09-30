@@ -388,14 +388,37 @@ async function processWebhookInBackground(
       });
     }
 
-    // Format appointment details with Claude
+    // Format appointment details 
     let formattedAppointmentDetails = null;
     let enhancedCallSummary = null;
 
-    if (parsedAppointmentDateTime && anthropicApiKey) {
-      console.log('=== FORMATTING APPOINTMENT WITH CLAUDE ===');
-      
-      const claudeFormatPrompt = `Format this appointment information for a business call log:
+    if (parsedAppointmentDateTime) {
+      // For manual test calls, use simple formatting to avoid slow Claude API calls
+      if (isManualCall) {
+        console.log('Manual test call - using quick formatting');
+        try {
+          const date = new Date(parsedAppointmentDateTime);
+          const options: Intl.DateTimeFormatOptions = {
+            weekday: 'long',
+            month: 'long', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+          };
+          formattedAppointmentDetails = date.toLocaleDateString('en-US', options);
+          enhancedCallSummary = `Scheduled ${analysisData.business_name?.value || 'test'} appointment for ${analysisData.customer_name?.value || 'customer'}`;
+          console.log('Quick format result:', formattedAppointmentDetails);
+        } catch (dateErr) {
+          console.error('Error formatting date:', dateErr);
+          formattedAppointmentDetails = 'Test appointment scheduled';
+          enhancedCallSummary = 'Test appointment scheduled';
+        }
+      } else if (anthropicApiKey) {
+        // For real calls, use Claude for better formatting
+        console.log('=== FORMATTING APPOINTMENT WITH CLAUDE ===');
+        
+        const claudeFormatPrompt = `Format this appointment information for a business call log:
 
 Date/Time: ${parsedAppointmentDateTime}
 Customer: ${analysisData.customer_name?.value || 'Unknown'}
@@ -408,39 +431,40 @@ Please provide:
 
 Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
 
-      try {
-        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${anthropicApiKey}`,
-            'Content-Type': 'application/json',
-            'x-api-key': anthropicApiKey,
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1000,
-            messages: [{ role: 'user', content: claudeFormatPrompt }]
-          })
-        });
+        try {
+          const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${anthropicApiKey}`,
+              'Content-Type': 'application/json',
+              'x-api-key': anthropicApiKey,
+              'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-20250514',
+              max_tokens: 1000,
+              messages: [{ role: 'user', content: claudeFormatPrompt }]
+            })
+          });
 
-        if (claudeResponse.ok) {
-          const claudeData = await claudeResponse.json();
-          const responseText = claudeData.content[0].text;
-          console.log('Claude formatting response:', responseText);
-          
-          try {
-            const cleanText = responseText.replace(/```json\n?|\n?```/g, '').trim();
-            const parsed = JSON.parse(cleanText);
-            formattedAppointmentDetails = parsed.formattedDate;
-            enhancedCallSummary = parsed.callSummary;
-            console.log('Enhanced call summary:', enhancedCallSummary);
-          } catch (parseErr) {
-            console.error('Failed to parse Claude formatting response:', parseErr);
+          if (claudeResponse.ok) {
+            const claudeData = await claudeResponse.json();
+            const responseText = claudeData.content[0].text;
+            console.log('Claude formatting response:', responseText);
+            
+            try {
+              const cleanText = responseText.replace(/```json\n?|\n?```/g, '').trim();
+              const parsed = JSON.parse(cleanText);
+              formattedAppointmentDetails = parsed.formattedDate;
+              enhancedCallSummary = parsed.callSummary;
+              console.log('Enhanced call summary:', enhancedCallSummary);
+            } catch (parseErr) {
+              console.error('Failed to parse Claude formatting response:', parseErr);
+            }
           }
+        } catch (claudeErr) {
+          console.error('Error calling Claude for formatting:', claudeErr);
         }
-      } catch (claudeErr) {
-        console.error('Error calling Claude for formatting:', claudeErr);
       }
     }
 
