@@ -23,14 +23,18 @@ Deno.serve(async (req) => {
 
     const { 
       userId, 
-      startTime, 
-      callerName, 
-      phoneNumber, 
-      email, 
+      startTime,
+      appointmentDateTime,
+      customerName,
+      customerEmail,
+      customerPhone,
       serviceType, 
       serviceAddress,
       notes 
     } = await req.json()
+
+    // Use appointmentDateTime if provided, fallback to startTime for backward compatibility
+    const dateTimeToUse = appointmentDateTime || startTime
 
     console.log('Booking calendar event for user:', userId)
 
@@ -48,10 +52,31 @@ Deno.serve(async (req) => {
 
     // Calculate end time based on appointment duration from calendar settings
     const appointmentDuration = calendarSettings.appointment_duration || 60
-    const startDateTime = new Date(startTime)
+    
+    console.log('Date input received:', dateTimeToUse)
+    
+    // Validate the date input
+    if (!dateTimeToUse) {
+      throw new Error('No appointment date/time provided')
+    }
+    
+    const startDateTime = new Date(dateTimeToUse)
+    
+    // Check if the date is valid
+    if (isNaN(startDateTime.getTime())) {
+      console.error('Invalid date provided:', dateTimeToUse)
+      throw new Error(`Invalid date format: ${dateTimeToUse}`)
+    }
+    
     const endDateTime = new Date(startDateTime)
     endDateTime.setMinutes(endDateTime.getMinutes() + appointmentDuration)
     const endTimeISO = endDateTime.toISOString()
+    
+    console.log('Calculated appointment times:', {
+      start: startDateTime.toISOString(),
+      end: endTimeISO,
+      duration: appointmentDuration
+    })
 
     // Check if we have encrypted tokens before proceeding
     if (!calendarSettings.encrypted_access_token && !calendarSettings.encrypted_refresh_token) {
@@ -285,21 +310,21 @@ Deno.serve(async (req) => {
 
     // Create the calendar event with a concise, professional title
     const event = {
-      summary: `${callerName} - ${conciseServiceType}`,
+      summary: `${customerName} - ${conciseServiceType}`,
       location: serviceAddress || '',
       description: `
 Appointment Details:
 - Service: ${serviceType}
-- Customer: ${callerName}
-- Phone: ${phoneNumber}
-- Email: ${email || 'Not provided'}
+- Customer: ${customerName}
+- Phone: ${customerPhone}
+- Email: ${customerEmail || 'Not provided'}
 - Service Location: ${serviceAddress || 'Not provided'}
 - Notes: ${notes || 'None'}
 
 Business Contact: ${businessSettings?.business_phone || 'Not provided'}
       `.trim(),
       start: {
-        dateTime: startTime,
+        dateTime: startDateTime.toISOString(),
         timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
       },
       end: {
@@ -308,8 +333,8 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
       },
       attendees: [
         {
-          email: email,
-          displayName: callerName,
+          email: customerEmail,
+          displayName: customerName,
         }
       ].filter(attendee => attendee.email), // Only include if email is provided
       reminders: {
@@ -366,13 +391,13 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
       .from('appointments')
       .insert({
         user_id: userId,
-        caller_name: callerName,
-        phone_number: phoneNumber,
-        email: email,
+        caller_name: customerName,
+        phone_number: customerPhone,
+        email: customerEmail,
         service_type: serviceType,
         notes: notes,
-        preferred_date: new Date(startTime).toISOString().split('T')[0],
-        preferred_time: new Date(startTime).toTimeString().split(' ')[0],
+        preferred_date: new Date(dateTimeToUse).toISOString().split('T')[0],
+        preferred_time: new Date(dateTimeToUse).toTimeString().split(' ')[0],
         calendar_event_id: eventData.id,
         status: 'scheduled',
       })
