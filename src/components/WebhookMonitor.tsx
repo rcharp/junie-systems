@@ -550,12 +550,16 @@ export const WebhookMonitor = () => {
 
   const handleDeleteSingle = async (callLogId: string) => {
     try {
+      // Optimistically update UI by removing the item immediately
+      setWebhookData(prevData => prevData.filter(item => item.id !== callLogId));
+      
       // Temporarily disable auto-refresh during deletion to prevent interference
       const wasAutoRefreshOn = autoRefresh;
       if (autoRefresh) {
         setAutoRefresh(false);
       }
       
+      // Perform deletion in background
       const { error, count } = await supabase
         .from('call_logs')
         .delete({ count: 'exact' })
@@ -563,6 +567,8 @@ export const WebhookMonitor = () => {
 
       if (error) {
         console.error('Delete error:', error);
+        // Restore the item if deletion failed
+        await fetchWebhookData();
         throw error;
       }
 
@@ -582,9 +588,6 @@ export const WebhookMonitor = () => {
 
     } catch (error) {
       console.error('Error deleting call log:', error);
-      
-      // If deletion failed, we should restore the item
-      await fetchWebhookData();
       
       // Show detailed error information
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

@@ -24,7 +24,6 @@ Deno.serve(async (req) => {
     const { 
       userId, 
       startTime, 
-      endTime, 
       callerName, 
       phoneNumber, 
       email, 
@@ -46,6 +45,13 @@ Deno.serve(async (req) => {
     if (settingsError || !calendarSettings) {
       throw new Error('Google Calendar not connected for this user')
     }
+
+    // Calculate end time based on appointment duration from calendar settings
+    const appointmentDuration = calendarSettings.appointment_duration || 60
+    const startDateTime = new Date(startTime)
+    const endDateTime = new Date(startDateTime)
+    endDateTime.setMinutes(endDateTime.getMinutes() + appointmentDuration)
+    const endTimeISO = endDateTime.toISOString()
 
     // Check if we have encrypted tokens before proceeding
     if (!calendarSettings.encrypted_access_token && !calendarSettings.encrypted_refresh_token) {
@@ -297,7 +303,7 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
         timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
       },
       end: {
-        dateTime: endTime,
+        dateTime: endTimeISO,
         timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
       },
       attendees: [

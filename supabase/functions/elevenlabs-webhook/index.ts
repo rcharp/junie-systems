@@ -587,7 +587,6 @@ serve(async (req) => {
             body: {
               userId: targetUserId,
               startTime: parsedAppointmentDateTime,
-              endTime: parsedAppointmentDateTime, // The function will add duration
               callerName: customerName,
               phoneNumber: customerPhone,
               email: customerEmail,
@@ -917,6 +916,7 @@ async function parseAppointmentTime(appointmentTimeString: string, userTimezone:
         const nextSlot = availabilityResult.data.availability[0];
         console.log('✅ Using next available slot:', nextSlot.startTime);
         console.log('Slot details:', nextSlot.humanReadable);
+        // Use the startTime from the slot directly since it's already in UTC
         return nextSlot.startTime;
       } else {
         console.log('❌ No available calendar slots found');
