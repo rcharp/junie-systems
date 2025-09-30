@@ -538,11 +538,22 @@ serve(async (req) => {
     console.log('isAppointmentScheduled:', isAppointmentScheduled);
     console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
 
+    // Check if this is a manual test call based on the appointment time value
+    let isManualTestCall = false;
+    if (webhookData.data && webhookData.data.analysis && webhookData.data.analysis.data_collection_results) {
+      const results = webhookData.data.analysis.data_collection_results;
+      if (results.appointment_time && results.appointment_time.value === "DYNAMIC_NEXT_AVAILABLE_SLOT") {
+        isManualTestCall = true;
+        console.log('🧪 Detected manual test call - calendar booking will be enabled');
+      }
+    }
+
     // Automatic calendar booking logic - works for both manual test calls and real webhooks
     // Only requires: appointment scheduled, valid date/time, and either business user OR manual test scenario
     const shouldCreateCalendarEvent = isAppointmentScheduled && parsedAppointmentDateTime && (
       (businessUserId && appointmentBookingEnabled) || // Real business user with booking enabled
-      (!businessUserId) // Manual test call scenario
+      (!businessUserId) || // Manual test call scenario (no business user)
+      isManualTestCall // Manual test call with dynamic slot (regardless of appointmentBookingEnabled)
     );
 
     if (shouldCreateCalendarEvent) {
