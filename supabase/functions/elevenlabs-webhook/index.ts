@@ -750,14 +750,13 @@ async function parseAppointmentTime(
           'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
         },
         body: JSON.stringify({
-          userId: calendarUser.user_id
+          user_id: calendarUser.user_id
         })
       });
 
-      console.log('Availability function response:', await availabilityResponse.json());
-
       if (availabilityResponse.ok) {
         const availabilityData = await availabilityResponse.json();
+        console.log('Availability function response:', availabilityData);
         console.log('Availability response received');
         
         if (availabilityData.data?.available && availabilityData.data.slots?.length > 0) {
