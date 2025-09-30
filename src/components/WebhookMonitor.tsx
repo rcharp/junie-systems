@@ -43,6 +43,7 @@ export const WebhookMonitor = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
+  const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -449,7 +450,10 @@ export const WebhookMonitor = () => {
         };
       });
 
-      setWebhookData(transformedData);
+      // Filter out items that are currently being deleted
+      const finalData = transformedData.filter(item => !deletingItems.has(item.id));
+
+      setWebhookData(finalData);
     } catch (error) {
       console.error('Error fetching webhook data:', error);
       toast({
@@ -550,14 +554,11 @@ export const WebhookMonitor = () => {
 
   const handleDeleteSingle = async (callLogId: string) => {
     try {
+      // Add to deleting items set to prevent it from reappearing
+      setDeletingItems(prev => new Set(prev).add(callLogId));
+      
       // Optimistically update UI by removing the item immediately
       setWebhookData(prevData => prevData.filter(item => item.id !== callLogId));
-      
-      // Temporarily disable auto-refresh during deletion to prevent interference
-      const wasAutoRefreshOn = autoRefresh;
-      if (autoRefresh) {
-        setAutoRefresh(false);
-      }
       
       // Perform deletion in background
       const { error, count } = await supabase
@@ -567,7 +568,12 @@ export const WebhookMonitor = () => {
 
       if (error) {
         console.error('Delete error:', error);
-        // Restore the item if deletion failed
+        // Remove from deleting set and restore the item if deletion failed
+        setDeletingItems(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(callLogId);
+          return newSet;
+        });
         await fetchWebhookData();
         throw error;
       }
@@ -579,12 +585,12 @@ export const WebhookMonitor = () => {
         description: `Call log has been permanently deleted (${count} row${count !== 1 ? 's' : ''} affected)`
       });
 
-      // Re-enable auto-refresh after a delay to prevent immediate re-fetch
-      setTimeout(() => {
-        if (wasAutoRefreshOn) {
-          setAutoRefresh(true);
-        }
-      }, 3000);
+      // Remove from deleting set after successful deletion
+      setDeletingItems(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(callLogId);
+        return newSet;
+      });
 
     } catch (error) {
       console.error('Error deleting call log:', error);
@@ -631,13 +637,20 @@ export const WebhookMonitor = () => {
           console.log('Real-time update:', payload);
           
           if (payload.eventType === 'INSERT') {
-            // Refresh data when new calls come in
-            fetchWebhookData();
+            // Only refresh if we're not in the middle of deleting items
+            if (deletingItems.size === 0) {
+              fetchWebhookData();
+            }
           } else if (payload.eventType === 'DELETE') {
-            // Remove deleted item from local state
+            // Remove deleted item from local state and deleting set
             const deletedId = payload.old?.id;
             if (deletedId) {
               setWebhookData(prev => prev.filter(item => item.id !== deletedId));
+              setDeletingItems(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(deletedId);
+                return newSet;
+              });
             }
           }
         }
