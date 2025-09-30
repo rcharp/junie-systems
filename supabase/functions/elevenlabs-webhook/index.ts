@@ -626,13 +626,16 @@ serve(async (req) => {
 
 Transcript excerpt: "${fullTranscript.substring(0, 500)}..."
 Raw appointment time: "${appointmentDetails || 'N/A'}"
-Parsed appointment datetime: "${parsedAppointmentDateTime}"
+Parsed appointment datetime (UTC): "${parsedAppointmentDateTime}"
+User timezone: "${userTimezone || 'America/New_York'}"
 Service address: "${serviceAddress || 'N/A'}"
 Customer name: "${customerName}"
 Service requested: "${serviceRequested}"
 
+IMPORTANT: The parsed appointment datetime is in UTC. Convert it to the user's timezone (${userTimezone || 'America/New_York'}) for display.
+
 Please respond with a JSON object containing:
-- formattedDate: A clean, readable date/time like "Friday, September 26 at 10:00 AM"
+- formattedDate: A clean, readable date/time converted to ${userTimezone || 'America/New_York'} timezone (e.g., "Friday, September 26 at 10:00 AM")
 - callSummary: A concise 1-2 sentence summary of what was scheduled
 
 Example:
