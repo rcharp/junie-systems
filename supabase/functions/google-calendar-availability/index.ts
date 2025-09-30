@@ -427,18 +427,23 @@ Deno.serve(async (req) => {
 
 Business timezone: ${userTimezone}
 
-Convert these UTC business hours back to local ${userTimezone} time for display.
+I have UTC time slots that represent business hours in ${userTimezone}. I need you to format them for display while keeping the UTC times unchanged.
 
-Input slots (UTC times that need to be converted to local time):
+Input slots (UTC times that are correctly converted for the business timezone):
 ${JSON.stringify(availableSlots)}
 
 RULES:
-1. Convert each UTC time to ${userTimezone} local time
-2. Return times as ISO strings representing the LOCAL time (add timezone offset back)
-3. If input is "2025-09-26T13:00:00.000Z" (1 PM UTC) and timezone is America/New_York, convert to 9:00 AM local, return "2025-09-26T09:00:00.000Z"
+1. Keep startTime and endTime exactly as provided (do NOT convert the UTC times)
+2. The UTC times are already correct - they represent the business hours converted to UTC
+3. For humanReadable, convert the UTC times to ${userTimezone} local time for display only
 4. Set timeOfDay based on LOCAL time: "morning" (6am-12pm), "afternoon" (12pm-6pm), "evening" (6pm+)
 5. Format humanReadable: "Weekday, Month Date, Year H:MM am/pm-H:MM am/pm" showing the LOCAL time
-6. Return ONLY valid JSON array, no markdown or explanation`;
+6. Return ONLY valid JSON array, no markdown or explanation
+
+Example: If input is "2025-09-30T13:30:00.000Z" for America/New_York:
+- Keep startTime: "2025-09-30T13:30:00.000Z" (do not change)
+- Set humanReadable: "Tuesday, September 30, 2025 9:30 am-3:15 pm" (showing local time)
+- Set timeOfDay: "morning" (based on 9:30 am local time)`;
 
           console.log('Calling Claude with prompt for timezone conversion...')
           
