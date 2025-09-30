@@ -555,79 +555,34 @@ serve(async (req) => {
     console.log('isAppointmentScheduled:', isAppointmentScheduled);
     console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
 
-    // Check if this is a manual test call based on the appointment time value
-    let isManualTestCall = false;
-    if (webhookData.data && webhookData.data.analysis && webhookData.data.analysis.data_collection_results) {
-      const results = webhookData.data.analysis.data_collection_results;
-      if (results.appointment_time && results.appointment_time.value === "DYNAMIC_NEXT_AVAILABLE_SLOT") {
-        isManualTestCall = true;
-        console.log('🧪 Detected manual test call - calendar booking will be enabled');
-      }
+    // Determine if this is a manual test call
+    const isManualTestCall = webhookData.data?.analysis?.data_collection_results?.appointment_time?.value === "DYNAMIC_NEXT_AVAILABLE_SLOT";
+    
+    if (isManualTestCall) {
+      console.log('🧪 Detected manual test call - calendar booking will be enabled');
     }
 
-    // Automatic calendar booking logic - works for both manual test calls and real webhooks
-    // Only requires: appointment scheduled, valid date/time, and either business user OR manual test scenario
-    const shouldCreateCalendarEvent = isAppointmentScheduled && parsedAppointmentDateTime && (
-      (businessUserId && appointmentBookingEnabled) || // Real business user with booking enabled
-      (!businessUserId) || // Manual test call scenario (no business user)
-      isManualTestCall // Manual test call with dynamic slot (regardless of appointmentBookingEnabled)
-    );
+    // Use unified calendar booking logic
+    const calendarBookingResult = await handleCalendarBooking({
+      isManualCall: isManualTestCall,
+      isAppointmentScheduled,
+      parsedAppointmentDateTime,
+      businessUserId,
+      appointmentBookingEnabled,
+      customerName,
+      customerPhone,
+      customerEmail,
+      serviceAddress,
+      serviceRequested,
+      supabase
+    });
 
-    if (shouldCreateCalendarEvent) {
-      console.log('✅ Creating automatic calendar event...');
-      
-      try {
-        // For manual test calls, check if there's any connected Google Calendar
-        let targetUserId = businessUserId;
-        
-        if (!businessUserId) {
-          // For manual test calls, find a user with Google Calendar connected
-          console.log('Manual test call - looking for connected Google Calendar user...');
-          const { data: calendarUsers, error: calendarError } = await supabase
-            .from('google_calendar_settings')
-            .select('user_id')
-            .eq('is_connected', true)
-            .limit(1);
-          
-          if (calendarError) {
-            console.error('Error checking calendar connections:', calendarError);
-          } else if (calendarUsers && calendarUsers.length > 0) {
-            targetUserId = calendarUsers[0].user_id;
-            console.log('Found connected calendar user:', targetUserId);
-          } else {
-            console.log('No connected Google Calendar found for manual test call');
-          }
-        }
-
-        if (targetUserId) {
-          const bookingResult = await supabase.functions.invoke('google-calendar-book', {
-            body: {
-              userId: targetUserId,
-              startTime: parsedAppointmentDateTime,
-              callerName: customerName,
-              phoneNumber: customerPhone,
-              email: customerEmail,
-              serviceAddress: serviceAddress,
-              serviceType: serviceRequested,
-              notes: `Service requested: ${serviceRequested}`
-            }
-          });
-
-          if (bookingResult.error) {
-            console.error('❌ Automatic calendar booking failed:', bookingResult.error);
-          } else {
-            console.log('✅ Automatic calendar appointment created successfully:', bookingResult.data);
-          }
-        }
-      } catch (bookingError) {
-        console.error('❌ Error during automatic calendar booking:', bookingError);
-      }
+    if (calendarBookingResult.error) {
+      console.error('❌ Calendar booking failed:', calendarBookingResult.error);
+    } else if (calendarBookingResult.success) {
+      console.log('✅ Calendar booking completed successfully:', calendarBookingResult.data);
     } else {
-      console.log('❌ Automatic calendar booking conditions not met:');
-      console.log('  - isAppointmentScheduled:', isAppointmentScheduled);
-      console.log('  - parsedAppointmentDateTime:', parsedAppointmentDateTime ? 'present' : 'null/empty');
-      console.log('  - businessUserId:', businessUserId ? 'present' : 'missing');
-      console.log('  - appointmentBookingEnabled:', appointmentBookingEnabled);
+      console.log('ℹ️ Calendar booking conditions not met');
     }
 
     // Use Claude to generate a clean appointment summary and formatted date
@@ -888,6 +843,111 @@ function getNextWeekday(date: Date, targetDay: number): Date {
   return result;
 }
 
+// Unified calendar booking function that handles both manual and real calls
+async function handleCalendarBooking({
+  isManualCall,
+  isAppointmentScheduled,
+  parsedAppointmentDateTime,
+  businessUserId,
+  appointmentBookingEnabled,
+  customerName,
+  customerPhone,
+  customerEmail,
+  serviceAddress,
+  serviceRequested,
+  supabase
+}: {
+  isManualCall: boolean;
+  isAppointmentScheduled: boolean;
+  parsedAppointmentDateTime: string | null;
+  businessUserId: string | null;
+  appointmentBookingEnabled: boolean;
+  customerName: string;
+  customerPhone: string;
+  customerEmail: string;
+  serviceAddress: string;
+  serviceRequested: string;
+  supabase: any;
+}) {
+  console.log('=== CHECKING AUTOMATIC CALENDAR BOOKING ===');
+  console.log('isManualCall:', isManualCall);
+  console.log('businessUserId:', businessUserId);
+  console.log('appointmentBookingEnabled:', appointmentBookingEnabled);
+  console.log('isAppointmentScheduled:', isAppointmentScheduled);
+  console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
+
+  // Check if calendar booking should be attempted
+  const shouldCreateCalendarEvent = isAppointmentScheduled && parsedAppointmentDateTime && (
+    (businessUserId && appointmentBookingEnabled) || // Real business user with booking enabled
+    (!businessUserId) || // Manual test call scenario (no business user)
+    isManualCall // Manual test call with dynamic slot (regardless of appointmentBookingEnabled)
+  );
+
+  if (!shouldCreateCalendarEvent) {
+    console.log('❌ Calendar booking conditions not met:');
+    console.log('  - isAppointmentScheduled:', isAppointmentScheduled);
+    console.log('  - parsedAppointmentDateTime:', parsedAppointmentDateTime ? 'present' : 'null/empty');
+    console.log('  - businessUserId:', businessUserId ? 'present' : 'missing');
+    console.log('  - appointmentBookingEnabled:', appointmentBookingEnabled);
+    return { success: false, error: 'Conditions not met' };
+  }
+
+  console.log('✅ Creating automatic calendar event...');
+  
+  try {
+    // Determine target user ID using the same logic for both manual and real calls
+    let targetUserId = businessUserId;
+    
+    if (!targetUserId) {
+      // Find a user with Google Calendar connected (used for manual test calls)
+      console.log('Looking for connected Google Calendar user...');
+      const { data: calendarUsers, error: calendarError } = await supabase
+        .from('google_calendar_settings')
+        .select('user_id')
+        .eq('is_connected', true)
+        .limit(1);
+      
+      if (calendarError) {
+        console.error('Error checking calendar connections:', calendarError);
+        return { success: false, error: 'Failed to find calendar user' };
+      }
+      
+      if (calendarUsers && calendarUsers.length > 0) {
+        targetUserId = calendarUsers[0].user_id;
+        console.log('Found connected calendar user:', targetUserId);
+      } else {
+        console.log('No connected Google Calendar found');
+        return { success: false, error: 'No connected calendar found' };
+      }
+    }
+
+    // Book the calendar event using the same logic for both call types
+    const bookingResult = await supabase.functions.invoke('google-calendar-book', {
+      body: {
+        userId: targetUserId,
+        startTime: parsedAppointmentDateTime,
+        callerName: customerName,
+        phoneNumber: customerPhone,
+        email: customerEmail,
+        serviceAddress: serviceAddress,
+        serviceType: serviceRequested,
+        notes: `Service requested: ${serviceRequested}`
+      }
+    });
+
+    if (bookingResult.error) {
+      console.error('❌ Calendar booking failed:', bookingResult.error);
+      return { success: false, error: bookingResult.error };
+    } else {
+      console.log('✅ Calendar booking completed successfully:', bookingResult.data);
+      return { success: true, data: bookingResult.data };
+    }
+  } catch (bookingError) {
+    console.error('❌ Error during calendar booking:', bookingError);
+    return { success: false, error: bookingError };
+  }
+}
+
 async function parseAppointmentTime(appointmentTimeString: string, userTimezone: string): Promise<string | null> {
   if (!appointmentTimeString || typeof appointmentTimeString !== 'string') {
     console.log('Invalid appointment time string:', appointmentTimeString);
@@ -896,15 +956,16 @@ async function parseAppointmentTime(appointmentTimeString: string, userTimezone:
 
   // Handle special case for dynamic next available slot
   if (appointmentTimeString === "DYNAMIC_NEXT_AVAILABLE_SLOT") {
-    console.log('=== MANUAL TEST: FINDING NEXT AVAILABLE CALENDAR SLOT ===');
+    console.log('=== FINDING NEXT AVAILABLE CALENDAR SLOT (UNIFIED LOGIC) ===');
     
     try {
-      // Find a user with Google Calendar connected for manual tests
+      // Use the same logic that the unified calendar booking function uses
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       );
       
+      // Find a user with Google Calendar connected (same logic as unified function)
       const { data: calendarUsers, error: calendarError } = await supabase
         .from('google_calendar_settings')
         .select('user_id')
@@ -917,14 +978,14 @@ async function parseAppointmentTime(appointmentTimeString: string, userTimezone:
       }
       
       if (!calendarUsers || calendarUsers.length === 0) {
-        console.log('No connected Google Calendar found for manual test');
+        console.log('No connected Google Calendar found');
         return null;
       }
       
       const targetUserId = calendarUsers[0].user_id;
-      console.log('Found connected calendar user for manual test:', targetUserId);
+      console.log('Found connected calendar user:', targetUserId);
       
-      // Get next available calendar slot
+      // Get next available calendar slot (same logic as unified function)
       console.log('Fetching next available calendar slot...');
       const availabilityResult = await supabase.functions.invoke('google-calendar-availability', {
         body: { user_id: targetUserId }
@@ -942,7 +1003,7 @@ async function parseAppointmentTime(appointmentTimeString: string, userTimezone:
         console.log('❌ No available calendar slots found');
         console.log('availabilityResult.data:', availabilityResult.data);
         console.log('availabilityResult.error:', availabilityResult.error);
-        // Fallback to tomorrow at 10 AM
+        // Fallback to tomorrow at 10 AM (same logic as before)
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         tomorrow.setHours(14, 0, 0, 0); // 10 AM EST = 2 PM UTC
