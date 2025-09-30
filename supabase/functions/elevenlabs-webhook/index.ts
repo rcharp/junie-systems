@@ -251,8 +251,22 @@ serve(async (req) => {
       }
     }
 
+    // Start background processing (don't wait for it)
+    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+    if (anthropicApiKey) {
+      processWebhookInBackground(
+        webhookData,
+        isManualCall,
+        supabase,
+        SUPABASE_URL,
+        anthropicApiKey
+      ).catch(error => {
+        console.error('Background processing failed:', error);
+      });
+    }
+
     // Return immediate response for faster UX
-    const response = new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({ 
       success: true,
       message: 'Webhook processed successfully',
       timestamp: new Date().toISOString(),
@@ -260,20 +274,6 @@ serve(async (req) => {
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
-    // Start background processing
-    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    EdgeRuntime.waitUntil(
-      processWebhookInBackground(
-        webhookData,
-        isManualCall,
-        supabase,
-        SUPABASE_URL,
-        anthropicApiKey
-      )
-    );
-
-    return response;
 
   } catch (error) {
     console.error('Error processing webhook:', error);
@@ -453,8 +453,8 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       if (typeof parsedAppointmentDateTime === 'string') {
         appointmentDateTime = new Date(parsedAppointmentDateTime);
         console.log('Converted to Date object:', appointmentDateTime.toISOString());
-      } else if (parsedAppointmentDateTime instanceof Date) {
-        appointmentDateTime = parsedAppointmentDateTime;
+      } else if (Object.prototype.toString.call(parsedAppointmentDateTime) === '[object Date]') {
+        appointmentDateTime = parsedAppointmentDateTime as Date;
       }
     }
 
