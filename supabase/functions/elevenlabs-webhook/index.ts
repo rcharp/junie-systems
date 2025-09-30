@@ -911,6 +911,8 @@ async function parseAppointmentTime(appointmentTimeString: string, userTimezone:
         body: { user_id: targetUserId }
       });
       
+      console.log('Availability function response:', JSON.stringify(availabilityResult, null, 2));
+      
       if (availabilityResult.data && availabilityResult.data.availability && availabilityResult.data.availability.length > 0) {
         const nextSlot = availabilityResult.data.availability[0];
         console.log('✅ Using next available slot:', nextSlot.startTime);
@@ -918,6 +920,8 @@ async function parseAppointmentTime(appointmentTimeString: string, userTimezone:
         return nextSlot.startTime;
       } else {
         console.log('❌ No available calendar slots found');
+        console.log('availabilityResult.data:', availabilityResult.data);
+        console.log('availabilityResult.error:', availabilityResult.error);
         // Fallback to tomorrow at 10 AM
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
