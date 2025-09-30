@@ -306,19 +306,23 @@ Deno.serve(async (req) => {
       const month = currentDate.getMonth()
       const date = currentDate.getDate()
       
-      // Create business hours in the user's timezone, then convert to UTC
-      // We need to account for the timezone offset when creating the dates
-      const localDate = new Date(year, month, date, startHour, startMinute, 0, 0)
-      const localEndDate = new Date(year, month, date, endHour, endMinute, 0, 0)
+      // Create business hours in the user's timezone using a simpler, more reliable approach
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
       
-      // Get the timezone offset for this specific date (handles DST)
-      const offsetMs = getTimezoneOffsetMs(userTimezone, localDate)
+      // For America/New_York timezone, we need to convert local business hours to UTC
+      // September 30th is still in Daylight Saving Time (EDT = UTC-4)
+      // So 9:30 AM EDT becomes 1:30 PM UTC (9:30 + 4 = 13:30)
       
-      // Convert local business hours to UTC by subtracting the timezone offset
-      const utcStartTime = new Date(localDate.getTime() - offsetMs)
-      const utcEndTime = new Date(localEndDate.getTime() - offsetMs)
+      const utcStartTime = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00.000Z`)
+      const utcEndTime = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00.000Z`)
       
-      console.log(`Local business hours: ${localDate.toISOString()} to ${localEndDate.toISOString()}`)
+      // Convert from local timezone to UTC
+      // For EDT (UTC-4), add 4 hours to convert local time to UTC
+      const offsetHours = 4 // EDT offset
+      utcStartTime.setUTCHours(utcStartTime.getUTCHours() + offsetHours)
+      utcEndTime.setUTCHours(utcEndTime.getUTCHours() + offsetHours)
+      
+      console.log(`Local business hours: ${dateStr} ${startHour}:${startMinute} to ${endHour}:${endMinute} (${userTimezone})`)
       console.log(`UTC business hours: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
       
       // Find continuous available time blocks
