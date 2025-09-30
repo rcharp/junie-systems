@@ -391,6 +391,9 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
+            {/* User Business IDs - Paginated */}
+            <UserWebhookList />
+
             {/* Google Calendar Availability Testing */}
             <Card>
               <CardHeader className="pb-4">
@@ -476,9 +479,6 @@ const AdminDashboard = () => {
                 )}
               </CardContent>
             </Card>
-
-            {/* User Business IDs - Paginated */}
-            <UserWebhookList />
 
             {/* Post-Call Data */}
             <WebhookMonitor />
