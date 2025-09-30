@@ -87,8 +87,8 @@ export const DEFAULT_TEST_CALL_DATA = {
             "enum": null,
             "type": "integer"
           },
-          "rationale": "The user provided their phone number as '7278714862' in the conversation. This is a ten-digit number, so it can be extracted as the phone number of the caller.",
-          "value": 7278714862
+          "rationale": "The user provided their phone number as '999-999-9999' in the conversation. This is a test number used for manual testing.",
+          "value": 9999999999
         },
         "service_address": {
           "data_collection_id": "service_address",
@@ -129,7 +129,7 @@ export const DEFAULT_TEST_CALL_DATA = {
       },
       {
         "role": "user",
-        "message": "7278714862"
+        "message": "999-999-9999"
       },
       {
         "role": "agent",
@@ -157,7 +157,7 @@ export const DEFAULT_TEST_CALL_DATA = {
       },
       {
         "role": "agent",
-        "message": "Excellent! So to confirm, I have you scheduled for the next available time slot at 5605 Trevesta Place, Palmetto, FL 34221. The technician will call you at 7278714862 about thirty minutes before arrival. Is there anything else you need help with today?"
+        "message": "Excellent! So to confirm, I have you scheduled for the next available time slot at 5605 Trevesta Place, Palmetto, FL 34221. The technician will call you at 999-999-9999 about thirty minutes before arrival. Is there anything else you need help with today?"
       },
       {
         "role": "user",
