@@ -932,8 +932,8 @@ async function parseAppointmentTime(appointmentTimeString: string, userTimezone:
       
       console.log('Availability function response:', JSON.stringify(availabilityResult, null, 2));
       
-      if (availabilityResult.data && availabilityResult.data.availability && availabilityResult.data.availability.length > 0) {
-        const nextSlot = availabilityResult.data.availability[0];
+      if (availabilityResult.data && availabilityResult.data.slots && availabilityResult.data.slots.length > 0) {
+        const nextSlot = availabilityResult.data.slots[0];
         console.log('✅ Using next available slot:', nextSlot.startTime);
         console.log('Slot details:', nextSlot.humanReadable);
         // Use the startTime from the slot directly since it's already in UTC
