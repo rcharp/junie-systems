@@ -19,15 +19,8 @@ const Footer = () => {
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
-                <span>📞 1-800-JUNIE</span>
-              </div>
-              <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
-                <span>hello@getjunie.com</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4" />
-                <span>San Francisco, CA</span>
+                <span>admin@getjunie.com</span>
               </div>
             </div>
           </div>
@@ -35,30 +28,30 @@ const Footer = () => {
           <div className="space-y-4">
             <h4 className="text-lg font-medium text-primary-foreground/90">Product</h4>
             <ul className="space-y-2 text-primary-foreground/80">
-              <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Demo</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">API</a></li>
+              <li><a href="/#features" className="hover:text-white transition-colors">Features</a></li>
+              <li><a href="/#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+              <li><a href="/" className="hover:text-white transition-colors">Demo</a></li>
+              <li><a href="/" className="hover:text-white transition-colors">API</a></li>
             </ul>
           </div>
           
           <div className="space-y-4">
             <h4 className="text-lg font-medium text-primary-foreground/90">Company</h4>
             <ul className="space-y-2 text-primary-foreground/80">
-              <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+              <li><a href="/" className="hover:text-white transition-colors">About</a></li>
+              <li><a href="/" className="hover:text-white transition-colors">Blog</a></li>
+              <li><a href="/" className="hover:text-white transition-colors">Careers</a></li>
+              <li><a href="mailto:admin@getjunie.com" className="hover:text-white transition-colors">Contact</a></li>
             </ul>
           </div>
           
           <div className="space-y-4">
             <h4 className="text-lg font-medium text-primary-foreground/90">Support</h4>
             <ul className="space-y-2 text-primary-foreground/80">
-              <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
+              <li><a href="/" className="hover:text-white transition-colors">Help Center</a></li>
+              <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="/terms" className="hover:text-white transition-colors">Terms of Service</a></li>
+              <li><a href="/" className="hover:text-white transition-colors">Security</a></li>
             </ul>
           </div>
         </div>
