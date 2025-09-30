@@ -864,6 +864,63 @@ async function parseAppointmentTime(appointmentTimeString: string, userTimezone:
     return null;
   }
 
+  // Handle special case for dynamic next available slot
+  if (appointmentTimeString === "DYNAMIC_NEXT_AVAILABLE_SLOT") {
+    console.log('=== MANUAL TEST: FINDING NEXT AVAILABLE CALENDAR SLOT ===');
+    
+    try {
+      // Find a user with Google Calendar connected for manual tests
+      const supabase = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      );
+      
+      const { data: calendarUsers, error: calendarError } = await supabase
+        .from('google_calendar_settings')
+        .select('user_id')
+        .eq('is_connected', true)
+        .limit(1);
+      
+      if (calendarError) {
+        console.error('Error checking calendar connections:', calendarError);
+        return null;
+      }
+      
+      if (!calendarUsers || calendarUsers.length === 0) {
+        console.log('No connected Google Calendar found for manual test');
+        return null;
+      }
+      
+      const targetUserId = calendarUsers[0].user_id;
+      console.log('Found connected calendar user for manual test:', targetUserId);
+      
+      // Get next available calendar slot
+      console.log('Fetching next available calendar slot...');
+      const availabilityResult = await supabase.functions.invoke('google-calendar-availability', {
+        body: { user_id: targetUserId }
+      });
+      
+      if (availabilityResult.data && availabilityResult.data.availability && availabilityResult.data.availability.length > 0) {
+        const nextSlot = availabilityResult.data.availability[0];
+        console.log('✅ Using next available slot:', nextSlot.startTime);
+        console.log('Slot details:', nextSlot.humanReadable);
+        return nextSlot.startTime;
+      } else {
+        console.log('❌ No available calendar slots found');
+        // Fallback to tomorrow at 10 AM
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(14, 0, 0, 0); // 10 AM EST = 2 PM UTC
+        const fallbackTime = tomorrow.toISOString();
+        console.log('Using fallback time (tomorrow 10 AM):', fallbackTime);
+        return fallbackTime;
+      }
+    } catch (error) {
+      console.error('Error finding next available slot:', error);
+      return null;
+    }
+  }
+
   try {
     const now = new Date();
     const lowerStr = appointmentTimeString.toLowerCase().trim();
