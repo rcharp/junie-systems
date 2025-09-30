@@ -512,6 +512,23 @@ serve(async (req) => {
         console.log('No user_id found for business_id:', businessId);
       }
     }
+    
+    // NOW that we have businessUserId, get the user's timezone properly
+    if (businessUserId) {
+      const { data: userSettings, error: userSettingsError } = await supabase
+        .from('user_profiles')
+        .select('timezone')
+        .eq('id', businessUserId)
+        .single();
+
+      if (userSettings && userSettings.timezone) {
+        userTimezone = userSettings.timezone;
+        console.log('Updated user timezone from profile:', userTimezone);
+      } else {
+        console.log('No timezone in user profile, using default');
+      }
+    }
+    
     // Refine timezone based on service address if user doesn't have timezone set
     if (userTimezone === 'America/New_York' && serviceAddress) {
       console.log('No custom timezone in user profile, determining from service address:', serviceAddress);
