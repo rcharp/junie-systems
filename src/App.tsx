@@ -7,6 +7,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import CallDetails from "./pages/CallDetails";
 import Settings from "./pages/Settings";
@@ -30,7 +31,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/signup" element={<Onboarding />} />
+            <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/call/:callId" element={<CallDetails />} />
             <Route path="/settings" element={<Settings />} />
