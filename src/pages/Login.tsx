@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,16 +18,23 @@ const Login = () => {
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const isRedirectingRef = useRef(false);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // Don't update state if we're already redirecting
+        if (isRedirectingRef.current) {
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         // Redirect authenticated users to dashboard
         if (session?.user) {
+          isRedirectingRef.current = true;
           setTimeout(() => {
             navigate("/dashboard");
           }, 0);
@@ -42,6 +49,7 @@ const Login = () => {
       
       // Redirect if already authenticated
       if (session?.user) {
+        isRedirectingRef.current = true;
         navigate("/dashboard");
       }
     });
@@ -82,6 +90,7 @@ const Login = () => {
         }
       } else if (data.user) {
         // Redirect to dashboard
+        isRedirectingRef.current = true;
         setTimeout(() => {
           navigate("/dashboard");
         }, 1000);
@@ -154,6 +163,7 @@ const Login = () => {
               console.log('Session established successfully');
               const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
               console.log(`Redirecting to ${redirectPath}`);
+              isRedirectingRef.current = true;
               window.location.href = redirectPath;
             } catch (error) {
               console.error('Error establishing session:', error);
