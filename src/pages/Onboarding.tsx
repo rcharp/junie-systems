@@ -108,6 +108,11 @@ const Onboarding = () => {
         title: "Business found!",
         description: `Selected ${data.name}`,
       });
+
+      // Automatically move to next step
+      setTimeout(() => {
+        setStep(2);
+      }, 800);
     } catch (error: any) {
       console.error('Error getting business details:', error);
       toast({
