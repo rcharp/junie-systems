@@ -53,51 +53,9 @@ const GoogleAuthCallback = () => {
           console.log('User profile created successfully');
         }
 
-        // Get the selected business data from sessionStorage
-        const selectedBusinessData = sessionStorage.getItem('selectedBusiness');
-        
-        if (selectedBusinessData) {
-          try {
-            const businessData = JSON.parse(selectedBusinessData);
-            console.log('Creating business settings with data:', businessData);
-            
-            // Check if business settings already exist
-            const { data: existingSettings } = await supabase
-              .from('business_settings')
-              .select('id')
-              .eq('user_id', session.user.id)
-              .maybeSingle();
-
-            if (!existingSettings) {
-              // Create business settings with the selected business data
-              const { error: businessError } = await supabase
-                .from('business_settings')
-                .insert({
-                  user_id: session.user.id,
-                  business_name: businessData.name,
-                  business_phone: businessData.phone,
-                  business_address: businessData.address,
-                  business_website: businessData.website,
-                  business_hours: businessData.openingHours?.join('\n'),
-                  business_type: businessData.types?.[0] || 'general',
-                });
-
-              if (businessError) {
-                console.error('Error creating business settings:', businessError);
-                throw businessError;
-              }
-              console.log('Business settings created successfully');
-            } else {
-              console.log('Business settings already exist');
-            }
-          } catch (parseError) {
-            console.error('Error parsing business data:', parseError);
-          }
-        }
-
         setStatus('success');
         
-        // Send session tokens to parent window so it can establish the session
+        // Send session tokens to parent window so it can establish the session and handle business setup
         if (window.opener) {
           console.log('Sending session tokens to parent window');
           window.opener.postMessage({ 
@@ -114,10 +72,10 @@ const GoogleAuthCallback = () => {
           await new Promise(resolve => setTimeout(resolve, 1000));
           window.close();
         } else {
-          // Fallback for non-popup case
-          console.log('Not a popup, redirecting to settings...');
+          // Fallback for non-popup case (direct navigation to callback URL)
+          console.log('Not a popup, redirecting to dashboard...');
           setTimeout(() => {
-            window.location.href = '/settings';
+            window.location.href = '/dashboard';
           }, 1500);
         }
 
