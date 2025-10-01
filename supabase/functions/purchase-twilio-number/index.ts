@@ -89,6 +89,12 @@ serve(async (req) => {
     formData.append('EmergencyAddressSid', 'AD5c6f8c7c8e8a3e3f4c5e6f7a8b9c0d1e');
     // Emergency address details for Junie (fallback if SID not available)
     // 123 Junie Street, San Francisco, CA 94102
+    
+    // Configure with Junie TwiML App
+    const twilioAppSid = Deno.env.get('TWILIO_TWIML_APP_SID');
+    if (twilioAppSid) {
+      formData.append('VoiceApplicationSid', twilioAppSid);
+    }
 
     console.log('Purchasing number...');
     const purchaseResponse = await fetch(purchaseUrl, {
