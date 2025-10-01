@@ -229,7 +229,44 @@ const Onboarding = () => {
           setExtractionProgress(20);
           let businessData: any = {};
           
-          if (savedBusiness) {
+          // If user provided a website URL, extract data from it
+          if (savedWebsiteUrl) {
+            console.log('Extracting business data from website:', savedWebsiteUrl);
+            try {
+              const { data: extractedData, error: extractError } = await supabase.functions.invoke('extract-business-data', {
+                body: { url: savedWebsiteUrl }
+              });
+
+              if (!extractError && extractedData?.success && extractedData?.data) {
+                console.log('Successfully extracted data from website:', extractedData.data);
+                businessData = {
+                  name: extractedData.data.business_name,
+                  phone: extractedData.data.business_phone,
+                  address: extractedData.data.business_address,
+                  website: savedWebsiteUrl,
+                  description: extractedData.data.business_description,
+                  types: extractedData.data.business_type ? [extractedData.data.business_type] : [],
+                  services: extractedData.data.services_offered,
+                  pricing: extractedData.data.pricing_structure,
+                  hours: extractedData.data.business_hours
+                };
+              } else {
+                console.error('Error extracting data from website:', extractError);
+                // Continue with minimal data
+                businessData = {
+                  name: businessSearch || 'My Business',
+                  website: savedWebsiteUrl
+                };
+              }
+            } catch (extractError) {
+              console.error('Error calling extract-business-data function:', extractError);
+              // Continue with minimal data
+              businessData = {
+                name: businessSearch || 'My Business',
+                website: savedWebsiteUrl
+              };
+            }
+          } else if (savedBusiness) {
             businessData = JSON.parse(savedBusiness);
           }
           
@@ -460,7 +497,44 @@ const Onboarding = () => {
                   setExtractionProgress(20);
                   let businessData: any = {};
                   
-                  if (savedBusiness) {
+                  // If user provided a website URL, extract data from it
+                  if (savedWebsiteUrl) {
+                    console.log('Extracting business data from website:', savedWebsiteUrl);
+                    try {
+                      const { data: extractedData, error: extractError } = await supabase.functions.invoke('extract-business-data', {
+                        body: { url: savedWebsiteUrl }
+                      });
+
+                      if (!extractError && extractedData?.success && extractedData?.data) {
+                        console.log('Successfully extracted data from website:', extractedData.data);
+                        businessData = {
+                          name: extractedData.data.business_name,
+                          phone: extractedData.data.business_phone,
+                          address: extractedData.data.business_address,
+                          website: savedWebsiteUrl,
+                          description: extractedData.data.business_description,
+                          types: extractedData.data.business_type ? [extractedData.data.business_type] : [],
+                          services: extractedData.data.services_offered,
+                          pricing: extractedData.data.pricing_structure,
+                          hours: extractedData.data.business_hours
+                        };
+                      } else {
+                        console.error('Error extracting data from website:', extractError);
+                        // Continue with minimal data
+                        businessData = {
+                          name: businessSearch || 'My Business',
+                          website: savedWebsiteUrl
+                        };
+                      }
+                    } catch (extractError) {
+                      console.error('Error calling extract-business-data function:', extractError);
+                      // Continue with minimal data
+                      businessData = {
+                        name: businessSearch || 'My Business',
+                        website: savedWebsiteUrl
+                      };
+                    }
+                  } else if (savedBusiness) {
                     businessData = JSON.parse(savedBusiness);
                   }
                   

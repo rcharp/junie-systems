@@ -38,10 +38,10 @@ async function extractBusinessDataWithClaude(websiteContent: string, url: string
       .trim()
       .substring(0, 8000); // Limit content to prevent token overflow
 
-    const prompt = `You are an expert business data extraction specialist. Analyze the following webpage content and extract structured business information.
+    const prompt = `You are an expert business data extraction specialist. Analyze the following webpage content from MULTIPLE pages of the same business website and extract structured business information.
 
-Website URL: ${url}
-Webpage Content: ${cleanContent}
+${websiteContent.length > 8000 ? 'Website Content (truncated to fit):' : 'Website Content:'}
+${cleanContent}
 
 Please extract the following information and return it as a JSON object. If any field cannot be determined from the content, use null for that field:
 
@@ -58,12 +58,13 @@ Please extract the following information and return it as a JSON object. If any 
 }
 
 Guidelines:
-- Extract exact information from the webpage - don't make assumptions
+- The content includes information from the main page, about page, services page, pricing page, and contact page
+- Extract exact information from the webpages - don't make assumptions
 - For business_name: use the official business name, not domain name
 - For business_phone: format as (XXX) XXX-XXXX if US number
 - For business_address: include full address with street, city, state, ZIP
 - For business_hours: standardize format (Mon-Fri: 9AM-5PM)
-- For services_offered: list 3-5 main services/products
+- For services_offered: list 3-5 main services/products based on all pages
 - For business_description: write a compelling, professional description based on the content
 - For business_type: categorize into specific industry type
 
@@ -77,8 +78,8 @@ Return only the JSON object, no additional text.`;
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
-        max_tokens: 1000,
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
         messages: [
           {
             role: 'user',
@@ -220,29 +221,91 @@ serve(async (req) => {
       }
     }
 
-    // Attempt to fetch webpage content
-    try {
-      console.log('Fetching webpage content...');
-      
-      const fetchResponse = await Promise.race([
-        fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-          }
-        }),
-        new Promise<Response>((_, reject) => 
-          setTimeout(() => reject(new Error('Request timeout')), 15000)
-        )
-      ]);
+    // Scrape main page and important subpages
+    const subpagesToScrape = [
+      '', // Main page
+      '/about',
+      '/about-us',
+      '/services',
+      '/pricing',
+      '/contact',
+      '/our-services',
+      '/what-we-do',
+      '/products'
+    ];
 
-      if (!fetchResponse.ok) {
-        console.error('Failed to fetch webpage:', fetchResponse.status, fetchResponse.statusText);
+    const scrapedPages: { url: string; content: string }[] = [];
+    let mainPageContent = '';
+
+    try {
+      console.log('Fetching main page and subpages...');
+      
+      // Normalize URL
+      let baseUrl = url;
+      if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+        baseUrl = 'https://' + baseUrl;
+      }
+      baseUrl = baseUrl.replace(/\/$/, ''); // Remove trailing slash
+
+      // Fetch each page
+      for (const subpage of subpagesToScrape) {
+        try {
+          const pageUrl = baseUrl + subpage;
+          console.log('Fetching:', pageUrl);
+
+          const fetchResponse = await Promise.race([
+            fetch(pageUrl, {
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+                'Upgrade-Insecure-Requests': '1',
+              }
+            }),
+            new Promise<Response>((_, reject) => 
+              setTimeout(() => reject(new Error('Request timeout')), 10000)
+            )
+          ]);
+
+          if (fetchResponse.ok) {
+            const content = await fetchResponse.text();
+            
+            // Extract text content and clean it
+            const textContent = content
+              .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+              .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+
+            // Only include if we got meaningful content
+            if (textContent.length > 100) {
+              scrapedPages.push({
+                url: pageUrl,
+                content: textContent.substring(0, 5000) // Limit per page
+              });
+              
+              // Store main page separately
+              if (subpage === '') {
+                mainPageContent = textContent;
+              }
+              
+              console.log(`Successfully scraped ${pageUrl}: ${textContent.length} characters`);
+            }
+          } else {
+            console.log(`Failed to fetch ${pageUrl}: ${fetchResponse.status}`);
+          }
+        } catch (pageError) {
+          console.log(`Error fetching ${baseUrl + subpage}:`, pageError instanceof Error ? pageError.message : 'Unknown error');
+          // Continue to next page
+        }
+      }
+
+      // If we didn't get any pages
+      if (scrapedPages.length === 0) {
+        console.error('Failed to fetch any pages from the website');
         
         // For social media, try to provide fallback data based on URL
         if (isSocialMedia && urlBusinessName) {
@@ -276,8 +339,12 @@ serve(async (req) => {
         );
       }
 
-      websiteContent = await fetchResponse.text();
-      console.log('Successfully fetched webpage content. Length:', websiteContent.length);
+      console.log(`Successfully scraped ${scrapedPages.length} pages from the website`);
+
+      // Combine all page content for Claude analysis
+      websiteContent = scrapedPages
+        .map(page => `--- Page: ${page.url} ---\n${page.content}`)
+        .join('\n\n');
 
     } catch (fetchError) {
       console.error('Fetch error:', fetchError);
