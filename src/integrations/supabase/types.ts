@@ -555,6 +555,8 @@ export type Database = {
           full_name: string | null
           id: string
           setup_completed: boolean | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           subscription_plan: string | null
           subscription_status: string | null
           timezone: string | null
@@ -568,6 +570,8 @@ export type Database = {
           full_name?: string | null
           id: string
           setup_completed?: boolean | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_plan?: string | null
           subscription_status?: string | null
           timezone?: string | null
@@ -581,6 +585,8 @@ export type Database = {
           full_name?: string | null
           id?: string
           setup_completed?: boolean | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_plan?: string | null
           subscription_status?: string | null
           timezone?: string | null

@@ -25,6 +25,8 @@ import { getUserTimezone, getTimezoneFromAddress, getCommonTimezones } from "@/l
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { FeatureGate } from "@/components/FeatureGate";
 import { useSubscription } from "@/hooks/useSubscription";
+import { BillingSettings } from "@/components/BillingSettings";
+import { CreditCard } from "lucide-react";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -1053,7 +1055,7 @@ const Settings = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 bg-muted border border-border">
+            <TabsList className="grid w-full grid-cols-5 bg-muted border border-border">
               <TabsTrigger value="business" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
                 <span className="hidden sm:inline">Business Info</span>
@@ -1070,6 +1072,10 @@ const Settings = () => {
               <TabsTrigger value="notifications" className="flex items-center gap-2">
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Notifications</span>
+              </TabsTrigger>
+              <TabsTrigger value="billing" className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4" />
+                <span className="hidden sm:inline">Billing</span>
               </TabsTrigger>
             </TabsList>
 
@@ -1626,6 +1632,11 @@ const Settings = () => {
             {/* Notifications */}
             <TabsContent value="notifications">
               <NotificationSettings />
+            </TabsContent>
+
+            {/* Billing */}
+            <TabsContent value="billing">
+              <BillingSettings />
             </TabsContent>
 
           </Tabs>

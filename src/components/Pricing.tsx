@@ -3,13 +3,41 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState<string | null>(null);
   
-  const handleGetStarted = (plan: string) => {
-    // Navigate to signup with the selected plan
-    navigate(`/signup?plan=${plan.toLowerCase()}`);
+  const handleGetStarted = async (plan: string) => {
+    // If user not logged in, redirect to signup
+    if (!user) {
+      navigate(`/signup?plan=${plan.toLowerCase()}`);
+      return;
+    }
+
+    // If logged in, create Stripe checkout session
+    setLoading(plan);
+    try {
+      const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
+        body: { plan: plan.toLowerCase() },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      toast.error('Failed to start checkout. Please try again.');
+    } finally {
+      setLoading(null);
+    }
   };
   
   const plans = [
@@ -121,10 +149,10 @@ const Pricing = () => {
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base mt-auto"
                   size="lg"
-                  disabled={plan.disabled}
+                  disabled={plan.disabled || loading === plan.name}
                   onClick={() => !plan.disabled && handleGetStarted(plan.name)}
                 >
-                  {plan.ctaText}
+                  {loading === plan.name ? 'Loading...' : plan.ctaText}
                 </Button>
               </CardContent>
             </Card>

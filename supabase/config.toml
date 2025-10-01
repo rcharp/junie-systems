@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.transfer-call-webhook]
 verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
