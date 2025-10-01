@@ -781,17 +781,25 @@ const Settings = () => {
         }
 
         // Validate individual address fields
+        console.log("=== ADDRESS VALIDATION DEBUG ===");
+        console.log("addressData:", JSON.stringify(addressData));
+        
         const missingAddressFields = [];
         if (!addressData.street?.trim()) missingAddressFields.push('street address');
         if (!addressData.city?.trim()) missingAddressFields.push('city');
         if (!addressData.state?.trim()) missingAddressFields.push('state');
         if (!addressData.zip?.trim()) missingAddressFields.push('ZIP code');
 
+        console.log("Missing address fields:", missingAddressFields);
+
         // Validate ZIP code format (must be exactly 5 digits)
         const zipRegex = /^\d{5}$/;
         const isValidZip = addressData.zip?.trim() && zipRegex.test(addressData.zip.trim());
+        
+        console.log("ZIP validation:", { zip: addressData.zip, isValidZip });
 
         if (missingAddressFields.length > 0 || !isValidZip) {
+          console.log("ADDRESS VALIDATION FAILED - Stopping save");
           setValidationErrors(prev => ({...prev, businessAddress: true}));
           
           let errorMessage = '';
@@ -813,6 +821,8 @@ const Settings = () => {
           setSaving(false);
           return;
         }
+        
+        console.log("ADDRESS VALIDATION PASSED");
 
         // Combine address fields into a single address string
         const fullAddress = [
