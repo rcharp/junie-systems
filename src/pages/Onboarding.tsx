@@ -1,12 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Search, ArrowRight, Loader2, Globe } from "lucide-react";
+import { Search, ArrowRight, Loader2, Globe, MapPin, Building2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface BusinessPrediction {
+  place_id: string;
+  description: string;
+  structured_formatting: {
+    main_text: string;
+    secondary_text: string;
+  };
+}
 
 const Onboarding = () => {
   const [step, setStep] = useState(1);
@@ -17,6 +27,11 @@ const Onboarding = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [searchResults, setSearchResults] = useState<BusinessPrediction[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [selectedBusiness, setSelectedBusiness] = useState<BusinessPrediction | null>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -30,6 +45,81 @@ const Onboarding = () => {
     checkUser();
   }, [navigate]);
 
+  useEffect(() => {
+    // Search for businesses as user types
+    if (businessSearch.trim().length >= 2 && !useWebsite) {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      searchTimeoutRef.current = setTimeout(async () => {
+        setSearchLoading(true);
+        setShowResults(true);
+        
+        try {
+          const { data, error } = await supabase.functions.invoke('search-business', {
+            body: { query: businessSearch }
+          });
+
+          if (error) throw error;
+
+          setSearchResults(data.predictions || []);
+        } catch (error: any) {
+          console.error('Error searching businesses:', error);
+          toast({
+            title: "Search error",
+            description: "Failed to search for businesses. Please try again.",
+            variant: "destructive"
+          });
+        } finally {
+          setSearchLoading(false);
+        }
+      }, 500); // Debounce for 500ms
+    } else {
+      setSearchResults([]);
+      setShowResults(false);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [businessSearch, useWebsite, toast]);
+
+  const handleBusinessSelect = async (business: BusinessPrediction) => {
+    setSelectedBusiness(business);
+    setBusinessSearch(business.structured_formatting.main_text);
+    setShowResults(false);
+
+    // Fetch detailed business information
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('get-business-details', {
+        body: { placeId: business.place_id }
+      });
+
+      if (error) throw error;
+
+      // Store business data for later use
+      sessionStorage.setItem('selectedBusiness', JSON.stringify(data));
+      
+      toast({
+        title: "Business found!",
+        description: `Selected ${data.name}`,
+      });
+    } catch (error: any) {
+      console.error('Error getting business details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch business details",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleBusinessContinue = () => {
     if (useWebsite && !websiteUrl) {
       toast({
@@ -39,10 +129,10 @@ const Onboarding = () => {
       });
       return;
     }
-    if (!useWebsite && !businessSearch) {
+    if (!useWebsite && (!businessSearch || !selectedBusiness)) {
       toast({
-        title: "Business name required",
-        description: "Please search for your business",
+        title: "Business selection required",
+        description: "Please select a business from the search results",
         variant: "destructive"
       });
       return;
@@ -181,25 +271,77 @@ const Onboarding = () => {
                   {!useWebsite ? (
                     <div className="space-y-4">
                       <div className="relative">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
                         <Input
                           type="text"
-                          placeholder="Type your business name..."
+                          placeholder="Search for your business..."
                           value={businessSearch}
-                          onChange={(e) => setBusinessSearch(e.target.value)}
+                          onChange={(e) => {
+                            setBusinessSearch(e.target.value);
+                            setSelectedBusiness(null);
+                          }}
+                          onFocus={() => businessSearch.length >= 2 && setShowResults(true)}
                           className="pl-12 h-14 text-base"
                           autoFocus
                         />
+                        {searchLoading && (
+                          <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-muted-foreground" />
+                        )}
+                        
+                        {/* Search Results Dropdown */}
+                        {showResults && searchResults.length > 0 && (
+                          <Card className="absolute w-full mt-2 z-50 shadow-lg border-2">
+                            <ScrollArea className="h-[300px]">
+                              <div className="p-2">
+                                {searchResults.map((result) => (
+                                  <button
+                                    key={result.place_id}
+                                    onClick={() => handleBusinessSelect(result)}
+                                    className="w-full text-left p-3 hover:bg-muted rounded-lg transition-colors flex items-start gap-3 group"
+                                  >
+                                    <Building2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium text-foreground group-hover:text-primary truncate">
+                                        {result.structured_formatting.main_text}
+                                      </p>
+                                      <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
+                                        <MapPin className="w-3 h-3" />
+                                        {result.structured_formatting.secondary_text}
+                                      </p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </ScrollArea>
+                          </Card>
+                        )}
+
+                        {showResults && searchResults.length === 0 && !searchLoading && businessSearch.length >= 2 && (
+                          <Card className="absolute w-full mt-2 z-50 shadow-lg border-2">
+                            <div className="p-4 text-center text-muted-foreground">
+                              No businesses found. Try a different search term.
+                            </div>
+                          </Card>
+                        )}
                       </div>
 
                       <Button
                         onClick={handleBusinessContinue}
                         className="w-full h-12 text-base"
                         size="lg"
-                        disabled={!businessSearch}
+                        disabled={!selectedBusiness || loading}
                       >
-                        Continue
-                        <ArrowRight className="ml-2 w-5 h-5" />
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            Continue
+                            <ArrowRight className="ml-2 w-5 h-5" />
+                          </>
+                        )}
                       </Button>
 
                       <div className="relative">
