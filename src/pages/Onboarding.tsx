@@ -31,6 +31,7 @@ const Onboarding = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessPrediction | null>(null);
+  const [isSelectingBusiness, setIsSelectingBusiness] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -46,8 +47,8 @@ const Onboarding = () => {
   }, [navigate]);
 
   useEffect(() => {
-    // Search for businesses as user types
-    if (businessSearch.trim().length >= 2 && !useWebsite) {
+    // Search for businesses as user types - but not when we're selecting a business
+    if (businessSearch.trim().length >= 2 && !useWebsite && !isSelectingBusiness && !selectedBusiness) {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
@@ -77,7 +78,9 @@ const Onboarding = () => {
       }, 500); // Debounce for 500ms
     } else {
       setSearchResults([]);
-      setShowResults(false);
+      if (!isSelectingBusiness && !selectedBusiness) {
+        setShowResults(false);
+      }
     }
 
     return () => {
@@ -85,9 +88,10 @@ const Onboarding = () => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [businessSearch, useWebsite, toast]);
+  }, [businessSearch, useWebsite, isSelectingBusiness, selectedBusiness, toast]);
 
   const handleBusinessSelect = async (business: BusinessPrediction) => {
+    setIsSelectingBusiness(true);
     setSelectedBusiness(business);
     setBusinessSearch(business.structured_formatting.main_text);
     setShowResults(false);
@@ -112,6 +116,7 @@ const Onboarding = () => {
       // Automatically move to next step
       setTimeout(() => {
         setStep(2);
+        setIsSelectingBusiness(false);
       }, 800);
     } catch (error: any) {
       console.error('Error getting business details:', error);
@@ -120,6 +125,7 @@ const Onboarding = () => {
         description: "Failed to fetch business details",
         variant: "destructive"
       });
+      setIsSelectingBusiness(false);
     } finally {
       setLoading(false);
     }
@@ -289,8 +295,13 @@ const Onboarding = () => {
                           onChange={(e) => {
                             setBusinessSearch(e.target.value);
                             setSelectedBusiness(null);
+                            setIsSelectingBusiness(false);
                           }}
-                          onFocus={() => businessSearch.length >= 2 && setShowResults(true)}
+                          onFocus={() => {
+                            if (businessSearch.length >= 2 && !selectedBusiness) {
+                              setShowResults(true);
+                            }
+                          }}
                           className="pl-12 h-14 text-base"
                           autoFocus
                         />
