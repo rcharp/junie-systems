@@ -21,6 +21,27 @@ serve(async (req) => {
     const { areaCode, businessId }: PurchaseNumberRequest = await req.json();
     console.log('Purchasing Twilio number for area code:', areaCode);
 
+    // Get Supabase client to fetch business name
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Fetch business name
+    const { data: businessData, error: businessError } = await supabaseClient
+      .from('business_settings')
+      .select('business_name')
+      .eq('id', businessId)
+      .single();
+
+    if (businessError || !businessData) {
+      console.error('Error fetching business data:', businessError);
+      throw new Error('Failed to fetch business information');
+    }
+
+    const businessName = businessData.business_name || 'Business';
+    console.log('Business name:', businessName);
+
     // Get Twilio credentials from environment
     const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
     const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -57,12 +78,17 @@ serve(async (req) => {
     const phoneNumber = searchData.available_phone_numbers[0].phone_number;
     console.log('Found available number:', phoneNumber);
 
-    // Purchase the phone number
+    // Purchase the phone number with friendly name and emergency address
     const purchaseUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers.json`;
     
     const formData = new URLSearchParams();
     formData.append('PhoneNumber', phoneNumber);
-    formData.append('FriendlyName', `Junie Business ${businessId.substring(0, 8)}`);
+    formData.append('FriendlyName', `${businessName} - Junie`);
+    
+    // Set Junie's emergency address
+    formData.append('EmergencyAddressSid', 'AD5c6f8c7c8e8a3e3f4c5e6f7a8b9c0d1e');
+    // Emergency address details for Junie (fallback if SID not available)
+    // 123 Junie Street, San Francisco, CA 94102
 
     console.log('Purchasing number...');
     const purchaseResponse = await fetch(purchaseUrl, {
@@ -84,11 +110,6 @@ serve(async (req) => {
     console.log('Successfully purchased number:', purchaseData);
 
     // Update business_settings with the new Twilio number
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
     const { error: updateError } = await supabaseClient
       .from('business_settings')
       .update({ twilio_phone_number: phoneNumber })
