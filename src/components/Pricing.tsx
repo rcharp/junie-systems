@@ -14,7 +14,6 @@ const Pricing = () => {
         "Unlimited minutes",
         "Message taking with custom questions", 
         "Smart spam detection",
-        "Bilingual agent - English + Spanish",
         "Call transcription",
         "Real-time notifications"
       ],
