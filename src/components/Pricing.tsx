@@ -5,13 +5,39 @@ import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscription } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
 const Pricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { subscriptionPlan } = useSubscription();
   const [loading, setLoading] = useState<string | null>(null);
+
+  const planHierarchy: Record<string, number> = {
+    'free': 0,
+    'professional': 1,
+    'scale': 2,
+    'growth': 3
+  };
+
+  const getButtonConfig = (planName: string, isDisabled: boolean) => {
+    if (!user) {
+      return { text: "Get Started for Free", disabled: isDisabled };
+    }
+
+    const currentPlanTier = planHierarchy[subscriptionPlan];
+    const targetPlanTier = planHierarchy[planName.toLowerCase()];
+
+    if (currentPlanTier === targetPlanTier) {
+      return { text: "Current Plan", disabled: true };
+    } else if (targetPlanTier > currentPlanTier) {
+      return { text: "Upgrade", disabled: isDisabled };
+    } else {
+      return { text: "Downgrade", disabled: isDisabled };
+    }
+  };
   
   const handleGetStarted = async (plan: string) => {
     // If user not logged in, redirect to signup
@@ -149,10 +175,10 @@ const Pricing = () => {
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base mt-auto"
                   size="lg"
-                  disabled={plan.disabled || loading === plan.name}
-                  onClick={() => !plan.disabled && handleGetStarted(plan.name)}
+                  disabled={getButtonConfig(plan.name, plan.disabled).disabled || loading === plan.name}
+                  onClick={() => !getButtonConfig(plan.name, plan.disabled).disabled && handleGetStarted(plan.name)}
                 >
-                  {loading === plan.name ? 'Loading...' : plan.ctaText}
+                  {loading === plan.name ? 'Loading...' : getButtonConfig(plan.name, plan.disabled).text}
                 </Button>
               </CardContent>
             </Card>
