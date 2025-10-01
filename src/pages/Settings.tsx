@@ -183,6 +183,17 @@ const Settings = () => {
     }
   }, [loading, user, navigate, searchParams, setSearchParams]);
 
+  // Separate effect to handle subtab changes
+  useEffect(() => {
+    const subTab = searchParams.get('subtab');
+    const tab = searchParams.get('tab');
+    
+    if (subTab && tab === 'account') {
+      console.log('Subtab effect - Setting accountSubTab to:', subTab);
+      setAccountSubTab(subTab);
+    }
+  }, [searchParams]);
+
   const fetchRecentActivity = async () => {
     try {
       const { data: callMessages, error } = await supabase
