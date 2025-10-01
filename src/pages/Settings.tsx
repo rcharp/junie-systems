@@ -89,6 +89,7 @@ const Settings = () => {
   const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
   const [urgentKeywords, setUrgentKeywords] = useState("");
   const [autoForward, setAutoForward] = useState(false);
+  const [assigningPhoneNumber, setAssigningPhoneNumber] = useState(false);
   
   
 
@@ -395,6 +396,76 @@ const Settings = () => {
       }
     } catch (error) {
       console.error('Error loading user settings:', error);
+    }
+  };
+
+  const handleAssignPhoneNumber = async () => {
+    if (!businessSettingsId) {
+      toast({
+        title: "Error",
+        description: "Business settings not found. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAssigningPhoneNumber(true);
+    try {
+      // Extract area code from business phone
+      let areaCode = '800'; // Default fallback
+      if (businessPhone) {
+        const phoneMatch = businessPhone.match(/\(?(\d{3})\)?/);
+        if (phoneMatch && phoneMatch[1]) {
+          areaCode = phoneMatch[1];
+        }
+      } else if (businessAddress) {
+        // Try to extract ZIP code and convert to area code
+        const zipMatch = businessAddress.match(/\b(\d{5})\b/);
+        if (zipMatch && zipMatch[1]) {
+          const zip = zipMatch[1];
+          // Common mappings (simplified)
+          if (zip.startsWith('1')) areaCode = '212'; // NY
+          else if (zip.startsWith('2')) areaCode = '202'; // DC
+          else if (zip.startsWith('3')) areaCode = '404'; // GA
+          else if (zip.startsWith('4')) areaCode = '502'; // KY
+          else if (zip.startsWith('6')) areaCode = '312'; // IL
+          else if (zip.startsWith('7')) areaCode = '214'; // TX
+          else if (zip.startsWith('8')) areaCode = '303'; // CO
+          else if (zip.startsWith('9')) areaCode = '206'; // WA
+        }
+      }
+
+      console.log('Requesting phone number with area code:', areaCode);
+
+      const { data, error } = await supabase.functions.invoke('purchase-twilio-number', {
+        body: {
+          areaCode: areaCode,
+          businessId: businessSettingsId
+        }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.success && data?.phoneNumber) {
+        setTwilioPhoneNumber(data.phoneNumber);
+        toast({
+          title: "Phone number assigned!",
+          description: `Your Junie phone number is ${data.phoneNumber}`,
+        });
+      } else {
+        throw new Error('Failed to assign phone number');
+      }
+    } catch (error: any) {
+      console.error('Error assigning phone number:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to assign phone number. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setAssigningPhoneNumber(false);
     }
   };
 
@@ -2022,12 +2093,22 @@ const Settings = () => {
                   {/* Junie Phone Number (Read-only) */}
                   <div className="space-y-2 p-4 bg-primary/5 rounded-lg border border-primary/20">
                     <Label htmlFor="twilioPhoneNumber" className="font-semibold">Your Junie Phone Number</Label>
-                    <Input
-                      id="twilioPhoneNumber"
-                      value={twilioPhoneNumber || "Not assigned yet"}
-                      disabled
-                      className="bg-muted cursor-not-allowed font-mono"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="twilioPhoneNumber"
+                        value={twilioPhoneNumber || "Not assigned yet"}
+                        disabled
+                        className="bg-muted cursor-not-allowed font-mono"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleAssignPhoneNumber}
+                        disabled={!!twilioPhoneNumber || assigningPhoneNumber}
+                        className="whitespace-nowrap"
+                      >
+                        {assigningPhoneNumber ? "Assigning..." : "Assign Phone Number"}
+                      </Button>
+                    </div>
                     <p className="text-sm text-muted-foreground">
                       This is your dedicated Junie AI phone number. Share this number with your customers to have calls handled by your AI assistant.
                     </p>
