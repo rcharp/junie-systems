@@ -234,17 +234,45 @@ const Settings = () => {
         if (data.business_hours) {
           try {
             const hoursData = JSON.parse(data.business_hours);
-            if (Array.isArray(hoursData)) {
-              // Ensure each hour entry has an id
+            if (Array.isArray(hoursData) && hoursData.length > 0) {
+              // Ensure each hour entry has an id and proper structure
               const hoursWithIds = hoursData.map((hour, index) => ({
-                ...hour,
-                id: hour.id || index + 1
+                id: hour.id || index + 1,
+                day: hour.day || 'monday',
+                isOpen: hour.isOpen !== undefined ? hour.isOpen : true,
+                openTime: hour.openTime || '09:00',
+                closeTime: hour.closeTime || '17:00'
               }));
               setBusinessHours(hoursWithIds);
+            } else {
+              // No valid hours found, use M-F 9-5 default
+              setBusinessHours([
+                { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+                { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+                { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+                { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+                { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+              ]);
             }
           } catch (e) {
-            // Keep default hours if parsing fails
+            // Parsing failed, use M-F 9-5 default
+            setBusinessHours([
+              { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+              { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+              { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+              { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+              { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+            ]);
           }
+        } else {
+          // No business hours in database, use M-F 9-5 default
+          setBusinessHours([
+            { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+            { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+            { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+            { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+            { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+          ]);
         }
         setBusinessDescription(data.business_description || "");
         setBusinessWebsite(data.business_website || "");

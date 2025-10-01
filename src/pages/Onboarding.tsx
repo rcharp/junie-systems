@@ -314,6 +314,26 @@ const Onboarding = () => {
                     { id: 5, day: 'friday', isOpen: true, openTime: '09:00', closeTime: '17:00' }
                   ];
                   
+                  // Determine which hours to save - use Google hours if available, otherwise default
+                  let businessHoursToSave = defaultHours;
+                  
+                  // If Google Business Profile has hours, try to use them
+                  if (businessData.openingHours && Array.isArray(businessData.openingHours) && businessData.openingHours.length > 0) {
+                    try {
+                      // Map Google hours to our format with IDs
+                      businessHoursToSave = businessData.openingHours.map((hour: any, index: number) => ({
+                        id: index + 1,
+                        day: hour.day || 'monday',
+                        isOpen: hour.isOpen !== undefined ? hour.isOpen : true,
+                        openTime: hour.openTime || '09:00',
+                        closeTime: hour.closeTime || '17:00'
+                      }));
+                    } catch (error) {
+                      console.error('Error parsing Google hours, using defaults:', error);
+                      businessHoursToSave = defaultHours;
+                    }
+                  }
+                  
                   // Save business settings with Claude-enhanced data
                   const { data: businessSettingsResult, error: businessError } = await supabase
                     .from('business_settings')
@@ -325,7 +345,7 @@ const Onboarding = () => {
                       business_address: businessData.address || null,
                       business_address_state_full: claudeData.state || null,
                       business_website: savedWebsiteUrl || businessData.website || null,
-                      business_hours: businessData.openingHours ? JSON.stringify(businessData.openingHours) : JSON.stringify(defaultHours),
+                      business_hours: JSON.stringify(businessHoursToSave),
                       business_description: claudeData.description || businessData.editorial_summary?.overview || null,
                       business_type_full_name: businessData.types?.join(', ') || null,
                       business_timezone: 'America/New_York',
