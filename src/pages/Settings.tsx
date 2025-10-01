@@ -1296,7 +1296,9 @@ const Settings = () => {
               </TabsTrigger>
               <TabsTrigger value="setup" className="flex items-center gap-2 py-3.5">
                 <Calendar className="w-4 h-4" />
-                <span className="hidden sm:inline">Calendar</span>
+                <span className="hidden sm:inline">
+                  Calendar {!featureAccess.appointmentScheduling && "(Upgrade)"}
+                </span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2 py-3.5">
                 <Bell className="w-4 h-4" />
