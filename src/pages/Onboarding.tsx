@@ -1221,7 +1221,7 @@ const Onboarding = () => {
                 className="w-full mt-6"
                 size="lg"
               >
-                Continue to Dashboard
+                Let's Go!
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </CardContent>
