@@ -180,6 +180,7 @@ const Onboarding = () => {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/google-auth-callback`,
+          skipBrowserRedirect: true,
         }
       });
 
@@ -188,8 +189,62 @@ const Onboarding = () => {
         throw error;
       }
 
-      // The browser will redirect to Google, no need to handle popup
-      console.log('Redirecting to Google OAuth...');
+      if (data?.url) {
+        // Open OAuth in popup window
+        const width = 600;
+        const height = 700;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+        
+        const popup = window.open(
+          data.url,
+          'google-oauth',
+          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+        );
+
+        // Listen for OAuth completion
+        const handleMessage = async (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return;
+          
+          if (event.data?.type === 'google-oauth-success') {
+            window.removeEventListener('message', handleMessage);
+            popup?.close();
+            
+            console.log('OAuth success, refreshing session...');
+            
+            // Give the session time to sync
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            toast({
+              title: "Welcome!",
+              description: "Successfully signed in with Google.",
+            });
+            
+            // Navigate to settings
+            navigate('/settings');
+          } else if (event.data?.type === 'google-oauth-error') {
+            window.removeEventListener('message', handleMessage);
+            popup?.close();
+            setLoading(false);
+            toast({
+              title: "Sign-in error",
+              description: event.data?.error || "Failed to sign in with Google.",
+              variant: "destructive",
+            });
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        // Check if popup was closed manually
+        const checkClosed = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', handleMessage);
+            setLoading(false);
+          }
+        }, 1000);
+      }
     } catch (error: any) {
       console.error('Google sign-in failed:', error);
       toast({
