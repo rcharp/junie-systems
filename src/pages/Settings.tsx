@@ -212,42 +212,46 @@ const Settings = () => {
       // Get auth provider info and Google metadata
       const { data: { user: authUser } } = await supabase.auth.getUser();
       console.log('Full auth user data:', authUser);
-      console.log('User identities:', authUser?.identities);
-      console.log('User app_metadata:', authUser?.app_metadata);
-      console.log('User user_metadata:', authUser?.user_metadata);
+      
+      let detectedProvider = '';
       
       if (authUser?.app_metadata?.provider) {
         console.log('Provider from app_metadata:', authUser.app_metadata.provider);
-        setAuthProvider(authUser.app_metadata.provider);
+        detectedProvider = authUser.app_metadata.provider;
+        setAuthProvider(detectedProvider);
       } else if (authUser?.identities && authUser.identities.length > 0) {
-        const provider = authUser.identities[0].provider;
-        console.log('Provider from identities:', provider);
-        setAuthProvider(provider);
+        detectedProvider = authUser.identities[0].provider;
+        console.log('Provider from identities:', detectedProvider);
+        setAuthProvider(detectedProvider);
+      }
+      
+      // Extract Google profile data if provider is Google
+      if (detectedProvider === 'google') {
+        console.log('Extracting Google data...');
         
-        // Extract Google profile data
-        if (provider === 'google') {
-          const googleIdentity = authUser.identities[0];
-          console.log('Google identity data:', googleIdentity.identity_data);
-          
-          const googleEmail = googleIdentity.identity_data?.email || email;
-          const googleAvatar = googleIdentity.identity_data?.avatar_url || 
-                               googleIdentity.identity_data?.picture || 
-                               authUser.user_metadata?.avatar_url ||
-                               authUser.user_metadata?.picture || "";
-          const googleFullName = googleIdentity.identity_data?.full_name || 
-                                googleIdentity.identity_data?.name ||
-                                authUser.user_metadata?.full_name ||
-                                authUser.user_metadata?.name || "";
-          
-          console.log('Extracted Google data:', { googleEmail, googleAvatar, googleFullName });
-          
-          setGoogleEmail(googleEmail);
-          setGoogleAvatarUrl(googleAvatar);
-          
-          // Auto-fill full name from Google if available
-          if (googleFullName) {
-            setUserFullName(googleFullName);
-          }
+        // Try to get data from identities first, then user_metadata
+        const googleIdentity = authUser?.identities?.[0];
+        const identityData = googleIdentity?.identity_data;
+        const userMeta = authUser?.user_metadata;
+        
+        const googleEmail = identityData?.email || userMeta?.email || email;
+        const googleAvatar = identityData?.avatar_url || 
+                             identityData?.picture || 
+                             userMeta?.avatar_url ||
+                             userMeta?.picture || "";
+        const googleFullName = identityData?.full_name || 
+                              identityData?.name ||
+                              userMeta?.full_name ||
+                              userMeta?.name || "";
+        
+        console.log('Extracted Google data:', { googleEmail, googleAvatar, googleFullName });
+        
+        setGoogleEmail(googleEmail);
+        setGoogleAvatarUrl(googleAvatar);
+        
+        // Auto-fill full name from Google if available
+        if (googleFullName) {
+          setUserFullName(googleFullName);
         }
       }
 
