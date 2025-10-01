@@ -126,17 +126,12 @@ const Onboarding = () => {
 
       // Store business data for later use
       sessionStorage.setItem('selectedBusiness', JSON.stringify(data));
-      
-      toast({
-        title: "Business found!",
-        description: `Selected ${data.name}`,
-      });
 
       // Automatically move to next step
       setTimeout(() => {
         setStep(2);
         isSelectingBusinessRef.current = false;
-      }, 800);
+      }, 500);
     } catch (error: any) {
       console.error('Error getting business details:', error);
       toast({
