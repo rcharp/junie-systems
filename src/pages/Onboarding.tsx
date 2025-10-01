@@ -173,28 +173,106 @@ const Onboarding = () => {
   const handleGoogleSignup = async () => {
     setLoading(true);
     try {
-      // Store the selected business before redirecting
-      // (it's already in sessionStorage from handleBusinessSelect)
-      
-      // Use full page redirect (not popup) for more reliable session handling
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/google-auth-callback`,
+          skipBrowserRedirect: true,
         }
       });
 
       if (error) {
         console.error('Google sign-in error:', error);
-        toast({
-          title: "Sign-in error",
-          description: error.message || "Failed to sign in with Google. Please try again.",
-          variant: "destructive"
-        });
-        setLoading(false);
+        throw error;
       }
-      
-      // The browser will now redirect to Google OAuth
+
+      if (data?.url) {
+        // Open OAuth in popup window (like calendar integration)
+        const width = 600;
+        const height = 700;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+        
+        const popup = window.open(
+          data.url,
+          'google-oauth',
+          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+        );
+
+        // Listen for OAuth completion
+        const handleMessage = async (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return;
+          
+          if (event.data?.type === 'google-oauth-success') {
+            window.removeEventListener('message', handleMessage);
+            
+            console.log('OAuth success, waiting for session sync...');
+            
+            // Give more time for session to sync naturally
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Now refresh session to ensure it's loaded
+            const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.error('Session refresh error:', refreshError);
+            }
+            
+            if (session) {
+              console.log('Session confirmed, closing popup and redirecting');
+              popup?.close();
+              
+              toast({
+                title: "Welcome!",
+                description: "Successfully signed in with Google.",
+              });
+              
+              // Navigate to settings
+              setTimeout(() => {
+                window.location.href = '/settings';
+              }, 500);
+            } else {
+              console.log('Session not found, trying getSession...');
+              const { data: { session: retrySession } } = await supabase.auth.getSession();
+              
+              if (retrySession) {
+                console.log('Session found on retry');
+                popup?.close();
+                window.location.href = '/settings';
+              } else {
+                popup?.close();
+                console.error('Session sync failed');
+                toast({
+                  title: "Session error",
+                  description: "Authentication successful but session sync failed. Please try logging in.",
+                  variant: "destructive",
+                });
+                setLoading(false);
+              }
+            }
+          } else if (event.data?.type === 'google-oauth-error') {
+            window.removeEventListener('message', handleMessage);
+            popup?.close();
+            setLoading(false);
+            toast({
+              title: "Sign-in error",
+              description: event.data?.error || "Failed to sign in with Google.",
+              variant: "destructive",
+            });
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        // Check if popup was closed manually
+        const checkClosed = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', handleMessage);
+            setLoading(false);
+          }
+        }, 1000);
+      }
     } catch (error: any) {
       console.error('Google sign-in failed:', error);
       toast({

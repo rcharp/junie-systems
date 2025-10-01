@@ -97,11 +97,26 @@ const GoogleAuthCallback = () => {
 
         setStatus('success');
         
-        // Redirect directly to settings (not popup mode)
-        console.log('OAuth complete, redirecting to settings...');
-        setTimeout(() => {
-          window.location.href = '/settings';
-        }, 1500);
+        // Send success message to parent window and keep popup open briefly
+        if (window.opener) {
+          console.log('Sending success message to parent window');
+          window.opener.postMessage({ 
+            type: 'google-oauth-success',
+            userId: session.user.id 
+          }, window.location.origin);
+          
+          // Keep popup open for 2 seconds to allow session to sync
+          console.log('Keeping popup open to allow session sync...');
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          // Parent will close the popup
+        } else {
+          // Fallback for non-popup case
+          console.log('Not a popup, redirecting to settings...');
+          setTimeout(() => {
+            window.location.href = '/settings';
+          }, 1500);
+        }
 
       } catch (err) {
         console.error('Google auth callback error:', err);
