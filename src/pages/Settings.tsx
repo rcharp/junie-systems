@@ -1297,7 +1297,7 @@ const Settings = () => {
               <TabsTrigger value="setup" className="flex items-center gap-2 py-3.5">
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">
-                  Calendar {!featureAccess.appointmentScheduling && "(Upgrade)"}
+                  Calendar {!featureAccess.appointmentScheduling && "(Pro)"}
                 </span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2 py-3.5">

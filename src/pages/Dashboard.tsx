@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { Calendar, Clock, Users, Settings, LogOut, Bell, Plus, Phone, BarChart3, TrendingUp, MessageSquare, Bot, Shield } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import CallList from "@/components/CallList";
 import NotificationSettings from "@/components/NotificationSettings";
 import CallAnalytics from "@/components/CallAnalytics";
@@ -45,6 +46,9 @@ const Dashboard = () => {
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [upgradeFeatureName, setUpgradeFeatureName] = useState("");
+  const [activeTab, setActiveTab] = useState("overview");
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalCalls: 0,
     totalMessages: 0,
@@ -555,7 +559,19 @@ const Dashboard = () => {
           </Card>
         )}
 
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          if (value === 'calendar' && !featureAccess.appointmentScheduling) {
+            setUpgradeFeatureName("Calendar");
+            setShowUpgradeDialog(true);
+            return;
+          }
+          if (value === 'analytics' && !featureAccess.advancedAnalytics) {
+            setUpgradeFeatureName("Analytics");
+            setShowUpgradeDialog(true);
+            return;
+          }
+          setActiveTab(value);
+        }} className="space-y-6">
             <TabsList className="grid w-full grid-cols-5 mb-6 p-1 h-auto">
             <TabsTrigger value="overview" className="flex items-center gap-2 py-3.5">
               <Users className="w-4 h-4" />
@@ -569,15 +585,17 @@ const Dashboard = () => {
               <Phone className="w-4 h-4" />
               <span className="hidden sm:inline">Calls</span>
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2 py-3.5" disabled={!featureAccess.appointmentScheduling}>
+            <TabsTrigger value="calendar" className={`flex items-center gap-2 py-3.5 ${!featureAccess.appointmentScheduling ? 'text-muted-foreground/50' : ''}`}>
               <Calendar className="w-4 h-4" />
-              <span className="hidden sm:inline">Calendar</span>
-              {!featureAccess.appointmentScheduling && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
+              <span className="hidden sm:inline">
+                Calendar {!featureAccess.appointmentScheduling && "(Pro)"}
+              </span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2 py-3.5" disabled={!featureAccess.advancedAnalytics}>
+            <TabsTrigger value="analytics" className={`flex items-center gap-2 py-3.5 ${!featureAccess.advancedAnalytics ? 'text-muted-foreground/50' : ''}`}>
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Analytics</span>
-              {!featureAccess.advancedAnalytics && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
+              <span className="hidden sm:inline">
+                Analytics {!featureAccess.advancedAnalytics && "(Pro)"}
+              </span>
             </TabsTrigger>
           </TabsList>
 
@@ -735,6 +753,27 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Upgrade Dialog */}
+      <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Upgrade Required</AlertDialogTitle>
+            <AlertDialogDescription>
+              The {upgradeFeatureName} feature is available on the Scale plan. Upgrade your plan to access this feature.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowUpgradeDialog(false);
+              navigate('/settings');
+            }}>
+              Go to Settings
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
