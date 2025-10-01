@@ -641,6 +641,23 @@ export type Database = {
           status: string
         }[]
       }
+      get_call_logs_for_admin: {
+        Args: { justification?: string; target_business_id?: string }
+        Returns: {
+          business_id: string
+          call_duration: number
+          call_status: string
+          call_type: string
+          caller_name: string
+          created_at: string
+          email: string
+          id: string
+          message_preview: string
+          phone_number: string
+          transcript_preview: string
+          urgency_level: string
+        }[]
+      }
       get_google_calendar_tokens: {
         Args: { p_user_id: string }
         Returns: {
