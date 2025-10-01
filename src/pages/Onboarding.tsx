@@ -148,21 +148,26 @@ const Onboarding = () => {
   const handleGoogleSignup = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Google sign-in error:', error);
+        throw error;
+      }
+
+      console.log('Google sign-in initiated:', data);
     } catch (error: any) {
+      console.error('Google sign-in failed:', error);
       toast({
-        title: "Error",
-        description: error.message,
+        title: "Sign-in error",
+        description: error.message || "Failed to sign in with Google. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setLoading(false);
     }
   };
