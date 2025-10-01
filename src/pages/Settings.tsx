@@ -42,6 +42,7 @@ const Settings = () => {
   const [showCalendarBanner, setShowCalendarBanner] = useState(false);
   const [calendarBannerType, setCalendarBannerType] = useState<'success' | 'error'>('success');
   const [calendarBannerMessage, setCalendarBannerMessage] = useState('');
+  const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const { featureAccess } = useSubscription();
   console.log("Settings state:", { user: user?.email, loading });
 
@@ -136,9 +137,20 @@ const Settings = () => {
     const tab = searchParams.get('tab');
     const calendarStatus = searchParams.get('calendar_status');
     const errorMessage = searchParams.get('error');
+    const onboardingComplete = searchParams.get('onboarding_complete');
     
     if (tab) {
       setActiveTab(tab);
+    }
+    
+    if (onboardingComplete === 'true') {
+      setShowOnboardingBanner(true);
+      setActiveTab('business'); // Show business tab after onboarding
+      
+      // Clear URL parameter after processing
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete('onboarding_complete');
+      setSearchParams(newSearchParams, { replace: true });
     }
     
     if (calendarStatus) {
@@ -1145,6 +1157,26 @@ const Settings = () => {
               Configure your Junie assistant and account preferences.
             </p>
           </div>
+
+          {/* Onboarding Success Banner */}
+          {showOnboardingBanner && (
+            <div className="p-4 rounded-lg border mb-6 bg-green-50 border-green-200 text-green-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-medium">Successfully signed up! Please review and complete your business information below.</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowOnboardingBanner(false)}
+                  className="h-6 w-6 p-0 hover:bg-green-100"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Calendar Connection Banner */}
           {showCalendarBanner && (

@@ -226,9 +226,16 @@ const Onboarding = () => {
               
               // Save business data if available
               const savedBusiness = sessionStorage.getItem('selectedBusiness');
-              if (savedBusiness && data.session?.user.id) {
+              const savedWebsiteUrl = useWebsite ? websiteUrl : null;
+              
+              if ((savedBusiness || savedWebsiteUrl) && data.session?.user.id) {
                 try {
-                  const businessData = JSON.parse(savedBusiness);
+                  let businessData: any = {};
+                  
+                  if (savedBusiness) {
+                    businessData = JSON.parse(savedBusiness);
+                  }
+                  
                   console.log('Saving business data:', businessData);
                   
                   // Create user profile if it doesn't exist
@@ -236,7 +243,7 @@ const Onboarding = () => {
                     .from('user_profiles')
                     .upsert({
                       id: data.session.user.id,
-                      company_name: businessData.name,
+                      company_name: businessData.name || businessSearch || 'My Business',
                       subscription_plan: 'free',
                       subscription_status: 'active'
                     }, { onConflict: 'id' });
@@ -245,27 +252,63 @@ const Onboarding = () => {
                     console.error('Error creating profile:', profileError);
                   }
                   
-                  // Save business settings
-                  const { error: businessError } = await supabase
+                  // Save business settings with complete data
+                  const { data: businessSettingsResult, error: businessError } = await supabase
                     .from('business_settings')
                     .upsert({
                       user_id: data.session.user.id,
-                      business_name: businessData.name,
-                      business_type: businessData.types?.[0] || businessData.businessType,
-                      business_phone: businessData.formatted_phone_number || businessData.international_phone_number,
-                      business_address: businessData.formatted_address,
-                      business_website: businessData.website,
-                      business_hours: businessData.opening_hours ? JSON.stringify(businessData.opening_hours) : null,
+                      business_name: businessData.name || businessSearch || 'My Business',
+                      business_type: businessData.types?.[0] || businessData.businessType || 'business',
+                      business_phone: businessData.phone || null,
+                      business_address: businessData.address || null,
+                      business_website: savedWebsiteUrl || businessData.website || null,
+                      business_hours: businessData.openingHours ? JSON.stringify(businessData.openingHours) : null,
                       business_description: businessData.editorial_summary?.overview || null,
-                      business_address_state_full: businessData.address_components?.find((c: any) => c.types.includes('administrative_area_level_1'))?.long_name,
-                      business_type_full_name: businessData.types?.join(', '),
-                      business_timezone: businessData.utc_offset_minutes ? `UTC${businessData.utc_offset_minutes >= 0 ? '+' : ''}${businessData.utc_offset_minutes / 60}` : 'America/New_York',
-                    }, { onConflict: 'user_id' });
+                      business_type_full_name: businessData.types?.join(', ') || null,
+                      business_timezone: 'America/New_York',
+                    }, { 
+                      onConflict: 'user_id'
+                    })
+                    .select('id')
+                    .single();
                   
                   if (businessError) {
                     console.error('Error saving business settings:', businessError);
                   } else {
                     console.log('Business data saved successfully');
+                    
+                    // Extract services using Claude API
+                    if (businessSettingsResult?.id) {
+                      try {
+                        const { data: servicesData, error: servicesError } = await supabase.functions.invoke('extract-services', {
+                          body: {
+                            businessName: businessData.name || businessSearch || 'My Business',
+                            businessType: businessData.types?.[0] || 'business',
+                            website: savedWebsiteUrl || businessData.website,
+                            businessDescription: businessData.editorial_summary?.overview
+                          }
+                        });
+                        
+                        if (!servicesError && servicesData?.services) {
+                          const businessId = businessSettingsResult.id;
+                          
+                          // Save extracted services to database
+                          const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
+                            business_id: businessId,
+                            name: service.name,
+                            price: service.price,
+                            description: service.description,
+                            display_order: index,
+                            is_active: true
+                          }));
+                          
+                          await supabase.from('services').insert(servicesToInsert);
+                          console.log('Services saved successfully');
+                        }
+                      } catch (servicesError) {
+                        console.error('Error extracting services:', servicesError);
+                      }
+                    }
                   }
                   
                   // Clear the sessionStorage
@@ -280,8 +323,8 @@ const Onboarding = () => {
                 description: "Successfully signed in with Google.",
               });
               
-              // Navigate to settings
-              window.location.href = '/settings';
+              // Navigate to settings with success flag
+              window.location.href = '/settings?onboarding_complete=true';
             } else {
               console.error('No session data received from popup');
               toast({
