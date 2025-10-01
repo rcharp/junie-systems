@@ -81,11 +81,6 @@ const Login = () => {
           throw error;
         }
       } else if (data.user) {
-        toast({
-          title: "Welcome back! 🎉",
-          description: "Redirecting to your dashboard...",
-        });
-        
         // Redirect to dashboard
         setTimeout(() => {
           navigate("/dashboard");
