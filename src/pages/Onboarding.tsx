@@ -1207,23 +1207,39 @@ const Onboarding = () => {
                 </select>
               </div>
 
-              <Button
-                onClick={() => {
-                  setShowVerification(false);
-                  toast({
-                    title: "Setup complete!",
-                    description: "Welcome to your AI assistant dashboard",
-                  });
-                  setTimeout(() => {
-                    window.location.href = '/settings?onboarding_complete=true';
-                  }, 500);
-                }}
-                className="w-full mt-6"
-                size="lg"
-              >
-                Let's Go!
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
+              <div className="flex gap-3 mt-6">
+                <Button
+                  onClick={() => {
+                    setShowVerification(false);
+                    setStep(1);
+                    setSelectedBusiness(null);
+                    setBusinessSearch("");
+                    setWebsiteUrl("");
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                  size="lg"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={() => {
+                    setShowVerification(false);
+                    toast({
+                      title: "Setup complete!",
+                      description: "Welcome to your AI assistant dashboard",
+                    });
+                    setTimeout(() => {
+                      window.location.href = '/settings?onboarding_complete=true';
+                    }, 500);
+                  }}
+                  className="flex-1"
+                  size="lg"
+                >
+                  Let's Go!
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
