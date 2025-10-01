@@ -15,7 +15,7 @@ const Pricing = () => {
         "Message taking with custom questions", 
         "Smart spam detection",
         "Bilingual agent - English + Spanish",
-        "Call recording & transcription",
+        "Call transcription",
         "Real-time notifications"
       ],
       popular: false,

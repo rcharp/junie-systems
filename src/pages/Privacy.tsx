@@ -23,7 +23,7 @@ const Privacy = () => {
               <ul className="list-disc ml-6 space-y-2">
                 <li>Name, email address, and phone number</li>
                 <li>Business information and preferences</li>
-                <li>Call recordings and transcripts (with your consent)</li>
+                <li>Call transcripts (with your consent)</li>
                 <li>Usage data and analytics</li>
               </ul>
             </section>
