@@ -231,48 +231,38 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
   };
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Globe className="h-5 w-5" />
-          Import from Website
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="websiteUrl">Website URL</Label>
+    <div className={className}>
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
           <Input
             id="websiteUrl"
             value={websiteUrl}
             onChange={(e) => setWebsiteUrl(e.target.value)}
-            placeholder="https://yourbusiness.com or google.com/maps/place/..."
+            placeholder="https://yourbusiness.com"
             disabled={isLoading}
           />
         </div>
-        
         <Button 
           onClick={handleImport}
           disabled={isLoading || !websiteUrl.trim()}
-          className="w-full bg-gradient-primary hover:opacity-90 text-white border-none"
+          className="bg-gradient-primary hover:opacity-90 text-white border-none"
         >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Extracting Data...
+              Importing...
             </>
           ) : (
             <>
               <Download className="mr-2 h-4 w-4" />
-              Import Business Data
+              Import
             </>
           )}
         </Button>
-        
-        <p className="text-sm text-muted-foreground">
-          Enter your business website, Google My Business, Yelp page, or any webpage with your business information.
-          We'll extract relevant details like business name, phone, address, and services.
-        </p>
-      </CardContent>
-    </Card>
+      </div>
+      <p className="text-xs text-muted-foreground mt-2">
+        Extract and auto-fill business details from your website
+      </p>
+    </div>
   );
 };

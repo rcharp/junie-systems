@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Search, ArrowRight, Loader2, Globe, MapPin, Building2 } from "lucide-react";
@@ -37,6 +38,8 @@ const Onboarding = () => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [extractingData, setExtractingData] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
+  const [showVerification, setShowVerification] = useState(false);
+  const [verificationData, setVerificationData] = useState<any>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -393,15 +396,17 @@ const Onboarding = () => {
           
           setExtractionProgress(100);
           
-          toast({
-            title: "Setup complete!",
-            description: "Welcome to your AI assistant dashboard",
+          // Show verification step
+          setExtractingData(false);
+          setShowVerification(true);
+          setVerificationData({
+            business_name: businessData.name || businessSearch || 'My Business',
+            business_phone: businessData.phone || null,
+            business_address: businessData.address || null,
+            business_type: claudeData.businessType || businessData.types?.[0] || 'other',
+            business_website: savedWebsiteUrl || businessData.website || null,
+            business_timezone: 'America/New_York',
           });
-          
-          // Redirect to settings
-          setTimeout(() => {
-            window.location.href = '/settings?onboarding_complete=true';
-          }, 500);
         } catch (error: any) {
           console.error('Setup error:', error);
           setExtractingData(false);
@@ -736,23 +741,37 @@ const Onboarding = () => {
                   
                   // Clear the sessionStorage
                   sessionStorage.removeItem('selectedBusiness');
+                  
+                  setExtractionProgress(100);
+                  
+                  // Show verification step
+                  setExtractingData(false);
+                  setShowVerification(true);
+                  setVerificationData({
+                    business_name: businessData.name || businessSearch || 'My Business',
+                    business_phone: businessData.phone || null,
+                    business_address: businessData.address || null,
+                    business_type: claudeData.businessType || businessData.types?.[0] || 'other',
+                    business_website: savedWebsiteUrl || businessData.website || null,
+                    business_timezone: 'America/New_York',
+                  });
                 } catch (error) {
                   console.error('Error processing business data:', error);
                 }
+              } else {
+                // No business data - just show basic verification
+                setExtractionProgress(100);
+                setExtractingData(false);
+                setShowVerification(true);
+                setVerificationData({
+                  business_name: businessSearch || 'My Business',
+                  business_phone: null,
+                  business_address: null,
+                  business_type: 'other',
+                  business_website: null,
+                  business_timezone: 'America/New_York',
+                });
               }
-              
-              setExtractionProgress(100);
-              
-              toast({
-                title: "Welcome!",
-                description: "Successfully signed in with Google.",
-              });
-              
-              // Small delay to show 100% progress
-              setTimeout(() => {
-                // Navigate to settings with success flag
-                window.location.href = '/settings?onboarding_complete=true';
-              }, 500);
             } else {
               console.error('No session data received from popup');
               toast({
@@ -1042,16 +1061,17 @@ const Onboarding = () => {
         
         setExtractionProgress(100);
         
-        toast({
-          title: "Account created!",
-          description: "Welcome to your AI assistant dashboard",
+        // Show verification step
+        setExtractingData(false);
+        setShowVerification(true);
+        setVerificationData({
+          business_name: businessData.name || businessSearch || 'My Business',
+          business_phone: businessData.phone || null,
+          business_address: businessData.address || null,
+          business_type: claudeData.businessType || businessData.types?.[0] || 'other',
+          business_website: savedWebsiteUrl || businessData.website || null,
+          business_timezone: 'America/New_York',
         });
-        
-        // Small delay to show 100% progress
-        setTimeout(() => {
-          // Navigate to settings with success flag
-          window.location.href = '/settings?onboarding_complete=true';
-        }, 500);
       }
     } catch (error: any) {
       console.error('Signup error:', error);
@@ -1095,6 +1115,116 @@ const Onboarding = () => {
                 </p>
               </div>
             </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Verification Step Overlay */}
+      {showVerification && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader>
+              <CardTitle className="text-2xl">Verify Your Business Details</CardTitle>
+              <p className="text-muted-foreground">Please review and update your information as needed</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="verify-name">Business Name</Label>
+                <Input
+                  id="verify-name"
+                  value={verificationData.business_name || ''}
+                  onChange={(e) => setVerificationData({...verificationData, business_name: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="verify-phone">Phone Number</Label>
+                <Input
+                  id="verify-phone"
+                  value={verificationData.business_phone || ''}
+                  onChange={(e) => setVerificationData({...verificationData, business_phone: e.target.value})}
+                  placeholder="(555) 123-4567"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="verify-address">Business Address</Label>
+                <Input
+                  id="verify-address"
+                  value={verificationData.business_address || ''}
+                  onChange={(e) => setVerificationData({...verificationData, business_address: e.target.value})}
+                  placeholder="123 Main St, City, State 12345"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="verify-type">Business Type</Label>
+                <select
+                  id="verify-type"
+                  value={verificationData.business_type || 'other'}
+                  onChange={(e) => setVerificationData({...verificationData, business_type: e.target.value})}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="electric">Electric</option>
+                  <option value="garage-door">Garage Door</option>
+                  <option value="handyman">Handyman</option>
+                  <option value="hvac">HVAC</option>
+                  <option value="landscaping">Landscaping</option>
+                  <option value="pest-control">Pest Control</option>
+                  <option value="plumbing">Plumbing</option>
+                  <option value="pool-spa">Pool & Spa</option>
+                  <option value="cleaning">Cleaning</option>
+                  <option value="roofing">Roofing</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="verify-website">Website</Label>
+                <Input
+                  id="verify-website"
+                  value={verificationData.business_website || ''}
+                  onChange={(e) => setVerificationData({...verificationData, business_website: e.target.value})}
+                  placeholder="https://yourbusiness.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="verify-timezone">Timezone</Label>
+                <select
+                  id="verify-timezone"
+                  value={verificationData.business_timezone || 'America/New_York'}
+                  onChange={(e) => setVerificationData({...verificationData, business_timezone: e.target.value})}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="America/New_York">Eastern Time</option>
+                  <option value="America/Chicago">Central Time</option>
+                  <option value="America/Denver">Mountain Time</option>
+                  <option value="America/Los_Angeles">Pacific Time</option>
+                  <option value="America/Phoenix">Arizona Time</option>
+                  <option value="America/Anchorage">Alaska Time</option>
+                  <option value="Pacific/Honolulu">Hawaii Time</option>
+                </select>
+              </div>
+
+              <Button
+                onClick={() => {
+                  setShowVerification(false);
+                  toast({
+                    title: "Setup complete!",
+                    description: "Welcome to your AI assistant dashboard",
+                  });
+                  setTimeout(() => {
+                    window.location.href = '/settings?onboarding_complete=true';
+                  }, 500);
+                }}
+                className="w-full mt-6"
+                size="lg"
+              >
+                Continue to Dashboard
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </CardContent>
           </Card>
         </div>
       )}
