@@ -5,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Bell, Mail, MessageSquare, Phone, AlertTriangle, Save } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -233,15 +234,28 @@ const NotificationSettings = () => {
                   </div>
                   <p className="text-sm text-muted-foreground">Get instant text messages for important calls</p>
                 </div>
-                <Switch
-                  id="sms-notifications"
-                  checked={smsNotifications}
-                  disabled={!smsOptIn}
-                  onCheckedChange={(checked) => {
-                    setSmsNotifications(checked);
-                    debouncedAutoSave();
-                  }}
-                />
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Switch
+                          id="sms-notifications"
+                          checked={smsNotifications}
+                          disabled={!smsOptIn}
+                          onCheckedChange={(checked) => {
+                            setSmsNotifications(checked);
+                            debouncedAutoSave();
+                          }}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    {!smsOptIn && (
+                      <TooltipContent>
+                        <p>Please agree to the terms below first</p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               </div>
 
               {/* Forwarding Number Display */}
