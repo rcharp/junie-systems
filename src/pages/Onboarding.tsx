@@ -951,6 +951,11 @@ const Onboarding = () => {
                           placeholder="Email address"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !loading) {
+                              handleEmailSignup();
+                            }
+                          }}
                           className="h-12 text-base"
                         />
                         <Input
@@ -958,6 +963,11 @@ const Onboarding = () => {
                           placeholder="Password (min 8 characters)"
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !loading) {
+                              handleEmailSignup();
+                            }
+                          }}
                           className="h-12 text-base"
                         />
                       </div>
