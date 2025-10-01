@@ -45,16 +45,20 @@ serve(async (req) => {
     }
 
     // Get or create Stripe customer
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('stripe_customer_id, email')
+      .select('stripe_customer_id')
       .eq('id', user.id)
       .single();
+
+    console.log('Profile data:', profile);
 
     let customerId = profile?.stripe_customer_id;
 
     // Create customer if doesn't exist
     if (!customerId) {
+      console.log('Creating new Stripe customer for user:', user.email);
+      
       const customerResponse = await fetch('https://api.stripe.com/v1/customers', {
         method: 'POST',
         headers: {
@@ -63,18 +67,35 @@ serve(async (req) => {
         },
         body: new URLSearchParams({
           email: user.email!,
-          metadata: JSON.stringify({ supabase_user_id: user.id }),
+          metadata: `{"supabase_user_id":"${user.id}"}`,
         }),
       });
 
       const customer = await customerResponse.json();
-      customerId = customer.id;
+      
+      if (customer.error) {
+        console.error('Stripe customer creation error:', customer.error);
+        throw new Error(`Failed to create Stripe customer: ${customer.error.message}`);
+      }
 
-      // Update profile with customer ID
-      await supabase
+      customerId = customer.id;
+      console.log('Created Stripe customer:', customerId);
+
+      // Update or insert profile with customer ID
+      const { error: updateError } = await supabase
         .from('user_profiles')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', user.id);
+        .upsert({ 
+          id: user.id,
+          stripe_customer_id: customerId 
+        });
+
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+      }
+    }
+
+    if (!customerId) {
+      throw new Error('Failed to get or create Stripe customer');
     }
 
     // Create checkout session
