@@ -528,14 +528,11 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
-        {/* Welcome Section */}
+        {/* Dashboard Header */}
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-muted-foreground mb-2">
-            Welcome back{user?.email ? `, ${user.email.split('@')[0]}` : ''}! 
+          <h2 className="text-3xl font-bold text-muted-foreground">
+            Dashboard
           </h2>
-          <p className="text-muted-foreground">
-            Here's what's happening with your AI scheduling assistant today.
-          </p>
         </div>
 
 
