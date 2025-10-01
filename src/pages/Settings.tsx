@@ -1101,10 +1101,10 @@ const Settings = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 bg-muted border border-border">
-              <TabsTrigger value="profile" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-5 bg-muted border border-border">
+              <TabsTrigger value="account" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
-                <span className="hidden sm:inline">Profile</span>
+                <span className="hidden sm:inline">Account</span>
               </TabsTrigger>
               <TabsTrigger value="business" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
@@ -1123,14 +1123,10 @@ const Settings = () => {
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Notifications</span>
               </TabsTrigger>
-              <TabsTrigger value="billing" className="flex items-center gap-2">
-                <CreditCard className="w-4 h-4" />
-                <span className="hidden sm:inline">Billing</span>
-              </TabsTrigger>
             </TabsList>
 
-            {/* User Profile */}
-            <TabsContent value="profile">
+            {/* Account (User Profile + Billing) */}
+            <TabsContent value="account" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -1203,6 +1199,8 @@ const Settings = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              <BillingSettings />
             </TabsContent>
 
             {/* Business Information */}
@@ -1758,11 +1756,6 @@ const Settings = () => {
             {/* Notifications */}
             <TabsContent value="notifications">
               <NotificationSettings />
-            </TabsContent>
-
-            {/* Billing */}
-            <TabsContent value="billing">
-              <BillingSettings />
             </TabsContent>
 
           </Tabs>
