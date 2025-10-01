@@ -23,6 +23,10 @@ const Pricing = () => {
   };
 
   const getButtonConfig = (planName: string, isDisabled: boolean) => {
+    if (planName.toLowerCase() === 'growth') {
+      return { text: "Coming Soon!", disabled: true };
+    }
+
     if (!user) {
       return { text: "Get Started for Free", disabled: isDisabled };
     }
