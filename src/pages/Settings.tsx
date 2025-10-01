@@ -39,7 +39,6 @@ const Settings = () => {
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("business");
-  const [accountSubTab, setAccountSubTab] = useState("profile");
   const [showCalendarBanner, setShowCalendarBanner] = useState(false);
   const [calendarBannerType, setCalendarBannerType] = useState<'success' | 'error'>('success');
   const [calendarBannerMessage, setCalendarBannerMessage] = useState('');
@@ -149,11 +148,6 @@ const Settings = () => {
       setActiveTab(tab);
     }
     
-    if (subTab && tab === 'account') {
-      console.log('Setting accountSubTab to:', subTab);
-      setAccountSubTab(subTab);
-    }
-    
     if (onboardingComplete === 'true') {
       setShowOnboardingBanner(true);
       setActiveTab('business'); // Show business tab after onboarding
@@ -182,17 +176,6 @@ const Settings = () => {
       setSearchParams(newSearchParams, { replace: true });
     }
   }, [loading, user, navigate, searchParams, setSearchParams]);
-
-  // Separate effect to handle subtab changes
-  useEffect(() => {
-    const subTab = searchParams.get('subtab');
-    const tab = searchParams.get('tab');
-    
-    if (subTab && tab === 'account') {
-      console.log('Subtab effect - Setting accountSubTab to:', subTab);
-      setAccountSubTab(subTab);
-    }
-  }, [searchParams]);
 
   const fetchRecentActivity = async () => {
     try {
@@ -1331,7 +1314,15 @@ const Settings = () => {
 
             {/* Account (User Profile + Billing) */}
             <TabsContent value="account" className="space-y-6">
-              <Tabs value={accountSubTab} onValueChange={setAccountSubTab} className="w-full">
+              <Tabs 
+                value={searchParams.get('subtab') || 'profile'} 
+                onValueChange={(value) => {
+                  const newSearchParams = new URLSearchParams(searchParams);
+                  newSearchParams.set('subtab', value);
+                  setSearchParams(newSearchParams, { replace: true });
+                }}
+                className="w-full"
+              >
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="profile">Profile</TabsTrigger>
                   <TabsTrigger value="billing">Plan and Billing</TabsTrigger>
