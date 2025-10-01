@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { Session, User } from "@supabase/supabase-js";
+import Header from "@/components/Header";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -167,24 +168,17 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary-glow/5" />
-      <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-gradient-to-br from-accent/10 to-transparent rounded-full blur-3xl" />
+    <div className="min-h-screen bg-background">
+      <Header />
       
-      {/* Header with logo */}
-      <div className="absolute top-6 left-6 flex items-center space-x-3 z-10">
-        <a href="/" className="flex items-center space-x-3">
-          <img 
-            src="/lovable-uploads/junie-logo.png" 
-            alt="Junie Logo" 
-            className="h-8 w-8"
-          />
-          <span className="text-xl font-bold text-muted-foreground">Junie</span>
-        </a>
-      </div>
-
+      <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden pt-20">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-primary-glow/5" />
+        <div className="absolute top-10 left-10 w-72 h-72 bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-gradient-to-br from-accent/10 to-transparent rounded-full blur-3xl" />
+      
+      {/* Header with logo - removed since we have the Header component */}
+      
       {/* Main Card */}
       <Card className="w-full max-w-md relative z-10 bg-card border shadow-2xl">
         <CardHeader className="text-center space-y-4">
@@ -306,6 +300,7 @@ const Login = () => {
           </div>
         </CardContent>
       </Card>
+    </div>
     </div>
   );
 };

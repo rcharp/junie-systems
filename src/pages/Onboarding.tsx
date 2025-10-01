@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, ArrowRight, Loader2, Globe, MapPin, Building2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import Header from "@/components/Header";
 
 interface BusinessPrediction {
   place_id: string;
@@ -266,21 +267,14 @@ const Onboarding = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
       {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/lovable-uploads/junie-logo.png" 
-              alt="Logo" 
-              className="h-8 w-8"
-            />
-            <span className="text-xl font-bold text-primary">Get Started</span>
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Step {step} of 2
-          </div>
+      <Header />
+      
+      {/* Progress indicator */}
+      <div className="container mx-auto px-4 py-2">
+        <div className="max-w-2xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
+          <span>Step {step} of 2</span>
         </div>
-      </header>
+      </div>
 
       <div className="flex-1 container mx-auto px-4 py-8 md:py-12">
         <div className="max-w-2xl mx-auto space-y-8">
