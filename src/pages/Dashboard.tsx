@@ -64,6 +64,26 @@ const Dashboard = () => {
     }
   }, [loading, user, navigate]);
 
+  // Check if new user needs onboarding FIRST, before loading any dashboard data
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!user) return;
+      
+      const { data: businessSettings } = await supabase
+        .from('business_settings')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      // Redirect to onboarding if no business settings exist
+      if (!businessSettings) {
+        navigate("/onboarding");
+      }
+    };
+    
+    checkOnboardingStatus();
+  }, [user, navigate]);
+
   useEffect(() => {
     if (user) {
       fetchRecentActivity();
