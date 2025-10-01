@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Bell, Mail, MessageSquare, Phone, AlertTriangle, Save } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +22,7 @@ const NotificationSettings = () => {
   const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [forwardingNumber, setForwardingNumber] = useState("");
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -36,7 +38,7 @@ const NotificationSettings = () => {
     try {
       const { data, error } = await supabase
         .from('business_settings')
-        .select('id, email_notifications, sms_notifications, push_notifications, instant_alerts')
+        .select('id, email_notifications, sms_notifications, push_notifications, instant_alerts, forwarding_number')
         .eq('user_id', user?.id)
         .single();
 
@@ -51,6 +53,7 @@ const NotificationSettings = () => {
         setSmsNotifications(data.sms_notifications || false);
         setPushNotifications(data.push_notifications !== false);
         setInstantAlerts(data.instant_alerts !== false);
+        setForwardingNumber(data.forwarding_number || "");
       }
     } catch (error) {
       console.error('Error loading notification settings:', error);
@@ -239,6 +242,22 @@ const NotificationSettings = () => {
                     debouncedAutoSave();
                   }}
                 />
+              </div>
+
+              {/* Forwarding Number Display */}
+              <div className="space-y-2">
+                <Label htmlFor="forwarding-number" className="text-sm font-medium">
+                  SMS Notification Number
+                </Label>
+                <Input
+                  id="forwarding-number"
+                  value={forwardingNumber || "Not set"}
+                  disabled
+                  className="bg-muted cursor-not-allowed"
+                />
+                <p className="text-xs text-muted-foreground">
+                  SMS notifications will be sent to this number. Update this in AI Caller settings.
+                </p>
               </div>
               
               <div className="flex items-start space-x-3">
