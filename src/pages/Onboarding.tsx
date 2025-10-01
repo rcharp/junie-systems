@@ -206,12 +206,20 @@ const Onboarding = () => {
             window.removeEventListener('message', handleMessage);
             popup?.close();
             
-            // Refresh the session on the parent window
-            console.log('Refreshing session after OAuth...');
-            const { data: { session } } = await supabase.auth.getSession();
+            console.log('OAuth success received, waiting for session sync...');
+            
+            // Wait a moment for the session to sync, then force refresh
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Force session refresh
+            const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+            
+            if (refreshError) {
+              console.error('Session refresh error:', refreshError);
+            }
             
             if (session) {
-              console.log('Session refreshed, navigating to settings');
+              console.log('Session established for user:', session.user.id);
               toast({
                 title: "Welcome!",
                 description: "Successfully signed in with Google.",
@@ -219,13 +227,25 @@ const Onboarding = () => {
               // Force navigate to settings
               window.location.href = '/settings';
             } else {
-              console.error('No session after OAuth success');
-              setLoading(false);
-              toast({
-                title: "Session error",
-                description: "Please try signing in again.",
-                variant: "destructive",
-              });
+              console.error('No session after OAuth and refresh');
+              // Try one more time with getSession
+              const { data: { session: retrySession } } = await supabase.auth.getSession();
+              
+              if (retrySession) {
+                console.log('Session found on retry');
+                window.location.href = '/settings';
+              } else {
+                console.error('Still no session, redirecting to login');
+                setLoading(false);
+                toast({
+                  title: "Session error",
+                  description: "Please try signing in again from the login page.",
+                  variant: "destructive",
+                });
+                setTimeout(() => {
+                  window.location.href = '/login';
+                }, 2000);
+              }
             }
           } else if (event.data?.type === 'google-oauth-error') {
             window.removeEventListener('message', handleMessage);
