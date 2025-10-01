@@ -5,7 +5,6 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Bell, Mail, MessageSquare, Phone, AlertTriangle, Save } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -226,36 +225,30 @@ const NotificationSettings = () => {
             </div>
 
             <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/20">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-base font-medium">SMS Notifications</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-base font-medium">SMS Notifications</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Get instant text messages for important calls</p>
                   </div>
-                  <p className="text-sm text-muted-foreground">Get instant text messages for important calls</p>
+                  <Switch
+                    id="sms-notifications"
+                    checked={smsNotifications}
+                    disabled={!smsOptIn}
+                    onCheckedChange={(checked) => {
+                      setSmsNotifications(checked);
+                      debouncedAutoSave();
+                    }}
+                  />
                 </div>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Switch
-                          id="sms-notifications"
-                          checked={smsNotifications}
-                          disabled={!smsOptIn}
-                          onCheckedChange={(checked) => {
-                            setSmsNotifications(checked);
-                            debouncedAutoSave();
-                          }}
-                        />
-                      </div>
-                    </TooltipTrigger>
-                    {!smsOptIn && (
-                      <TooltipContent>
-                        <p>Please agree to the terms below first</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                {!smsOptIn && (
+                  <p className="text-xs text-destructive">
+                    Please agree to the terms below first
+                  </p>
+                )}
               </div>
 
               {/* Forwarding Number Display */}
