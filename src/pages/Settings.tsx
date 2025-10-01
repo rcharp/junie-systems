@@ -1212,112 +1212,123 @@ const Settings = () => {
 
             {/* Account (User Profile + Billing) */}
             <TabsContent value="account" className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <User className="w-5 h-5 mr-2" />
-                    User Profile
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="userEmail">Email Address</Label>
-                    <Input
-                      id="userEmail"
-                      type="email"
-                      value={userEmail}
-                      disabled
-                      className="bg-muted"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Email cannot be changed. Contact support if you need to update it.
-                    </p>
-                  </div>
+              <Tabs defaultValue="profile" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="profile">Profile</TabsTrigger>
+                  <TabsTrigger value="billing">Billing</TabsTrigger>
+                </TabsList>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="userFullName">Full Name</Label>
-                      <Input
-                        id="userFullName"
-                        value={userFullName}
-                        onChange={(e) => {
-                          setUserFullName(e.target.value);
-                          debouncedAutoSave("Profile");
-                        }}
-                        placeholder="Your full name"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="userCompanyName">Company Name</Label>
-                      <Input
-                        id="userCompanyName"
-                        value={userCompanyName}
-                        onChange={(e) => {
-                          setUserCompanyName(e.target.value);
-                          debouncedAutoSave("Profile");
-                        }}
-                        placeholder="Your company name"
-                      />
-                    </div>
-                  </div>
+                <TabsContent value="profile" className="space-y-6 mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <User className="w-5 h-5 mr-2" />
+                        User Profile
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label htmlFor="userEmail">Email Address</Label>
+                        <Input
+                          id="userEmail"
+                          type="email"
+                          value={userEmail}
+                          disabled
+                          className="bg-muted"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Email cannot be changed. Contact support if you need to update it.
+                        </p>
+                      </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="userTimezone">Timezone</Label>
-                    <Select 
-                      value={userTimezone} 
-                      onValueChange={(value) => {
-                        setUserTimezone(value);
-                        debouncedAutoSave("Profile");
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select your timezone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {getCommonTimezones().map((tz) => (
-                          <SelectItem key={tz.value} value={tz.value}>
-                            {tz.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="userFullName">Full Name</Label>
+                          <Input
+                            id="userFullName"
+                            value={userFullName}
+                            onChange={(e) => {
+                              setUserFullName(e.target.value);
+                              debouncedAutoSave("Profile");
+                            }}
+                            placeholder="Your full name"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="userCompanyName">Company Name</Label>
+                          <Input
+                            id="userCompanyName"
+                            value={userCompanyName}
+                            onChange={(e) => {
+                              setUserCompanyName(e.target.value);
+                              debouncedAutoSave("Profile");
+                            }}
+                            placeholder="Your company name"
+                          />
+                        </div>
+                      </div>
 
-              <BillingSettings />
+                      <div className="space-y-2">
+                        <Label htmlFor="userTimezone">Timezone</Label>
+                        <Select 
+                          value={userTimezone} 
+                          onValueChange={(value) => {
+                            setUserTimezone(value);
+                            debouncedAutoSave("Profile");
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your timezone" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {getCommonTimezones().map((tz) => (
+                              <SelectItem key={tz.value} value={tz.value}>
+                                {tz.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              {/* Danger Zone - Account Deletion */}
-              <Card className="border-destructive/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center text-destructive">
-                    <AlertTriangle className="w-5 h-5 mr-2" />
-                    Danger Zone
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-foreground">Delete Account</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Permanently delete your account and all associated data. This action cannot be undone.
-                    </p>
-                    <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                      <li>Your Stripe subscription will be cancelled</li>
-                      <li>All business settings and data will be deleted</li>
-                      <li>Call logs and recordings will be permanently removed</li>
-                      <li>This action is irreversible</li>
-                    </ul>
-                  </div>
-                  <Button 
-                    variant="destructive"
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="w-full sm:w-auto"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete Account
-                  </Button>
-                </CardContent>
-              </Card>
+                  {/* Danger Zone - Account Deletion */}
+                  <Card className="border-destructive/50">
+                    <CardHeader>
+                      <CardTitle className="flex items-center text-destructive">
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        Danger Zone
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-foreground">Delete Account</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Permanently delete your account and all associated data. This action cannot be undone.
+                        </p>
+                        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                          <li>Your Stripe subscription will be cancelled</li>
+                          <li>All business settings and data will be deleted</li>
+                          <li>Call logs and recordings will be permanently removed</li>
+                          <li>This action is irreversible</li>
+                        </ul>
+                      </div>
+                      <Button 
+                        variant="destructive"
+                        onClick={() => setShowDeleteDialog(true)}
+                        className="w-full sm:w-auto"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete Account
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="billing" className="space-y-6 mt-6">
+                  <BillingSettings />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             {/* Business Information */}
