@@ -88,7 +88,9 @@ const Settings = () => {
   // AI Settings State
   const [aiPersonality, setAiPersonality] = useState("professional");
   const [customGreeting, setCustomGreeting] = useState("");
-  const [commonQuestions, setCommonQuestions] = useState("");
+  const [commonQuestionsAnswers, setCommonQuestionsAnswers] = useState<{question: string, answer: string}[]>([
+    { question: "", answer: "" }
+  ]);
   const [appointmentBooking, setAppointmentBooking] = useState(false);
   const [leadCapture, setLeadCapture] = useState(true);
   const [generatingDescription, setGeneratingDescription] = useState(false);
@@ -231,7 +233,23 @@ const Settings = () => {
         
         setAiPersonality(data.ai_personality || "professional");
         setCustomGreeting(data.custom_greeting || "");
-        setCommonQuestions(data.common_questions || "");
+        
+        // Parse common questions from old format or new format
+        if (data.common_questions) {
+          try {
+            const parsed = JSON.parse(data.common_questions);
+            if (Array.isArray(parsed)) {
+              setCommonQuestionsAnswers(parsed.length > 0 ? parsed : [{ question: "", answer: "" }]);
+            } else {
+              // Old format - convert text to array
+              setCommonQuestionsAnswers([{ question: "", answer: "" }]);
+            }
+          } catch {
+            // If not JSON, treat as old format
+            setCommonQuestionsAnswers([{ question: "", answer: "" }]);
+          }
+        }
+        
         setAppointmentBooking(data.appointment_booking || false);
         setLeadCapture(data.lead_capture !== false);
         setEmailNotifications(data.email_notifications !== false);
@@ -325,6 +343,29 @@ const Settings = () => {
     }
     
     setServices(newServices);
+  };
+
+  // Common Questions management functions
+  const questionInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const addQuestionAnswer = () => {
+    setCommonQuestionsAnswers([...commonQuestionsAnswers, { question: "", answer: "" }]);
+    setTimeout(() => {
+      const newIndex = commonQuestionsAnswers.length;
+      questionInputRefs.current[newIndex]?.focus();
+    }, 0);
+  };
+
+  const removeQuestionAnswer = (index: number) => {
+    if (commonQuestionsAnswers.length > 1) {
+      setCommonQuestionsAnswers(commonQuestionsAnswers.filter((_, i) => i !== index));
+    }
+  };
+
+  const updateQuestionAnswer = (index: number, field: 'question' | 'answer', value: string) => {
+    const newQA = [...commonQuestionsAnswers];
+    newQA[index][field] = value;
+    setCommonQuestionsAnswers(newQA);
   };
 
   const generateBusinessDescription = async () => {
@@ -746,14 +787,12 @@ const Settings = () => {
           forwarding_number: forwardingNumber,
           urgent_keywords: urgentKeywords,
           auto_forward: autoForward,
-          
-          
+          common_questions: JSON.stringify(commonQuestionsAnswers.filter(qa => qa.question.trim() || qa.answer.trim())),
         };
       } else if (section === "AI Assistant") {
         updateData = {
           ai_personality: aiPersonality,
           custom_greeting: customGreeting,
-          common_questions: commonQuestions,
           appointment_booking: appointmentBooking,
           lead_capture: leadCapture
         };
@@ -1663,21 +1702,71 @@ const Settings = () => {
                   </div>
 
 
-                  <div className="space-y-2">
-                    <Label htmlFor="commonQuestions">Common Questions & Answers</Label>
-                    <Textarea
-                      id="commonQuestions"
-                      value={commonQuestions}
-                      onChange={(e) => {
-                        setCommonQuestions(e.target.value);
-                        debouncedAutoSave("Calls");
-                      }}
-                      placeholder="Q: What services do you offer?&#10;A: We provide 24/7 AI answering services, appointment booking, lead capture, and customer service support.&#10;&#10;Q: How does your AI answering service work?&#10;A: Our AI assistant answers your calls professionally, captures customer information, books appointments, and handles inquiries naturally.&#10;&#10;Q: What are your rates?&#10;A: We offer flexible pricing plans starting from basic call handling to comprehensive business solutions. I can schedule a consultation to discuss pricing."
-                      rows={12}
-                      className="min-h-[300px]"
-                    />
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label>Common Questions & Answers</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addQuestionAnswer}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Question
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {commonQuestionsAnswers.map((qa, index) => (
+                        <div key={index} className="space-y-3 p-4 border rounded-lg">
+                          <div className="flex gap-2 items-start">
+                            <div className="flex-1">
+                              <Label htmlFor={`question-${index}`} className="text-sm font-medium">
+                                Question
+                              </Label>
+                              <Input
+                                id={`question-${index}`}
+                                ref={(el) => questionInputRefs.current[index] = el}
+                                placeholder="e.g., What services do you offer?"
+                                value={qa.question}
+                                onChange={(e) => {
+                                  updateQuestionAnswer(index, 'question', e.target.value);
+                                  debouncedAutoSave("Call");
+                                }}
+                              />
+                            </div>
+                            {commonQuestionsAnswers.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeQuestionAnswer(index)}
+                                className="mt-6"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <div>
+                            <Label htmlFor={`answer-${index}`} className="text-sm font-medium">
+                              Answer
+                            </Label>
+                            <Textarea
+                              id={`answer-${index}`}
+                              placeholder="e.g., We provide 24/7 AI answering services, appointment booking, lead capture, and customer service support."
+                              value={qa.answer}
+                              onChange={(e) => {
+                                updateQuestionAnswer(index, 'answer', e.target.value);
+                                debouncedAutoSave("Call");
+                              }}
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                     <p className="text-sm text-muted-foreground">
-                      Pre-program frequently asked questions and their answers
+                      Pre-program frequently asked questions and their answers for your AI assistant
                     </p>
                   </div>
 
