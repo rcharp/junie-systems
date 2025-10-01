@@ -142,11 +142,15 @@ const Settings = () => {
     const errorMessage = searchParams.get('error');
     const onboardingComplete = searchParams.get('onboarding_complete');
     
+    console.log('Settings URL params:', { tab, subTab });
+    
     if (tab) {
+      console.log('Setting activeTab to:', tab);
       setActiveTab(tab);
     }
     
     if (subTab && tab === 'account') {
+      console.log('Setting accountSubTab to:', subTab);
       setAccountSubTab(subTab);
     }
     
