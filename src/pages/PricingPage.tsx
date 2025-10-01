@@ -5,10 +5,17 @@ import { ArrowLeft, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const PricingPage = () => {
-  const { user, setSigningOut } = useAuth();
+  const { user, loading, setSigningOut } = useAuth();
   const navigate = useNavigate();
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component is mounted before rendering auth-dependent UI
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -18,6 +25,15 @@ const PricingPage = () => {
       window.location.href = '/';
     }
   };
+
+  // Show loading state while checking auth
+  if (!mounted || loading) {
+    return (
+      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-subtle">
