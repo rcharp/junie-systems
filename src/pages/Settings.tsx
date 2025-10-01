@@ -997,6 +997,14 @@ const Settings = () => {
           pricing_structure: finalValidServices.map(s => `${s.name}: ${s.price}`).join(', ')
         };
       } else if (section === "Call") {
+        if (!forwardingNumber || !forwardingNumber.trim()) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Emergency Forwarding Number is required"
+          });
+          return;
+        }
         updateData = {
           forwarding_number: forwardingNumber,
           urgent_keywords: urgentKeywords,
@@ -2140,7 +2148,9 @@ const Settings = () => {
 
                   <FeatureGate feature="callTransfers" showUpgradeMessage={true}>
                     <div className="space-y-2">
-                      <Label htmlFor="forwardingNumber" className="font-semibold">Emergency Forwarding Number</Label>
+                      <Label htmlFor="forwardingNumber" className="font-semibold">
+                        Emergency Forwarding Number <span className="text-destructive">*</span>
+                      </Label>
                       <Input
                         id="forwardingNumber"
                         value={forwardingNumber}
@@ -2149,6 +2159,7 @@ const Settings = () => {
                           debouncedAutoSave("Calls");
                         }}
                         placeholder="+1 (555) 987-6543"
+                        required
                       />
                       <p className="text-sm text-muted-foreground">
                         Your business phone number. Urgent or emergency calls will be forwarded to this number when the AI detects urgent keywords.
