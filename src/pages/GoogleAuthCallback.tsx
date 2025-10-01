@@ -12,6 +12,9 @@ const GoogleAuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
+        // Wait a moment for the URL hash to be processed by Supabase
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Get the session after OAuth redirect
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
@@ -23,14 +26,17 @@ const GoogleAuthCallback = () => {
           throw new Error('No session found after OAuth');
         }
 
+        console.log('Session established for user:', session.user.id);
+
         // Create user profile if it doesn't exist
         const { data: existingProfile } = await supabase
           .from('user_profiles')
           .select('id')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
 
         if (!existingProfile) {
+          console.log('Creating new user profile...');
           const { error: profileError } = await supabase
             .from('user_profiles')
             .insert({
@@ -42,7 +48,9 @@ const GoogleAuthCallback = () => {
 
           if (profileError) {
             console.error('Error creating profile:', profileError);
+            throw profileError;
           }
+          console.log('User profile created successfully');
         }
 
         // Get the selected business data from sessionStorage
@@ -51,13 +59,14 @@ const GoogleAuthCallback = () => {
         if (selectedBusinessData) {
           try {
             const businessData = JSON.parse(selectedBusinessData);
+            console.log('Creating business settings with data:', businessData);
             
             // Check if business settings already exist
             const { data: existingSettings } = await supabase
               .from('business_settings')
               .select('id')
               .eq('user_id', session.user.id)
-              .single();
+              .maybeSingle();
 
             if (!existingSettings) {
               // Create business settings with the selected business data
@@ -69,13 +78,17 @@ const GoogleAuthCallback = () => {
                   business_phone: businessData.phone,
                   business_address: businessData.address,
                   business_website: businessData.website,
-                  business_hours: businessData.openingHours?.join(', '),
+                  business_hours: businessData.openingHours?.join('\n'),
                   business_type: businessData.types?.[0] || 'general',
                 });
 
               if (businessError) {
                 console.error('Error creating business settings:', businessError);
+                throw businessError;
               }
+              console.log('Business settings created successfully');
+            } else {
+              console.log('Business settings already exist');
             }
           } catch (parseError) {
             console.error('Error parsing business data:', parseError);
@@ -86,12 +99,17 @@ const GoogleAuthCallback = () => {
         
         // Send success message to parent window and close popup
         if (window.opener) {
-          window.opener.postMessage({ type: 'google-oauth-success' }, window.location.origin);
+          console.log('Sending success message to parent window');
+          window.opener.postMessage({ 
+            type: 'google-oauth-success',
+            userId: session.user.id 
+          }, window.location.origin);
           setTimeout(() => {
             window.close();
           }, 1000);
         } else {
           // Fallback for non-popup case - redirect to settings
+          console.log('Not a popup, redirecting to settings...');
           setTimeout(() => {
             navigate('/settings', { replace: true });
           }, 1500);

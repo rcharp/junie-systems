@@ -181,20 +181,34 @@ const Onboarding = () => {
         );
 
         // Listen for OAuth completion
-        const handleMessage = (event: MessageEvent) => {
+        const handleMessage = async (event: MessageEvent) => {
           if (event.origin !== window.location.origin) return;
           
           if (event.data?.type === 'google-oauth-success') {
             window.removeEventListener('message', handleMessage);
             popup?.close();
-            toast({
-              title: "Welcome!",
-              description: "Successfully signed in with Google.",
-            });
-            // Navigate to settings page instead of dashboard
-            setTimeout(() => {
-              navigate('/settings');
-            }, 500);
+            
+            // Refresh the session on the parent window
+            console.log('Refreshing session after OAuth...');
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+              console.log('Session refreshed, navigating to settings');
+              toast({
+                title: "Welcome!",
+                description: "Successfully signed in with Google.",
+              });
+              // Force navigate to settings
+              window.location.href = '/settings';
+            } else {
+              console.error('No session after OAuth success');
+              setLoading(false);
+              toast({
+                title: "Session error",
+                description: "Please try signing in again.",
+                variant: "destructive",
+              });
+            }
           } else if (event.data?.type === 'google-oauth-error') {
             window.removeEventListener('message', handleMessage);
             popup?.close();
