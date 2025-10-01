@@ -1185,8 +1185,8 @@ const Settings = () => {
             </div>
           )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 bg-muted border border-border">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-5 bg-muted border border-border mb-6">
               <TabsTrigger value="account" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">Account</span>
@@ -1211,14 +1211,14 @@ const Settings = () => {
             </TabsList>
 
             {/* Account (User Profile + Billing) */}
-            <TabsContent value="account" className="space-y-6">
+            <TabsContent value="account" className="space-y-0">
               <Tabs defaultValue="profile" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="profile">Profile</TabsTrigger>
                   <TabsTrigger value="billing">Billing</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="profile" className="space-y-6 mt-6">
+                <TabsContent value="profile" className="space-y-6">
                   <Card>
                     <CardHeader>
                       <CardTitle className="flex items-center">
@@ -1325,14 +1325,14 @@ const Settings = () => {
                   </Card>
                 </TabsContent>
 
-                <TabsContent value="billing" className="space-y-6 mt-6">
+                <TabsContent value="billing" className="space-y-6">
                   <BillingSettings />
                 </TabsContent>
               </Tabs>
             </TabsContent>
 
             {/* Business Information */}
-            <TabsContent value="business">
+            <TabsContent value="business" className="space-y-0">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -1746,7 +1746,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Call Settings */}
-            <TabsContent value="calls">
+            <TabsContent value="calls" className="space-y-0">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -1896,7 +1896,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Setup */}
-            <TabsContent value="setup">
+            <TabsContent value="setup" className="space-y-0">
               <FeatureGate feature="appointmentScheduling">
                 <Card>
                   <CardHeader>
@@ -1934,7 +1934,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Notifications */}
-            <TabsContent value="notifications">
+            <TabsContent value="notifications" className="space-y-0">
               <NotificationSettings />
             </TabsContent>
 
