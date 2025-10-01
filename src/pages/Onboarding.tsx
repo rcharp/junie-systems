@@ -493,25 +493,177 @@ const Onboarding = () => {
       if (error) throw error;
 
       if (data.user) {
+        // Show extraction overlay
+        setExtractingData(true);
+        setExtractionProgress(10);
+        
+        // Create user profile
         const { error: profileError } = await supabase
           .from('user_profiles')
-          .insert([
-            {
-              id: data.user.id,
-              subscription_plan: 'free',
-              subscription_status: 'active'
+          .upsert({
+            id: data.user.id,
+            company_name: businessSearch || 'My Business',
+            subscription_plan: 'free',
+            subscription_status: 'active'
+          }, { onConflict: 'id' });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+        
+        setExtractionProgress(20);
+        
+        // Get saved business data
+        const savedBusiness = sessionStorage.getItem('selectedBusiness');
+        const savedWebsiteUrl = useWebsite ? websiteUrl : null;
+        
+        let businessData: any = {};
+        
+        if (savedBusiness) {
+          businessData = JSON.parse(savedBusiness);
+        }
+        
+        setExtractionProgress(30);
+        
+        // Use Claude to determine business type, state, and description
+        let claudeData: any = {};
+        try {
+          const { data: generatedData, error: claudeError } = await supabase.functions.invoke('generate-business-description', {
+            body: {
+              businessName: businessData.name || businessSearch || 'My Business',
+              businessType: businessData.types?.[0] || 'other',
+              services: [],
+              address: businessData.address || null,
+              phone: businessData.phone || null,
+              website: savedWebsiteUrl || businessData.website || null,
+              businessTypesList,
+              statesList
             }
-          ]);
-
-        if (profileError) throw profileError;
-
+          });
+          
+          if (!claudeError && generatedData) {
+            claudeData = generatedData;
+            console.log('Claude generated data:', claudeData);
+          }
+        } catch (error) {
+          console.error('Error generating with Claude:', error);
+        }
+        
+        setExtractionProgress(60);
+        
+        // Default business hours: M-F 9am-5pm
+        const defaultHours = [
+          { id: 1, day: 'monday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          { id: 2, day: 'tuesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          { id: 3, day: 'wednesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          { id: 4, day: 'thursday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+          { id: 5, day: 'friday', isOpen: true, openTime: '09:00', closeTime: '17:00' }
+        ];
+        
+        // Determine which hours to save - use Google hours if available, otherwise default
+        let businessHoursToSave = defaultHours;
+        
+        // If Google Business Profile has hours, try to use them
+        if (businessData.openingHours && Array.isArray(businessData.openingHours) && businessData.openingHours.length > 0) {
+          try {
+            // Map Google hours to our format with IDs
+            businessHoursToSave = businessData.openingHours.map((hour: any, index: number) => ({
+              id: index + 1,
+              day: hour.day || 'monday',
+              isOpen: hour.isOpen !== undefined ? hour.isOpen : true,
+              openTime: hour.openTime || '09:00',
+              closeTime: hour.closeTime || '17:00'
+            }));
+          } catch (error) {
+            console.error('Error parsing Google hours, using defaults:', error);
+            businessHoursToSave = defaultHours;
+          }
+        }
+        
+        // Save business settings with Claude-enhanced data
+        const { data: businessSettingsResult, error: businessError } = await supabase
+          .from('business_settings')
+          .upsert({
+            user_id: data.user.id,
+            business_name: businessData.name || businessSearch || 'My Business',
+            business_type: claudeData.businessType || businessData.types?.[0] || 'other',
+            business_phone: businessData.phone || null,
+            business_address: businessData.address || null,
+            business_address_state_full: claudeData.state || null,
+            business_website: savedWebsiteUrl || businessData.website || null,
+            business_hours: JSON.stringify(businessHoursToSave),
+            business_description: claudeData.description || businessData.editorial_summary?.overview || null,
+            business_type_full_name: businessData.types?.join(', ') || null,
+            business_timezone: 'America/New_York',
+          }, { 
+            onConflict: 'user_id'
+          })
+          .select('id')
+          .single();
+        
+        setExtractionProgress(70);
+        
+        if (businessError) {
+          console.error('Error saving business settings:', businessError);
+        } else {
+          console.log('Business data saved successfully');
+          
+          // Extract services using Claude API
+          if (businessSettingsResult?.id) {
+            try {
+              setExtractionProgress(80);
+              const { data: servicesData, error: servicesError } = await supabase.functions.invoke('extract-services', {
+                body: {
+                  businessName: businessData.name || businessSearch || 'My Business',
+                  businessType: claudeData.businessType || businessData.types?.[0] || 'other',
+                  website: savedWebsiteUrl || businessData.website,
+                  businessDescription: claudeData.description || businessData.editorial_summary?.overview
+                }
+              });
+              
+              setExtractionProgress(90);
+              
+              if (!servicesError && servicesData?.services) {
+                const businessId = businessSettingsResult.id;
+                
+                // Save extracted services to database
+                const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
+                  business_id: businessId,
+                  name: service.name,
+                  price: service.price,
+                  description: service.description,
+                  display_order: index,
+                  is_active: true
+                }));
+                
+                await supabase.from('services').insert(servicesToInsert);
+                console.log('Services saved successfully');
+              }
+            } catch (servicesError) {
+              console.error('Error extracting services:', servicesError);
+            }
+          }
+        }
+        
+        // Clear the sessionStorage
+        sessionStorage.removeItem('selectedBusiness');
+        
+        setExtractionProgress(100);
+        
         toast({
           title: "Account created!",
           description: "Welcome to your AI assistant dashboard",
         });
-        navigate("/dashboard");
+        
+        // Small delay to show 100% progress
+        setTimeout(() => {
+          // Navigate to settings with success flag
+          window.location.href = '/settings?onboarding_complete=true';
+        }, 500);
       }
     } catch (error: any) {
+      console.error('Signup error:', error);
+      setExtractingData(false);
       toast({
         title: "Signup failed",
         description: error.message,
