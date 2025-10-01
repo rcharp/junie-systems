@@ -43,6 +43,7 @@ const Settings = () => {
   const [calendarBannerType, setCalendarBannerType] = useState<'success' | 'error'>('success');
   const [calendarBannerMessage, setCalendarBannerMessage] = useState('');
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { featureAccess } = useSubscription();
   console.log("Settings state:", { user: user?.email, loading });
 
@@ -1203,6 +1204,27 @@ const Settings = () => {
             </p>
           </div>
 
+          {/* Upgrade Dialog */}
+          <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Upgrade Required</AlertDialogTitle>
+                <AlertDialogDescription>
+                  The Calendar feature is available on the Scale plan. Upgrade your plan to access appointment scheduling and Google Calendar integration.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => {
+                  setShowUpgradeDialog(false);
+                  setActiveTab('account');
+                }}>
+                  Go to Billing
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
           {/* Onboarding Success Banner */}
           {showOnboardingBanner && (
             <div className="p-4 rounded-lg border mb-6 bg-green-50 border-green-200 text-green-800">
@@ -1251,7 +1273,14 @@ const Settings = () => {
             </div>
           )}
 
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={(value) => {
+            // Check if user has access to Calendar tab
+            if (value === 'setup' && !featureAccess.appointmentScheduling) {
+              setShowUpgradeDialog(true);
+              return;
+            }
+            setActiveTab(value);
+          }}>
             <TabsList className="grid w-full grid-cols-5 mb-6 p-1 h-auto">
               <TabsTrigger value="account" className="flex items-center gap-2 py-3.5">
                 <User className="w-4 h-4" />
@@ -1265,10 +1294,9 @@ const Settings = () => {
                 <Phone className="w-4 h-4" />
                 <span className="hidden sm:inline">Calls</span>
               </TabsTrigger>
-              <TabsTrigger value="setup" className="flex items-center gap-2 py-3.5" disabled={!featureAccess.appointmentScheduling}>
+              <TabsTrigger value="setup" className="flex items-center gap-2 py-3.5">
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">Calendar</span>
-                {!featureAccess.appointmentScheduling && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2 py-3.5">
                 <Bell className="w-4 h-4" />
