@@ -12,7 +12,7 @@ import { useState } from 'react';
 const Pricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { subscriptionPlan } = useSubscription();
+  const { subscriptionPlan, isLoading } = useSubscription();
   const [loading, setLoading] = useState<string | null>(null);
 
   const planHierarchy: Record<string, number> = {
@@ -27,7 +27,8 @@ const Pricing = () => {
       return { text: "Coming Soon!", disabled: true };
     }
 
-    if (!user) {
+    // Show "Get Started for Free" if user is not logged in or still loading
+    if (!user || isLoading) {
       return { text: "Get Started for Free", disabled: false };
     }
 
