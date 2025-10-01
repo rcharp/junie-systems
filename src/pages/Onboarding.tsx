@@ -229,6 +229,57 @@ const Onboarding = () => {
               
               console.log('Session established successfully:', data.session?.user.id);
               
+              // Save business data if available
+              const savedBusiness = sessionStorage.getItem('selectedBusiness');
+              if (savedBusiness && data.session?.user.id) {
+                try {
+                  const businessData = JSON.parse(savedBusiness);
+                  console.log('Saving business data:', businessData);
+                  
+                  // Create user profile if it doesn't exist
+                  const { error: profileError } = await supabase
+                    .from('user_profiles')
+                    .upsert({
+                      id: data.session.user.id,
+                      company_name: businessData.name,
+                      subscription_plan: 'free',
+                      subscription_status: 'active'
+                    }, { onConflict: 'id' });
+                  
+                  if (profileError) {
+                    console.error('Error creating profile:', profileError);
+                  }
+                  
+                  // Save business settings
+                  const { error: businessError } = await supabase
+                    .from('business_settings')
+                    .upsert({
+                      user_id: data.session.user.id,
+                      business_name: businessData.name,
+                      business_type: businessData.types?.[0] || businessData.businessType,
+                      business_phone: businessData.formatted_phone_number || businessData.international_phone_number,
+                      business_address: businessData.formatted_address,
+                      business_website: businessData.website,
+                      business_hours: businessData.opening_hours ? JSON.stringify(businessData.opening_hours) : null,
+                      business_description: businessData.editorial_summary?.overview || null,
+                      business_address_state_full: businessData.address_components?.find((c: any) => c.types.includes('administrative_area_level_1'))?.long_name,
+                      business_type_full_name: businessData.types?.join(', '),
+                      business_timezone: businessData.utc_offset_minutes ? `UTC${businessData.utc_offset_minutes >= 0 ? '+' : ''}${businessData.utc_offset_minutes / 60}` : 'America/New_York',
+                    }, { onConflict: 'user_id' });
+                  
+                  if (businessError) {
+                    console.error('Error saving business settings:', businessError);
+                  } else {
+                    console.log('Business data saved successfully');
+                  }
+                  
+                  // Clear the sessionStorage
+                  sessionStorage.removeItem('selectedBusiness');
+                } catch (error) {
+                  console.error('Error processing business data:', error);
+                }
+              }
+              
               toast({
                 title: "Welcome!",
                 description: "Successfully signed in with Google.",
