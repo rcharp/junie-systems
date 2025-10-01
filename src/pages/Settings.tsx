@@ -1448,6 +1448,43 @@ const Settings = () => {
                                 Authenticated via Google
                               </p>
                             </div>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={async () => {
+                                if (confirm('Disconnect your Google account? This will also disconnect Google Calendar and sign you out.')) {
+                                  try {
+                                    // Disconnect Google Calendar first
+                                    const { error: calendarError } = await supabase
+                                      .from('google_calendar_settings')
+                                      .update({
+                                        is_connected: false,
+                                        encrypted_access_token: null,
+                                        encrypted_refresh_token: null,
+                                        expires_at: null,
+                                        calendar_id: null
+                                      })
+                                      .eq('user_id', user?.id);
+
+                                    if (calendarError) {
+                                      console.error('Error disconnecting calendar:', calendarError);
+                                    }
+
+                                    // Sign out and redirect
+                                    await handleRobustSignOut(supabase);
+                                  } catch (error) {
+                                    console.error('Error disconnecting account:', error);
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Error",
+                                      description: "Failed to disconnect account"
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              Disconnect
+                            </Button>
                           </div>
                         </div>
                       )}
