@@ -1475,10 +1475,21 @@ const Settings = () => {
                 <TabsContent value="profile" className="space-y-6">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="flex items-center">
-                        <User className="w-5 h-5 mr-2" />
-                        User Profile
-                      </CardTitle>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center">
+                          <User className="w-5 h-5 mr-2" />
+                          User Profile
+                        </CardTitle>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate("/setup-guide")}
+                          className="flex items-center gap-2"
+                        >
+                          <Zap className="w-4 h-4" />
+                          Setup Guide
+                        </Button>
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="space-y-2">
@@ -2084,10 +2095,21 @@ const Settings = () => {
             <TabsContent value="calls" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Bot className="w-5 h-5 mr-2" />
-                    AI Caller Settings
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center">
+                      <Bot className="w-5 h-5 mr-2" />
+                      AI Caller Settings
+                    </CardTitle>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate("/setup-guide")}
+                      className="flex items-center gap-2"
+                    >
+                      <Zap className="w-4 h-4" />
+                      Setup Guide
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {/* Junie Phone Number (Read-only) */}
@@ -2261,10 +2283,21 @@ const Settings = () => {
               <FeatureGate feature="appointmentScheduling">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Calendar className="h-5 w-5" />
-                      Calendar Integration
-                    </CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5" />
+                        Calendar Integration
+                      </CardTitle>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate("/setup-guide")}
+                        className="flex items-center gap-2"
+                      >
+                        <Zap className="w-4 h-4" />
+                        Setup Guide
+                      </Button>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
