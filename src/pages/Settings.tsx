@@ -235,7 +235,12 @@ const Settings = () => {
           try {
             const hoursData = JSON.parse(data.business_hours);
             if (Array.isArray(hoursData)) {
-              setBusinessHours(hoursData);
+              // Ensure each hour entry has an id
+              const hoursWithIds = hoursData.map((hour, index) => ({
+                ...hour,
+                id: hour.id || index + 1
+              }));
+              setBusinessHours(hoursWithIds);
             }
           } catch (e) {
             // Keep default hours if parsing fails

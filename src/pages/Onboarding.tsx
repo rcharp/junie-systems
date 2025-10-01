@@ -307,11 +307,11 @@ const Onboarding = () => {
                   
                   // Default business hours: M-F 9am-5pm
                   const defaultHours = [
-                    { day: 'monday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
-                    { day: 'tuesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
-                    { day: 'wednesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
-                    { day: 'thursday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
-                    { day: 'friday', isOpen: true, openTime: '09:00', closeTime: '17:00' }
+                    { id: 1, day: 'monday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+                    { id: 2, day: 'tuesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+                    { id: 3, day: 'wednesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+                    { id: 4, day: 'thursday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+                    { id: 5, day: 'friday', isOpen: true, openTime: '09:00', closeTime: '17:00' }
                   ];
                   
                   // Save business settings with Claude-enhanced data
