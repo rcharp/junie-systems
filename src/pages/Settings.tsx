@@ -228,7 +228,19 @@ const Settings = () => {
         // Parse existing address
         if (data.business_address) {
           const parsedAddress = parseAddress(data.business_address);
+          // If we have a state from Claude extraction, use that instead
+          if (data.business_address_state_full) {
+            parsedAddress.state = data.business_address_state_full;
+          }
           setAddressData(parsedAddress);
+        } else if (data.business_address_state_full) {
+          // If no full address but we have a state, set that
+          setAddressData({
+            street: '',
+            city: '',
+            state: data.business_address_state_full,
+            zip: ''
+          });
         }
         // Parse business hours
         if (data.business_hours) {
