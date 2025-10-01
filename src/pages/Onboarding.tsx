@@ -550,17 +550,17 @@ const Onboarding = () => {
             <div className="space-y-6 animate-slide-up">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                  Let's find your business
+                  Let&apos;s find your Google business profile
                 </h1>
                 <p className="text-muted-foreground text-lg">
-                  We'll use your business information to train your AI assistant
+                  We&apos;ll use your business information to train your AI assistant
                 </p>
               </div>
 
               <Card className="border-2 shadow-elegant">
                 <CardHeader>
                   <CardTitle className="text-center text-xl">
-                    {useWebsite ? "Enter Your Website" : "Search Your Business"}
+                    {useWebsite ? "Enter Your Website" : "Search for your business"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -570,7 +570,7 @@ const Onboarding = () => {
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
                         <Input
                           type="text"
-                          placeholder="Search for your business..."
+                          placeholder="Enter your business name"
                           value={businessSearch}
                           onChange={(e) => {
                             setBusinessSearch(e.target.value);
