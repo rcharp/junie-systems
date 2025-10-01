@@ -1447,10 +1447,16 @@ const Settings = () => {
                         variant="destructive"
                         onClick={() => setShowDeleteDialog(true)}
                         className="w-full sm:w-auto"
+                        disabled={isAdmin}
                       >
                         <Trash2 className="w-4 h-4 mr-2" />
                         Delete Account
                       </Button>
+                      {isAdmin && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Admin accounts cannot be deleted through the UI for security reasons.
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>
