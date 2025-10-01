@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { GripVertical, CheckCircle2, Plus, Trash2 } from 'lucide-react';
+import { GripVertical, CheckCircle2, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -45,9 +45,15 @@ interface SortableItemProps {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   onPriorityChange: (id: string, priority: 'high' | 'medium' | 'low') => void;
+  onEdit: (id: string, newText: string) => void;
+  isEditing: boolean;
+  onStartEdit: (id: string, currentText: string) => void;
+  onCancelEdit: () => void;
+  editingText: string;
+  onEditingTextChange: (text: string) => void;
 }
 
-function SortableItem({ item, onToggle, onDelete, onPriorityChange }: SortableItemProps) {
+function SortableItem({ item, onToggle, onDelete, onPriorityChange, onEdit, isEditing, onStartEdit, onCancelEdit, editingText, onEditingTextChange }: SortableItemProps) {
   const {
     attributes,
     listeners,
@@ -89,7 +95,7 @@ function SortableItem({ item, onToggle, onDelete, onPriorityChange }: SortableIt
         item.completed ? 'opacity-60 bg-muted/50' : 'hover:bg-muted/50'
       }`}
     >
-      {/* Top row: drag handle, checkbox, text, completed icon */}
+      {/* Top row: drag handle, checkbox, text/input, completed icon */}
       <div className="flex items-center space-x-3 mb-2">
         <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
           <GripVertical className="h-4 w-4 text-muted-foreground" />
@@ -100,47 +106,98 @@ function SortableItem({ item, onToggle, onDelete, onPriorityChange }: SortableIt
           checked={item.completed}
           onCheckedChange={() => onToggle(item.id)}
           className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          disabled={isEditing}
         />
         
-        <label
-          htmlFor={item.id}
-          className={`flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
-            item.completed ? 'line-through text-muted-foreground' : ''
-          }`}
-        >
-          {item.text}
-        </label>
-        
-        {item.completed && (
-          <CheckCircle2 className="h-4 w-4 text-primary" />
+        {isEditing ? (
+          <div className="flex-1 flex items-center gap-2">
+            <Input
+              value={editingText}
+              onChange={(e) => onEditingTextChange(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  onEdit(item.id, editingText);
+                } else if (e.key === 'Escape') {
+                  onCancelEdit();
+                }
+              }}
+              className="h-8 text-sm"
+              autoFocus
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(item.id, editingText)}
+              className="h-8 w-8 p-0"
+            >
+              <Check className="h-4 w-4 text-green-600" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onCancelEdit}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4 text-destructive" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <label
+              htmlFor={item.id}
+              className={`flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                item.completed ? 'line-through text-muted-foreground' : ''
+              }`}
+            >
+              {item.text}
+            </label>
+            
+            {item.completed && (
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+            )}
+          </>
         )}
       </div>
       
-      {/* Bottom row: priority dropdown and trash button */}
-      <div className="flex items-center gap-2 ml-10">
-        <Select value={item.priority} onValueChange={(priority: 'high' | 'medium' | 'low') => onPriorityChange(item.id, priority)}>
-          <SelectTrigger className="w-32 h-8 text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
-          </SelectContent>
-        </Select>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete(item.id);
-          }}
-          className="transition-opacity h-8"
-        >
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </Button>
-      </div>
+      {/* Bottom row: priority dropdown, edit button, and trash button */}
+      {!isEditing && (
+        <div className="flex items-center gap-2 ml-10">
+          <Select value={item.priority} onValueChange={(priority: 'high' | 'medium' | 'low') => onPriorityChange(item.id, priority)}>
+            <SelectTrigger className="w-32 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onStartEdit(item.id, item.text);
+            }}
+            className="transition-opacity h-8"
+          >
+            <Pencil className="h-4 w-4 text-muted-foreground" />
+          </Button>
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(item.id);
+            }}
+            className="transition-opacity h-8"
+          >
+            <Trash2 className="h-4 w-4 text-destructive" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -150,6 +207,8 @@ export function TodoChecklist() {
   const [loading, setLoading] = useState(true);
   const [newTodoText, setNewTodoText] = useState('');
   const [newTodoPriority, setNewTodoPriority] = useState<'high' | 'medium' | 'low'>('medium');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -374,6 +433,57 @@ export function TodoChecklist() {
     }
   };
 
+  const startEditTodo = (id: string, currentText: string) => {
+    setEditingId(id);
+    setEditingText(currentText);
+  };
+
+  const cancelEditTodo = () => {
+    setEditingId(null);
+    setEditingText('');
+  };
+
+  const editTodo = async (id: string, newText: string) => {
+    if (!newText.trim()) {
+      toast({
+        title: "Error",
+        description: "Todo text cannot be empty",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('todos')
+        .update({ text: newText.trim() })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setTodos((items) =>
+        items.map((item) =>
+          item.id === id ? { ...item, text: newText.trim() } : item
+        )
+      );
+
+      setEditingId(null);
+      setEditingText('');
+
+      toast({
+        title: "Todo updated",
+        description: "Todo text has been updated successfully",
+      });
+    } catch (error: any) {
+      console.error('Error updating todo:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update todo",
+        variant: "destructive",
+      });
+    }
+  };
+
   const completedCount = todos.filter(todo => todo.completed).length;
   const totalCount = todos.length;
 
@@ -442,7 +552,19 @@ export function TodoChecklist() {
             <SortableContext items={todos} strategy={verticalListSortingStrategy}>
               <div className="space-y-2">
                 {todos.map((todo) => (
-                  <SortableItem key={todo.id} item={todo} onToggle={toggleTodo} onDelete={deleteTodo} onPriorityChange={updateTodoPriority} />
+                  <SortableItem 
+                    key={todo.id} 
+                    item={todo} 
+                    onToggle={toggleTodo} 
+                    onDelete={deleteTodo} 
+                    onPriorityChange={updateTodoPriority}
+                    onEdit={editTodo}
+                    isEditing={editingId === todo.id}
+                    onStartEdit={startEditTodo}
+                    onCancelEdit={cancelEditTodo}
+                    editingText={editingText}
+                    onEditingTextChange={setEditingText}
+                  />
                 ))}
               </div>
             </SortableContext>
