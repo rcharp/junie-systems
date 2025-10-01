@@ -99,7 +99,6 @@ const Settings = () => {
 
   // Account Deletion State
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Notification Settings State
@@ -959,15 +958,6 @@ const Settings = () => {
   };
 
   const handleDeleteAccount = async () => {
-    if (deleteConfirmText !== "DELETE MY ACCOUNT") {
-      toast({
-        title: "Confirmation required",
-        description: "Please type 'DELETE MY ACCOUNT' to confirm",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsDeleting(true);
 
     try {
@@ -994,7 +984,6 @@ const Settings = () => {
     } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
-      setDeleteConfirmText("");
     }
   };
 
@@ -1962,25 +1951,13 @@ const Settings = () => {
               <p className="font-semibold text-destructive">
                 This action cannot be undone. Are you absolutely sure?
               </p>
-              <div className="space-y-2">
-                <Label htmlFor="deleteConfirm" className="text-foreground">
-                  Type <span className="font-mono font-bold">DELETE MY ACCOUNT</span> to confirm:
-                </Label>
-                <Input
-                  id="deleteConfirm"
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder="DELETE MY ACCOUNT"
-                  className="font-mono"
-                />
-              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAccount}
-              disabled={deleteConfirmText !== "DELETE MY ACCOUNT" || isDeleting}
+              disabled={isDeleting}
               className="bg-destructive hover:bg-destructive/90"
             >
               {isDeleting ? "Deleting..." : "Delete Account"}
