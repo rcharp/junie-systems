@@ -1518,7 +1518,7 @@ const Settings = () => {
                         onChange={(e) => {
                           const newName = e.target.value;
                           setBusinessName(newName);
-                          debouncedAutoSave("Business");
+                          // Disabled auto-save - require manual save for validation
                           // Auto-update description when business name changes (with debounce)
                           if (newName && businessType && businessSettingsId) {
                             if (descriptionUpdateTimeout) {
@@ -1553,7 +1553,7 @@ const Settings = () => {
                         <Select value={businessType} onValueChange={(value) => {
                           console.log("Business type changed to:", value);
                           setBusinessType(value);
-                          debouncedAutoSave("Business");
+                          // Disabled auto-save - require manual save for validation
                         }}>
                           <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
                             <SelectValue placeholder="Select business type" />
@@ -1598,7 +1598,7 @@ const Settings = () => {
                         // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                         const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, '');
                         setBusinessPhone(phoneValue);
-                        debouncedAutoSave("Business");
+                        // Disabled auto-save - require manual save for validation
                       }}
                       placeholder="+1 (555) 123-4567"
                       className={validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
@@ -1728,7 +1728,7 @@ const Settings = () => {
                       value={businessDescription}
                       onChange={(e) => {
                         setBusinessDescription(e.target.value);
-                        debouncedAutoSave("Business");
+                        // Disabled auto-save - require manual save for validation
                       }}
                       placeholder="Brief description of your business and services..."
                       rows={6}
@@ -1754,7 +1754,7 @@ const Settings = () => {
                       value={businessWebsite}
                       onChange={(e) => {
                         setBusinessWebsite(e.target.value);
-                        debouncedAutoSave("Business");
+                        // Disabled auto-save - require manual save for validation
                       }}
                       placeholder="https://www.yourbusiness.com"
                     />
@@ -1769,7 +1769,7 @@ const Settings = () => {
                         if (tz) {
                           setBusinessTimezone(tz.value);
                           setBusinessTimezoneOffset(tz.offset);
-                          debouncedAutoSave("Business");
+                          // Disabled auto-save - require manual save for validation
                         }
                       }}
                     >
@@ -1826,7 +1826,7 @@ const Settings = () => {
                                   value={service.name}
                                   onChange={(e) => {
                                     updateService(index, 'name', e.target.value);
-                                    debouncedAutoSave("Business");
+                                    // Disabled auto-save - require manual save for validation
                                   }}
                                   className={service.name.trim() === '' && validationErrors.services ? "border-red-500" : ""}
                                 />
@@ -1843,7 +1843,7 @@ const Settings = () => {
                                     value={service.price}
                                   onChange={(e) => {
                                     updateService(index, 'price', e.target.value);
-                                    debouncedAutoSave("Business");
+                                    // Disabled auto-save - require manual save for validation
                                   }}
                                     className={`pl-6 ${priceErrorClass}`}
                                   />
@@ -1871,7 +1871,7 @@ const Settings = () => {
                                 value={service.description || ""}
                                 onChange={(e) => {
                                   updateService(index, 'description', e.target.value);
-                                  debouncedAutoSave("Business");
+                                  // Disabled auto-save - require manual save for validation
                                 }}
                               />
                             </div>
@@ -1886,7 +1886,7 @@ const Settings = () => {
 
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                      {isAutoSaving ? "Auto-saving changes..." : "Changes are automatically saved"}
+                      Click "Save Now" to save your changes
                     </div>
                     <Button onClick={() => saveSettings("Business")} disabled={saving || isAutoSaving} variant="outline" size="sm" className="bg-gradient-primary hover:opacity-90 text-white border-none">
                       <Save className="w-4 h-4 mr-2" />
