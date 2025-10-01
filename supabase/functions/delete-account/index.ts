@@ -66,6 +66,28 @@ serve(async (req) => {
       }
     }
 
+    // Delete security audit logs first (not cascaded automatically)
+    const { error: auditDeleteError } = await supabaseClient
+      .from('security_audit_log')
+      .delete()
+      .eq('user_id', userId);
+
+    if (auditDeleteError) {
+      console.error('Error deleting audit logs:', auditDeleteError);
+      // Continue anyway - audit logs shouldn't block account deletion
+    }
+
+    // Delete user activity logs
+    const { error: activityDeleteError } = await supabaseClient
+      .from('user_activity')
+      .delete()
+      .eq('user_id', userId);
+
+    if (activityDeleteError) {
+      console.error('Error deleting activity logs:', activityDeleteError);
+      // Continue anyway
+    }
+
     // Delete user data (cascading deletes will handle related tables)
     // The auth.users deletion will cascade to user_profiles and other tables
     const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(userId);
