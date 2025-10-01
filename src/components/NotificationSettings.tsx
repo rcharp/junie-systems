@@ -23,6 +23,7 @@ const NotificationSettings = () => {
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [forwardingNumber, setForwardingNumber] = useState("");
+  const [showTermsWarning, setShowTermsWarning] = useState(false);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -225,30 +226,27 @@ const NotificationSettings = () => {
             </div>
 
             <div className="space-y-4 border border-border rounded-lg p-4 bg-muted/20">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                      <span className="text-base font-medium">SMS Notifications</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">Get instant text messages for important calls</p>
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-base font-medium">SMS Notifications</span>
                   </div>
-                  <Switch
-                    id="sms-notifications"
-                    checked={smsNotifications}
-                    disabled={!smsOptIn}
-                    onCheckedChange={(checked) => {
-                      setSmsNotifications(checked);
-                      debouncedAutoSave();
-                    }}
-                  />
+                  <p className="text-sm text-muted-foreground">Get instant text messages for important calls</p>
                 </div>
-                {!smsOptIn && (
-                  <p className="text-xs text-destructive">
-                    Please agree to the terms below first
-                  </p>
-                )}
+                <Switch
+                  id="sms-notifications"
+                  checked={smsNotifications}
+                  disabled={!smsOptIn}
+                  onCheckedChange={(checked) => {
+                    if (!smsOptIn) {
+                      setShowTermsWarning(true);
+                      return;
+                    }
+                    setSmsNotifications(checked);
+                    debouncedAutoSave();
+                  }}
+                />
               </div>
 
               {/* Forwarding Number Display */}
@@ -273,22 +271,31 @@ const NotificationSettings = () => {
                   checked={smsOptIn}
                   onCheckedChange={(checked) => {
                     setSmsOptIn(checked as boolean);
+                    if (checked) {
+                      setShowTermsWarning(false);
+                    }
                     if (!checked) {
                       setSmsNotifications(false);
                     }
                     debouncedAutoSave();
                   }}
+                  className={showTermsWarning ? "border-destructive data-[state=checked]:bg-destructive" : ""}
                 />
                 <div className="grid gap-1.5 leading-none">
                   <Label
                     htmlFor="sms-opt-in"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${showTermsWarning ? "text-destructive" : ""}`}
                   >
                     I agree to receive text messages about potential customer inquiries
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     By checking this box, you consent to receive SMS notifications about new leads and customer messages. Standard messaging rates may apply. You can opt out at any time.
                   </p>
+                  {showTermsWarning && (
+                    <p className="text-xs text-destructive font-medium">
+                      Please agree to the terms to enable SMS notifications
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
