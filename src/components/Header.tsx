@@ -5,7 +5,11 @@ import { LogOut, LayoutDashboard, Settings } from "lucide-react";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
 
-const Header = () => {
+interface HeaderProps {
+  showAuthButtons?: boolean;
+}
+
+const Header = ({ showAuthButtons = true }: HeaderProps) => {
   const { user, loading, setSigningOut } = useAuth();
   const navigate = useNavigate();
 
@@ -45,7 +49,7 @@ const Header = () => {
         
         {!loading && (
           <div className="flex items-center space-x-2 sm:space-x-4">
-            {user ? (
+            {showAuthButtons && user ? (
               <>
                 <Button 
                   variant="ghost" 
