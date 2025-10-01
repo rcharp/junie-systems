@@ -57,6 +57,7 @@ const Dashboard = () => {
     successRate: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -67,7 +68,10 @@ const Dashboard = () => {
   // Check if new user needs onboarding FIRST, before loading any dashboard data
   useEffect(() => {
     const checkOnboardingStatus = async () => {
-      if (!user) return;
+      if (!user) {
+        setCheckingOnboarding(false);
+        return;
+      }
       
       const { data: businessSettings } = await supabase
         .from('business_settings')
@@ -78,7 +82,11 @@ const Dashboard = () => {
       // Redirect to onboarding if no business settings exist
       if (!businessSettings) {
         navigate("/onboarding");
+        return;
       }
+      
+      // User has completed onboarding, allow dashboard to render
+      setCheckingOnboarding(false);
     };
     
     checkOnboardingStatus();
@@ -419,6 +427,11 @@ const Dashboard = () => {
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // Don't render dashboard until we've checked onboarding status
+  if (checkingOnboarding) {
+    return null;
   }
 
   if (!user) {
