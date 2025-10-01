@@ -53,6 +53,8 @@ const Settings = () => {
   const [userCompanyName, setUserCompanyName] = useState("");
   const [userTimezone, setUserTimezone] = useState("");
   const [authProvider, setAuthProvider] = useState<string>("");
+  const [googleEmail, setGoogleEmail] = useState<string>("");
+  const [googleAvatarUrl, setGoogleAvatarUrl] = useState<string>("");
 
   // Business Info State
   const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
@@ -207,12 +209,25 @@ const Settings = () => {
       // Set email from parameter
       setUserEmail(email);
 
-      // Get auth provider info
+      // Get auth provider info and Google metadata
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser?.app_metadata?.provider) {
         setAuthProvider(authUser.app_metadata.provider);
       } else if (authUser?.identities && authUser.identities.length > 0) {
         setAuthProvider(authUser.identities[0].provider);
+        
+        // Extract Google profile data
+        if (authUser.identities[0].provider === 'google') {
+          const googleIdentity = authUser.identities[0];
+          setGoogleEmail(googleIdentity.identity_data?.email || email);
+          setGoogleAvatarUrl(googleIdentity.identity_data?.avatar_url || googleIdentity.identity_data?.picture || "");
+          
+          // Auto-fill full name from Google if not already set
+          const googleFullName = googleIdentity.identity_data?.full_name || googleIdentity.identity_data?.name || "";
+          if (googleFullName) {
+            setUserFullName(googleFullName);
+          }
+        }
       }
 
       // Load user profile data
@@ -223,7 +238,10 @@ const Settings = () => {
         .maybeSingle();
 
       if (profileData) {
-        setUserFullName(profileData.full_name || "");
+        // Only override full name if it exists in the profile
+        if (profileData.full_name) {
+          setUserFullName(profileData.full_name);
+        }
         setUserCompanyName(profileData.company_name || "");
         setUserTimezone(profileData.timezone || "");
       }
@@ -1381,14 +1399,29 @@ const Settings = () => {
                       </div>
 
                       {authProvider === 'google' && (
-                        <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                          <Badge variant="secondary" className="bg-white">
-                            <Globe className="w-3 h-3 mr-1" />
-                            Google
-                          </Badge>
-                          <p className="text-sm text-muted-foreground">
-                            Connected via Google authentication
-                          </p>
+                        <div className="space-y-2">
+                          <Label>Connected Account</Label>
+                          <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                            {googleAvatarUrl && (
+                              <img 
+                                src={googleAvatarUrl} 
+                                alt="Google Profile" 
+                                className="w-10 h-10 rounded-full border-2 border-primary/20"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="secondary" className="bg-white">
+                                  <Globe className="w-3 h-3 mr-1" />
+                                  Google
+                                </Badge>
+                              </div>
+                              <p className="text-sm font-medium truncate">{googleEmail}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Authenticated via Google
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       )}
 
