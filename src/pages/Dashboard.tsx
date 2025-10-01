@@ -556,13 +556,28 @@ const Dashboard = () => {
         )}
 
         <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-3 gap-1">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-            <TabsTrigger value="calls" className="text-xs sm:text-sm">
-              <span className="hidden md:inline">Messages &</span>{" "}Calls
+            <TabsList className="grid w-full grid-cols-5 mb-6 p-1 h-auto">
+            <TabsTrigger value="overview" className="flex items-center gap-2 py-3.5">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Account</span>
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs sm:text-sm" disabled={!featureAccess.advancedAnalytics}>
-              Analytics {!featureAccess.advancedAnalytics && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
+            <TabsTrigger value="business" className="flex items-center gap-2 py-3.5">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Business</span>
+            </TabsTrigger>
+            <TabsTrigger value="calls" className="flex items-center gap-2 py-3.5">
+              <Phone className="w-4 h-4" />
+              <span className="hidden sm:inline">Calls</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2 py-3.5" disabled={!featureAccess.appointmentScheduling}>
+              <Calendar className="w-4 h-4" />
+              <span className="hidden sm:inline">Calendar</span>
+              {!featureAccess.appointmentScheduling && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-2 py-3.5" disabled={!featureAccess.advancedAnalytics}>
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Analytics</span>
+              {!featureAccess.advancedAnalytics && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
             </TabsTrigger>
           </TabsList>
 
@@ -679,8 +694,38 @@ const Dashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="calls">
+          <TabsContent value="business" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Business Settings</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground mb-4">Configure your business information and settings.</p>
+                <Button onClick={() => navigate("/settings?tab=business")}>
+                  Go to Business Settings
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="calls" className="space-y-6">
             <CallList />
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <FeatureGate feature="appointmentScheduling">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Calendar Integration</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">Connect your Google Calendar for appointment scheduling.</p>
+                  <Button onClick={() => navigate("/settings?tab=setup")}>
+                    Calendar Settings
+                  </Button>
+                </CardContent>
+              </Card>
+            </FeatureGate>
           </TabsContent>
 
           <TabsContent value="analytics">
