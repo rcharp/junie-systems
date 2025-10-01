@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -33,7 +33,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
+  const [signingOut, setSigningOutState] = useState(false);
+  const signingOutRef = useRef(false);
+
+  const setSigningOut = (value: boolean) => {
+    signingOutRef.current = value;
+    setSigningOutState(value);
+  };
 
   const checkAdminStatus = async (userId: string) => {
     try {
@@ -55,7 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         // Don't update state if we're in the process of signing out
-        if (signingOut) {
+        if (signingOutRef.current) {
           return;
         }
         
