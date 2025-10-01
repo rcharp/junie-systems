@@ -44,6 +44,12 @@ const Settings = () => {
   const { featureAccess } = useSubscription();
   console.log("Settings state:", { user: user?.email, loading });
 
+  // User Profile State
+  const [userEmail, setUserEmail] = useState("");
+  const [userFullName, setUserFullName] = useState("");
+  const [userCompanyName, setUserCompanyName] = useState("");
+  const [userTimezone, setUserTimezone] = useState("");
+
   // Business Info State
   const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
   const [businessName, setBusinessName] = useState("");
@@ -115,7 +121,7 @@ const Settings = () => {
     if (!loading && !user) {
       navigate("/login");
     } else if (user) {
-      loadUserSettings(user.id);
+      loadUserSettings(user.id, user.email || "");
       fetchRecentActivity();
     }
     
@@ -163,8 +169,25 @@ const Settings = () => {
     }
   };
 
-  const loadUserSettings = async (userId: string) => {
+  const loadUserSettings = async (userId: string, email: string) => {
     try {
+      // Set email from parameter
+      setUserEmail(email);
+
+      // Load user profile data
+      const { data: profileData } = await supabase
+        .from('user_profiles')
+        .select('full_name, company_name, timezone')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileData) {
+        setUserFullName(profileData.full_name || "");
+        setUserCompanyName(profileData.company_name || "");
+        setUserTimezone(profileData.timezone || "");
+      }
+
+      // Load business settings
       const { data, error } = await supabase
         .from('business_settings')
         .select('*')
@@ -529,6 +552,29 @@ const Settings = () => {
     if (!user) return;
     
     try {
+      // Handle Profile section separately as it updates user_profiles table
+      if (section === "Profile") {
+        const { error } = await supabase
+          .from('user_profiles')
+          .update({
+            full_name: userFullName,
+            company_name: userCompanyName,
+            timezone: userTimezone,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id);
+
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: "Profile updated",
+          description: "Your profile settings have been updated successfully.",
+        });
+        return;
+      }
+
       let updateData: any = {};
 
       if (section === "Business") {
@@ -1055,10 +1101,14 @@ const Settings = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 bg-muted border border-border">
+            <TabsList className="grid w-full grid-cols-6 bg-muted border border-border">
+              <TabsTrigger value="profile" className="flex items-center gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Profile</span>
+              </TabsTrigger>
               <TabsTrigger value="business" className="flex items-center gap-2">
                 <Building className="w-4 h-4" />
-                <span className="hidden sm:inline">Business Info</span>
+                <span className="hidden sm:inline">Business</span>
               </TabsTrigger>
               <TabsTrigger value="calls" className="flex items-center gap-2">
                 <Phone className="w-4 h-4" />
@@ -1078,6 +1128,82 @@ const Settings = () => {
                 <span className="hidden sm:inline">Billing</span>
               </TabsTrigger>
             </TabsList>
+
+            {/* User Profile */}
+            <TabsContent value="profile">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <User className="w-5 h-5 mr-2" />
+                    User Profile
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="userEmail">Email Address</Label>
+                    <Input
+                      id="userEmail"
+                      type="email"
+                      value={userEmail}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Email cannot be changed. Contact support if you need to update it.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="userFullName">Full Name</Label>
+                      <Input
+                        id="userFullName"
+                        value={userFullName}
+                        onChange={(e) => {
+                          setUserFullName(e.target.value);
+                          debouncedAutoSave("Profile");
+                        }}
+                        placeholder="Your full name"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="userCompanyName">Company Name</Label>
+                      <Input
+                        id="userCompanyName"
+                        value={userCompanyName}
+                        onChange={(e) => {
+                          setUserCompanyName(e.target.value);
+                          debouncedAutoSave("Profile");
+                        }}
+                        placeholder="Your company name"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="userTimezone">Timezone</Label>
+                    <Select 
+                      value={userTimezone} 
+                      onValueChange={(value) => {
+                        setUserTimezone(value);
+                        debouncedAutoSave("Profile");
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select your timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getCommonTimezones().map((tz) => (
+                          <SelectItem key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             {/* Business Information */}
             <TabsContent value="business">
