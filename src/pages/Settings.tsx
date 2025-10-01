@@ -211,19 +211,40 @@ const Settings = () => {
 
       // Get auth provider info and Google metadata
       const { data: { user: authUser } } = await supabase.auth.getUser();
+      console.log('Full auth user data:', authUser);
+      console.log('User identities:', authUser?.identities);
+      console.log('User app_metadata:', authUser?.app_metadata);
+      console.log('User user_metadata:', authUser?.user_metadata);
+      
       if (authUser?.app_metadata?.provider) {
+        console.log('Provider from app_metadata:', authUser.app_metadata.provider);
         setAuthProvider(authUser.app_metadata.provider);
       } else if (authUser?.identities && authUser.identities.length > 0) {
-        setAuthProvider(authUser.identities[0].provider);
+        const provider = authUser.identities[0].provider;
+        console.log('Provider from identities:', provider);
+        setAuthProvider(provider);
         
         // Extract Google profile data
-        if (authUser.identities[0].provider === 'google') {
+        if (provider === 'google') {
           const googleIdentity = authUser.identities[0];
-          setGoogleEmail(googleIdentity.identity_data?.email || email);
-          setGoogleAvatarUrl(googleIdentity.identity_data?.avatar_url || googleIdentity.identity_data?.picture || "");
+          console.log('Google identity data:', googleIdentity.identity_data);
           
-          // Auto-fill full name from Google if not already set
-          const googleFullName = googleIdentity.identity_data?.full_name || googleIdentity.identity_data?.name || "";
+          const googleEmail = googleIdentity.identity_data?.email || email;
+          const googleAvatar = googleIdentity.identity_data?.avatar_url || 
+                               googleIdentity.identity_data?.picture || 
+                               authUser.user_metadata?.avatar_url ||
+                               authUser.user_metadata?.picture || "";
+          const googleFullName = googleIdentity.identity_data?.full_name || 
+                                googleIdentity.identity_data?.name ||
+                                authUser.user_metadata?.full_name ||
+                                authUser.user_metadata?.name || "";
+          
+          console.log('Extracted Google data:', { googleEmail, googleAvatar, googleFullName });
+          
+          setGoogleEmail(googleEmail);
+          setGoogleAvatarUrl(googleAvatar);
+          
+          // Auto-fill full name from Google if available
           if (googleFullName) {
             setUserFullName(googleFullName);
           }
@@ -236,6 +257,8 @@ const Settings = () => {
         .select('full_name, company_name, timezone')
         .eq('id', userId)
         .maybeSingle();
+
+      console.log('Profile data from DB:', profileData);
 
       if (profileData) {
         // Only override full name if it exists in the profile
