@@ -677,19 +677,35 @@ const Dashboard = () => {
                   <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => navigate('/settings?tab=calls')}
+                  >
                     <Phone className="w-4 h-4 mr-2" />
                     Configure Call Forwarding
                   </Button>
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => navigate('/settings?tab=ai')}
+                  >
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Review Call Scripts
                   </Button>
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => navigate('/settings?tab=business')}
+                  >
                     <Users className="w-4 h-4 mr-2" />
                     Manage Business Info
                   </Button>
-                  <Button className="w-full justify-start" variant="outline">
+                  <Button 
+                    className="w-full justify-start" 
+                    variant="outline"
+                    onClick={() => navigate('/settings?tab=ai')}
+                  >
                     <Settings className="w-4 h-4 mr-2" />
                     AI Settings
                   </Button>
