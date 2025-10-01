@@ -1703,17 +1703,22 @@ const Settings = () => {
 
 
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label>Common Questions & Answers</Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addQuestionAnswer}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Question
-                      </Button>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Common Questions & Answers</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={addQuestionAnswer}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Question
+                        </Button>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Pre-program frequently asked questions and their answers for your AI assistant
+                      </p>
                     </div>
                     
                     <div className="space-y-3">
@@ -1765,9 +1770,6 @@ const Settings = () => {
                         </div>
                       ))}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Pre-program frequently asked questions and their answers for your AI assistant
-                    </p>
                   </div>
 
                   <Separator />
