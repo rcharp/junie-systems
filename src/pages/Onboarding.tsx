@@ -550,10 +550,10 @@ const Onboarding = () => {
             <div className="space-y-6 animate-slide-up">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                  Let&apos;s find your Google business profile
+                  Let&apos;s find your business
                 </h1>
                 <p className="text-muted-foreground text-lg">
-                  We&apos;ll use your business information to train your AI assistant
+                  We&apos;ll use your Google business profile to train Junie
                 </p>
               </div>
 
