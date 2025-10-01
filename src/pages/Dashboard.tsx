@@ -540,23 +540,20 @@ const Dashboard = () => {
 
 
         {/* Main Dashboard Content */}
-        {/* Welcome Card - only show if setup not completed */}
+        {/* Setup Guide Link - only show if setup not completed */}
         {showSetupGuide && (
-          <Card className="mb-8 bg-gradient-hero text-white border-0">
-            <CardHeader>
-              <CardTitle className="text-white">🎉 Welcome to Junie!</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-white/90 mb-4">
-                Your intelligent call answering service is ready to help you never miss another customer call.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Button variant="secondary" onClick={() => navigate("/setup-guide")}>
-                  Setup Guide
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="mb-6">
+            <p className="text-muted-foreground">
+              Follow our{" "}
+              <button 
+                onClick={() => navigate("/setup-guide")}
+                className="text-primary hover:underline font-medium"
+              >
+                setup guide
+              </button>
+              {" "}to finish setting up your AI agent
+            </p>
+          </div>
         )}
 
         <Tabs value={activeTab} onValueChange={(value) => {
