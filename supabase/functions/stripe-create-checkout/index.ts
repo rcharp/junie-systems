@@ -12,9 +12,9 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 // Price IDs for each plan (you'll need to create these in Stripe Dashboard)
 const PRICE_IDS = {
-  professional: '', // Add your Stripe price ID for Professional plan
-  scale: '',        // Add your Stripe price ID for Scale plan
-  growth: '',       // Add your Stripe price ID for Growth plan
+  professional: 'price_1SDDa4C6VxOVUbRGmwMZQzSs',
+  scale: 'price_1SDDaMC6VxOVUbRGSicIm5JC',
+  growth: 'price_1SDDaZC6VxOVUbRGGskqR0Rc',
 };
 
 serve(async (req) => {
