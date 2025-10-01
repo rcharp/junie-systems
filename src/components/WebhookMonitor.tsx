@@ -884,7 +884,7 @@ export const WebhookMonitor = () => {
                 className={`p-4 border rounded-lg bg-muted/30 relative ${!isItemExpanded ? 'cursor-pointer hover:bg-muted/50 transition-colors' : ''}`}
                 onClick={!isItemExpanded ? () => setExpandedItems(prev => ({ ...prev, [data.id]: !prev[data.id] })) : undefined}
               >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-col gap-3 mb-3">
                 <div className="flex flex-col gap-1">
                   {/* Incoming Call Header */}
                   {(() => {
@@ -907,11 +907,11 @@ export const WebhookMonitor = () => {
                     
                     return (
                       <>
-                        <div className="text-2xl font-bold text-foreground">
+                        <div className="text-xl md:text-2xl font-bold text-foreground break-words">
                           Incoming - {formatPhoneNumber(incomingCall)}
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">Call Time: {data.call_datetime}</Badge>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-xs">Call Time: {data.call_datetime}</Badge>
                           {/* Test/Real Call Detection */}
                           {(() => {
                             const textOnly = data.raw_webhook_data?.text_only;
@@ -920,9 +920,9 @@ export const WebhookMonitor = () => {
                                               data.raw_webhook_data?.data?.analysis?.data_collection_results?.caller_id?.value;
                             
                             if (textOnly === true || !hasCallerId) {
-                              return <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200">Manual</Badge>;
+                              return <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-200 text-xs">Manual</Badge>;
                             } else {
-                              return <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200">Real Call</Badge>;
+                              return <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-200 text-xs">Real Call</Badge>;
                             }
                           })()}
                         </div>
@@ -930,22 +930,22 @@ export const WebhookMonitor = () => {
                     );
                   })()}
                 </div>
-                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                <div className="flex gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setExpandedItems(prev => ({ ...prev, [data.id]: !prev[data.id] }))}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 text-xs h-8"
                   >
                     {isItemExpanded ? (
                       <>
-                        <Minimize2 className="h-4 w-4" />
-                        Minimize
+                        <Minimize2 className="h-3 w-3" />
+                        <span className="hidden sm:inline">Minimize</span>
                       </>
                     ) : (
                       <>
-                        <Maximize2 className="h-4 w-4" />
-                        Expand
+                        <Maximize2 className="h-3 w-3" />
+                        <span className="hidden sm:inline">Expand</span>
                       </>
                     )}
                   </Button>
@@ -956,16 +956,18 @@ export const WebhookMonitor = () => {
                         size="sm"
                         onClick={() => handleDeleteSingle(data.id)}
                         disabled={loading}
+                        className="h-8 w-8 p-0"
                       >
-                        <Check className="h-4 w-4" />
+                        <Check className="h-3 w-3" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleCancelDelete}
                         disabled={loading}
+                        className="h-8 w-8 p-0"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="h-3 w-3" />
                       </Button>
                     </div>
                   ) : (
@@ -974,9 +976,9 @@ export const WebhookMonitor = () => {
                       size="sm"
                       onClick={() => handleDeleteClick(data.id)}
                       disabled={loading}
-                      className="text-destructive hover:text-destructive"
+                      className="text-destructive hover:text-destructive h-8 w-8 p-0"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   )}
                 </div>

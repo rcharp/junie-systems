@@ -232,21 +232,23 @@ const CallList = () => {
                 onClick={() => navigate(`/call/${message.id}`)}
               >
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="flex flex-col gap-2">
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-muted-foreground" />
                         <span className="font-semibold text-muted-foreground">{cleanCallerName(message.caller_name)}</span>
                       </div>
-                      <Badge className={getUrgencyColor(message.urgency_level)}>
-                        {message.urgency_level}
-                      </Badge>
-                      <Badge className={getCallTypeColor(message.call_type)}>
-                        {message.call_type}
-                      </Badge>
-                      {message.status === 'new' && (
-                        <Badge variant="secondary">New</Badge>
-                      )}
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={getUrgencyColor(message.urgency_level)}>
+                          {message.urgency_level}
+                        </Badge>
+                        <Badge className={getCallTypeColor(message.call_type)}>
+                          {message.call_type}
+                        </Badge>
+                        {message.status === 'new' && (
+                          <Badge variant="secondary">New</Badge>
+                        )}
+                      </div>
                     </div>
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(message.created_at), 'MMM d, h:mm a')}
@@ -320,18 +322,20 @@ const CallList = () => {
                 onClick={() => navigate(`/call/${call.id}`)}
               >
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="flex flex-col gap-2">
                       <div className="flex items-center space-x-2">
                         <User className="w-4 h-4 text-muted-foreground" />
                         <span className="font-semibold text-muted-foreground">{cleanCallerName(call.caller_name)}</span>
                       </div>
-                      <Badge variant={call.call_status === 'completed' ? 'default' : 'secondary'}>
-                        {call.call_status}
-                      </Badge>
-                      <Badge className={getUrgencyColor(call.urgency_level)}>
-                        {call.urgency_level}
-                      </Badge>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={call.call_status === 'completed' ? 'default' : 'secondary'}>
+                          {call.call_status}
+                        </Badge>
+                        <Badge className={getUrgencyColor(call.urgency_level)}>
+                          {call.urgency_level}
+                        </Badge>
+                      </div>
                     </div>
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(call.created_at), 'MMM d, h:mm a')}
