@@ -1209,12 +1209,45 @@ const Onboarding = () => {
 
               <div className="flex gap-3 mt-6">
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
+                    try {
+                      // Get current user
+                      const { data: { session } } = await supabase.auth.getSession();
+                      if (session?.user?.id) {
+                        // Delete services and business settings for this user
+                        const { data: businessSettings } = await supabase
+                          .from('business_settings')
+                          .select('id')
+                          .eq('user_id', session.user.id)
+                          .maybeSingle();
+                        
+                        if (businessSettings?.id) {
+                          // Delete services first
+                          await supabase
+                            .from('services')
+                            .delete()
+                            .eq('business_id', businessSettings.id);
+                          
+                          // Delete business settings
+                          await supabase
+                            .from('business_settings')
+                            .delete()
+                            .eq('user_id', session.user.id);
+                        }
+                      }
+                    } catch (error) {
+                      console.error('Error clearing business data:', error);
+                    }
+                    
+                    // Clear all state
                     setShowVerification(false);
+                    setVerificationData({});
                     setStep(1);
                     setSelectedBusiness(null);
                     setBusinessSearch("");
                     setWebsiteUrl("");
+                    setUseWebsite(false);
+                    sessionStorage.removeItem('selectedBusiness');
                   }}
                   variant="outline"
                   className="flex-1"
