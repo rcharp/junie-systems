@@ -542,18 +542,20 @@ const Dashboard = () => {
         {/* Main Dashboard Content */}
         {/* Setup Guide Link - only show if setup not completed */}
         {showSetupGuide && (
-          <div className="mb-6">
-            <p className="text-muted-foreground">
-              Follow our{" "}
-              <button 
-                onClick={() => navigate("/setup-guide")}
-                className="text-primary hover:underline font-medium"
-              >
-                setup guide
-              </button>
-              {" "}to finish setting up your AI agent
-            </p>
-          </div>
+          <Card className="mb-6 bg-gradient-hero border-0">
+            <CardContent className="py-4">
+              <p className="text-white">
+                Follow our{" "}
+                <button 
+                  onClick={() => navigate("/setup-guide")}
+                  className="text-white hover:underline font-semibold"
+                >
+                  setup guide
+                </button>
+                {" "}to finish setting up your AI agent
+              </p>
+            </CardContent>
+          </Card>
         )}
 
         <Tabs value={activeTab} onValueChange={(value) => {
