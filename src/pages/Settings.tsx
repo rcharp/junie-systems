@@ -646,11 +646,14 @@ const Settings = () => {
       });
     } catch (error) {
       console.error('Error saving settings:', error);
-      toast({
-        title: "Error saving settings",
-        description: "There was an error saving your settings. Please try again.",
-        variant: "destructive",
-      });
+      // Only show generic error if it's not a validation error (validation errors show their own toasts)
+      if (!(error instanceof Error && error.message.startsWith('Validation failed'))) {
+        toast({
+          title: "Error saving settings",
+          description: "There was an error saving your settings. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setSaving(false);
     }
@@ -743,7 +746,6 @@ const Settings = () => {
             variant: "destructive",
             duration: 5000,
           });
-          setSaving(false);
           throw new Error("Validation failed: Missing required fields");
         }
 
@@ -763,7 +765,6 @@ const Settings = () => {
             variant: "destructive",
             duration: 5000,
           });
-          setSaving(false);
           throw new Error("Validation failed: Invalid service pricing");
         }
 
@@ -776,7 +777,6 @@ const Settings = () => {
             variant: "destructive",
             duration: 5000,
           });
-          setSaving(false);
           throw new Error("Validation failed: No services provided");
         }
 
@@ -818,7 +818,6 @@ const Settings = () => {
             variant: "destructive",
             duration: 5000,
           });
-          setSaving(false);
           throw new Error("Validation failed: Invalid address");
         }
         
