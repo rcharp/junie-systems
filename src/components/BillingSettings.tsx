@@ -6,10 +6,12 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { CreditCard, ExternalLink, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const BillingSettings = () => {
   const { subscriptionPlan, subscriptionStatus, isLoading } = useSubscription();
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const navigate = useNavigate();
 
   const handleManageBilling = async () => {
     setLoadingPortal(true);
@@ -147,7 +149,7 @@ export const BillingSettings = () => {
               variant="outline" 
               size="sm" 
               className="mt-3"
-              onClick={() => window.location.href = '/#pricing'}
+              onClick={() => navigate('/pricing')}
             >
               View Plans
             </Button>
