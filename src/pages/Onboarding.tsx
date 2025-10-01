@@ -111,7 +111,7 @@ const Onboarding = () => {
         } finally {
           setSearchLoading(false);
         }
-      }, 500); // Debounce for 500ms
+      }, 300); // Debounce for 300ms
     } else {
       setSearchResults([]);
       if (!isSelectingBusinessRef.current && !selectedBusiness) {
