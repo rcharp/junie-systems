@@ -79,10 +79,13 @@ const Login = () => {
       });
 
       if (error) {
-        if (error.message.includes("Invalid login credentials")) {
+        // Check for common OAuth-related errors
+        if (error.message.includes("Invalid login credentials") || 
+            error.message.includes("Email not confirmed") ||
+            error.message.includes("No user found")) {
           toast({
-            title: "Invalid credentials",
-            description: "Please check your email and password and try again.",
+            title: "Unable to sign in",
+            description: "If you signed up with Google, please use the 'Continue with Google' button instead.",
             variant: "destructive",
           });
         } else {

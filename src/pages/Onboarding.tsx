@@ -855,7 +855,20 @@ const Onboarding = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if account already exists with OAuth
+        if (error.message.includes("User already registered") || 
+            error.message.includes("already registered")) {
+          toast({
+            title: "Account exists",
+            description: "An account with this email already exists. If you signed up with Google, please use the 'Continue with Google' button above.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+        throw error;
+      }
 
       if (data.user) {
         // Show extraction overlay
