@@ -744,7 +744,7 @@ const Settings = () => {
             duration: 5000,
           });
           setSaving(false);
-          return;
+          throw new Error("Validation failed: Missing required fields");
         }
 
         // Validate services - each service must have both name and price
@@ -764,7 +764,7 @@ const Settings = () => {
             duration: 5000,
           });
           setSaving(false);
-          return;
+          throw new Error("Validation failed: Invalid service pricing");
         }
 
         if (validServices.length === 0) {
@@ -777,7 +777,7 @@ const Settings = () => {
             duration: 5000,
           });
           setSaving(false);
-          return;
+          throw new Error("Validation failed: No services provided");
         }
 
         // Validate individual address fields
@@ -819,7 +819,7 @@ const Settings = () => {
             duration: 5000,
           });
           setSaving(false);
-          return;
+          throw new Error("Validation failed: Invalid address");
         }
         
         console.log("ADDRESS VALIDATION PASSED");
