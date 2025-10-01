@@ -14,8 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Calendar, Zap, CheckCircle, XCircle, X, Settings as SettingsIcon, LogOut } from "lucide-react";
+import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Calendar, Zap, CheckCircle, XCircle, X, Settings as SettingsIcon, LogOut, AlertTriangle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
@@ -95,6 +96,11 @@ const Settings = () => {
   const [leadCapture, setLeadCapture] = useState(true);
   const [generatingDescription, setGeneratingDescription] = useState(false);
   const [descriptionUpdateTimeout, setDescriptionUpdateTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // Account Deletion State
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Notification Settings State
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -952,6 +958,46 @@ const Settings = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE MY ACCOUNT") {
+      toast({
+        title: "Confirmation required",
+        description: "Please type 'DELETE MY ACCOUNT' to confirm",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsDeleting(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-account', {
+        method: 'POST'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Account deleted",
+        description: "Your account and all data have been permanently deleted.",
+      });
+
+      // Sign out and redirect
+      await handleRobustSignOut(supabase);
+    } catch (error: any) {
+      console.error('Error deleting account:', error);
+      toast({
+        title: "Error deleting account",
+        description: error.message || "Failed to delete account. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setDeleteConfirmText("");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -1240,6 +1286,38 @@ const Settings = () => {
               </Card>
 
               <BillingSettings />
+
+              {/* Danger Zone - Account Deletion */}
+              <Card className="border-destructive/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-destructive">
+                    <AlertTriangle className="w-5 h-5 mr-2" />
+                    Danger Zone
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-foreground">Delete Account</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Permanently delete your account and all associated data. This action cannot be undone.
+                    </p>
+                    <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                      <li>Your Stripe subscription will be cancelled</li>
+                      <li>All business settings and data will be deleted</li>
+                      <li>Call logs and recordings will be permanently removed</li>
+                      <li>This action is irreversible</li>
+                    </ul>
+                  </div>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Account
+                  </Button>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* Business Information */}
@@ -1852,6 +1930,53 @@ const Settings = () => {
           </Tabs>
         </div>
       </main>
+
+      {/* Delete Account Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center text-destructive">
+              <AlertTriangle className="w-5 h-5 mr-2" />
+              Delete Account
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-4">
+              <p>This will permanently delete your account and all associated data, including:</p>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                <li>Your Stripe subscription (will be cancelled immediately)</li>
+                <li>All business settings and configurations</li>
+                <li>Call logs and recordings</li>
+                <li>Appointments and calendar data</li>
+                <li>All other personal data</li>
+              </ul>
+              <p className="font-semibold text-destructive">
+                This action cannot be undone. Are you absolutely sure?
+              </p>
+              <div className="space-y-2">
+                <Label htmlFor="deleteConfirm" className="text-foreground">
+                  Type <span className="font-mono font-bold">DELETE MY ACCOUNT</span> to confirm:
+                </Label>
+                <Input
+                  id="deleteConfirm"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE MY ACCOUNT"
+                  className="font-mono"
+                />
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteAccount}
+              disabled={deleteConfirmText !== "DELETE MY ACCOUNT" || isDeleting}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              {isDeleting ? "Deleting..." : "Delete Account"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
