@@ -52,6 +52,7 @@ const Settings = () => {
   const [userFullName, setUserFullName] = useState("");
   const [userCompanyName, setUserCompanyName] = useState("");
   const [userTimezone, setUserTimezone] = useState("");
+  const [authProvider, setAuthProvider] = useState<string>("");
 
   // Business Info State
   const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
@@ -205,6 +206,14 @@ const Settings = () => {
     try {
       // Set email from parameter
       setUserEmail(email);
+
+      // Get auth provider info
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser?.app_metadata?.provider) {
+        setAuthProvider(authUser.app_metadata.provider);
+      } else if (authUser?.identities && authUser.identities.length > 0) {
+        setAuthProvider(authUser.identities[0].provider);
+      }
 
       // Load user profile data
       const { data: profileData } = await supabase
@@ -1370,6 +1379,18 @@ const Settings = () => {
                           Email cannot be changed. Contact support if you need to update it.
                         </p>
                       </div>
+
+                      {authProvider === 'google' && (
+                        <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                          <Badge variant="secondary" className="bg-white">
+                            <Globe className="w-3 h-3 mr-1" />
+                            Google
+                          </Badge>
+                          <p className="text-sm text-muted-foreground">
+                            Connected via Google authentication
+                          </p>
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
