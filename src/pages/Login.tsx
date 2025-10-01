@@ -127,7 +127,9 @@ const Login = () => {
             window.removeEventListener('message', handleMessage);
             popup?.close();
             
-            console.log('OAuth success received, waiting for session to sync...');
+            const isNewUser = event.data.isNewUser;
+            console.log('OAuth success received, isNewUser:', isNewUser);
+            console.log('Waiting for session to sync...');
             
             // Wait for the session to sync to the parent window
             let sessionReady = false;
@@ -148,8 +150,9 @@ const Login = () => {
             }
             
             if (sessionReady) {
-              console.log('Redirecting to dashboard with active session');
-              window.location.href = '/dashboard';
+              const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
+              console.log(`Redirecting to ${redirectPath} with active session`);
+              window.location.href = redirectPath;
             } else {
               console.error('Session failed to sync after multiple attempts');
               toast({

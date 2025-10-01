@@ -28,38 +28,29 @@ const GoogleAuthCallback = () => {
 
         console.log('Session established for user:', session.user.id);
 
-        // Create user profile if it doesn't exist
+        // Check if user profile already exists
         const { data: existingProfile } = await supabase
           .from('user_profiles')
           .select('id')
           .eq('id', session.user.id)
           .maybeSingle();
 
-        if (!existingProfile) {
-          console.log('Creating new user profile...');
-          const { error: profileError } = await supabase
-            .from('user_profiles')
-            .insert({
-              id: session.user.id,
-              full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
-              subscription_plan: 'free',
-              subscription_status: 'active',
-            });
+        const isNewUser = !existingProfile;
 
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-            throw profileError;
-          }
-          console.log('User profile created successfully');
+        if (isNewUser) {
+          console.log('New user detected - will redirect to onboarding');
+        } else {
+          console.log('Existing user - will redirect to dashboard');
         }
 
         setStatus('success');
         
-        // Send session tokens to parent window so it can establish the session and handle business setup
+        // Send session tokens to parent window
         if (window.opener) {
           console.log('Sending session tokens to parent window');
           window.opener.postMessage({ 
             type: 'google-oauth-success',
+            isNewUser,
             session: {
               access_token: session.access_token,
               refresh_token: session.refresh_token,
@@ -73,9 +64,10 @@ const GoogleAuthCallback = () => {
           window.close();
         } else {
           // Fallback for non-popup case (direct navigation to callback URL)
-          console.log('Not a popup, redirecting to dashboard...');
+          const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
+          console.log(`Not a popup, redirecting to ${redirectPath}...`);
           setTimeout(() => {
-            window.location.href = '/dashboard';
+            window.location.href = redirectPath;
           }, 1500);
         }
 
