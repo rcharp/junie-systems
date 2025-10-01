@@ -52,7 +52,8 @@ const Pricing = () => {
         "Dedicated success manager"
       ],
       popular: false,
-      ctaText: "Get Started for Free"
+      ctaText: "Coming Soon!",
+      disabled: true
     }
   ];
 
@@ -74,7 +75,7 @@ const Pricing = () => {
           {plans.map((plan, index) => (
             <Card 
               key={index} 
-              className={`relative group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 ${
+              className={`relative group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 flex flex-col h-full ${
                 plan.popular ? 'border-primary shadow-lg md:scale-105' : 'border-border/50'
               }`}
             >
@@ -99,8 +100,8 @@ const Pricing = () => {
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
-                <ul className="space-y-2 sm:space-y-3">
+              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6 flex flex-col flex-1">
+                <ul className="space-y-2 sm:space-y-3 flex-1">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start gap-2 sm:gap-3">
                       <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary mt-0.5 flex-shrink-0" />
@@ -110,8 +111,9 @@ const Pricing = () => {
                 </ul>
                 
                 <Button 
-                  className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base"
+                  className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base mt-auto"
                   size="lg"
+                  disabled={plan.disabled}
                 >
                   {plan.ctaText}
                 </Button>
