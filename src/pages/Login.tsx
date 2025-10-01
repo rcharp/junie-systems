@@ -128,36 +128,31 @@ const Login = () => {
             popup?.close();
             
             const isNewUser = event.data.isNewUser;
+            const sessionData = event.data.session;
             console.log('OAuth success received, isNewUser:', isNewUser);
-            console.log('Waiting for session to sync...');
+            console.log('Setting session in parent window...');
             
-            // Wait for the session to sync to the parent window
-            let sessionReady = false;
-            let attempts = 0;
-            const maxAttempts = 10;
-            
-            while (!sessionReady && attempts < maxAttempts) {
-              await new Promise(resolve => setTimeout(resolve, 500));
-              const { data: { session } } = await supabase.auth.getSession();
-              
-              if (session) {
-                console.log('Session synced successfully:', session.user.id);
-                sessionReady = true;
-              } else {
-                attempts++;
-                console.log(`Waiting for session... attempt ${attempts}/${maxAttempts}`);
+            try {
+              // Set the session in the parent window using the tokens from the popup
+              const { error: sessionError } = await supabase.auth.setSession({
+                access_token: sessionData.access_token,
+                refresh_token: sessionData.refresh_token,
+              });
+
+              if (sessionError) {
+                console.error('Failed to set session:', sessionError);
+                throw sessionError;
               }
-            }
-            
-            if (sessionReady) {
+
+              console.log('Session established successfully');
               const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
-              console.log(`Redirecting to ${redirectPath} with active session`);
+              console.log(`Redirecting to ${redirectPath}`);
               window.location.href = redirectPath;
-            } else {
-              console.error('Session failed to sync after multiple attempts');
+            } catch (error) {
+              console.error('Error establishing session:', error);
               toast({
                 title: "Session error",
-                description: "Please refresh the page and try again.",
+                description: "Failed to establish session. Please try again.",
                 variant: "destructive",
               });
               setLoading(false);
