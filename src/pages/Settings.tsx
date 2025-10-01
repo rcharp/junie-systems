@@ -39,6 +39,7 @@ const Settings = () => {
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("business");
+  const [accountSubTab, setAccountSubTab] = useState("profile");
   const [showCalendarBanner, setShowCalendarBanner] = useState(false);
   const [calendarBannerType, setCalendarBannerType] = useState<'success' | 'error'>('success');
   const [calendarBannerMessage, setCalendarBannerMessage] = useState('');
@@ -136,12 +137,17 @@ const Settings = () => {
     
     // Handle URL parameters for tab selection and calendar status
     const tab = searchParams.get('tab');
+    const subTab = searchParams.get('subtab');
     const calendarStatus = searchParams.get('calendar_status');
     const errorMessage = searchParams.get('error');
     const onboardingComplete = searchParams.get('onboarding_complete');
     
     if (tab) {
       setActiveTab(tab);
+    }
+    
+    if (subTab && tab === 'account') {
+      setAccountSubTab(subTab);
     }
     
     if (onboardingComplete === 'true') {
@@ -1310,7 +1316,7 @@ const Settings = () => {
 
             {/* Account (User Profile + Billing) */}
             <TabsContent value="account" className="space-y-6">
-              <Tabs defaultValue="profile" className="w-full">
+              <Tabs value={accountSubTab} onValueChange={setAccountSubTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="profile">Profile</TabsTrigger>
                   <TabsTrigger value="billing">Plan and Billing</TabsTrigger>
