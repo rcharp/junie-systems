@@ -397,27 +397,29 @@ export function TodoChecklist() {
       <CardContent>
         {/* Add Todo Form */}
         <div className="mb-6 p-4 border rounded-lg bg-muted/20">
-          <div className="flex gap-2 mb-3">
+          <div className="flex flex-col md:flex-row gap-2 mb-3">
             <Input
               placeholder="Add a new todo..."
               value={newTodoText}
               onChange={(e) => setNewTodoText(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addTodo()}
-              className="flex-1 max-w-md"
+              className="w-full md:flex-1 md:max-w-md"
             />
-            <Select value={newTodoPriority} onValueChange={(value: 'high' | 'medium' | 'low') => setNewTodoPriority(value)}>
-              <SelectTrigger className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button onClick={addTodo} disabled={!newTodoText.trim()}>
-              <Plus className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Select value={newTodoPriority} onValueChange={(value: 'high' | 'medium' | 'low') => setNewTodoPriority(value)}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button onClick={addTodo} disabled={!newTodoText.trim()}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
