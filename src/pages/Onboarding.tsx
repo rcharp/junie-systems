@@ -172,11 +172,13 @@ const Onboarding = () => {
   const handleGoogleSignup = async () => {
     setLoading(true);
     try {
+      // Store the selected business before redirecting
+      // (it's already in sessionStorage from handleBusinessSelect)
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/google-auth-callback`,
-          skipBrowserRedirect: true,
         }
       });
 
@@ -185,91 +187,8 @@ const Onboarding = () => {
         throw error;
       }
 
-      if (data?.url) {
-        // Open OAuth in popup window
-        const width = 600;
-        const height = 700;
-        const left = window.screen.width / 2 - width / 2;
-        const top = window.screen.height / 2 - height / 2;
-        
-        const popup = window.open(
-          data.url,
-          'google-oauth',
-          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
-        );
-
-        // Listen for OAuth completion
-        const handleMessage = async (event: MessageEvent) => {
-          if (event.origin !== window.location.origin) return;
-          
-          if (event.data?.type === 'google-oauth-success') {
-            window.removeEventListener('message', handleMessage);
-            popup?.close();
-            
-            console.log('OAuth success received, waiting for session sync...');
-            
-            // Wait a moment for the session to sync, then force refresh
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            // Force session refresh
-            const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-            
-            if (refreshError) {
-              console.error('Session refresh error:', refreshError);
-            }
-            
-            if (session) {
-              console.log('Session established for user:', session.user.id);
-              toast({
-                title: "Welcome!",
-                description: "Successfully signed in with Google.",
-              });
-              // Force navigate to settings
-              window.location.href = '/settings';
-            } else {
-              console.error('No session after OAuth and refresh');
-              // Try one more time with getSession
-              const { data: { session: retrySession } } = await supabase.auth.getSession();
-              
-              if (retrySession) {
-                console.log('Session found on retry');
-                window.location.href = '/settings';
-              } else {
-                console.error('Still no session, redirecting to login');
-                setLoading(false);
-                toast({
-                  title: "Session error",
-                  description: "Please try signing in again from the login page.",
-                  variant: "destructive",
-                });
-                setTimeout(() => {
-                  window.location.href = '/login';
-                }, 2000);
-              }
-            }
-          } else if (event.data?.type === 'google-oauth-error') {
-            window.removeEventListener('message', handleMessage);
-            popup?.close();
-            setLoading(false);
-            toast({
-              title: "Sign-in error",
-              description: event.data?.error || "Failed to sign in with Google.",
-              variant: "destructive",
-            });
-          }
-        };
-
-        window.addEventListener('message', handleMessage);
-
-        // Check if popup was closed manually
-        const checkClosed = setInterval(() => {
-          if (popup?.closed) {
-            clearInterval(checkClosed);
-            window.removeEventListener('message', handleMessage);
-            setLoading(false);
-          }
-        }, 1000);
-      }
+      // The browser will redirect to Google, no need to handle popup
+      console.log('Redirecting to Google OAuth...');
     } catch (error: any) {
       console.error('Google sign-in failed:', error);
       toast({
