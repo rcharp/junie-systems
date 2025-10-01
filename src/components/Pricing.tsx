@@ -30,7 +30,6 @@ const Pricing = () => {
         "Appointment scheduling",
         "Call transfers",
         "Send texts during call",
-        "CRM integrations",
         "Advanced analytics",
         "Priority support"
       ],
@@ -47,6 +46,7 @@ const Pricing = () => {
         "Live transfers (Coming Soon)",
         "Training files & custom knowledge",
         "Multiple phone numbers",
+        "CRM integrations",
         "Team collaboration tools",
         "White-label options",
         "Dedicated success manager"
