@@ -696,7 +696,7 @@ const Settings = () => {
     let updateData: any = {};
 
       if (section === "Business") {
-        // Validate required business fields BEFORE processing
+        // Validate ALL fields at once and collect errors
         console.log("=== VALIDATION DEBUG ===");
         console.log("Raw businessType value:", JSON.stringify(businessType));
         console.log("businessType type:", typeof businessType);
@@ -712,109 +712,18 @@ const Settings = () => {
         
         console.log("Required fields after processing:", requiredFields);
         
-        // Additional phone number validation
+        // Validate phone number format
         const phoneRegex = /^[\d\s\-\(\)\+]+$/;
         const isValidPhone = !requiredFields.businessPhone || phoneRegex.test(requiredFields.businessPhone);
 
-        const newValidationErrors = {
-          businessName: !requiredFields.businessName || requiredFields.businessName === "",
-          businessType: !requiredFields.businessType || requiredFields.businessType === "",
-          businessPhone: !requiredFields.businessPhone || requiredFields.businessPhone === "" || !isValidPhone,
-          businessDescription: !requiredFields.businessDescription || requiredFields.businessDescription === "",
-          businessAddress: false,
-          services: false
-        };
-
-        const missingFields = Object.entries(requiredFields)
-          .filter(([key, value]) => !value || value.length === 0)
-          .map(([key]) => key);
-          
-        // Add phone validation error
-        if (!isValidPhone && requiredFields.businessPhone) {
-          missingFields.push('businessPhone');
-        }
-
-        if (missingFields.length > 0) {
-          setValidationErrors(newValidationErrors);
-          
-          const fieldNames = missingFields.map(field => {
-            switch(field) {
-              case 'businessName': return 'Business Name';
-              case 'businessType': return 'Business Type';
-              case 'businessPhone': return requiredFields.businessPhone && !isValidPhone ? 'Phone Number (invalid format)' : 'Phone Number';
-              case 'businessDescription': return 'Business Description';
-              default: return field;
-            }
-          });
-          
-          toast({
-            title: "Missing Required Fields",
-            description: `Please fill in all required fields highlighted in red: ${fieldNames.join(', ')}`,
-            variant: "destructive",
-            duration: 5000,
-          });
-          
-          // Scroll to first error field
-          if (newValidationErrors.businessName && businessNameRef.current) {
-            businessNameRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            businessNameRef.current.focus();
-          } else if (newValidationErrors.businessType && businessTypeRef.current) {
-            businessTypeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          } else if (newValidationErrors.businessPhone && businessPhoneRef.current) {
-            businessPhoneRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            businessPhoneRef.current.focus();
-          } else if (newValidationErrors.businessDescription && businessDescriptionRef.current) {
-            businessDescriptionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            businessDescriptionRef.current.focus();
-          }
-          
-          throw new Error("Validation failed: Missing required fields");
-        }
-
-        // Validate services - each service must have both name and price
+        // Validate services
         const validServices = services.filter(s => s.name.trim() !== "");
         const invalidServices = validServices.filter(s => {
           const priceValue = s.price.trim();
           return !priceValue || isNaN(parseFloat(priceValue)) || parseFloat(priceValue) <= 0;
         });
         
-        if (invalidServices.length > 0) {
-          setValidationErrors(prev => ({...prev, services: true}));
-          
-          toast({
-            title: "Service Pricing Required",
-            description: `All services must have valid prices greater than 0. ${invalidServices.length} service(s) have invalid prices and are highlighted in red.`,
-            variant: "destructive",
-            duration: 5000,
-          });
-          
-          // Scroll to services section
-          if (servicesRef.current) {
-            servicesRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-          
-          throw new Error("Validation failed: Invalid service pricing");
-        }
-
-        if (validServices.length === 0) {
-          setValidationErrors(prev => ({...prev, services: true}));
-          
-          toast({
-            title: "Services Required",
-            description: "Please add at least one service with pricing.",
-            variant: "destructive",
-            duration: 5000,
-          });
-          
-          // Scroll to services section
-          if (servicesRef.current) {
-            servicesRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-          
-          throw new Error("Validation failed: No services provided");
-        }
-
-        // Validate individual address fields
+        // Validate address fields
         console.log("=== ADDRESS VALIDATION DEBUG ===");
         console.log("addressData:", JSON.stringify(addressData));
         
@@ -832,36 +741,84 @@ const Settings = () => {
         
         console.log("ZIP validation:", { zip: addressData.zip, isValidZip });
 
-        if (missingAddressFields.length > 0 || !isValidZip) {
-          console.log("ADDRESS VALIDATION FAILED - Stopping save");
-          setValidationErrors(prev => ({...prev, businessAddress: true}));
-          
-          let errorMessage = '';
+        // Collect ALL validation errors
+        const newValidationErrors = {
+          businessName: !requiredFields.businessName || requiredFields.businessName === "",
+          businessType: !requiredFields.businessType || requiredFields.businessType === "",
+          businessPhone: !requiredFields.businessPhone || requiredFields.businessPhone === "" || !isValidPhone,
+          businessDescription: !requiredFields.businessDescription || requiredFields.businessDescription === "",
+          businessAddress: missingAddressFields.length > 0 || !isValidZip,
+          services: invalidServices.length > 0 || validServices.length === 0
+        };
+
+        // Build error messages for all issues
+        const errorMessages: string[] = [];
+        
+        if (newValidationErrors.businessName || newValidationErrors.businessType || 
+            newValidationErrors.businessPhone || newValidationErrors.businessDescription) {
+          const missingFields = [];
+          if (newValidationErrors.businessName) missingFields.push('Business Name');
+          if (newValidationErrors.businessType) missingFields.push('Business Type');
+          if (newValidationErrors.businessPhone) {
+            missingFields.push(requiredFields.businessPhone && !isValidPhone ? 'Phone Number (invalid format)' : 'Phone Number');
+          }
+          if (newValidationErrors.businessDescription) missingFields.push('Business Description');
+          errorMessages.push(`Missing/Invalid: ${missingFields.join(', ')}`);
+        }
+
+        if (newValidationErrors.businessAddress) {
           if (missingAddressFields.length > 0) {
-            errorMessage = `Please provide the following address fields: ${missingAddressFields.join(', ')}.`;
+            errorMessages.push(`Address: ${missingAddressFields.join(', ')}`);
           }
           if (!isValidZip && addressData.zip?.trim()) {
-            errorMessage += (errorMessage ? ' ' : '') + 'ZIP code must be exactly 5 digits.';
-          } else if (!addressData.zip?.trim()) {
-            errorMessage = errorMessage || 'Please provide a ZIP code.';
+            errorMessages.push('ZIP code must be exactly 5 digits');
           }
+        }
+
+        if (newValidationErrors.services) {
+          if (validServices.length === 0) {
+            errorMessages.push('At least one service required');
+          } else if (invalidServices.length > 0) {
+            errorMessages.push(`${invalidServices.length} service(s) have invalid prices`);
+          }
+        }
+
+        // If there are ANY errors, show them all and stop
+        if (errorMessages.length > 0) {
+          setValidationErrors(newValidationErrors);
           
           toast({
-            title: "Address Required",
-            description: errorMessage,
+            title: "Validation Errors",
+            description: errorMessages.join(' • '),
             variant: "destructive",
             duration: 5000,
           });
           
-          // Scroll to address field
-          if (businessAddressRef.current) {
+          // Scroll to first error field
+          if (newValidationErrors.businessName && businessNameRef.current) {
+            businessNameRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            businessNameRef.current.focus();
+          } else if (newValidationErrors.businessType && businessTypeRef.current) {
+            businessTypeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (newValidationErrors.businessPhone && businessPhoneRef.current) {
+            businessPhoneRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            businessPhoneRef.current.focus();
+          } else if (newValidationErrors.businessDescription && businessDescriptionRef.current) {
+            businessDescriptionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            businessDescriptionRef.current.focus();
+          } else if (newValidationErrors.businessAddress && businessAddressRef.current) {
             businessAddressRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (newValidationErrors.services && servicesRef.current) {
+            servicesRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
           
-          throw new Error("Validation failed: Invalid address");
+          throw new Error("Validation failed: Multiple fields require attention");
         }
         
-        console.log("ADDRESS VALIDATION PASSED");
+        console.log("VALIDATION PASSED");
+
+        // After validation passes, we can safely use validServices
+        const finalValidServices = services.filter(s => s.name.trim() !== "");
 
         // Combine address fields into a single address string
         const fullAddress = [
@@ -909,8 +866,8 @@ const Settings = () => {
           business_website: businessWebsite,
           business_timezone: timezone,
           business_timezone_offset: timezoneOffset,
-          services_offered: JSON.stringify(validServices),
-          pricing_structure: validServices.map(s => `${s.name}: ${s.price}`).join(', ')
+          services_offered: JSON.stringify(finalValidServices),
+          pricing_structure: finalValidServices.map(s => `${s.name}: ${s.price}`).join(', ')
         };
       } else if (section === "Call") {
         updateData = {
