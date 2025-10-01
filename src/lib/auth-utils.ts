@@ -38,11 +38,11 @@ export const handleRobustSignOut = async (supabase: any) => {
       console.warn('Sign out error (continuing with cleanup):', err);
     }
     
-    // Force page reload for a clean state
-    window.location.href = '/';
+    // Force page reload to login page for a clean state
+    window.location.href = '/login';
   } catch (error) {
     console.error('Error during sign out:', error);
-    // Force redirect even if there's an error
-    window.location.href = '/';
+    // Force redirect to login even if there's an error
+    window.location.href = '/login';
   }
 };
