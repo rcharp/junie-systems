@@ -381,9 +381,9 @@ const Onboarding = () => {
                 
                 setExtractionProgress(90);
                 
+                const businessId = businessSettingsResult.id;
+                
                 if (!servicesError && servicesData?.services) {
-                  const businessId = businessSettingsResult.id;
-                  
                   const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
                     business_id: businessId,
                     name: service.name,
@@ -395,6 +395,54 @@ const Onboarding = () => {
                   
                   await supabase.from('services').insert(servicesToInsert);
                   console.log('Services saved successfully');
+                }
+                
+                // Purchase Twilio number for the business
+                try {
+                  console.log('Attempting to purchase Twilio number...');
+                  
+                  // Extract area code from address or phone
+                  let areaCode = '800'; // Default fallback
+                  if (businessData.phone) {
+                    // Try to extract area code from phone number
+                    const phoneMatch = businessData.phone.match(/\(?(\d{3})\)?/);
+                    if (phoneMatch && phoneMatch[1]) {
+                      areaCode = phoneMatch[1];
+                    }
+                  } else if (businessData.address) {
+                    // Try to extract ZIP code and convert to area code (simplified)
+                    const zipMatch = businessData.address.match(/\b(\d{5})\b/);
+                    if (zipMatch && zipMatch[1]) {
+                      // Use first 3 digits of ZIP as rough area code approximation
+                      // This is simplified - in production you'd use a proper ZIP to area code mapping
+                      const zip = zipMatch[1];
+                      // Common mappings (simplified)
+                      if (zip.startsWith('1')) areaCode = '212'; // NY
+                      else if (zip.startsWith('2')) areaCode = '202'; // DC
+                      else if (zip.startsWith('3')) areaCode = '404'; // GA
+                      else if (zip.startsWith('4')) areaCode = '502'; // KY
+                      else if (zip.startsWith('6')) areaCode = '312'; // IL
+                      else if (zip.startsWith('7')) areaCode = '214'; // TX
+                      else if (zip.startsWith('8')) areaCode = '303'; // CO
+                      else if (zip.startsWith('9')) areaCode = '206'; // WA
+                    }
+                  }
+                  
+                  const { data: twilioData, error: twilioError } = await supabase.functions.invoke('purchase-twilio-number', {
+                    body: {
+                      areaCode: areaCode,
+                      businessId: businessSettingsResult.id
+                    }
+                  });
+                  
+                  if (twilioError) {
+                    console.error('Error purchasing Twilio number:', twilioError);
+                  } else if (twilioData?.success) {
+                    console.log('Successfully purchased Twilio number:', twilioData.phoneNumber);
+                  }
+                } catch (twilioError) {
+                  console.error('Error calling purchase-twilio-number:', twilioError);
+                  // Don't fail onboarding if Twilio purchase fails
                 }
               } catch (servicesError) {
                 console.error('Error extracting services:', servicesError);
@@ -728,9 +776,9 @@ const Onboarding = () => {
                         
                         setExtractionProgress(90);
                         
+                        const businessId = businessSettingsResult.id;
+                        
                         if (!servicesError && servicesData?.services) {
-                          const businessId = businessSettingsResult.id;
-                          
                           // Save extracted services to database
                           const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
                             business_id: businessId,
@@ -743,6 +791,48 @@ const Onboarding = () => {
                           
                           await supabase.from('services').insert(servicesToInsert);
                           console.log('Services saved successfully');
+                        }
+                        
+                        // Purchase Twilio number for the business
+                        try {
+                          console.log('Attempting to purchase Twilio number...');
+                          
+                          // Extract area code from address or phone
+                          let areaCode = '800'; // Default fallback
+                          if (businessData.phone) {
+                            const phoneMatch = businessData.phone.match(/\(?(\d{3})\)?/);
+                            if (phoneMatch && phoneMatch[1]) {
+                              areaCode = phoneMatch[1];
+                            }
+                          } else if (businessData.address) {
+                            const zipMatch = businessData.address.match(/\b(\d{5})\b/);
+                            if (zipMatch && zipMatch[1]) {
+                              const zip = zipMatch[1];
+                              if (zip.startsWith('1')) areaCode = '212';
+                              else if (zip.startsWith('2')) areaCode = '202';
+                              else if (zip.startsWith('3')) areaCode = '404';
+                              else if (zip.startsWith('4')) areaCode = '502';
+                              else if (zip.startsWith('6')) areaCode = '312';
+                              else if (zip.startsWith('7')) areaCode = '214';
+                              else if (zip.startsWith('8')) areaCode = '303';
+                              else if (zip.startsWith('9')) areaCode = '206';
+                            }
+                          }
+                          
+                          const { data: twilioData, error: twilioError } = await supabase.functions.invoke('purchase-twilio-number', {
+                            body: {
+                              areaCode: areaCode,
+                              businessId: businessId
+                            }
+                          });
+                          
+                          if (twilioError) {
+                            console.error('Error purchasing Twilio number:', twilioError);
+                          } else if (twilioData?.success) {
+                            console.log('Successfully purchased Twilio number:', twilioData.phoneNumber);
+                          }
+                        } catch (twilioError) {
+                          console.error('Error calling purchase-twilio-number:', twilioError);
                         }
                       } catch (servicesError) {
                         console.error('Error extracting services:', servicesError);
@@ -1058,9 +1148,9 @@ const Onboarding = () => {
               
               setExtractionProgress(90);
               
+              const businessId = businessSettingsResult.id;
+              
               if (!servicesError && servicesData?.services) {
-                const businessId = businessSettingsResult.id;
-                
                 // Save extracted services to database
                 const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
                   business_id: businessId,
@@ -1073,6 +1163,48 @@ const Onboarding = () => {
                 
                 await supabase.from('services').insert(servicesToInsert);
                 console.log('Services saved successfully');
+              }
+              
+              // Purchase Twilio number for the business
+              try {
+                console.log('Attempting to purchase Twilio number...');
+                
+                // Extract area code from address or phone
+                let areaCode = '800'; // Default fallback
+                if (businessData.phone) {
+                  const phoneMatch = businessData.phone.match(/\(?(\d{3})\)?/);
+                  if (phoneMatch && phoneMatch[1]) {
+                    areaCode = phoneMatch[1];
+                  }
+                } else if (businessData.address) {
+                  const zipMatch = businessData.address.match(/\b(\d{5})\b/);
+                  if (zipMatch && zipMatch[1]) {
+                    const zip = zipMatch[1];
+                    if (zip.startsWith('1')) areaCode = '212';
+                    else if (zip.startsWith('2')) areaCode = '202';
+                    else if (zip.startsWith('3')) areaCode = '404';
+                    else if (zip.startsWith('4')) areaCode = '502';
+                    else if (zip.startsWith('6')) areaCode = '312';
+                    else if (zip.startsWith('7')) areaCode = '214';
+                    else if (zip.startsWith('8')) areaCode = '303';
+                    else if (zip.startsWith('9')) areaCode = '206';
+                  }
+                }
+                
+                const { data: twilioData, error: twilioError } = await supabase.functions.invoke('purchase-twilio-number', {
+                  body: {
+                    areaCode: areaCode,
+                    businessId: businessId
+                  }
+                });
+                
+                if (twilioError) {
+                  console.error('Error purchasing Twilio number:', twilioError);
+                } else if (twilioData?.success) {
+                  console.log('Successfully purchased Twilio number:', twilioData.phoneNumber);
+                }
+              } catch (twilioError) {
+                console.error('Error calling purchase-twilio-number:', twilioError);
               }
             } catch (servicesError) {
               console.error('Error extracting services:', servicesError);

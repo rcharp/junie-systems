@@ -134,6 +134,7 @@ export type Database = {
           record_calls: boolean | null
           services_offered: string | null
           sms_notifications: boolean | null
+          twilio_phone_number: string | null
           updated_at: string
           urgent_keywords: string | null
           user_id: string
@@ -167,6 +168,7 @@ export type Database = {
           record_calls?: boolean | null
           services_offered?: string | null
           sms_notifications?: boolean | null
+          twilio_phone_number?: string | null
           updated_at?: string
           urgent_keywords?: string | null
           user_id: string
@@ -200,6 +202,7 @@ export type Database = {
           record_calls?: boolean | null
           services_offered?: string | null
           sms_notifications?: boolean | null
+          twilio_phone_number?: string | null
           updated_at?: string
           urgent_keywords?: string | null
           user_id?: string

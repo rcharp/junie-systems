@@ -86,6 +86,7 @@ const Settings = () => {
 
   // Call Settings State
   const [forwardingNumber, setForwardingNumber] = useState("");
+  const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
   const [urgentKeywords, setUrgentKeywords] = useState("");
   const [autoForward, setAutoForward] = useState(false);
   
@@ -356,6 +357,7 @@ const Settings = () => {
         setBusinessDescription(data.business_description || "");
         setBusinessWebsite(data.business_website || "");
         setForwardingNumber(data.forwarding_number || "");
+        setTwilioPhoneNumber(data.twilio_phone_number || "");
         setUrgentKeywords(data.urgent_keywords || "");
         setAutoForward(data.auto_forward || false);
         
@@ -1368,8 +1370,8 @@ const Settings = () => {
                 <span className="hidden sm:inline">Business</span>
               </TabsTrigger>
               <TabsTrigger value="calls" className="flex items-center gap-2 py-3.5">
-                <Phone className="w-4 h-4" />
-                <span className="hidden sm:inline">Calls</span>
+                <Bot className="w-4 h-4" />
+                <span className="hidden sm:inline">AI Caller</span>
               </TabsTrigger>
               <TabsTrigger value="setup" className={`flex items-center gap-2 py-3.5 ${!featureAccess.appointmentScheduling ? 'text-muted-foreground/50' : ''}`}>
                 <Calendar className="w-4 h-4" />
@@ -2012,14 +2014,30 @@ const Settings = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <Phone className="w-5 h-5 mr-2" />
-                    Call Handling Settings
+                    <Bot className="w-5 h-5 mr-2" />
+                    AI Caller Settings
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
+                  {/* Junie Phone Number (Read-only) */}
+                  <div className="space-y-2 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                    <Label htmlFor="twilioPhoneNumber" className="font-semibold">Your Junie Phone Number</Label>
+                    <Input
+                      id="twilioPhoneNumber"
+                      value={twilioPhoneNumber || "Not assigned yet"}
+                      disabled
+                      className="bg-muted cursor-not-allowed font-mono"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      This is your dedicated Junie AI phone number. Share this number with your customers to have calls handled by your AI assistant.
+                    </p>
+                  </div>
+
+                  <Separator />
+
                   <FeatureGate feature="callTransfers" showUpgradeMessage={true}>
                     <div className="space-y-2">
-                      <Label htmlFor="forwardingNumber">Call Forwarding Number</Label>
+                      <Label htmlFor="forwardingNumber" className="font-semibold">Emergency Forwarding Number</Label>
                       <Input
                         id="forwardingNumber"
                         value={forwardingNumber}
@@ -2030,7 +2048,7 @@ const Settings = () => {
                         placeholder="+1 (555) 987-6543"
                       />
                       <p className="text-sm text-muted-foreground">
-                        Urgent calls will be forwarded to this number
+                        Your business phone number. Urgent or emergency calls will be forwarded to this number when the AI detects urgent keywords.
                       </p>
                     </div>
                   </FeatureGate>
