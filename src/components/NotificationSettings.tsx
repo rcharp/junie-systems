@@ -272,6 +272,7 @@ const NotificationSettings = () => {
                     setSmsOptIn(checked as boolean);
                     if (checked) {
                       setShowTermsWarning(false);
+                      setSmsNotifications(true);
                     }
                     if (!checked) {
                       setSmsNotifications(false);
