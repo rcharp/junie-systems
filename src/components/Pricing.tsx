@@ -28,7 +28,7 @@ const Pricing = () => {
     }
 
     if (!user) {
-      return { text: "Get Started for Free", disabled: isDisabled };
+      return { text: "Get Started for Free", disabled: false };
     }
 
     const currentPlanTier = planHierarchy[subscriptionPlan];
@@ -37,9 +37,9 @@ const Pricing = () => {
     if (currentPlanTier === targetPlanTier) {
       return { text: "Current Plan", disabled: true };
     } else if (targetPlanTier > currentPlanTier) {
-      return { text: "Upgrade", disabled: isDisabled };
+      return { text: "Upgrade", disabled: false };
     } else {
-      return { text: "Downgrade", disabled: isDisabled };
+      return { text: "Downgrade", disabled: false };
     }
   };
   
