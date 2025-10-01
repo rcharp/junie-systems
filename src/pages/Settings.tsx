@@ -1294,12 +1294,9 @@ const Settings = () => {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={() => {
                   setShowUpgradeDialog(false);
-                  const newSearchParams = new URLSearchParams(searchParams);
-                  newSearchParams.set('tab', 'account');
-                  newSearchParams.set('subtab', 'billing');
-                  setSearchParams(newSearchParams);
+                  navigate('/pricing');
                 }}>
-                  Go to Billing
+                  View Plans
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

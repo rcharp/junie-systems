@@ -64,9 +64,9 @@ export const FeatureGate = ({
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={() => {
                   setShowUpgradeDialog(false);
-                  navigate('/settings?tab=account&subtab=billing');
+                  navigate('/pricing');
                 }}>
-                  Go to Billing
+                  View Plans
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
