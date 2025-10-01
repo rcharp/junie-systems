@@ -128,3 +128,9 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.search-business]
+verify_jwt = false
+
+[functions.get-business-details]
+verify_jwt = false
