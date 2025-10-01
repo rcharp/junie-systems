@@ -662,31 +662,30 @@ const Settings = () => {
   const saveSettingsInternal = async (section: string) => {
     if (!user) return;
     
-    try {
-      // Handle Profile section separately as it updates user_profiles table
-      if (section === "Profile") {
-        const { error } = await supabase
-          .from('user_profiles')
-          .update({
-            full_name: userFullName,
-            company_name: userCompanyName,
-            timezone: userTimezone,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user.id);
+    // Handle Profile section separately as it updates user_profiles table
+    if (section === "Profile") {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          full_name: userFullName,
+          company_name: userCompanyName,
+          timezone: userTimezone,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
 
-        if (error) {
-          throw error;
-        }
-
-        toast({
-          title: "Profile updated",
-          description: "Your profile settings have been updated successfully.",
-        });
-        return;
+      if (error) {
+        throw error;
       }
 
-      let updateData: any = {};
+      toast({
+        title: "Profile updated",
+        description: "Your profile settings have been updated successfully.",
+      });
+      return;
+    }
+
+    let updateData: any = {};
 
       if (section === "Business") {
         // Validate required business fields BEFORE processing
@@ -916,21 +915,6 @@ const Settings = () => {
         await saveServices(data.id);
         setBusinessSettingsId(data.id);
       }
-      
-      toast({
-        title: "Settings saved",
-        description: `Your ${section.toLowerCase()} settings have been updated successfully.`,
-      });
-    } catch (error: any) {
-      console.error('Error saving settings:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save settings",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
-    }
   };
 
   const parseAddress = (addressString: string) => {
