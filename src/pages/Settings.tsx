@@ -952,9 +952,21 @@ const Settings = () => {
         const zip = stateZipMatch ? stateZipMatch[2] : '';
         return { street, city, state, zip };
       } else if (parts.length >= 4) {
-        // Format: Street, City, State, ZIP
+        // Format: Street, City, State, ZIP (or USA/Country)
         const state = parts[2] || '';
-        const zip = parts[3] || '';
+        let zip = parts[3] || '';
+        
+        // If the 4th part is "USA" or not a valid zip, try to find zip in the 3rd part
+        if (zip === 'USA' || zip === 'United States' || !/^\d{5}(-\d{4})?$/.test(zip)) {
+          // Try to extract zip from state field
+          const stateZipMatch = state.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
+          if (stateZipMatch) {
+            return { street, city, state: stateZipMatch[1], zip: stateZipMatch[2] };
+          }
+          // No valid zip found
+          return { street, city, state, zip: '' };
+        }
+        
         return { street, city, state, zip };
       }
     }
@@ -1596,7 +1608,10 @@ const Settings = () => {
                   <div className="space-y-2">
                     <AddressInput
                       value={addressData}
-                      onChange={setAddressData}
+                      onChange={(newAddressData) => {
+                        setAddressData(newAddressData);
+                        // Don't auto-save address changes - require manual save for validation
+                      }}
                       onAddressComplete={handleAddressSelect}
                       label="Business Address *"
                       className={validationErrors.businessAddress ? "border-red-500" : ""}
