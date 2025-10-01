@@ -723,9 +723,9 @@ const Dashboard = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => {
               setShowUpgradeDialog(false);
-              navigate('/settings');
+              navigate('/settings?tab=account');
             }}>
-              Go to Settings
+              Go to Billing
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
