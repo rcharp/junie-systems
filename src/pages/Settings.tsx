@@ -23,7 +23,7 @@ import { WebsiteImporter } from "@/components/WebsiteImporter";
 import { AddressInput } from "@/components/AddressAutocomplete";
 import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
 import { getUserTimezone, getTimezoneFromAddress, getCommonTimezones } from "@/lib/timezone-utils";
-import { handleRobustSignOut } from "@/lib/auth-utils";
+import { handleRobustSignOut, cleanupAuthState } from "@/lib/auth-utils";
 import { FeatureGate } from "@/components/FeatureGate";
 import { useSubscription } from "@/hooks/useSubscription";
 import { BillingSettings } from "@/components/BillingSettings";
@@ -1030,8 +1030,11 @@ const Settings = () => {
         description: "Your account and all data have been permanently deleted.",
       });
 
-      // Sign out and redirect
-      await handleRobustSignOut(supabase);
+      // Clean up auth state locally
+      cleanupAuthState();
+      
+      // Single redirect to login - edge function already deleted the user
+      window.location.href = '/login';
     } catch (error: any) {
       console.error('Error deleting account:', error);
       toast({
@@ -1039,7 +1042,6 @@ const Settings = () => {
         description: error.message || "Failed to delete account. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setIsDeleting(false);
       setShowDeleteDialog(false);
     }
