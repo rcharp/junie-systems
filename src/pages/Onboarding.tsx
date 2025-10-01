@@ -31,7 +31,7 @@ const Onboarding = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessPrediction | null>(null);
-  const [isSelectingBusiness, setIsSelectingBusiness] = useState(false);
+  const isSelectingBusinessRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -48,7 +48,7 @@ const Onboarding = () => {
 
   useEffect(() => {
     // Search for businesses as user types - but not when we're selecting a business
-    if (businessSearch.trim().length >= 2 && !useWebsite && !isSelectingBusiness && !selectedBusiness) {
+    if (businessSearch.trim().length >= 2 && !useWebsite && !isSelectingBusinessRef.current && !selectedBusiness) {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
@@ -78,7 +78,7 @@ const Onboarding = () => {
       }, 500); // Debounce for 500ms
     } else {
       setSearchResults([]);
-      if (!isSelectingBusiness && !selectedBusiness) {
+      if (!isSelectingBusinessRef.current && !selectedBusiness) {
         setShowResults(false);
       }
     }
@@ -88,10 +88,10 @@ const Onboarding = () => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, [businessSearch, useWebsite, isSelectingBusiness, selectedBusiness, toast]);
+  }, [businessSearch, useWebsite, selectedBusiness, toast]);
 
   const handleBusinessSelect = async (business: BusinessPrediction) => {
-    setIsSelectingBusiness(true);
+    isSelectingBusinessRef.current = true;
     setSelectedBusiness(business);
     setBusinessSearch(business.structured_formatting.main_text);
     setShowResults(false);
@@ -116,7 +116,7 @@ const Onboarding = () => {
       // Automatically move to next step
       setTimeout(() => {
         setStep(2);
-        setIsSelectingBusiness(false);
+        isSelectingBusinessRef.current = false;
       }, 800);
     } catch (error: any) {
       console.error('Error getting business details:', error);
@@ -125,7 +125,7 @@ const Onboarding = () => {
         description: "Failed to fetch business details",
         variant: "destructive"
       });
-      setIsSelectingBusiness(false);
+      isSelectingBusinessRef.current = false;
     } finally {
       setLoading(false);
     }
@@ -295,7 +295,7 @@ const Onboarding = () => {
                           onChange={(e) => {
                             setBusinessSearch(e.target.value);
                             setSelectedBusiness(null);
-                            setIsSelectingBusiness(false);
+                            isSelectingBusinessRef.current = false;
                           }}
                           onFocus={() => {
                             if (businessSearch.length >= 2 && !selectedBusiness) {
