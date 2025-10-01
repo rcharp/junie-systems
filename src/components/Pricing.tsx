@@ -22,14 +22,19 @@ const Pricing = () => {
     'growth': 3
   };
 
-  const getButtonConfig = (planName: string, isDisabled: boolean) => {
+  const getButtonConfig = (planName: string) => {
     if (planName.toLowerCase() === 'growth') {
       return { text: "Coming Soon!", disabled: true };
     }
 
-    // Show "Get Started for Free" if user is not logged in or still loading
-    if (!user || isLoading) {
+    // Only show upgrade/downgrade if user is logged in AND subscription data is loaded
+    if (!user) {
       return { text: "Get Started for Free", disabled: false };
+    }
+
+    // If user is logged in but subscription is still loading, show loading state
+    if (isLoading) {
+      return { text: "Loading...", disabled: true };
     }
 
     const currentPlanTier = planHierarchy[subscriptionPlan];
@@ -180,10 +185,10 @@ const Pricing = () => {
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base mt-auto"
                   size="lg"
-                  disabled={getButtonConfig(plan.name, plan.disabled).disabled || loading === plan.name}
-                  onClick={() => !getButtonConfig(plan.name, plan.disabled).disabled && handleGetStarted(plan.name)}
+                  disabled={getButtonConfig(plan.name).disabled || loading === plan.name}
+                  onClick={() => !getButtonConfig(plan.name).disabled && handleGetStarted(plan.name)}
                 >
-                  {loading === plan.name ? 'Loading...' : getButtonConfig(plan.name, plan.disabled).text}
+                  {loading === plan.name ? 'Loading...' : getButtonConfig(plan.name).text}
                 </Button>
               </CardContent>
             </Card>
