@@ -1186,25 +1186,25 @@ const Settings = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 mb-6 p-2 h-auto">
-              <TabsTrigger value="account" className="flex items-center gap-2">
+            <TabsList className="grid w-full grid-cols-5 mb-6 p-1 h-auto">
+              <TabsTrigger value="account" className="flex items-center gap-2 py-3">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">Account</span>
               </TabsTrigger>
-              <TabsTrigger value="business" className="flex items-center gap-2">
+              <TabsTrigger value="business" className="flex items-center gap-2 py-3">
                 <Building className="w-4 h-4" />
                 <span className="hidden sm:inline">Business</span>
               </TabsTrigger>
-              <TabsTrigger value="calls" className="flex items-center gap-2">
+              <TabsTrigger value="calls" className="flex items-center gap-2 py-3">
                 <Phone className="w-4 h-4" />
                 <span className="hidden sm:inline">Calls</span>
               </TabsTrigger>
-              <TabsTrigger value="setup" className="flex items-center gap-2" disabled={!featureAccess.appointmentScheduling}>
+              <TabsTrigger value="setup" className="flex items-center gap-2 py-3" disabled={!featureAccess.appointmentScheduling}>
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">Calendar</span>
                 {!featureAccess.appointmentScheduling && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <TabsTrigger value="notifications" className="flex items-center gap-2 py-3">
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Notifications</span>
               </TabsTrigger>
