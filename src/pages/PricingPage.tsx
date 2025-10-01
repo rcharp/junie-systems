@@ -1,9 +1,24 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Pricing from "@/components/Pricing";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { handleRobustSignOut } from "@/lib/auth-utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const PricingPage = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await handleRobustSignOut(supabase);
+      navigate('/');
+    } catch (error: any) {
+      window.location.href = '/';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-subtle">
       {/* Header */}
@@ -26,9 +41,16 @@ const PricingPage = () => {
                   Back to Home
                 </Link>
               </Button>
-              <Button variant="outline" asChild>
-                <Link to="/login">Sign In</Link>
-              </Button>
+              {user ? (
+                <Button variant="outline" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              ) : (
+                <Button variant="outline" asChild>
+                  <Link to="/login">Sign In</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
