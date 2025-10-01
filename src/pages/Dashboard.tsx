@@ -548,7 +548,7 @@ const Dashboard = () => {
                 Follow our{" "}
                 <button 
                   onClick={() => navigate("/setup-guide")}
-                  className="text-white hover:underline font-semibold"
+                  className="text-white underline hover:no-underline font-semibold"
                 >
                   setup guide
                 </button>
