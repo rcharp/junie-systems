@@ -85,56 +85,62 @@ function SortableItem({ item, onToggle, onDelete, onPriorityChange }: SortableIt
     <div
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center space-x-3 p-3 border rounded-lg bg-card transition-colors ${getPriorityBorderClass(item.priority)} ${
+      className={`group p-3 border rounded-lg bg-card transition-colors ${getPriorityBorderClass(item.priority)} ${
         item.completed ? 'opacity-60 bg-muted/50' : 'hover:bg-muted/50'
       }`}
     >
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-        <GripVertical className="h-4 w-4 text-muted-foreground" />
+      {/* Top row: drag handle, checkbox, text, completed icon */}
+      <div className="flex items-center space-x-3 mb-2">
+        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-4 w-4 text-muted-foreground" />
+        </div>
+        
+        <Checkbox
+          id={item.id}
+          checked={item.completed}
+          onCheckedChange={() => onToggle(item.id)}
+          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+        />
+        
+        <label
+          htmlFor={item.id}
+          className={`flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+            item.completed ? 'line-through text-muted-foreground' : ''
+          }`}
+        >
+          {item.text}
+        </label>
+        
+        {item.completed && (
+          <CheckCircle2 className="h-4 w-4 text-primary" />
+        )}
       </div>
       
-      <Checkbox
-        id={item.id}
-        checked={item.completed}
-        onCheckedChange={() => onToggle(item.id)}
-        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-      />
-      
-      <label
-        htmlFor={item.id}
-        className={`flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
-          item.completed ? 'line-through text-muted-foreground' : ''
-        }`}
-      >
-        {item.text}
-      </label>
-      
-      <Select value={item.priority} onValueChange={(priority: 'high' | 'medium' | 'low') => onPriorityChange(item.id, priority)}>
-        <SelectTrigger className="w-32 h-8 text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="high">High</SelectItem>
-          <SelectItem value="medium">Medium</SelectItem>
-          <SelectItem value="low">Low</SelectItem>
-        </SelectContent>
-      </Select>
-      
-      {item.completed && (
-        <CheckCircle2 className="h-4 w-4 text-primary" />
-      )}
-      
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(item.id);
-        }}
-        className="transition-opacity"
-      >
-        <Trash2 className="h-4 w-4 text-destructive" />
-      </Button>
+      {/* Bottom row: priority dropdown and trash button */}
+      <div className="flex items-center gap-2 ml-10">
+        <Select value={item.priority} onValueChange={(priority: 'high' | 'medium' | 'low') => onPriorityChange(item.id, priority)}>
+          <SelectTrigger className="w-32 h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+          </SelectContent>
+        </Select>
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(item.id);
+          }}
+          className="transition-opacity h-8"
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </div>
     </div>
   );
 }
