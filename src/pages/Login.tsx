@@ -126,13 +126,11 @@ const Login = () => {
           if (event.data?.type === 'google-oauth-success') {
             window.removeEventListener('message', handleMessage);
             popup?.close();
-            toast({
-              title: "Welcome back!",
-              description: "Successfully signed in with Google.",
-            });
-            setTimeout(() => {
-              navigate('/dashboard');
-            }, 500);
+            
+            console.log('OAuth success received, forcing full page reload to /dashboard');
+            
+            // Force a full page navigation to ensure session is loaded
+            window.location.href = '/dashboard';
           } else if (event.data?.type === 'google-oauth-error') {
             window.removeEventListener('message', handleMessage);
             popup?.close();

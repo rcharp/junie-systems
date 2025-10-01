@@ -13,7 +13,7 @@ const GoogleAuthCallback = () => {
     const handleCallback = async () => {
       try {
         // Wait a moment for the URL hash to be processed by Supabase
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Get the session after OAuth redirect
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -99,20 +99,21 @@ const GoogleAuthCallback = () => {
         
         // Send success message to parent window and close popup
         if (window.opener) {
-          console.log('Sending success message to parent window');
+          console.log('Sending success message to parent window with session info');
           window.opener.postMessage({ 
             type: 'google-oauth-success',
-            userId: session.user.id 
+            userId: session.user.id,
+            sessionEstablished: true
           }, window.location.origin);
-          setTimeout(() => {
-            window.close();
-          }, 1000);
+          
+          // Give parent window time to receive message
+          await new Promise(resolve => setTimeout(resolve, 500));
+          window.close();
         } else {
-          // Fallback for non-popup case - redirect to settings
-          console.log('Not a popup, redirecting to settings...');
-          setTimeout(() => {
-            window.location.href = '/settings';
-          }, 1500);
+          // Fallback for non-popup case - direct navigation
+          console.log('Not a popup, navigating directly to settings...');
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          window.location.href = '/settings';
         }
 
       } catch (err) {

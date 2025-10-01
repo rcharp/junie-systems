@@ -210,18 +210,10 @@ const Onboarding = () => {
             window.removeEventListener('message', handleMessage);
             popup?.close();
             
-            console.log('OAuth success, refreshing session...');
+            console.log('OAuth success received, forcing full page reload to /settings');
             
-            // Give the session time to sync
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            toast({
-              title: "Welcome!",
-              description: "Successfully signed in with Google.",
-            });
-            
-            // Navigate to settings
-            navigate('/settings');
+            // Force a full page navigation to ensure session is loaded
+            window.location.href = '/settings';
           } else if (event.data?.type === 'google-oauth-error') {
             window.removeEventListener('message', handleMessage);
             popup?.close();
