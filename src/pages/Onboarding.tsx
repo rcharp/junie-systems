@@ -210,10 +210,38 @@ const Onboarding = () => {
             window.removeEventListener('message', handleMessage);
             popup?.close();
             
-            console.log('OAuth success received, forcing full page reload to /settings');
+            console.log('OAuth success received, waiting for session to sync...');
             
-            // Force a full page navigation to ensure session is loaded
-            window.location.href = '/settings';
+            // Wait for the session to sync to the parent window
+            let sessionReady = false;
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (!sessionReady && attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+              const { data: { session } } = await supabase.auth.getSession();
+              
+              if (session) {
+                console.log('Session synced successfully:', session.user.id);
+                sessionReady = true;
+              } else {
+                attempts++;
+                console.log(`Waiting for session... attempt ${attempts}/${maxAttempts}`);
+              }
+            }
+            
+            if (sessionReady) {
+              console.log('Redirecting to settings with active session');
+              window.location.href = '/settings';
+            } else {
+              console.error('Session failed to sync after multiple attempts');
+              toast({
+                title: "Session error",
+                description: "Please refresh the page and try again.",
+                variant: "destructive",
+              });
+              setLoading(false);
+            }
           } else if (event.data?.type === 'google-oauth-error') {
             window.removeEventListener('message', handleMessage);
             popup?.close();
