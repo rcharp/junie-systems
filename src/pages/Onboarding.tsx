@@ -89,10 +89,10 @@ const Onboarding = () => {
         clearTimeout(searchTimeoutRef.current);
       }
 
-      searchTimeoutRef.current = setTimeout(async () => {
-        setSearchLoading(true);
-        setShowResults(true);
-        
+      setSearchLoading(true);
+      setShowResults(true);
+      
+      const performSearch = async () => {
         try {
           const { data, error } = await supabase.functions.invoke('search-business', {
             body: { query: businessSearch }
@@ -111,7 +111,9 @@ const Onboarding = () => {
         } finally {
           setSearchLoading(false);
         }
-      }, 300); // Debounce for 300ms
+      };
+      
+      performSearch();
     } else {
       setSearchResults([]);
       if (!isSelectingBusinessRef.current && !selectedBusiness) {
