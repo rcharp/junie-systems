@@ -23,6 +23,8 @@ import { AddressInput } from "@/components/AddressAutocomplete";
 import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
 import { getUserTimezone, getTimezoneFromAddress, getCommonTimezones } from "@/lib/timezone-utils";
 import { handleRobustSignOut } from "@/lib/auth-utils";
+import { FeatureGate } from "@/components/FeatureGate";
+import { useSubscription } from "@/hooks/useSubscription";
 
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
@@ -37,6 +39,7 @@ const Settings = () => {
   const [showCalendarBanner, setShowCalendarBanner] = useState(false);
   const [calendarBannerType, setCalendarBannerType] = useState<'success' | 'error'>('success');
   const [calendarBannerMessage, setCalendarBannerMessage] = useState('');
+  const { featureAccess } = useSubscription();
   console.log("Settings state:", { user: user?.email, loading });
 
   // Business Info State
@@ -1059,9 +1062,10 @@ const Settings = () => {
                 <Phone className="w-4 h-4" />
                 <span className="hidden sm:inline">Calls</span>
               </TabsTrigger>
-              <TabsTrigger value="setup" className="flex items-center gap-2">
+              <TabsTrigger value="setup" className="flex items-center gap-2" disabled={!featureAccess.appointmentScheduling}>
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">Calendar</span>
+                {!featureAccess.appointmentScheduling && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2">
                 <Bell className="w-4 h-4" />
@@ -1493,21 +1497,23 @@ const Settings = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="forwardingNumber">Call Forwarding Number</Label>
-                    <Input
-                      id="forwardingNumber"
-                      value={forwardingNumber}
-                      onChange={(e) => {
-                        setForwardingNumber(e.target.value);
-                        debouncedAutoSave("Calls");
-                      }}
-                      placeholder="+1 (555) 987-6543"
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Urgent calls will be forwarded to this number
-                    </p>
-                  </div>
+                  <FeatureGate feature="callTransfers" showUpgradeMessage={true}>
+                    <div className="space-y-2">
+                      <Label htmlFor="forwardingNumber">Call Forwarding Number</Label>
+                      <Input
+                        id="forwardingNumber"
+                        value={forwardingNumber}
+                        onChange={(e) => {
+                          setForwardingNumber(e.target.value);
+                          debouncedAutoSave("Calls");
+                        }}
+                        placeholder="+1 (555) 987-6543"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Urgent calls will be forwarded to this number
+                      </p>
+                    </div>
+                  </FeatureGate>
 
                   <div className="space-y-2">
                     <Label htmlFor="urgentKeywords">Urgent Keywords</Label>
@@ -1581,15 +1587,16 @@ const Settings = () => {
 
             {/* Setup */}
             <TabsContent value="setup">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Calendar Integration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
+              <FeatureGate feature="appointmentScheduling">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Calendar Integration
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
                         <Label>Enable Appointment Booking</Label>
@@ -1613,6 +1620,7 @@ const Settings = () => {
                   <GoogleCalendarConnect />
                 </CardContent>
               </Card>
+              </FeatureGate>
             </TabsContent>
 
             {/* Notifications */}

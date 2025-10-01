@@ -15,6 +15,8 @@ import { WebhookInfo } from "@/components/WebhookInfo";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import { FeatureGate } from "@/components/FeatureGate";
+import { useSubscription } from "@/hooks/useSubscription";
 
 
 interface RecentActivity {
@@ -39,6 +41,7 @@ const Dashboard = () => {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { subscriptionPlan, featureAccess } = useSubscription();
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [showSetupGuide, setShowSetupGuide] = useState(false);
@@ -558,7 +561,9 @@ const Dashboard = () => {
             <TabsTrigger value="calls" className="text-xs sm:text-sm">
               <span className="hidden md:inline">Messages &</span>{" "}Calls
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="text-xs sm:text-sm">Analytics</TabsTrigger>
+            <TabsTrigger value="analytics" className="text-xs sm:text-sm" disabled={!featureAccess.advancedAnalytics}>
+              Analytics {!featureAccess.advancedAnalytics && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -679,7 +684,9 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="analytics">
-            <CallAnalytics />
+            <FeatureGate feature="advancedAnalytics">
+              <CallAnalytics />
+            </FeatureGate>
           </TabsContent>
         </Tabs>
       </main>

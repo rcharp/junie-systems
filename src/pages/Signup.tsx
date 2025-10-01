@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Session, User } from "@supabase/supabase-js";
+import { Badge } from "@/components/ui/badge";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -17,6 +18,14 @@ const Signup = () => {
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedPlan = searchParams.get("plan") || "professional";
+  
+  const planNames: Record<string, string> = {
+    professional: "Professional",
+    scale: "Scale",
+    growth: "Growth"
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -97,6 +106,19 @@ const Signup = () => {
           });
         }
       } else if (data.user) {
+        // Create user profile with selected plan
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: data.user.id,
+            subscription_plan: selectedPlan,
+            subscription_status: 'active'
+          });
+
+        if (profileError) {
+          console.error('Error creating profile:', profileError);
+        }
+        
         // Auto-confirm the user and sign them in immediately
         toast({
           title: "Account created! 🎉",
@@ -158,6 +180,13 @@ const Signup = () => {
           <CardTitle className="text-2xl font-bold text-muted-foreground">
             Sign up
           </CardTitle>
+          {selectedPlan && (
+            <div className="flex justify-center">
+              <Badge className="bg-primary text-primary-foreground">
+                {planNames[selectedPlan] || "Professional"} Plan
+              </Badge>
+            </div>
+          )}
         </CardHeader>
         
         <CardContent className="space-y-6">

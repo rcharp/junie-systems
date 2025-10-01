@@ -1,9 +1,17 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Pricing = () => {
+  const navigate = useNavigate();
+  
+  const handleGetStarted = (plan: string) => {
+    // Navigate to signup with the selected plan
+    navigate(`/signup?plan=${plan.toLowerCase()}`);
+  };
+  
   const plans = [
     {
       name: "Professional",
@@ -114,6 +122,7 @@ const Pricing = () => {
                   className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base mt-auto"
                   size="lg"
                   disabled={plan.disabled}
+                  onClick={() => !plan.disabled && handleGetStarted(plan.name)}
                 >
                   {plan.ctaText}
                 </Button>
