@@ -231,41 +231,43 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
   };
 
   return (
-    <div className={className}>
-      <div className="space-y-2 mb-3">
-        <Label htmlFor="websiteUrl">Import Business Information</Label>
-        <p className="text-sm text-muted-foreground">
-          Enter a Google Business Profile, Yelp page, or website URL to extract and auto-fill your business details
-        </p>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <Input
-            id="websiteUrl"
-            value={websiteUrl}
-            onChange={(e) => setWebsiteUrl(e.target.value)}
-            placeholder="Enter Google Business, Yelp, or website URL..."
-            disabled={isLoading}
-          />
+    <Card className={`bg-primary/5 border-primary/20 ${className}`}>
+      <CardContent className="pt-6">
+        <div className="space-y-2 mb-3">
+          <Label htmlFor="websiteUrl">Import Business Information</Label>
+          <p className="text-sm text-muted-foreground">
+            Enter a Google Business Profile, Yelp page, or website URL to extract and auto-fill your business details
+          </p>
         </div>
-        <Button 
-          onClick={handleImport}
-          disabled={isLoading || !websiteUrl.trim()}
-          className="bg-gradient-primary hover:opacity-90 text-white border-none"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Importing...
-            </>
-          ) : (
-            <>
-              <Download className="mr-2 h-4 w-4" />
-              Import
-            </>
-          )}
-        </Button>
-      </div>
-    </div>
+        <div className="flex items-center gap-3">
+          <div className="flex-1">
+            <Input
+              id="websiteUrl"
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              placeholder="Enter Google Business, Yelp, or website URL..."
+              disabled={isLoading}
+            />
+          </div>
+          <Button 
+            onClick={handleImport}
+            disabled={isLoading || !websiteUrl.trim()}
+            className="bg-gradient-primary hover:opacity-90 text-white border-none"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Import
+              </>
+            )}
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
