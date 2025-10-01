@@ -205,22 +205,29 @@ const Onboarding = () => {
           
           if (event.data?.type === 'google-oauth-success') {
             window.removeEventListener('message', handleMessage);
+            popup?.close();
             
-            console.log('OAuth success, waiting for session sync...');
+            console.log('Received session tokens from popup');
             
-            // Give more time for session to sync naturally
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Now refresh session to ensure it's loaded
-            const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-            
-            if (refreshError) {
-              console.error('Session refresh error:', refreshError);
-            }
-            
-            if (session) {
-              console.log('Session confirmed, closing popup and redirecting');
-              popup?.close();
+            // Establish session in parent window using tokens from popup
+            if (event.data.session) {
+              const { data, error } = await supabase.auth.setSession({
+                access_token: event.data.session.access_token,
+                refresh_token: event.data.session.refresh_token,
+              });
+              
+              if (error) {
+                console.error('Error setting session:', error);
+                toast({
+                  title: "Session error",
+                  description: "Failed to establish session. Please try logging in.",
+                  variant: "destructive",
+                });
+                setLoading(false);
+                return;
+              }
+              
+              console.log('Session established successfully:', data.session?.user.id);
               
               toast({
                 title: "Welcome!",
@@ -228,27 +235,15 @@ const Onboarding = () => {
               });
               
               // Navigate to settings
-              setTimeout(() => {
-                window.location.href = '/settings';
-              }, 500);
+              window.location.href = '/settings';
             } else {
-              console.log('Session not found, trying getSession...');
-              const { data: { session: retrySession } } = await supabase.auth.getSession();
-              
-              if (retrySession) {
-                console.log('Session found on retry');
-                popup?.close();
-                window.location.href = '/settings';
-              } else {
-                popup?.close();
-                console.error('Session sync failed');
-                toast({
-                  title: "Session error",
-                  description: "Authentication successful but session sync failed. Please try logging in.",
-                  variant: "destructive",
-                });
-                setLoading(false);
-              }
+              console.error('No session data received from popup');
+              toast({
+                title: "Session error",
+                description: "Please try again.",
+                variant: "destructive",
+              });
+              setLoading(false);
             }
           } else if (event.data?.type === 'google-oauth-error') {
             window.removeEventListener('message', handleMessage);

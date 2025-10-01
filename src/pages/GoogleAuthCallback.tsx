@@ -12,7 +12,7 @@ const GoogleAuthCallback = () => {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Wait a moment for the URL hash to be processed by Supabase
+        // Wait for Supabase to process the OAuth callback
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         // Get the session after OAuth redirect
@@ -97,19 +97,22 @@ const GoogleAuthCallback = () => {
 
         setStatus('success');
         
-        // Send success message to parent window and keep popup open briefly
+        // Send session tokens to parent window so it can establish the session
         if (window.opener) {
-          console.log('Sending success message to parent window');
+          console.log('Sending session tokens to parent window');
           window.opener.postMessage({ 
             type: 'google-oauth-success',
-            userId: session.user.id 
+            session: {
+              access_token: session.access_token,
+              refresh_token: session.refresh_token,
+              expires_at: session.expires_at,
+              user: session.user
+            }
           }, window.location.origin);
           
-          // Keep popup open for 2 seconds to allow session to sync
-          console.log('Keeping popup open to allow session sync...');
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Parent will close the popup
+          // Keep popup open briefly to ensure message is sent
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          window.close();
         } else {
           // Fallback for non-popup case
           console.log('Not a popup, redirecting to settings...');
