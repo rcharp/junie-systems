@@ -27,8 +27,10 @@ const Pricing = () => {
       return { text: "Coming Soon!", disabled: true };
     }
 
-    // Only show upgrade/downgrade if user is logged in AND subscription data is loaded
-    if (!user) {
+    // Explicit check: only show upgrade/downgrade if user exists
+    const isUserLoggedIn = !!user;
+    
+    if (!isUserLoggedIn) {
       return { text: "Get Started for Free", disabled: false };
     }
 
