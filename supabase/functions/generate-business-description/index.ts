@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { businessName, businessType, services, address, phone } = await req.json();
+    const { businessName, businessType, services, address, phone, website, businessTypesList, statesList } = await req.json();
     
-    console.log('Generating business description for:', { businessName, businessType, services });
+    console.log('Generating business data for:', { businessName, businessType, address });
 
     // Build context for the AI
     const servicesText = services && services.length > 0 
@@ -24,21 +24,29 @@ serve(async (req) => {
     
     const locationText = address ? ` located in ${address}` : '';
     
-    const prompt = `Write a compelling, professional business description for ${businessName}, a ${businessType} business${locationText}. 
+    const prompt = `You are analyzing a business to extract structured information.
 
-Services offered: ${servicesText}
+Business Name: ${businessName}
+Business Type: ${businessType}
+Location: ${address || 'Unknown'}
+Services: ${servicesText}
 ${phone ? `Contact: ${phone}` : ''}
+${website ? `Website: ${website}` : ''}
 
-Requirements:
-- 2-3 sentences maximum
-- Focus on quality, reliability, and customer satisfaction
-- Include key services naturally
-- Professional but approachable tone
-- Highlight what makes them unique in their local market
-- Do not use excessive adjectives or marketing fluff
-- Make it sound authentic and trustworthy
+Please provide:
 
-Generate only the description text, no extra formatting or quotes.`;
+1. A compelling, professional business description (2-3 sentences). Focus on quality, reliability, and customer satisfaction. Include key services naturally. Professional but approachable tone. Highlight what makes them unique in their local market. No excessive adjectives or marketing fluff. Make it sound authentic and trustworthy.
+
+2. Match the business type to the MOST APPROPRIATE option from this list: ${businessTypesList?.join(', ') || 'restaurant, retail, healthcare, home_services, professional_services, automotive, beauty, fitness, education, entertainment, other'}
+
+3. Extract the US state (if mentioned in the address) and match it to this list: ${statesList?.join(', ') || 'AL, AK, AZ, AR, CA, CO, CT, DE, FL, GA, HI, ID, IL, IN, IA, KS, KY, LA, ME, MD, MA, MI, MN, MS, MO, MT, NE, NV, NH, NJ, NM, NY, NC, ND, OH, OK, OR, PA, RI, SC, SD, TN, TX, UT, VT, VA, WA, WV, WI, WY'}
+
+Return ONLY a JSON object in this exact format (no markdown, no extra text):
+{
+  "description": "your description here",
+  "businessType": "matched_business_type",
+  "state": "STATE_CODE or null"
+}`;
 
     console.log('Making request to Claude API...');
 
@@ -51,7 +59,7 @@ Generate only the description text, no extra formatting or quotes.`;
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 150,
+        max_tokens: 500,
         messages: [
           { 
             role: 'user', 
@@ -72,11 +80,24 @@ Generate only the description text, no extra formatting or quotes.`;
     const data = await response.json();
     console.log('Claude API response:', data);
     
-    const generatedDescription = data.content[0].text.trim();
+    const generatedText = data.content[0].text.trim();
+    console.log('Generated text:', generatedText);
     
-    console.log('Generated description:', generatedDescription);
+    // Parse JSON response
+    let result;
+    try {
+      result = JSON.parse(generatedText);
+    } catch (parseError) {
+      console.error('Failed to parse Claude response as JSON:', generatedText);
+      // Fallback to simple description
+      result = {
+        description: generatedText,
+        businessType: businessType || 'other',
+        state: null
+      };
+    }
 
-    return new Response(JSON.stringify({ description: generatedDescription }), {
+    return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

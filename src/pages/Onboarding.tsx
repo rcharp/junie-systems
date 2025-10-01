@@ -35,8 +35,25 @@ const Onboarding = () => {
   const isSelectingBusinessRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const [extractingData, setExtractingData] = useState(false);
+  const [extractionProgress, setExtractionProgress] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Business types list for Claude matching
+  const businessTypesList = [
+    'electric', 'garage-door', 'handyman', 'hvac', 'landscaping', 
+    'other', 'pest-control', 'plumbing', 'pool-spa', 'cleaning', 'roofing'
+  ];
+
+  // US states list for Claude matching
+  const statesList = [
+    'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 
+    'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 
+    'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 
+    'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 
+    'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
+  ];
 
   useEffect(() => {
     const checkUser = async () => {
@@ -224,12 +241,17 @@ const Onboarding = () => {
               
               console.log('Session established successfully:', data.session?.user.id);
               
+              // Show extraction overlay
+              setExtractingData(true);
+              setExtractionProgress(10);
+              
               // Save business data if available
               const savedBusiness = sessionStorage.getItem('selectedBusiness');
               const savedWebsiteUrl = useWebsite ? websiteUrl : null;
               
               if ((savedBusiness || savedWebsiteUrl) && data.session?.user.id) {
                 try {
+                  setExtractionProgress(20);
                   let businessData: any = {};
                   
                   if (savedBusiness) {
@@ -237,6 +259,7 @@ const Onboarding = () => {
                   }
                   
                   console.log('Saving business data:', businessData);
+                  setExtractionProgress(30);
                   
                   // Create user profile if it doesn't exist
                   const { error: profileError } = await supabase
@@ -252,18 +275,56 @@ const Onboarding = () => {
                     console.error('Error creating profile:', profileError);
                   }
                   
-                  // Save business settings with complete data
+                  setExtractionProgress(40);
+                  
+                  // Use Claude to determine business type, state, and description
+                  let claudeData: any = {};
+                  try {
+                    const { data: generatedData, error: claudeError } = await supabase.functions.invoke('generate-business-description', {
+                      body: {
+                        businessName: businessData.name || businessSearch || 'My Business',
+                        businessType: businessData.types?.[0] || 'other',
+                        services: [],
+                        address: businessData.address || null,
+                        phone: businessData.phone || null,
+                        website: savedWebsiteUrl || businessData.website || null,
+                        businessTypesList,
+                        statesList
+                      }
+                    });
+                    
+                    if (!claudeError && generatedData) {
+                      claudeData = generatedData;
+                      console.log('Claude generated data:', claudeData);
+                    }
+                  } catch (error) {
+                    console.error('Error generating with Claude:', error);
+                  }
+                  
+                  setExtractionProgress(60);
+                  
+                  // Default business hours: M-F 9am-5pm
+                  const defaultHours = [
+                    { day: 'monday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+                    { day: 'tuesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+                    { day: 'wednesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+                    { day: 'thursday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+                    { day: 'friday', isOpen: true, openTime: '09:00', closeTime: '17:00' }
+                  ];
+                  
+                  // Save business settings with Claude-enhanced data
                   const { data: businessSettingsResult, error: businessError } = await supabase
                     .from('business_settings')
                     .upsert({
                       user_id: data.session.user.id,
                       business_name: businessData.name || businessSearch || 'My Business',
-                      business_type: businessData.types?.[0] || businessData.businessType || 'business',
+                      business_type: claudeData.businessType || businessData.types?.[0] || 'other',
                       business_phone: businessData.phone || null,
                       business_address: businessData.address || null,
+                      business_address_state_full: claudeData.state || null,
                       business_website: savedWebsiteUrl || businessData.website || null,
-                      business_hours: businessData.openingHours ? JSON.stringify(businessData.openingHours) : null,
-                      business_description: businessData.editorial_summary?.overview || null,
+                      business_hours: businessData.openingHours ? JSON.stringify(businessData.openingHours) : JSON.stringify(defaultHours),
+                      business_description: claudeData.description || businessData.editorial_summary?.overview || null,
                       business_type_full_name: businessData.types?.join(', ') || null,
                       business_timezone: 'America/New_York',
                     }, { 
@@ -271,6 +332,8 @@ const Onboarding = () => {
                     })
                     .select('id')
                     .single();
+                  
+                  setExtractionProgress(70);
                   
                   if (businessError) {
                     console.error('Error saving business settings:', businessError);
@@ -280,14 +343,17 @@ const Onboarding = () => {
                     // Extract services using Claude API
                     if (businessSettingsResult?.id) {
                       try {
+                        setExtractionProgress(80);
                         const { data: servicesData, error: servicesError } = await supabase.functions.invoke('extract-services', {
                           body: {
                             businessName: businessData.name || businessSearch || 'My Business',
-                            businessType: businessData.types?.[0] || 'business',
+                            businessType: claudeData.businessType || businessData.types?.[0] || 'other',
                             website: savedWebsiteUrl || businessData.website,
-                            businessDescription: businessData.editorial_summary?.overview
+                            businessDescription: claudeData.description || businessData.editorial_summary?.overview
                           }
                         });
+                        
+                        setExtractionProgress(90);
                         
                         if (!servicesError && servicesData?.services) {
                           const businessId = businessSettingsResult.id;
@@ -318,13 +384,18 @@ const Onboarding = () => {
                 }
               }
               
+              setExtractionProgress(100);
+              
               toast({
                 title: "Welcome!",
                 description: "Successfully signed in with Google.",
               });
               
-              // Navigate to settings with success flag
-              window.location.href = '/settings?onboarding_complete=true';
+              // Small delay to show 100% progress
+              setTimeout(() => {
+                // Navigate to settings with success flag
+                window.location.href = '/settings?onboarding_complete=true';
+              }, 500);
             } else {
               console.error('No session data received from popup');
               toast({
@@ -435,6 +506,32 @@ const Onboarding = () => {
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
       {/* Header */}
       <Header />
+      
+      {/* Data Extraction Loading Overlay */}
+      {extractingData && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          <Card className="w-full max-w-md mx-4 p-8">
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <div className="flex justify-center mb-4">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">Junie is extracting business details</h3>
+                <p className="text-sm text-muted-foreground">
+                  Please wait while we analyze and set up your business information...
+                </p>
+              </div>
+              
+              <div className="space-y-2">
+                <Progress value={extractionProgress} className="h-2" />
+                <p className="text-xs text-center text-muted-foreground">
+                  {extractionProgress}% complete
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
       
       {/* Progress indicator */}
       <div className="container mx-auto px-4 py-2">
