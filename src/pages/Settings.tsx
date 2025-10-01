@@ -787,12 +787,26 @@ const Settings = () => {
         if (!addressData.state?.trim()) missingAddressFields.push('state');
         if (!addressData.zip?.trim()) missingAddressFields.push('ZIP code');
 
-        if (missingAddressFields.length > 0) {
+        // Validate ZIP code format (must be exactly 5 digits)
+        const zipRegex = /^\d{5}$/;
+        const isValidZip = addressData.zip?.trim() && zipRegex.test(addressData.zip.trim());
+
+        if (missingAddressFields.length > 0 || !isValidZip) {
           setValidationErrors(prev => ({...prev, businessAddress: true}));
+          
+          let errorMessage = '';
+          if (missingAddressFields.length > 0) {
+            errorMessage = `Please provide the following address fields: ${missingAddressFields.join(', ')}.`;
+          }
+          if (!isValidZip && addressData.zip?.trim()) {
+            errorMessage += (errorMessage ? ' ' : '') + 'ZIP code must be exactly 5 digits.';
+          } else if (!addressData.zip?.trim()) {
+            errorMessage = errorMessage || 'Please provide a ZIP code.';
+          }
           
           toast({
             title: "Address Required",
-            description: `Please provide the following address fields: ${missingAddressFields.join(', ')}.`,
+            description: errorMessage,
             variant: "destructive",
             duration: 5000,
           });

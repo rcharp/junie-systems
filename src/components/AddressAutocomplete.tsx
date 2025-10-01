@@ -84,9 +84,9 @@ export const AddressInput = ({
   ];
 
   const handleFieldChange = (field: keyof AddressData, fieldValue: string) => {
-    // For zip code, only allow numeric characters and hyphens
+    // For zip code, only allow exactly 5 numeric digits
     if (field === 'zip') {
-      fieldValue = fieldValue.replace(/[^\d-]/g, '');
+      fieldValue = fieldValue.replace(/\D/g, '').slice(0, 5);
     }
     
     const newValue = {
@@ -168,8 +168,8 @@ export const AddressInput = ({
           <Input
             value={value.zip}
             onChange={(e) => handleFieldChange('zip', e.target.value)}
-            placeholder="ZIP Code"
-            maxLength={10}
+            placeholder="ZIP Code (5 digits)"
+            maxLength={5}
             className={cn(
               isFieldEmpty('zip') && "border-destructive focus-visible:ring-destructive"
             )}
