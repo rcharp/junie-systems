@@ -33,7 +33,7 @@ import { CreditCard } from "lucide-react";
 
 const Settings = () => {
   console.log("Settings component rendering...");
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, setSigningOut } = useAuth();
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -1149,7 +1149,7 @@ const Settings = () => {
               </DropdownMenu>
               <Button variant="ghost" onClick={async () => {
                 try {
-                  await handleRobustSignOut(supabase);
+                  await handleRobustSignOut(supabase, setSigningOut);
                 } catch (error: any) {
                   window.location.href = '/';
                 }
@@ -1213,7 +1213,7 @@ const Settings = () => {
               </DropdownMenu>
               <Button variant="ghost" onClick={async () => {
                 try {
-                  await handleRobustSignOut(supabase);
+                  await handleRobustSignOut(supabase, setSigningOut);
                 } catch (error: any) {
                   window.location.href = '/';
                 }

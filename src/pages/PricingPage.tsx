@@ -7,12 +7,12 @@ import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
 
 const PricingPage = () => {
-  const { user } = useAuth();
+  const { user, setSigningOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
-      await handleRobustSignOut(supabase);
+      await handleRobustSignOut(supabase, setSigningOut);
       navigate('/');
     } catch (error: any) {
       window.location.href = '/';

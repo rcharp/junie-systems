@@ -23,7 +23,7 @@ interface Stats {
 }
 
 const AdminDashboard = () => {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading, setSigningOut } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
@@ -230,7 +230,7 @@ const AdminDashboard = () => {
               </DropdownMenu>
               <Button variant="ghost" onClick={async () => {
                 try {
-                  await handleRobustSignOut(supabase);
+                  await handleRobustSignOut(supabase, setSigningOut);
                 } catch (error: any) {
                   window.location.href = '/';
                 }
@@ -292,7 +292,7 @@ const AdminDashboard = () => {
               </Badge>
               <Button variant="ghost" onClick={async () => {
                 try {
-                  await handleRobustSignOut(supabase);
+                  await handleRobustSignOut(supabase, setSigningOut);
                 } catch (error: any) {
                   window.location.href = '/';
                 }

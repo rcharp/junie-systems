@@ -46,14 +46,14 @@ const CallDetails = () => {
   const { callId } = useParams<{ callId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, setSigningOut } = useAuth();
   const [callData, setCallData] = useState<CallData | null>(null);
   const [loading, setLoading] = useState(true);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
   const handleSignOut = async () => {
     try {
-      await handleRobustSignOut(supabase);
+      await handleRobustSignOut(supabase, setSigningOut);
     } catch (error: any) {
       window.location.href = '/';
     }

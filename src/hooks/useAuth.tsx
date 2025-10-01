@@ -7,6 +7,8 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  signingOut: boolean;
+  setSigningOut: (value: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -14,6 +16,8 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   isAdmin: false,
+  signingOut: false,
+  setSigningOut: () => {},
 });
 
 export const useAuth = () => {
@@ -29,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   const checkAdminStatus = async (userId: string) => {
     try {
@@ -49,6 +54,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        // Don't update state if we're in the process of signing out
+        if (signingOut) {
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -84,7 +94,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, signingOut, setSigningOut }}>
       {children}
     </AuthContext.Provider>
   );

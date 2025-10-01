@@ -39,7 +39,7 @@ interface DashboardStats {
 }
 
 const Dashboard = () => {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, setSigningOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { subscriptionPlan, featureAccess } = useSubscription();
@@ -414,7 +414,7 @@ const Dashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      await handleRobustSignOut(supabase);
+      await handleRobustSignOut(supabase, setSigningOut);
     } catch (error: any) {
       // Force redirect even if there's an error
       window.location.href = '/';

@@ -25,8 +25,13 @@ export const cleanupAuthState = () => {
   }
 };
 
-export const handleRobustSignOut = async (supabase: any) => {
+export const handleRobustSignOut = async (supabase: any, setSigningOut?: (value: boolean) => void) => {
   try {
+    // Set signing out state to prevent intermediate renders
+    if (setSigningOut) {
+      setSigningOut(true);
+    }
+    
     // Clean up auth state first
     cleanupAuthState();
     
