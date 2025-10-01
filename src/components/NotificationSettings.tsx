@@ -237,9 +237,8 @@ const NotificationSettings = () => {
                 <Switch
                   id="sms-notifications"
                   checked={smsNotifications}
-                  disabled={!smsOptIn}
                   onCheckedChange={(checked) => {
-                    if (!smsOptIn) {
+                    if (!smsOptIn && checked) {
                       setShowTermsWarning(true);
                       return;
                     }
