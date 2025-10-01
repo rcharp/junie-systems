@@ -90,10 +90,30 @@ const Login = () => {
   };
 
   const handleGoogleSignIn = async () => {
-    toast({
-      title: "Coming Soon",
-      description: "Social login will be available soon!",
-    });
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        }
+      });
+
+      if (error) {
+        console.error('Google sign-in error:', error);
+        throw error;
+      }
+
+      console.log('Google sign-in initiated:', data);
+    } catch (error: any) {
+      console.error('Google sign-in failed:', error);
+      toast({
+        title: "Sign-in error",
+        description: error.message || "Failed to sign in with Google. Please try again.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
   };
 
   return (
