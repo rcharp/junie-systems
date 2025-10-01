@@ -123,6 +123,14 @@ const Settings = () => {
     services: false
   });
 
+  // Refs for scrolling to error fields
+  const businessNameRef = useRef<HTMLInputElement>(null);
+  const businessTypeRef = useRef<HTMLButtonElement>(null);
+  const businessPhoneRef = useRef<HTMLInputElement>(null);
+  const businessDescriptionRef = useRef<HTMLTextAreaElement>(null);
+  const businessAddressRef = useRef<HTMLDivElement>(null);
+  const servicesRef = useRef<HTMLDivElement>(null);
+
   // Notifications state
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
@@ -745,6 +753,21 @@ const Settings = () => {
             variant: "destructive",
             duration: 5000,
           });
+          
+          // Scroll to first error field
+          if (newValidationErrors.businessName && businessNameRef.current) {
+            businessNameRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            businessNameRef.current.focus();
+          } else if (newValidationErrors.businessType && businessTypeRef.current) {
+            businessTypeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          } else if (newValidationErrors.businessPhone && businessPhoneRef.current) {
+            businessPhoneRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            businessPhoneRef.current.focus();
+          } else if (newValidationErrors.businessDescription && businessDescriptionRef.current) {
+            businessDescriptionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            businessDescriptionRef.current.focus();
+          }
+          
           throw new Error("Validation failed: Missing required fields");
         }
 
@@ -764,6 +787,12 @@ const Settings = () => {
             variant: "destructive",
             duration: 5000,
           });
+          
+          // Scroll to services section
+          if (servicesRef.current) {
+            servicesRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          
           throw new Error("Validation failed: Invalid service pricing");
         }
 
@@ -776,6 +805,12 @@ const Settings = () => {
             variant: "destructive",
             duration: 5000,
           });
+          
+          // Scroll to services section
+          if (servicesRef.current) {
+            servicesRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          
           throw new Error("Validation failed: No services provided");
         }
 
@@ -817,6 +852,12 @@ const Settings = () => {
             variant: "destructive",
             duration: 5000,
           });
+          
+          // Scroll to address field
+          if (businessAddressRef.current) {
+            businessAddressRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+          
           throw new Error("Validation failed: Invalid address");
         }
         
@@ -1497,6 +1538,7 @@ const Settings = () => {
                       </Label>
                       <Input
                         id="businessName"
+                        ref={businessNameRef}
                         value={businessName}
                         onChange={(e) => {
                           const newName = e.target.value;
@@ -1538,7 +1580,7 @@ const Settings = () => {
                           setBusinessType(value);
                           // Disabled auto-save - require manual save for validation
                         }}>
-                          <SelectTrigger className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
+                          <SelectTrigger ref={businessTypeRef} className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
                             <SelectValue placeholder="Select business type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1576,6 +1618,7 @@ const Settings = () => {
                     </Label>
                     <Input
                       id="businessPhone"
+                      ref={businessPhoneRef}
                       value={businessPhone}
                       onChange={(e) => {
                         // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
@@ -1588,7 +1631,7 @@ const Settings = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-2" ref={businessAddressRef}>
                     <AddressInput
                       value={addressData}
                       onChange={(newAddressData) => {
@@ -1708,6 +1751,7 @@ const Settings = () => {
                     </Label>
                     <Textarea
                       id="businessDescription"
+                      ref={businessDescriptionRef}
                       value={businessDescription}
                       onChange={(e) => {
                         setBusinessDescription(e.target.value);
@@ -1774,7 +1818,7 @@ const Settings = () => {
                     )}
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-4" ref={servicesRef}>
                     <div className="flex items-center justify-between">
                       <Label>
                         Services & Pricing <span className="text-red-500">*</span>
