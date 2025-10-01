@@ -142,10 +142,108 @@ const Signup = () => {
   };
 
   const handleGoogleSignUp = async () => {
-    toast({
-      title: "Coming Soon",
-      description: "Social login will be available soon!",
-    });
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/google-auth-callback`,
+          skipBrowserRedirect: true,
+        }
+      });
+
+      if (error) {
+        console.error('Google sign-up error:', error);
+        throw error;
+      }
+
+      if (data?.url) {
+        // Open OAuth in popup window
+        const width = 600;
+        const height = 700;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+        
+        const popup = window.open(
+          data.url,
+          'google-oauth',
+          `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+        );
+
+        // Listen for OAuth completion
+        const handleMessage = async (event: MessageEvent) => {
+          if (event.origin !== window.location.origin) return;
+          
+          if (event.data?.type === 'google-oauth-success') {
+            window.removeEventListener('message', handleMessage);
+            popup?.close();
+            
+            console.log('OAuth success received, waiting for session to sync...');
+            
+            // Wait for the session to sync to the parent window
+            let sessionReady = false;
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            while (!sessionReady && attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+              const { data: { session } } = await supabase.auth.getSession();
+              
+              if (session) {
+                console.log('Session synced successfully:', session.user.id);
+                sessionReady = true;
+                
+                // Create user profile with selected plan if it doesn't exist
+                const { error: profileError } = await supabase
+                  .from('user_profiles')
+                  .upsert({
+                    id: session.user.id,
+                    subscription_plan: selectedPlan,
+                    subscription_status: 'active'
+                  }, { onConflict: 'id' });
+
+                if (profileError) {
+                  console.error('Error creating profile:', profileError);
+                }
+              } else {
+                attempts++;
+                console.log(`Waiting for session... attempt ${attempts}/${maxAttempts}`);
+              }
+            }
+            
+            if (sessionReady) {
+              toast({
+                title: "Welcome! 🎉",
+                description: "Redirecting to your dashboard...",
+              });
+              
+              setTimeout(() => {
+                navigate("/dashboard");
+              }, 1000);
+            } else {
+              throw new Error('Session sync timeout. Please try signing in again.');
+            }
+            
+            setLoading(false);
+          }
+        };
+
+        window.addEventListener('message', handleMessage);
+        
+        // Check if popup was blocked
+        if (!popup || popup.closed) {
+          throw new Error('Popup was blocked. Please allow popups for this site and try again.');
+        }
+      }
+    } catch (error: any) {
+      console.error('Google OAuth error:', error);
+      toast({
+        title: "Google Sign-up Error",
+        description: error.message || "Failed to sign up with Google. Please try again.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
   };
 
   return (
