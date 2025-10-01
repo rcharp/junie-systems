@@ -37,6 +37,7 @@ const Onboarding = () => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [extractingData, setExtractingData] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -59,11 +60,30 @@ const Onboarding = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/dashboard");
+        setIsAuthenticated(true);
+        // Check if user has already completed setup
+        const { data: businessSettings } = await supabase
+          .from('business_settings')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+        
+        // Only redirect to dashboard if they've completed business setup
+        if (businessSettings) {
+          navigate("/dashboard");
+        }
       }
     };
     checkUser();
   }, [navigate]);
+
+  // Auto-proceed to business setup for authenticated users at step 2
+  useEffect(() => {
+    if (step === 2 && isAuthenticated) {
+      // Automatically trigger business data saving for already-authenticated users
+      handleAuthenticatedUserSetup();
+    }
+  }, [step, isAuthenticated]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -182,6 +202,190 @@ const Onboarding = () => {
       return;
     }
     setStep(2);
+  };
+
+  const handleAuthenticatedUserSetup = async () => {
+    // This function handles business setup for users who are already authenticated
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.error('No session found for authenticated user');
+        return;
+      }
+
+      console.log('Setting up business data for authenticated user:', session.user.id);
+      
+      // Show extraction overlay
+      setExtractingData(true);
+      setExtractionProgress(10);
+      
+      // Save business data
+      const savedBusiness = sessionStorage.getItem('selectedBusiness');
+      const savedWebsiteUrl = useWebsite ? websiteUrl : null;
+      
+      if ((savedBusiness || savedWebsiteUrl)) {
+        try {
+          setExtractionProgress(20);
+          let businessData: any = {};
+          
+          if (savedBusiness) {
+            businessData = JSON.parse(savedBusiness);
+          }
+          
+          console.log('Saving business data:', businessData);
+          setExtractionProgress(30);
+          
+          // Ensure user profile exists
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .upsert({
+              id: session.user.id,
+              company_name: businessData.name || businessSearch || 'My Business',
+              subscription_plan: 'free',
+              subscription_status: 'active'
+            }, { onConflict: 'id' });
+          
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+          
+          setExtractionProgress(40);
+          
+          // Use Claude to determine business type, state, and description
+          let claudeData: any = {};
+          try {
+            const { data: generatedData, error: claudeError } = await supabase.functions.invoke('generate-business-description', {
+              body: {
+                businessName: businessData.name || businessSearch || 'My Business',
+                businessType: businessData.types?.[0] || 'other',
+                services: [],
+                address: businessData.address || null,
+                phone: businessData.phone || null,
+                website: savedWebsiteUrl || businessData.website || null,
+                businessTypesList,
+                statesList
+              }
+            });
+            
+            if (!claudeError && generatedData) {
+              claudeData = generatedData;
+              console.log('Claude generated data:', claudeData);
+            }
+          } catch (error) {
+            console.error('Error generating with Claude:', error);
+          }
+          
+          setExtractionProgress(60);
+          
+          // Default business hours
+          const defaultHours = [
+            { id: 1, day: 'monday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+            { id: 2, day: 'tuesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+            { id: 3, day: 'wednesday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+            { id: 4, day: 'thursday', isOpen: true, openTime: '09:00', closeTime: '17:00' },
+            { id: 5, day: 'friday', isOpen: true, openTime: '09:00', closeTime: '17:00' }
+          ];
+          
+          // Save business settings
+          const { data: businessSettingsResult, error: businessError } = await supabase
+            .from('business_settings')
+            .upsert({
+              user_id: session.user.id,
+              business_name: businessData.name || businessSearch || 'My Business',
+              business_type: claudeData.businessType || businessData.types?.[0] || 'other',
+              business_phone: businessData.phone || null,
+              business_address: businessData.address || null,
+              business_address_state_full: claudeData.state || null,
+              business_website: savedWebsiteUrl || businessData.website || null,
+              business_hours: JSON.stringify(defaultHours),
+              business_description: claudeData.description || businessData.editorial_summary?.overview || null,
+              business_type_full_name: businessData.types?.join(', ') || null,
+              business_timezone: 'America/New_York',
+            }, { 
+              onConflict: 'user_id'
+            })
+            .select('id')
+            .single();
+          
+          setExtractionProgress(70);
+          
+          if (businessError) {
+            console.error('Error saving business settings:', businessError);
+          } else {
+            console.log('Business data saved successfully');
+            
+            // Extract services
+            if (businessSettingsResult?.id) {
+              try {
+                setExtractionProgress(80);
+                const { data: servicesData, error: servicesError } = await supabase.functions.invoke('extract-services', {
+                  body: {
+                    businessName: businessData.name || businessSearch || 'My Business',
+                    businessType: claudeData.businessType || businessData.types?.[0] || 'other',
+                    website: savedWebsiteUrl || businessData.website,
+                    businessDescription: claudeData.description || businessData.editorial_summary?.overview
+                  }
+                });
+                
+                setExtractionProgress(90);
+                
+                if (!servicesError && servicesData?.services) {
+                  const businessId = businessSettingsResult.id;
+                  
+                  const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
+                    business_id: businessId,
+                    name: service.name,
+                    price: service.price,
+                    description: service.description,
+                    display_order: index,
+                    is_active: true
+                  }));
+                  
+                  await supabase.from('services').insert(servicesToInsert);
+                  console.log('Services saved successfully');
+                }
+              } catch (servicesError) {
+                console.error('Error extracting services:', servicesError);
+              }
+            }
+          }
+          
+          // Clear sessionStorage
+          sessionStorage.removeItem('selectedBusiness');
+          
+          setExtractionProgress(100);
+          
+          toast({
+            title: "Setup complete!",
+            description: "Welcome to your AI assistant dashboard",
+          });
+          
+          // Redirect to settings
+          setTimeout(() => {
+            window.location.href = '/settings?onboarding_complete=true';
+          }, 500);
+        } catch (error: any) {
+          console.error('Setup error:', error);
+          setExtractingData(false);
+          toast({
+            title: "Setup failed",
+            description: error.message,
+            variant: "destructive"
+          });
+        }
+      }
+    } catch (error: any) {
+      console.error('Error in authenticated user setup:', error);
+      setExtractingData(false);
+      toast({
+        title: "Error",
+        description: "Failed to complete setup. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSignup = async () => {
