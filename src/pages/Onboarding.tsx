@@ -48,7 +48,8 @@ const Onboarding = () => {
   // Business types list for Claude matching
   const businessTypesList = [
     'electric', 'garage-door', 'handyman', 'hvac', 'landscaping', 
-    'other', 'pest-control', 'plumbing', 'pool-spa', 'cleaning', 'roofing'
+    'other', 'pest-control', 'plumbing', 'pool-spa', 'cleaning', 'roofing',
+    'gym', 'doctor-office', 'dentist-office'
   ];
 
   // US states list for Claude matching
