@@ -41,6 +41,7 @@ const Onboarding = () => {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationData, setVerificationData] = useState<any>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const isCheckingAuthRef = useRef(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -61,6 +62,13 @@ const Onboarding = () => {
 
   useEffect(() => {
     const checkUser = async () => {
+      // Prevent multiple simultaneous auth checks
+      if (isCheckingAuthRef.current) {
+        return;
+      }
+      
+      isCheckingAuthRef.current = true;
+      
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setIsAuthenticated(true);
@@ -76,6 +84,8 @@ const Onboarding = () => {
           navigate("/dashboard");
         }
       }
+      
+      isCheckingAuthRef.current = false;
     };
     checkUser();
   }, [navigate]);
