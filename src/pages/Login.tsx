@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -259,12 +258,14 @@ const Login = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <Checkbox 
-                id="remember"
+              <input 
+                type="checkbox" 
+                id="remember" 
+                className="w-4 h-4 text-primary bg-background border rounded focus:ring-primary/50"
               />
-              <Label htmlFor="remember" className="text-muted-foreground text-sm cursor-pointer">
+              <label htmlFor="remember" className="text-muted-foreground text-sm cursor-pointer">
                 Remember me
-              </Label>
+              </label>
             </div>
             
             <Button 
