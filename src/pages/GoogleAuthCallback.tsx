@@ -23,6 +23,65 @@ const GoogleAuthCallback = () => {
           throw new Error('No session found after OAuth');
         }
 
+        // Create user profile if it doesn't exist
+        const { data: existingProfile } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('id', session.user.id)
+          .single();
+
+        if (!existingProfile) {
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert({
+              id: session.user.id,
+              full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || null,
+              subscription_plan: 'free',
+              subscription_status: 'active',
+            });
+
+          if (profileError) {
+            console.error('Error creating profile:', profileError);
+          }
+        }
+
+        // Get the selected business data from sessionStorage
+        const selectedBusinessData = sessionStorage.getItem('selectedBusiness');
+        
+        if (selectedBusinessData) {
+          try {
+            const businessData = JSON.parse(selectedBusinessData);
+            
+            // Check if business settings already exist
+            const { data: existingSettings } = await supabase
+              .from('business_settings')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .single();
+
+            if (!existingSettings) {
+              // Create business settings with the selected business data
+              const { error: businessError } = await supabase
+                .from('business_settings')
+                .insert({
+                  user_id: session.user.id,
+                  business_name: businessData.name,
+                  business_phone: businessData.phone,
+                  business_address: businessData.address,
+                  business_website: businessData.website,
+                  business_hours: businessData.openingHours?.join(', '),
+                  business_type: businessData.types?.[0] || 'general',
+                });
+
+              if (businessError) {
+                console.error('Error creating business settings:', businessError);
+              }
+            }
+          } catch (parseError) {
+            console.error('Error parsing business data:', parseError);
+          }
+        }
+
         setStatus('success');
         
         // Send success message to parent window and close popup
@@ -32,10 +91,10 @@ const GoogleAuthCallback = () => {
             window.close();
           }, 1000);
         } else {
-          // Fallback for non-popup case
+          // Fallback for non-popup case - redirect to settings
           setTimeout(() => {
-            navigate('/dashboard', { replace: true });
-          }, 2000);
+            navigate('/settings', { replace: true });
+          }, 1500);
         }
 
       } catch (err) {

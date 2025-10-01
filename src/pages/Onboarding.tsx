@@ -191,8 +191,9 @@ const Onboarding = () => {
               title: "Welcome!",
               description: "Successfully signed in with Google.",
             });
+            // Navigate to settings page instead of dashboard
             setTimeout(() => {
-              navigate('/dashboard');
+              navigate('/settings');
             }, 500);
           } else if (event.data?.type === 'google-oauth-error') {
             window.removeEventListener('message', handleMessage);
