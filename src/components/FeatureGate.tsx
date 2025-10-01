@@ -1,10 +1,10 @@
 import { ReactNode } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { FeatureAccess, getRequiredPlanForFeature } from "@/lib/subscription-utils";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 interface FeatureGateProps {
   feature: keyof FeatureAccess;
@@ -21,6 +21,7 @@ export const FeatureGate = ({
 }: FeatureGateProps) => {
   const { checkFeature, isLoading } = useSubscription();
   const navigate = useNavigate();
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const hasAccess = checkFeature(feature);
 
   if (isLoading) {
@@ -35,21 +36,42 @@ export const FeatureGate = ({
     if (showUpgradeMessage) {
       const requiredPlan = getRequiredPlanForFeature(feature);
       return (
-        <Alert className="border-primary/50 bg-primary/5">
-          <Lock className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>
-              This feature requires the <strong>{requiredPlan}</strong> plan or higher.
-            </span>
-            <Button 
-              size="sm" 
-              onClick={() => navigate("/#pricing")}
-              className="ml-4"
-            >
-              Upgrade
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <>
+          <div className="border border-primary/50 bg-primary/5 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <span>
+                This feature requires the <strong>{requiredPlan}</strong> plan or higher.
+              </span>
+              <Button 
+                size="sm" 
+                onClick={() => setShowUpgradeDialog(true)}
+                className="ml-4"
+              >
+                Upgrade
+              </Button>
+            </div>
+          </div>
+
+          <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Upgrade Required</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This feature is available on the {requiredPlan} plan. Upgrade your plan to access this feature.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => {
+                  setShowUpgradeDialog(false);
+                  navigate('/settings?tab=account&subtab=billing');
+                }}>
+                  Go to Billing
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       );
     }
 

@@ -1216,14 +1216,17 @@ const Settings = () => {
               <AlertDialogHeader>
                 <AlertDialogTitle>Upgrade Required</AlertDialogTitle>
                 <AlertDialogDescription>
-                  The Calendar feature is available on the Scale plan. Upgrade your plan to access appointment scheduling and Google Calendar integration.
+                  This feature is available on the Scale plan. Upgrade your plan to access this feature.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={() => {
                   setShowUpgradeDialog(false);
-                  setActiveTab('account');
+                  const newSearchParams = new URLSearchParams(searchParams);
+                  newSearchParams.set('tab', 'account');
+                  newSearchParams.set('subtab', 'billing');
+                  setSearchParams(newSearchParams);
                 }}>
                   Go to Billing
                 </AlertDialogAction>
