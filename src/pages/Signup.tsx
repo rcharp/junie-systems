@@ -93,11 +93,8 @@ const Signup = () => {
 
       if (error) {
         if (error.message.includes("already registered") || error.message.includes("User already registered")) {
-          toast({
-            title: "Account exists",
-            description: "This email is already registered. Try signing in instead.",
-            variant: "destructive",
-          });
+          navigate(`/login?email=${encodeURIComponent(email)}`);
+          return;
         } else {
           toast({
             title: "Signup Error",

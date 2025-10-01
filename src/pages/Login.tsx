@@ -5,12 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Session, User } from "@supabase/supabase-js";
 import Header from "@/components/Header";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -47,6 +48,17 @@ const Login = () => {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
+
+  // Show toast if redirected from signup
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      toast({
+        title: "Account already exists",
+        description: "Please log in with your existing account.",
+      });
+    }
+  }, [searchParams, toast]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
