@@ -320,14 +320,71 @@ const Onboarding = () => {
                   // If Google Business Profile has hours, try to use them
                   if (businessData.openingHours && Array.isArray(businessData.openingHours) && businessData.openingHours.length > 0) {
                     try {
-                      // Map Google hours to our format with IDs
-                      businessHoursToSave = businessData.openingHours.map((hour: any, index: number) => ({
-                        id: index + 1,
-                        day: hour.day || 'monday',
-                        isOpen: hour.isOpen !== undefined ? hour.isOpen : true,
-                        openTime: hour.openTime || '09:00',
-                        closeTime: hour.closeTime || '17:00'
-                      }));
+                      // Parse Google hours from weekday_text format (e.g., "Monday: 9:00 AM – 5:00 PM")
+                      businessHoursToSave = businessData.openingHours.map((hourText: string, index: number) => {
+                        // Extract day and hours from the text
+                        const match = hourText.match(/^(\w+):\s*(.+)$/);
+                        if (!match) return null;
+                        
+                        const day = match[1].toLowerCase();
+                        const hoursText = match[2];
+                        
+                        // Check if open 24 hours
+                        if (hoursText.includes('Open 24 hours')) {
+                          return {
+                            id: index + 1,
+                            day,
+                            isOpen: true,
+                            openTime: '00:00',
+                            closeTime: '23:59'
+                          };
+                        }
+                        
+                        // Check if closed
+                        if (hoursText.includes('Closed')) {
+                          return {
+                            id: index + 1,
+                            day,
+                            isOpen: false,
+                            openTime: '09:00',
+                            closeTime: '17:00'
+                          };
+                        }
+                        
+                        // Parse time range (e.g., "9:00 AM – 5:00 PM")
+                        const timeMatch = hoursText.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/);
+                        if (timeMatch) {
+                          let openHour = parseInt(timeMatch[1]);
+                          const openMin = timeMatch[2];
+                          const openPeriod = timeMatch[3];
+                          let closeHour = parseInt(timeMatch[4]);
+                          const closeMin = timeMatch[5];
+                          const closePeriod = timeMatch[6];
+                          
+                          // Convert to 24-hour format
+                          if (openPeriod === 'PM' && openHour !== 12) openHour += 12;
+                          if (openPeriod === 'AM' && openHour === 12) openHour = 0;
+                          if (closePeriod === 'PM' && closeHour !== 12) closeHour += 12;
+                          if (closePeriod === 'AM' && closeHour === 12) closeHour = 0;
+                          
+                          return {
+                            id: index + 1,
+                            day,
+                            isOpen: true,
+                            openTime: `${String(openHour).padStart(2, '0')}:${openMin}`,
+                            closeTime: `${String(closeHour).padStart(2, '0')}:${closeMin}`
+                          };
+                        }
+                        
+                        // Default fallback
+                        return {
+                          id: index + 1,
+                          day,
+                          isOpen: true,
+                          openTime: '09:00',
+                          closeTime: '17:00'
+                        };
+                      }).filter(Boolean); // Remove any null entries
                     } catch (error) {
                       console.error('Error parsing Google hours, using defaults:', error);
                       businessHoursToSave = defaultHours;
@@ -566,14 +623,71 @@ const Onboarding = () => {
         // If Google Business Profile has hours, try to use them
         if (businessData.openingHours && Array.isArray(businessData.openingHours) && businessData.openingHours.length > 0) {
           try {
-            // Map Google hours to our format with IDs
-            businessHoursToSave = businessData.openingHours.map((hour: any, index: number) => ({
-              id: index + 1,
-              day: hour.day || 'monday',
-              isOpen: hour.isOpen !== undefined ? hour.isOpen : true,
-              openTime: hour.openTime || '09:00',
-              closeTime: hour.closeTime || '17:00'
-            }));
+            // Parse Google hours from weekday_text format (e.g., "Monday: 9:00 AM – 5:00 PM")
+            businessHoursToSave = businessData.openingHours.map((hourText: string, index: number) => {
+              // Extract day and hours from the text
+              const match = hourText.match(/^(\w+):\s*(.+)$/);
+              if (!match) return null;
+              
+              const day = match[1].toLowerCase();
+              const hoursText = match[2];
+              
+              // Check if open 24 hours
+              if (hoursText.includes('Open 24 hours')) {
+                return {
+                  id: index + 1,
+                  day,
+                  isOpen: true,
+                  openTime: '00:00',
+                  closeTime: '23:59'
+                };
+              }
+              
+              // Check if closed
+              if (hoursText.includes('Closed')) {
+                return {
+                  id: index + 1,
+                  day,
+                  isOpen: false,
+                  openTime: '09:00',
+                  closeTime: '17:00'
+                };
+              }
+              
+              // Parse time range (e.g., "9:00 AM – 5:00 PM")
+              const timeMatch = hoursText.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/);
+              if (timeMatch) {
+                let openHour = parseInt(timeMatch[1]);
+                const openMin = timeMatch[2];
+                const openPeriod = timeMatch[3];
+                let closeHour = parseInt(timeMatch[4]);
+                const closeMin = timeMatch[5];
+                const closePeriod = timeMatch[6];
+                
+                // Convert to 24-hour format
+                if (openPeriod === 'PM' && openHour !== 12) openHour += 12;
+                if (openPeriod === 'AM' && openHour === 12) openHour = 0;
+                if (closePeriod === 'PM' && closeHour !== 12) closeHour += 12;
+                if (closePeriod === 'AM' && closeHour === 12) closeHour = 0;
+                
+                return {
+                  id: index + 1,
+                  day,
+                  isOpen: true,
+                  openTime: `${String(openHour).padStart(2, '0')}:${openMin}`,
+                  closeTime: `${String(closeHour).padStart(2, '0')}:${closeMin}`
+                };
+              }
+              
+              // Default fallback
+              return {
+                id: index + 1,
+                day,
+                isOpen: true,
+                openTime: '09:00',
+                closeTime: '17:00'
+              };
+            }).filter(Boolean); // Remove any null entries
           } catch (error) {
             console.error('Error parsing Google hours, using defaults:', error);
             businessHoursToSave = defaultHours;
