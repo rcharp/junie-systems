@@ -157,7 +157,7 @@ const Onboarding = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: `${window.location.origin}/google-auth-callback`,
           skipBrowserRedirect: true,
         }
       });
@@ -184,12 +184,17 @@ const Onboarding = () => {
         const handleMessage = (event: MessageEvent) => {
           if (event.origin !== window.location.origin) return;
           
-          if (event.data?.type === 'oauth-success') {
+          if (event.data?.type === 'google-oauth-success') {
             window.removeEventListener('message', handleMessage);
             popup?.close();
-            setLoading(false);
-            navigate('/dashboard');
-          } else if (event.data?.type === 'oauth-error') {
+            toast({
+              title: "Welcome!",
+              description: "Successfully signed in with Google.",
+            });
+            setTimeout(() => {
+              navigate('/dashboard');
+            }, 500);
+          } else if (event.data?.type === 'google-oauth-error') {
             window.removeEventListener('message', handleMessage);
             popup?.close();
             setLoading(false);

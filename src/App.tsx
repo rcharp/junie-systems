@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import CallDetails from "./pages/CallDetails";
 import Settings from "./pages/Settings";
 import GoogleAuth from "./pages/GoogleAuth";
+import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import SetupGuide from "./pages/SetupGuide";
 import AdminDashboard from "./pages/AdminDashboard";
 import Privacy from "./pages/Privacy";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/call/:callId" element={<CallDetails />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/google_auth" element={<GoogleAuth />} />
+            <Route path="/google-auth-callback" element={<GoogleAuthCallback />} />
             <Route path="/setup-guide" element={<SetupGuide />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/privacy" element={<Privacy />} />
