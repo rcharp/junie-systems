@@ -1186,32 +1186,32 @@ const Settings = () => {
           )}
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 bg-muted/50 border border-border mb-6 p-1">
-              <TabsTrigger value="account" className="flex items-center gap-2 data-[state=active]:bg-background">
+            <TabsList className="grid w-full grid-cols-5 bg-muted border border-border mb-6 p-1">
+              <TabsTrigger value="account" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">Account</span>
               </TabsTrigger>
-              <TabsTrigger value="business" className="flex items-center gap-2 data-[state=active]:bg-background">
+              <TabsTrigger value="business" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
                 <Building className="w-4 h-4" />
                 <span className="hidden sm:inline">Business</span>
               </TabsTrigger>
-              <TabsTrigger value="calls" className="flex items-center gap-2 data-[state=active]:bg-background">
+              <TabsTrigger value="calls" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
                 <Phone className="w-4 h-4" />
                 <span className="hidden sm:inline">Calls</span>
               </TabsTrigger>
-              <TabsTrigger value="setup" className="flex items-center gap-2 data-[state=active]:bg-background" disabled={!featureAccess.appointmentScheduling}>
+              <TabsTrigger value="setup" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm" disabled={!featureAccess.appointmentScheduling}>
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">Calendar</span>
                 {!featureAccess.appointmentScheduling && <Badge variant="outline" className="ml-1 text-[10px]">Scale</Badge>}
               </TabsTrigger>
-              <TabsTrigger value="notifications" className="flex items-center gap-2 data-[state=active]:bg-background">
+              <TabsTrigger value="notifications" className="flex items-center gap-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Notifications</span>
               </TabsTrigger>
             </TabsList>
 
             {/* Account (User Profile + Billing) */}
-            <TabsContent value="account" className="mt-0 pt-6 space-y-6">
+            <TabsContent value="account" className="space-y-6">
               <Tabs defaultValue="profile" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -1332,7 +1332,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Business Information */}
-            <TabsContent value="business" className="mt-0 pt-6 space-y-6">
+            <TabsContent value="business" className="space-y-6">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -1746,7 +1746,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Call Settings */}
-            <TabsContent value="calls" className="mt-0 pt-6 space-y-6">
+            <TabsContent value="calls" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -1896,7 +1896,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Setup */}
-            <TabsContent value="setup" className="mt-0 pt-6 space-y-6">
+            <TabsContent value="setup" className="space-y-6">
               <FeatureGate feature="appointmentScheduling">
                 <Card>
                   <CardHeader>
@@ -1934,7 +1934,7 @@ const Settings = () => {
             </TabsContent>
 
             {/* Notifications */}
-            <TabsContent value="notifications" className="mt-0 pt-6 space-y-6">
+            <TabsContent value="notifications" className="space-y-6">
               <NotificationSettings />
             </TabsContent>
 
