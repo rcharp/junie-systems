@@ -491,24 +491,12 @@ const Onboarding = () => {
                         )}
                       </div>
 
-                      <Button
-                        onClick={handleBusinessContinue}
-                        className="w-full h-12 text-base"
-                        size="lg"
-                        disabled={!selectedBusiness || loading}
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                            Loading...
-                          </>
-                        ) : (
-                          <>
-                            Continue
-                            <ArrowRight className="ml-2 w-5 h-5" />
-                          </>
-                        )}
-                      </Button>
+                      {loading && (
+                        <div className="text-center py-4">
+                          <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+                          <p className="text-sm text-muted-foreground mt-2">Loading business details...</p>
+                        </div>
+                      )}
 
                       <div className="relative">
                         <div className="absolute inset-0 flex items-center">
