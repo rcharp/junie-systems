@@ -68,13 +68,14 @@ serve(async (req) => {
     // Get or create Stripe customer
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, stripe_test_customer_id')
       .eq('id', user.id)
       .single();
 
     console.log('Profile data:', profile);
 
-    let customerId = profile?.stripe_customer_id;
+    // Use appropriate customer ID based on mode
+    let customerId = useSandbox ? profile?.stripe_test_customer_id : profile?.stripe_customer_id;
 
     // Create customer if doesn't exist
     if (!customerId) {
@@ -102,13 +103,14 @@ serve(async (req) => {
       customerId = customer.id;
       console.log('Created Stripe customer:', customerId);
 
-      // Update or insert profile with customer ID
+      // Update or insert profile with customer ID (test or live based on mode)
+      const updateData = useSandbox 
+        ? { id: user.id, stripe_test_customer_id: customerId }
+        : { id: user.id, stripe_customer_id: customerId };
+      
       const { error: updateError } = await supabase
         .from('user_profiles')
-        .upsert({ 
-          id: user.id,
-          stripe_customer_id: customerId 
-        });
+        .upsert(updateData);
 
       if (updateError) {
         console.error('Error updating profile:', updateError);
