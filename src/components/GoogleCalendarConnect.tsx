@@ -31,10 +31,10 @@ const GoogleCalendarConnect = () => {
 
   const fetchCalendarSettings = async () => {
     try {
-      // Use the safe view that excludes encrypted tokens
+      // Fetch calendar settings (excluding encrypted tokens via RLS policy)
       const { data, error } = await supabase
-        .from('google_calendar_settings_safe')
-        .select('*')
+        .from('google_calendar_settings')
+        .select('id, is_connected, calendar_id, timezone, appointment_duration, created_at, updated_at, expires_at')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
         .limit(1);

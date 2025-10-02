@@ -682,45 +682,7 @@ export type Database = {
       }
     }
     Views: {
-      google_calendar_settings_safe: {
-        Row: {
-          appointment_duration: number | null
-          availability_hours: Json | null
-          calendar_id: string | null
-          created_at: string | null
-          expires_at: string | null
-          id: string | null
-          is_connected: boolean | null
-          timezone: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          appointment_duration?: number | null
-          availability_hours?: Json | null
-          calendar_id?: string | null
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string | null
-          is_connected?: boolean | null
-          timezone?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          appointment_duration?: number | null
-          availability_hours?: Json | null
-          calendar_id?: string | null
-          created_at?: string | null
-          expires_at?: string | null
-          id?: string | null
-          is_connected?: boolean | null
-          timezone?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       authorize_admin_customer_data_access: {
