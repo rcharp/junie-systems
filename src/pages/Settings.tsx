@@ -29,6 +29,15 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { BillingSettings } from "@/components/BillingSettings";
 import { CreditCard } from "lucide-react";
 
+// Types
+interface BusinessType {
+  id: string;
+  value: string;
+  label: string;
+  is_active: boolean;
+  display_order: number;
+}
+
 // Fixed: Removed servicesOffered and pricingStructure state variables
 
 const Settings = () => {
@@ -76,7 +85,6 @@ const Settings = () => {
   const [services, setServices] = useState<{id?: string, name: string, price: string, description?: string}[]>([
     { name: "", price: "" }
   ]);
-  const [businessTypes, setBusinessTypes] = useState<{value: string, label: string}[]>([]);
 
   const [addressData, setAddressData] = useState({
     street: '',
@@ -119,6 +127,9 @@ const Settings = () => {
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
 
+  // Business Types State
+  const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
+
   // Validation error states for visual feedback
   const [validationErrors, setValidationErrors] = useState<{[key: string]: boolean}>({
     businessName: false,
@@ -146,7 +157,7 @@ const Settings = () => {
     const loadBusinessTypes = async () => {
       const { data, error } = await supabase
         .from('business_types')
-        .select('value, label')
+        .select('*')
         .eq('is_active', true)
         .order('display_order');
       
