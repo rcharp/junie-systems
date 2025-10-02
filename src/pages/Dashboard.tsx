@@ -570,8 +570,8 @@ const Dashboard = () => {
 
 
         {/* Main Dashboard Content */}
-        {/* Setup Guide Link - only show if setup not completed */}
-        {showSetupGuide && (
+        {/* Setup Guide Link - Hidden */}
+        {/* {showSetupGuide && (
           <Card className="mb-6 bg-gradient-hero border-0">
             <CardContent className="py-4">
               <p className="text-white">
@@ -586,7 +586,7 @@ const Dashboard = () => {
               </p>
             </CardContent>
           </Card>
-        )}
+        )} */}
 
         <Tabs value={activeTab} onValueChange={(value) => {
           if (value === 'calendar' && !featureAccess.appointmentScheduling) {

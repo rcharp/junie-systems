@@ -1488,7 +1488,7 @@ const Settings = () => {
                           <User className="w-5 h-5 mr-2" />
                           User Profile
                         </CardTitle>
-                        <Button 
+                        {/* <Button 
                           variant="outline" 
                           size="sm"
                           onClick={() => navigate("/setup-guide")}
@@ -1496,7 +1496,7 @@ const Settings = () => {
                         >
                           <Zap className="w-4 h-4" />
                           Setup Guide
-                        </Button>
+                        </Button> */}
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -1688,7 +1688,7 @@ const Settings = () => {
                       <Building className="w-5 h-5 mr-2" />
                       Business Information
                     </CardTitle>
-                    <Button 
+                    {/* <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => navigate("/setup-guide")}
@@ -1696,7 +1696,7 @@ const Settings = () => {
                     >
                       <Zap className="w-4 h-4" />
                       Setup Guide
-                    </Button>
+                    </Button> */}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -2108,7 +2108,7 @@ const Settings = () => {
                       <Bot className="w-5 h-5 mr-2" />
                       AI Caller Settings
                     </CardTitle>
-                    <Button 
+                    {/* <Button 
                       variant="outline" 
                       size="sm"
                       onClick={() => navigate("/setup-guide")}
@@ -2116,7 +2116,7 @@ const Settings = () => {
                     >
                       <Zap className="w-4 h-4" />
                       Setup Guide
-                    </Button>
+                    </Button> */}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -2299,7 +2299,7 @@ const Settings = () => {
                         <Calendar className="h-5 w-5" />
                         Calendar Integration
                       </CardTitle>
-                      <Button 
+                      {/* <Button 
                         variant="outline" 
                         size="sm"
                         onClick={() => navigate("/setup-guide")}
@@ -2307,7 +2307,7 @@ const Settings = () => {
                       >
                         <Zap className="w-4 h-4" />
                         Setup Guide
-                      </Button>
+                      </Button> */}
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-6">
