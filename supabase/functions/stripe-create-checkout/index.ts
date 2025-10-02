@@ -19,9 +19,9 @@ const LIVE_PRICE_IDS = {
 
 // Sandbox/test price IDs
 const SANDBOX_PRICE_IDS = {
-  professional: 'price_1SDqpKCFxjtRFu5wxezKVrlZ',
-  scale: 'price_1SDqpcCFxjtRFu5w7gC0Ae7o',
-  growth: 'price_1SDqprCFxjtRFu5wkcbEeGdW',
+  professional: 'price_1SDr4LC6VxOVUbRGntrsE4Jq',
+  scale: 'price_1SDr4aC6VxOVUbRGnNLzJdcJ',
+  growth: 'price_1SDr4lC6VxOVUbRGPeikgxmV',
 };
 
 serve(async (req) => {
