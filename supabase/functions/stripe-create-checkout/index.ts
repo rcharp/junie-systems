@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
+const STRIPE_TEST_SECRET_KEY = Deno.env.get('STRIPE_TEST_SECRET_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -56,6 +57,7 @@ serve(async (req) => {
     
     const useTestMode = stripeModeData?.setting_value === true;
     const PRICE_IDS = useTestMode ? TEST_PRICE_IDS : LIVE_PRICE_IDS;
+    const stripeKey = useTestMode ? STRIPE_TEST_SECRET_KEY : STRIPE_SECRET_KEY;
     
     console.log(`Using ${useTestMode ? 'TEST' : 'LIVE'} Stripe mode`);
     
@@ -82,7 +84,7 @@ serve(async (req) => {
       const customerResponse = await fetch('https://api.stripe.com/v1/customers', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+          'Authorization': `Bearer ${stripeKey}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
@@ -123,7 +125,7 @@ serve(async (req) => {
     const checkoutResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+        'Authorization': `Bearer ${stripeKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
