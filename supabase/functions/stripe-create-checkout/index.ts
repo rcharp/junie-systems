@@ -10,11 +10,18 @@ const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-// Price IDs for each plan (you'll need to create these in Stripe Dashboard)
-const PRICE_IDS = {
+// Live production price IDs
+const LIVE_PRICE_IDS = {
   professional: 'price_1SDDa4C6VxOVUbRGmwMZQzSs',
   scale: 'price_1SDDaMC6VxOVUbRGSicIm5JC',
   growth: 'price_1SDDaZC6VxOVUbRGGskqR0Rc',
+};
+
+// Sandbox/test price IDs (to be updated with actual test price IDs)
+const SANDBOX_PRICE_IDS = {
+  professional: 'price_test_professional', // TODO: Replace with actual test price ID
+  scale: 'price_test_scale', // TODO: Replace with actual test price ID
+  growth: 'price_test_growth', // TODO: Replace with actual test price ID
 };
 
 serve(async (req) => {
@@ -39,6 +46,18 @@ serve(async (req) => {
     }
 
     const { plan } = await req.json();
+    
+    // Check if we should use sandbox mode
+    const { data: stripeModeData } = await supabase
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', 'stripe_sandbox_mode')
+      .maybeSingle();
+    
+    const useSandbox = stripeModeData?.setting_value === true;
+    const PRICE_IDS = useSandbox ? SANDBOX_PRICE_IDS : LIVE_PRICE_IDS;
+    
+    console.log(`Using ${useSandbox ? 'SANDBOX' : 'LIVE'} Stripe mode`);
     
     if (!plan || !PRICE_IDS[plan as keyof typeof PRICE_IDS]) {
       throw new Error('Invalid plan selected');

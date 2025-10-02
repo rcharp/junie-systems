@@ -13,7 +13,7 @@ import { UserWebhookList } from '@/components/UserWebhookList';
 import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { TodoChecklist } from '@/components/TodoChecklist';
 import { BusinessTypesManager } from '@/components/BusinessTypesManager';
-import { TwilioAutoAssignToggle } from '@/components/TwilioAutoAssignToggle';
+import { AdminSettings } from '@/components/AdminSettings';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -339,8 +339,8 @@ const AdminDashboard = () => {
           </TabsList>
           
           <TabsContent value="overview" className="space-y-6 sm:space-y-8">
-            {/* Twilio Auto-Assignment Toggle */}
-            <TwilioAutoAssignToggle />
+            {/* Admin Settings */}
+            <AdminSettings />
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
