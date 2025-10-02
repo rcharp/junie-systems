@@ -13,6 +13,7 @@ interface User {
   full_name: string;
   company_name: string;
   created_at: string;
+  subscription_plan: string;
 }
 
 export const UserWebhookList = () => {
@@ -87,10 +88,10 @@ export const UserWebhookList = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          User Business IDs
+          Users
         </CardTitle>
         <CardDescription>
-          Paginated list of business IDs for each user's business settings
+          View all users with their subscription plans and business information
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -112,6 +113,17 @@ export const UserWebhookList = () => {
                             {user.full_name}
                           </Badge>
                         )}
+                        <Badge 
+                          variant={
+                            user.subscription_plan === 'growth' ? 'default' : 
+                            user.subscription_plan === 'scale' ? 'secondary' : 
+                            user.subscription_plan === 'professional' ? 'outline' : 
+                            'outline'
+                          }
+                          className="text-xs w-fit capitalize"
+                        >
+                          {user.subscription_plan}
+                        </Badge>
                       </div>
                       {user.company_name && (
                         <p className="text-xs sm:text-sm text-muted-foreground truncate">{user.company_name}</p>
@@ -134,7 +146,7 @@ export const UserWebhookList = () => {
                           className="w-full sm:w-auto text-xs sm:text-sm"
                         >
                           <Copy className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                          Copy
+                          Copy ID
                         </Button>
                       )}
                     </div>

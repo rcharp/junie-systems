@@ -777,6 +777,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          subscription_plan: string
         }[]
       }
       get_users_with_emails_for_admin: {
