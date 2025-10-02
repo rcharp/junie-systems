@@ -84,14 +84,15 @@ const Pricing = () => {
 
       if (data.url) {
         console.log('Redirecting to Stripe checkout:', data.url);
+        // Don't clear loading state - we're redirecting away
         window.location.href = data.url;
+        return; // Exit early, don't clear loading state
       } else {
         throw new Error('No checkout URL returned');
       }
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
       toast.error(error.message || 'Failed to start checkout. Please try again.');
-    } finally {
       setLoading(null);
     }
   };
