@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
+const STRIPE_TEST_SECRET_KEY = Deno.env.get('STRIPE_TEST_SECRET_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -31,27 +32,39 @@ serve(async (req) => {
       throw new Error('Invalid user token');
     }
 
-    // Get customer ID
+    // Check if we should use test mode
+    const { data: stripeModeData } = await supabase
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', 'stripe_sandbox_mode')
+      .maybeSingle();
+    
+    const useTestMode = stripeModeData?.setting_value === true;
+    const stripeKey = useTestMode ? STRIPE_TEST_SECRET_KEY : STRIPE_SECRET_KEY;
+
+    // Get customer ID based on mode
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, stripe_test_customer_id')
       .eq('id', user.id)
       .single();
 
-    if (!profile?.stripe_customer_id) {
-      throw new Error('No Stripe customer found');
+    const customerId = useTestMode ? profile?.stripe_test_customer_id : profile?.stripe_customer_id;
+
+    if (!customerId) {
+      throw new Error('No Stripe customer found. Please complete a purchase first.');
     }
 
     // Create portal session
     const portalResponse = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+        'Authorization': `Bearer ${stripeKey}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        customer: profile.stripe_customer_id,
-        return_url: `${req.headers.get('origin')}/settings`,
+        customer: customerId,
+        return_url: `${req.headers.get('origin')}/settings?subtab=billing`,
       }),
     });
 
