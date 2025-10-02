@@ -44,13 +44,7 @@ const Onboarding = () => {
   const isCheckingAuthRef = useRef(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Business types list for Claude matching
-  const businessTypesList = [
-    'electric', 'garage-door', 'handyman', 'hvac', 'landscaping', 
-    'other', 'pest-control', 'plumbing', 'pool-spa', 'cleaning', 'roofing',
-    'gym', 'doctor-office', 'dentist-office', 'health-wellness', 'physician', 'dentist'
-  ];
+  const [businessTypesList, setBusinessTypesList] = useState<string[]>([]);
 
   // US states list for Claude matching
   const statesList = [
@@ -60,6 +54,23 @@ const Onboarding = () => {
     'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 
     'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'
   ];
+
+  // Fetch business types from database
+  useEffect(() => {
+    const fetchBusinessTypes = async () => {
+      const { data, error } = await supabase
+        .from('business_types')
+        .select('value')
+        .eq('is_active', true)
+        .order('display_order');
+      
+      if (!error && data) {
+        setBusinessTypesList(data.map(t => t.value));
+      }
+    };
+    
+    fetchBusinessTypes();
+  }, []);
 
   useEffect(() => {
     const checkUser = async () => {

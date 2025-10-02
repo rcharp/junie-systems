@@ -76,6 +76,7 @@ const Settings = () => {
   const [services, setServices] = useState<{id?: string, name: string, price: string, description?: string}[]>([
     { name: "", price: "" }
   ]);
+  const [businessTypes, setBusinessTypes] = useState<{value: string, label: string}[]>([]);
 
   const [addressData, setAddressData] = useState({
     street: '',
@@ -138,6 +139,23 @@ const Settings = () => {
 
   // Notifications state
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
+
+  // Fetch business types from database
+  useEffect(() => {
+    const fetchBusinessTypes = async () => {
+      const { data, error } = await supabase
+        .from('business_types')
+        .select('value, label')
+        .eq('is_active', true)
+        .order('display_order');
+      
+      if (!error && data) {
+        setBusinessTypes(data);
+      }
+    };
+    
+    fetchBusinessTypes();
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -1759,23 +1777,11 @@ const Settings = () => {
                             <SelectValue placeholder="Select business type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="electric">Electric Services</SelectItem>
-                            <SelectItem value="garage-door">Garage Door Services</SelectItem>
-                            <SelectItem value="handyman">Handyman Services</SelectItem>
-                            <SelectItem value="hvac">HVAC & Air Conditioning</SelectItem>
-                            <SelectItem value="landscaping">Landscaping</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                            <SelectItem value="pest-control">Pest Control</SelectItem>
-                            <SelectItem value="plumbing">Plumbing</SelectItem>
-                            <SelectItem value="pool-spa">Pool & Spa Services</SelectItem>
-                            <SelectItem value="cleaning">Professional Cleaning</SelectItem>
-                            <SelectItem value="roofing">Roofing</SelectItem>
-                            <SelectItem value="gym">Gym</SelectItem>
-                            <SelectItem value="doctor-office">Doctor Office</SelectItem>
-                            <SelectItem value="dentist-office">Dentist Office</SelectItem>
-                            <SelectItem value="health-wellness">Health and Wellness</SelectItem>
-                            <SelectItem value="physician">Physician</SelectItem>
-                            <SelectItem value="dentist">Dentist</SelectItem>
+                            {businessTypes.map((type) => (
+                              <SelectItem key={type.value} value={type.value}>
+                                {type.label}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         {businessType && (
