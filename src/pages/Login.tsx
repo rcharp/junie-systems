@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Session, User } from "@supabase/supabase-js";
 import Header from "@/components/Header";
+import googleLogo from "@/assets/google-logo.svg";
 
 const Login = () => {
   const [searchParams] = useSearchParams();
@@ -302,7 +303,7 @@ const Login = () => {
             onClick={handleGoogleSignIn}
           >
             <img 
-              src="/src/assets/google-logo.svg" 
+              src={googleLogo} 
               alt="Google" 
               className="w-5 h-5 mr-2"
             />
