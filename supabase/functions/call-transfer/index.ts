@@ -1,3 +1,8 @@
+// ============================================================================
+// MODIFIED VERSION OF YOUR CODE
+// This shows exactly what to change in your existing code
+// ============================================================================
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
 
@@ -6,15 +11,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Initialize Supabase client
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-// Active call tracking with business context
 const activeCalls = new Map<string, any>();
 
-// Function to get forwarding number for a business
+// ============================================================================
+// STEP 1: REMOVE THIS ENTIRE FUNCTION
+// You don't need handleCallTransfer anymore - the Supabase Edge Function does this
+// ============================================================================
+// async function handleCallTransfer(...) { ... }  <-- DELETE THIS ENTIRE FUNCTION
+
+// ============================================================================
+// STEP 2: KEEP YOUR getForwardingNumber FUNCTION
+// This is still useful for fetching the number when the call starts
+// ============================================================================
 async function getForwardingNumber(businessId?: string, userId?: string): Promise<string> {
   try {
     console.log(`[Transfer] Fetching forwarding number for businessId: ${businessId}, userId: ${userId}`);
@@ -52,120 +64,8 @@ async function getForwardingNumber(businessId?: string, userId?: string): Promis
     return "+12345";
   }
 }
-// Function to handle call transfer request from ElevenLabs
-async function handleCallTransfer(callSid: string, businessId?: string, userId?: string, providedAgentNumber?: string) {
-  try {
-    // Get the forwarding number - use provided number first, then fetch from database
-    const agentNumber = providedAgentNumber || await getForwardingNumber(businessId, userId);
-    console.log(`[Transfer] Initiating transfer for call ${callSid} to ${agentNumber}`);
-
-    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
-    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
-
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
-      throw new Error("Missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN");
-    }
-
-    // Get call details using Twilio REST API
-    const auth = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
-    const callResponse = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls/${callSid}.json`, {
-      headers: {
-        'Authorization': `Basic ${auth}`
-      }
-    });
-
-    if (!callResponse.ok) {
-      throw new Error(`Failed to fetch call details: ${callResponse.statusText}`);
-    }
-
-    const call = await callResponse.json();
-    const conferenceName = `transfer_${callSid}`;
-    const callerNumber = call.to;
-
-    // Move caller to a conference room
-    const customerTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-      <Response>
-        <Say>Please hold while we connect you to an agent.</Say>
-        <Dial>
-          <Conference startConferenceOnEnter="false" endConferenceOnExit="false" waitUrl="http://twimlets.com/holdmusic?Bucket=com.twilio.music.classical">
-            ${conferenceName}
-          </Conference>
-        </Dial>
-      </Response>`;
-
-    console.log(`[Transfer] Updating call ${callSid} with conference TwiML`);
-    
-    // Update the call with new TwiML
-    const updateResponse = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls/${callSid}.json`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        'Twiml': customerTwiml
-      })
-    });
-
-    if (!updateResponse.ok) {
-      throw new Error(`Failed to update call: ${updateResponse.statusText}`);
-    }
-
-    console.log(`[Transfer] Caller ${callerNumber} placed in conference ${conferenceName}`);
-
-    // Call the agent and connect them to the same conference
-    console.log(`[Transfer] Creating outbound call to agent ${agentNumber}`);
-    
-    const agentTwiml = `<?xml version="1.0" encoding="UTF-8"?>
-      <Response>
-        <Say>You are being connected to a caller who was speaking with Junie, our AI assistant.</Say>
-        <Dial>
-          <Conference startConferenceOnEnter="true" endConferenceOnExit="true" beep="false">
-            ${conferenceName}
-          </Conference>
-        </Dial>
-      </Response>`;
-
-    const agentCallResponse = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        'To': agentNumber,
-        'From': call.from,
-        'Twiml': agentTwiml
-      })
-    });
-
-    if (!agentCallResponse.ok) {
-      throw new Error(`Failed to create agent call: ${agentCallResponse.statusText}`);
-    }
-
-    const agentCall = await agentCallResponse.json();
-    console.log(`[Transfer] Outbound call to agent created: ${agentCall.sid}`);
-
-    activeCalls.set(callSid, {
-      status: "transferring",
-      conferenceName,
-      agentCallSid: agentCall.sid,
-      agentNumber,
-    });
-
-    return { success: true, agentCallSid: agentCall.sid };
-  } catch (error) {
-    console.error("[Transfer] Error transferring call:", error);
-    if (error instanceof Error) {
-      console.error("[Transfer] Full error details:", error.stack);
-      return { success: false, error: error.message };
-    }
-    return { success: false, error: "Unknown error occurred" };
-  }
-}
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -173,7 +73,7 @@ serve(async (req) => {
   const url = new URL(req.url);
   const pathname = url.pathname;
 
-  // Handle incoming calls from Twilio
+  // Your existing /incoming-call-eleven handler stays the same
   if (pathname === "/incoming-call-eleven" && (req.method === "GET" || req.method === "POST")) {
     const body = await req.formData();
     const callSid = body.get('CallSid') as string;
@@ -186,19 +86,11 @@ serve(async (req) => {
         from: body.get('From'),
         to: body.get('To'),
         started: new Date(),
-        // Extract business context from form data if available
         businessId: body.get('BusinessId') as string || undefined,
         userId: body.get('UserId') as string || undefined,
       });
-      console.log(`[Twilio] Call tracked: ${JSON.stringify({
-        from: body.get('From'),
-        to: body.get('To'),
-        businessId: body.get('BusinessId'),
-        userId: body.get('UserId')
-      })}`);
     }
 
-    // Generate TwiML response to connect the call to a WebSocket stream
     const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
       <Response>
         <Connect>
@@ -214,7 +106,10 @@ serve(async (req) => {
     });
   }
 
-  // Handle WebSocket connections for media streams
+  // ============================================================================
+  // STEP 3: THIS IS WHERE THE WEBSOCKET HANDLER IS
+  // Find the section that says: if (pathname === "/media-stream")
+  // ============================================================================
   if (pathname === "/media-stream") {
     const upgrade = req.headers.get("upgrade") || "";
     if (upgrade.toLowerCase() !== "websocket") {
@@ -247,6 +142,11 @@ serve(async (req) => {
       console.log(`[II] ElevenLabs connection closed. Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}`);
     };
 
+    // ============================================================================
+    // STEP 4: REPLACE THE elevenLabsWs.onmessage HANDLER
+    // Find this line: elevenLabsWs.onmessage = async (event) => {
+    // Replace the ENTIRE handler with the code below
+    // ============================================================================
     elevenLabsWs.onmessage = async (event) => {
       try {
         const message = JSON.parse(event.data);
@@ -283,39 +183,9 @@ serve(async (req) => {
             }
             break;
 
-          case "tool_request":
-            console.log("[II] *** TOOL REQUEST RECEIVED ***");
-            console.log(`[II] Tool name: ${message.tool_request?.tool_name}`);
-            console.log(`[II] Tool parameters: ${JSON.stringify(message.tool_request?.params || {})}`);
-            console.log(`[II] Event ID: ${message.tool_request?.event_id}`);
-
-            if (message.tool_request?.tool_name === "transfer_call" && callSid) {
-              console.log(`[II] Processing transfer_call tool request for call ${callSid}`);
-
-              // Get business context from active call tracking
-              const callContext = activeCalls.get(callSid);
-              const businessId = message.tool_request.params?.business_id || callContext?.businessId;
-              const userId = message.tool_request.params?.user_id || callContext?.userId;
-              const providedAgentNumber = message.tool_request.params?.agent_number || message.tool_request.params?.phone_number;
-              
-              console.log(`[II] Business context - businessId: ${businessId}, userId: ${userId}, providedNumber: ${providedAgentNumber}`);
-
-              console.log(`[II] Initiating call transfer from tool request`);
-              const transferResult = await handleCallTransfer(callSid, businessId, userId, providedAgentNumber);
-              console.log(`[II] Transfer result: ${JSON.stringify(transferResult)}`);
-
-              console.log(`[II] Sending tool response to ElevenLabs with event ID: ${message.tool_request.event_id}`);
-              const toolResponse = {
-                type: "tool_response",
-                event_id: message.tool_request.event_id,
-                tool_name: "transfer_call",
-                result: transferResult,
-              };
-              console.log(`[II] Tool response payload: ${JSON.stringify(toolResponse)}`);
-              elevenLabsWs.send(JSON.stringify(toolResponse));
-            }
-            break;
-
+          // ============================================================================
+          // NEW CODE: Replace your existing "client_tool_call" case with this
+          // ============================================================================
           case "client_tool_call":
             console.log("[II] *** CLIENT TOOL CALL RECEIVED ***");
             console.log(`[II] Tool name: ${message.client_tool_call?.tool_name}`);
@@ -323,43 +193,90 @@ serve(async (req) => {
             console.log(`[II] Parameters: ${JSON.stringify(message.client_tool_call?.parameters || {})}`);
 
             if (message.client_tool_call?.tool_name === "transfer_call" && callSid) {
-              console.log(`[II] Processing transfer_call client tool call for call ${callSid}`);
+              console.log(`[II] Processing transfer_call for call ${callSid}`);
 
-              // Get business context from active call tracking
+              // Get the forwarding number from stored call context
               const callContext = activeCalls.get(callSid);
-              const businessId = message.client_tool_call.parameters?.business_id || callContext?.businessId;
-              const userId = message.client_tool_call.parameters?.user_id || callContext?.userId;
-              const providedAgentNumber = message.client_tool_call.parameters?.phone_number || message.client_tool_call.parameters?.agent_number;
-              
-              console.log(`[II] Business context - businessId: ${businessId}, userId: ${userId}, providedNumber: ${providedAgentNumber}`);
+              if (!callContext || !callContext.forwarding_number) {
+                console.error("[II] No forwarding number found in call context");
+                
+                elevenLabsWs.send(JSON.stringify({
+                  type: "client_tool_result",
+                  tool_call_id: message.client_tool_call.tool_call_id,
+                  result: "No forwarding number available",
+                  is_error: true
+                }));
+                break;
+              }
 
-              console.log(`[II] Initiating call transfer from client tool call`);
-              const transferResult = await handleCallTransfer(callSid, businessId, userId, providedAgentNumber);
-              console.log(`[II] Transfer result: ${JSON.stringify(transferResult)}`);
+              const forwardingNumber = callContext.forwarding_number;
+              console.log(`[II] Calling Supabase Edge Function to transfer to: ${forwardingNumber}`);
 
-              console.log(`[II] Sending client tool response to ElevenLabs with tool call ID: ${message.client_tool_call.tool_call_id}`);
-              const toolResponse = {
-                type: "client_tool_response",
-                tool_call_id: message.client_tool_call.tool_call_id,
-                data: transferResult
-              };
-              console.log(`[II] Client tool response payload: ${JSON.stringify(toolResponse)}`);
-              elevenLabsWs.send(JSON.stringify(toolResponse));
-            } else if (message.client_tool_call?.tool_name === "transfer_call") {
-              console.error(`[II] Transfer requested but callSid is missing. Current callSid: ${callSid}`);
+              try {
+                // Call your Supabase Edge Function
+                const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+                const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+                
+                const response = await fetch(
+                  `${SUPABASE_URL}/functions/v1/transfer-call`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                      call_sid: callSid,
+                      forwarding_number: forwardingNumber
+                    })
+                  }
+                );
+
+                const result = await response.json();
+                console.log("[II] Supabase Edge Function result:", result);
+
+                // Send response back to ElevenLabs
+                elevenLabsWs.send(JSON.stringify({
+                  type: "client_tool_result",
+                  tool_call_id: message.client_tool_call.tool_call_id,
+                  result: result.success 
+                    ? "Transfer initiated successfully" 
+                    : `Transfer failed: ${result.error}`,
+                  is_error: !result.success
+                }));
+
+              } catch (error) {
+                console.error("[II] Error calling Supabase Edge Function:", error);
+                
+                elevenLabsWs.send(JSON.stringify({
+                  type: "client_tool_result",
+                  tool_call_id: message.client_tool_call.tool_call_id,
+                  result: `Transfer failed: ${error.message}`,
+                  is_error: true
+                }));
+              }
             }
             break;
 
+          // ============================================================================
+          // DELETE THE "tool_request" CASE
+          // You don't need this anymore since you're using client tools
+          // ============================================================================
+          // case "tool_request": ... <-- DELETE THIS ENTIRE CASE
+
           default:
             console.log(`[II] Received unhandled message type: ${message.type}`);
-            console.log(`[II] Full message content: ${JSON.stringify(message)}`);
         }
       } catch (error) {
         console.error("[II] Error parsing or handling ElevenLabs message:", error);
-        console.error("[II] Raw message data:", event.data.toString().substring(0, 200) + "...");
       }
     };
 
+    // ============================================================================
+    // STEP 5: UPDATE THE socket.onmessage HANDLER
+    // Find where it says: socket.onmessage = async (event) => {
+    // Modify the "start" case to fetch and store the forwarding number
+    // ============================================================================
     socket.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -372,24 +289,32 @@ serve(async (req) => {
 
             if (callSid) {
               const existingCall = activeCalls.get(callSid) || {};
+              
+              // ============================================================================
+              // NEW CODE: Fetch the forwarding number and store it
+              // ============================================================================
+              const forwardingNumber = await getForwardingNumber(
+                existingCall.businessId, 
+                existingCall.userId
+              );
+              
               activeCalls.set(callSid, { 
                 ...existingCall,
                 status: "active", 
-                streamSid 
+                streamSid,
+                forwarding_number: forwardingNumber  // <-- STORE IT HERE
               });
-              console.log(`[Twilio] Updated call tracking with stream info: ${JSON.stringify({
+              
+              console.log(`[Twilio] Call context: ${JSON.stringify({
                 callSid,
                 streamSid,
-                status: "active"
+                forwarding_number: forwardingNumber
               })}`);
             }
             break;
 
           case "media":
             if (elevenLabsWs.readyState === WebSocket.OPEN) {
-              // Convert base64 payload for ElevenLabs
-              const encoder = new TextEncoder();
-              const decoder = new TextDecoder();
               const audioData = atob(data.media.payload);
               const audioBytes = new Uint8Array(audioData.length);
               for (let i = 0; i < audioData.length; i++) {
@@ -404,24 +329,15 @@ serve(async (req) => {
             break;
 
           case "stop":
-            console.log(`[Twilio] Received stop event for stream: ${streamSid}`);
-            elevenLabsWs.close();
-
+            console.log(`[Twilio] Stream stopped: ${streamSid}`);
             if (callSid) {
-              console.log(`[Twilio] Removing call ${callSid} from tracking`);
               activeCalls.delete(callSid);
             }
+            elevenLabsWs.close();
             break;
-
-          default:
-            console.log(`[Twilio] Received unhandled event: ${data.event}`);
-            console.log(`[Twilio] Full event data: ${JSON.stringify(data)}`);
         }
       } catch (error) {
-        console.error("[Twilio] Error processing message:", error);
-        if (error instanceof Error) {
-          console.error("[Twilio] Error stack:", error.stack);
-        }
+        console.error("[Twilio] Error handling message:", error);
       }
     };
 
@@ -432,50 +348,10 @@ serve(async (req) => {
 
     socket.onerror = (error) => {
       console.error("[Twilio] WebSocket error:", error);
-      elevenLabsWs.close();
     };
 
     return response;
   }
 
-  // Manual transfer endpoint
-  if (pathname === "/transfer-call" && req.method === "POST") {
-    try {
-      const body = await req.json();
-      const { callSid, agentNumber, businessId, userId } = body;
-
-      if (!callSid) {
-        console.log("[API] Transfer request missing callSid");
-        return new Response(
-          JSON.stringify({ error: "Missing callSid parameter" }), 
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-
-      console.log(`[API] Manual transfer requested for call ${callSid}, businessId: ${businessId}, userId: ${userId}, agentNumber: ${agentNumber}`);
-      const result = await handleCallTransfer(callSid, businessId, userId, agentNumber);
-      console.log(`[API] Manual transfer result: ${JSON.stringify(result)}`);
-
-      return new Response(
-        JSON.stringify(result), 
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    } catch (error) {
-      console.error("[API] Error in transfer endpoint:", error);
-      return new Response(
-        JSON.stringify({ error: "Internal server error" }), 
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
-    }
-  }
-
-  return new Response("Not Found", { status: 404, headers: corsHeaders });
+  return new Response("Not Found", { status: 404 });
 });
