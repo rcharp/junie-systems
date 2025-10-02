@@ -1,8 +1,3 @@
-// ============================================================================
-// MODIFIED VERSION OF YOUR CODE
-// This shows exactly what to change in your existing code
-// ============================================================================
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
 
@@ -17,16 +12,6 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const activeCalls = new Map<string, any>();
 
-// ============================================================================
-// STEP 1: REMOVE THIS ENTIRE FUNCTION
-// You don't need handleCallTransfer anymore - the Supabase Edge Function does this
-// ============================================================================
-// async function handleCallTransfer(...) { ... }  <-- DELETE THIS ENTIRE FUNCTION
-
-// ============================================================================
-// STEP 2: KEEP YOUR getForwardingNumber FUNCTION
-// This is still useful for fetching the number when the call starts
-// ============================================================================
 async function getForwardingNumber(businessId?: string, userId?: string): Promise<string> {
   try {
     console.log(`[Transfer] Fetching forwarding number for businessId: ${businessId}, userId: ${userId}`);
@@ -73,7 +58,6 @@ serve(async (req) => {
   const url = new URL(req.url);
   const pathname = url.pathname;
 
-  // Your existing /incoming-call-eleven handler stays the same
   if (pathname === "/incoming-call-eleven" && (req.method === "GET" || req.method === "POST")) {
     const body = await req.formData();
     const callSid = body.get('CallSid') as string;
@@ -106,10 +90,6 @@ serve(async (req) => {
     });
   }
 
-  // ============================================================================
-  // STEP 3: THIS IS WHERE THE WEBSOCKET HANDLER IS
-  // Find the section that says: if (pathname === "/media-stream")
-  // ============================================================================
   if (pathname === "/media-stream") {
     const upgrade = req.headers.get("upgrade") || "";
     if (upgrade.toLowerCase() !== "websocket") {
@@ -142,11 +122,6 @@ serve(async (req) => {
       console.log(`[II] ElevenLabs connection closed. Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}`);
     };
 
-    // ============================================================================
-    // STEP 4: REPLACE THE elevenLabsWs.onmessage HANDLER
-    // Find this line: elevenLabsWs.onmessage = async (event) => {
-    // Replace the ENTIRE handler with the code below
-    // ============================================================================
     elevenLabsWs.onmessage = async (event) => {
       try {
         const message = JSON.parse(event.data);
@@ -183,9 +158,6 @@ serve(async (req) => {
             }
             break;
 
-          // ============================================================================
-          // NEW CODE: Replace your existing "client_tool_call" case with this
-          // ============================================================================
           case "client_tool_call":
             console.log("[II] *** CLIENT TOOL CALL RECEIVED ***");
             console.log(`[II] Tool name: ${message.client_tool_call?.tool_name}`);
@@ -195,7 +167,6 @@ serve(async (req) => {
             if (message.client_tool_call?.tool_name === "transfer_call" && callSid) {
               console.log(`[II] Processing transfer_call for call ${callSid}`);
 
-              // Get the forwarding number from stored call context
               const callContext = activeCalls.get(callSid);
               if (!callContext || !callContext.forwarding_number) {
                 console.error("[II] No forwarding number found in call context");
@@ -213,7 +184,6 @@ serve(async (req) => {
               console.log(`[II] Calling Supabase Edge Function to transfer to: ${forwardingNumber}`);
 
               try {
-                // Call your Supabase Edge Function
                 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
                 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
                 
@@ -235,7 +205,6 @@ serve(async (req) => {
                 const result = await response.json();
                 console.log("[II] Supabase Edge Function result:", result);
 
-                // Send response back to ElevenLabs
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
                   tool_call_id: message.client_tool_call.tool_call_id,
@@ -258,12 +227,6 @@ serve(async (req) => {
             }
             break;
 
-          // ============================================================================
-          // DELETE THE "tool_request" CASE
-          // You don't need this anymore since you're using client tools
-          // ============================================================================
-          // case "tool_request": ... <-- DELETE THIS ENTIRE CASE
-
           default:
             console.log(`[II] Received unhandled message type: ${message.type}`);
         }
@@ -272,11 +235,6 @@ serve(async (req) => {
       }
     };
 
-    // ============================================================================
-    // STEP 5: UPDATE THE socket.onmessage HANDLER
-    // Find where it says: socket.onmessage = async (event) => {
-    // Modify the "start" case to fetch and store the forwarding number
-    // ============================================================================
     socket.onmessage = async (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -290,9 +248,6 @@ serve(async (req) => {
             if (callSid) {
               const existingCall = activeCalls.get(callSid) || {};
               
-              // ============================================================================
-              // NEW CODE: Fetch the forwarding number and store it
-              // ============================================================================
               const forwardingNumber = await getForwardingNumber(
                 existingCall.businessId, 
                 existingCall.userId
@@ -302,7 +257,7 @@ serve(async (req) => {
                 ...existingCall,
                 status: "active", 
                 streamSid,
-                forwarding_number: forwardingNumber  // <-- STORE IT HERE
+                forwarding_number: forwardingNumber
               });
               
               console.log(`[Twilio] Call context: ${JSON.stringify({
