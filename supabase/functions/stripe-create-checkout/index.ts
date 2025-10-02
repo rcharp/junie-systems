@@ -7,22 +7,21 @@ const corsHeaders = {
 };
 
 const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY');
-const STRIPE_SANDBOX_SECRET_KEY = Deno.env.get('STRIPE_SANDBOX_SECRET_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+// Test mode price IDs (for testing without real charges)
+const TEST_PRICE_IDS = {
+  professional: 'price_1SDr4LC6VxOVUbRGntrsE4Jq',
+  scale: 'price_1SDr4aC6VxOVUbRGnNLzJdcJ',
+  growth: 'price_1SDr4lC6VxOVUbRGPeikgxmV',
+};
 
 // Live production price IDs
 const LIVE_PRICE_IDS = {
   professional: 'price_1SDDa4C6VxOVUbRGmwMZQzSs',
   scale: 'price_1SDDaMC6VxOVUbRGSicIm5JC',
   growth: 'price_1SDDaZC6VxOVUbRGGskqR0Rc',
-};
-
-// Sandbox/test price IDs
-const SANDBOX_PRICE_IDS = {
-  professional: 'price_1SDr4LC6VxOVUbRGntrsE4Jq',
-  scale: 'price_1SDr4aC6VxOVUbRGnNLzJdcJ',
-  growth: 'price_1SDr4lC6VxOVUbRGPeikgxmV',
 };
 
 serve(async (req) => {
@@ -48,18 +47,17 @@ serve(async (req) => {
 
     const { plan } = await req.json();
     
-    // Check if we should use sandbox mode
+    // Check if we should use test mode
     const { data: stripeModeData } = await supabase
       .from('system_settings')
       .select('setting_value')
       .eq('setting_key', 'stripe_sandbox_mode')
       .maybeSingle();
     
-    const useSandbox = stripeModeData?.setting_value === true;
-    const PRICE_IDS = useSandbox ? SANDBOX_PRICE_IDS : LIVE_PRICE_IDS;
-    const stripeKey = useSandbox ? STRIPE_SANDBOX_SECRET_KEY : STRIPE_SECRET_KEY;
+    const useTestMode = stripeModeData?.setting_value === true;
+    const PRICE_IDS = useTestMode ? TEST_PRICE_IDS : LIVE_PRICE_IDS;
     
-    console.log(`Using ${useSandbox ? 'SANDBOX' : 'LIVE'} Stripe mode`);
+    console.log(`Using ${useTestMode ? 'TEST' : 'LIVE'} Stripe mode`);
     
     if (!plan || !PRICE_IDS[plan as keyof typeof PRICE_IDS]) {
       throw new Error('Invalid plan selected');
@@ -75,7 +73,7 @@ serve(async (req) => {
     console.log('Profile data:', profile);
 
     // Use appropriate customer ID based on mode
-    let customerId = useSandbox ? profile?.stripe_test_customer_id : profile?.stripe_customer_id;
+    let customerId = useTestMode ? profile?.stripe_test_customer_id : profile?.stripe_customer_id;
 
     // Create customer if doesn't exist
     if (!customerId) {
@@ -84,7 +82,7 @@ serve(async (req) => {
       const customerResponse = await fetch('https://api.stripe.com/v1/customers', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${stripeKey}`,
+          'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({
@@ -104,7 +102,7 @@ serve(async (req) => {
       console.log('Created Stripe customer:', customerId);
 
       // Update or insert profile with customer ID (test or live based on mode)
-      const updateData = useSandbox 
+      const updateData = useTestMode 
         ? { id: user.id, stripe_test_customer_id: customerId }
         : { id: user.id, stripe_customer_id: customerId };
       
@@ -125,7 +123,7 @@ serve(async (req) => {
     const checkoutResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${stripeKey}`,
+        'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
