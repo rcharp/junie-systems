@@ -35,9 +35,9 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
             />
           </a>
           {isAdmin && (
-            <Badge className="bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base px-3 sm:px-4 py-1 sm:py-1.5 flex items-center gap-1.5 sm:gap-2">
+            <Badge className="bg-blue-600 hover:bg-blue-700 text-white border-0 text-sm sm:text-base px-3 sm:px-4 py-1 sm:py-1.5 flex items-center gap-1.5 sm:gap-2 font-semibold shadow-md">
               <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="font-semibold">Admin Access</span>
+              <span>Admin Access</span>
             </Badge>
           )}
         </div>
