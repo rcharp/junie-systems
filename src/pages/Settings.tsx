@@ -1770,6 +1770,12 @@ const Settings = () => {
                             <SelectItem value="pool-spa">Pool & Spa Services</SelectItem>
                             <SelectItem value="cleaning">Professional Cleaning</SelectItem>
                             <SelectItem value="roofing">Roofing</SelectItem>
+                            <SelectItem value="gym">Gym</SelectItem>
+                            <SelectItem value="doctor-office">Doctor Office</SelectItem>
+                            <SelectItem value="dentist-office">Dentist Office</SelectItem>
+                            <SelectItem value="health-wellness">Health and Wellness</SelectItem>
+                            <SelectItem value="physician">Physician</SelectItem>
+                            <SelectItem value="dentist">Dentist</SelectItem>
                           </SelectContent>
                         </Select>
                         {businessType && (
