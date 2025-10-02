@@ -62,17 +62,17 @@ serve(async (req) => {
     // Handle live mode Stripe customer
     if (profile?.stripe_customer_id) {
       try {
-        // Cancel subscription if it exists
+        // Cancel subscription if it exists (but keep the customer)
         if (profile.stripe_subscription_id) {
           await stripe.subscriptions.cancel(profile.stripe_subscription_id);
           console.log('Live Stripe subscription cancelled:', profile.stripe_subscription_id);
         }
 
-        // Delete customer
-        await stripe.customers.del(profile.stripe_customer_id);
-        console.log('Live Stripe customer deleted:', profile.stripe_customer_id);
+        // Note: We deliberately do NOT delete the Stripe customer
+        // This preserves payment history and allows for easier reactivation
+        console.log('Live Stripe customer preserved:', profile.stripe_customer_id);
       } catch (stripeError) {
-        console.error('Live Stripe deletion error:', stripeError);
+        console.error('Live Stripe cancellation error:', stripeError);
         // Continue with account deletion even if Stripe fails
       }
     }
@@ -80,7 +80,7 @@ serve(async (req) => {
     // Handle test mode Stripe customer
     if (profile?.stripe_test_customer_id) {
       try {
-        // List and cancel all subscriptions for test customer
+        // List and cancel all subscriptions for test customer (but keep the customer)
         const subscriptions = await stripeTest.subscriptions.list({
           customer: profile.stripe_test_customer_id,
         });
@@ -90,11 +90,11 @@ serve(async (req) => {
           console.log('Test Stripe subscription cancelled:', subscription.id);
         }
 
-        // Delete test customer
-        await stripeTest.customers.del(profile.stripe_test_customer_id);
-        console.log('Test Stripe customer deleted:', profile.stripe_test_customer_id);
+        // Note: We deliberately do NOT delete the Stripe customer
+        // This preserves payment history and allows for easier reactivation
+        console.log('Test Stripe customer preserved:', profile.stripe_test_customer_id);
       } catch (stripeError) {
-        console.error('Test Stripe deletion error:', stripeError);
+        console.error('Test Stripe cancellation error:', stripeError);
         // Continue with account deletion even if Stripe fails
       }
     }
