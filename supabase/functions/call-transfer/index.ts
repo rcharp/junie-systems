@@ -190,7 +190,7 @@ serve(async (req) => {
                 const callContext = activeCalls.get(callSid);
                 
                 const response = await fetch(
-                  `${SUPABASE_URL}/functions/v1/transfer-call-webhook/transfer-call`,
+                  `${SUPABASE_URL}/functions/v1/transfer-call`,
                   {
                     method: 'POST',
                     headers: {

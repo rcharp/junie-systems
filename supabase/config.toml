@@ -134,3 +134,6 @@ verify_jwt = false
 
 [functions.get-business-details]
 verify_jwt = false
+
+[functions.transfer-call]
+verify_jwt = false
