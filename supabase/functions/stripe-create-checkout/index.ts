@@ -11,18 +11,20 @@ const STRIPE_TEST_SECRET_KEY = Deno.env.get('STRIPE_TEST_SECRET_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-// Test mode price IDs (for testing without real charges)
+// Test mode price IDs (replace with your actual Stripe test price IDs)
+// To get these: Go to Stripe Dashboard → Products → Create recurring prices
+// Copy the price IDs that start with price_test_...
 const TEST_PRICE_IDS = {
-  professional: 'price_1SDr4LC6VxOVUbRGntrsE4Jq',
-  scale: 'price_1SDr4aC6VxOVUbRGnNLzJdcJ',
-  growth: 'price_1SDr4lC6VxOVUbRGPeikgxmV',
+  professional: 'price_test_YOUR_PROFESSIONAL_PRICE_ID', // Replace with your actual test price ID
+  scale: 'price_test_YOUR_SCALE_PRICE_ID', // Replace with your actual test price ID
+  growth: 'price_test_YOUR_GROWTH_PRICE_ID', // Replace with your actual test price ID
 };
 
-// Live production price IDs
+// Live production price IDs (replace when you're ready to go live)
 const LIVE_PRICE_IDS = {
-  professional: 'price_1SDDa4C6VxOVUbRGmwMZQzSs',
-  scale: 'price_1SDDaMC6VxOVUbRGSicIm5JC',
-  growth: 'price_1SDDaZC6VxOVUbRGGskqR0Rc',
+  professional: 'price_YOUR_PROFESSIONAL_PRICE_ID',
+  scale: 'price_YOUR_SCALE_PRICE_ID',
+  growth: 'price_YOUR_GROWTH_PRICE_ID',
 };
 
 serve(async (req) => {
