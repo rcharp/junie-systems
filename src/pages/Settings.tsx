@@ -140,9 +140,10 @@ const Settings = () => {
   // Notifications state
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
-  // Fetch business types from database
+
   useEffect(() => {
-    const fetchBusinessTypes = async () => {
+    // Load business types from database
+    const loadBusinessTypes = async () => {
       const { data, error } = await supabase
         .from('business_types')
         .select('value, label')
@@ -154,10 +155,8 @@ const Settings = () => {
       }
     };
     
-    fetchBusinessTypes();
-  }, []);
-
-  useEffect(() => {
+    loadBusinessTypes();
+    
     if (!loading && !user) {
       navigate("/login");
     } else if (user) {
