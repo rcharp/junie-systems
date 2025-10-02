@@ -37,32 +37,103 @@ serve(async (req) => {
 
     const userId = user.id;
 
-    // Get user profile to find Stripe customer ID
+    // Get user profile to find Stripe customer IDs
     const { data: profile } = await supabaseClient
       .from('user_profiles')
-      .select('stripe_customer_id, stripe_subscription_id')
+      .select('stripe_customer_id, stripe_subscription_id, stripe_test_customer_id')
       .eq('id', userId)
       .single();
 
-    // Cancel Stripe subscription and delete customer if they exist
-    if (profile?.stripe_customer_id) {
-      const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-        apiVersion: '2023-10-16',
-      });
+    // Get business settings to find Twilio phone number
+    const { data: businessSettings } = await supabaseClient
+      .from('business_settings')
+      .select('twilio_phone_number')
+      .eq('user_id', userId)
+      .single();
 
+    // Cancel Stripe subscriptions and delete customers (both live and test)
+    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16',
+    });
+    const stripeTest = new Stripe(Deno.env.get('STRIPE_SANDBOX_SECRET_KEY') || '', {
+      apiVersion: '2023-10-16',
+    });
+
+    // Handle live mode Stripe customer
+    if (profile?.stripe_customer_id) {
       try {
         // Cancel subscription if it exists
         if (profile.stripe_subscription_id) {
           await stripe.subscriptions.cancel(profile.stripe_subscription_id);
-          console.log('Stripe subscription cancelled:', profile.stripe_subscription_id);
+          console.log('Live Stripe subscription cancelled:', profile.stripe_subscription_id);
         }
 
         // Delete customer
         await stripe.customers.del(profile.stripe_customer_id);
-        console.log('Stripe customer deleted:', profile.stripe_customer_id);
+        console.log('Live Stripe customer deleted:', profile.stripe_customer_id);
       } catch (stripeError) {
-        console.error('Stripe deletion error:', stripeError);
+        console.error('Live Stripe deletion error:', stripeError);
         // Continue with account deletion even if Stripe fails
+      }
+    }
+
+    // Handle test mode Stripe customer
+    if (profile?.stripe_test_customer_id) {
+      try {
+        // List and cancel all subscriptions for test customer
+        const subscriptions = await stripeTest.subscriptions.list({
+          customer: profile.stripe_test_customer_id,
+        });
+        
+        for (const subscription of subscriptions.data) {
+          await stripeTest.subscriptions.cancel(subscription.id);
+          console.log('Test Stripe subscription cancelled:', subscription.id);
+        }
+
+        // Delete test customer
+        await stripeTest.customers.del(profile.stripe_test_customer_id);
+        console.log('Test Stripe customer deleted:', profile.stripe_test_customer_id);
+      } catch (stripeError) {
+        console.error('Test Stripe deletion error:', stripeError);
+        // Continue with account deletion even if Stripe fails
+      }
+    }
+
+    // Release Twilio phone number if it exists
+    if (businessSettings?.twilio_phone_number) {
+      try {
+        const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+        const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+        
+        const twilioResponse = await fetch(
+          `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(businessSettings.twilio_phone_number)}`,
+          {
+            headers: {
+              'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
+            },
+          }
+        );
+
+        const phoneNumbers = await twilioResponse.json();
+        
+        if (phoneNumbers.incoming_phone_numbers && phoneNumbers.incoming_phone_numbers.length > 0) {
+          const phoneNumberSid = phoneNumbers.incoming_phone_numbers[0].sid;
+          
+          await fetch(
+            `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers/${phoneNumberSid}.json`,
+            {
+              method: 'DELETE',
+              headers: {
+                'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
+              },
+            }
+          );
+          
+          console.log('Twilio phone number released:', businessSettings.twilio_phone_number);
+        }
+      } catch (twilioError) {
+        console.error('Twilio deletion error:', twilioError);
+        // Continue with account deletion even if Twilio fails
       }
     }
 
