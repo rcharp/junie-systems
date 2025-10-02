@@ -64,6 +64,12 @@ const Settings = () => {
   const [authProvider, setAuthProvider] = useState<string>("");
   const [googleEmail, setGoogleEmail] = useState<string>("");
   const [googleAvatarUrl, setGoogleAvatarUrl] = useState<string>("");
+  
+  // Password Update State
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [updatingPassword, setUpdatingPassword] = useState(false);
 
   // Business Info State
   const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
@@ -1200,6 +1206,81 @@ const Settings = () => {
     }
   };
 
+  const handleUpdatePassword = async () => {
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Missing fields",
+        description: "Please fill in all password fields"
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Passwords don't match",
+        description: "New password and confirmation must match"
+      });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        variant: "destructive",
+        title: "Password too short",
+        description: "Password must be at least 6 characters long"
+      });
+      return;
+    }
+
+    setUpdatingPassword(true);
+
+    try {
+      // First verify current password by signing in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: userEmail,
+        password: currentPassword
+      });
+
+      if (signInError) {
+        toast({
+          variant: "destructive",
+          title: "Incorrect password",
+          description: "Your current password is incorrect"
+        });
+        return;
+      }
+
+      // Update password
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (updateError) throw updateError;
+
+      // Clear fields
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+
+      toast({
+        title: "Password updated",
+        description: "Your password has been successfully updated"
+      });
+    } catch (error: any) {
+      console.error('Error updating password:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to update password"
+      });
+    } finally {
+      setUpdatingPassword(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
 
@@ -1662,6 +1743,63 @@ const Settings = () => {
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Password Update - Only show for email/password users */}
+                  {authProvider === 'email' && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Shield className="w-5 h-5 mr-2" />
+                          Change Password
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="currentPassword">Current Password</Label>
+                          <Input
+                            id="currentPassword"
+                            type="password"
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            placeholder="Enter current password"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="newPassword">New Password</Label>
+                          <Input
+                            id="newPassword"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Enter new password"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Must be at least 6 characters long
+                          </p>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm new password"
+                          />
+                        </div>
+
+                        <Button 
+                          onClick={handleUpdatePassword}
+                          disabled={updatingPassword || !currentPassword || !newPassword || !confirmPassword}
+                          className="w-full"
+                        >
+                          {updatingPassword ? "Updating..." : "Update Password"}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Danger Zone - Account Deletion */}
                   <Card className="border-destructive/50">
