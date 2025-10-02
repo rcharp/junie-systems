@@ -77,7 +77,25 @@ serve(async (req) => {
     // Use appropriate customer ID based on mode
     let customerId = useTestMode ? profile?.stripe_test_customer_id : profile?.stripe_customer_id;
 
-    // Create customer if doesn't exist
+    // Verify customer exists in Stripe if we have an ID
+    if (customerId) {
+      console.log('Verifying Stripe customer exists:', customerId);
+      const verifyResponse = await fetch(`https://api.stripe.com/v1/customers/${customerId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${stripeKey}`,
+        },
+      });
+
+      if (!verifyResponse.ok) {
+        console.log('Stripe customer not found, will create new one');
+        customerId = null; // Customer doesn't exist, need to create new one
+      } else {
+        console.log('Stripe customer verified:', customerId);
+      }
+    }
+
+    // Create customer if doesn't exist or verification failed
     if (!customerId) {
       console.log('Creating new Stripe customer for user:', user.email);
       
