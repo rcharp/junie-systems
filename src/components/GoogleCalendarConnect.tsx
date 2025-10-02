@@ -31,8 +31,9 @@ const GoogleCalendarConnect = () => {
 
   const fetchCalendarSettings = async () => {
     try {
+      // Use the safe view that excludes encrypted tokens
       const { data, error } = await supabase
-        .from('google_calendar_settings')
+        .from('google_calendar_settings_safe')
         .select('*')
         .eq('user_id', user?.id)
         .order('created_at', { ascending: false })
@@ -44,22 +45,8 @@ const GoogleCalendarConnect = () => {
       }
 
       const settings = data?.[0] || null;
-      // Check if we actually have valid tokens, not just is_connected flag
-      const hasValidTokens = settings?.encrypted_access_token || settings?.encrypted_refresh_token;
-      const isReallyConnected = settings?.is_connected && hasValidTokens;
-      
-      // If is_connected is true but no tokens, reset the connection status
-      if (settings?.is_connected && !hasValidTokens) {
-        console.log('Found stale connection, resetting...');
-        await supabase
-          .from('google_calendar_settings')
-          .update({ is_connected: false })
-          .eq('user_id', user?.id);
-        
-        setCalendarSettings({ ...settings, is_connected: false });
-      } else {
-        setCalendarSettings(settings);
-      }
+      // Connection validation is now done server-side
+      setCalendarSettings(settings);
     } catch (error) {
       console.error('Error fetching calendar settings:', error);
     } finally {
@@ -135,13 +122,11 @@ const GoogleCalendarConnect = () => {
 
   const handleDisconnect = async () => {
     try {
-      // First, update the record to clear tokens and set is_connected to false
+      // Update the record to clear connection and tokens
       const { error: updateError } = await supabase
         .from('google_calendar_settings')
         .update({
           is_connected: false,
-          encrypted_access_token: null,
-          encrypted_refresh_token: null,
           expires_at: null
         })
         .eq('user_id', user?.id);

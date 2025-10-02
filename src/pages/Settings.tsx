@@ -1696,8 +1696,6 @@ const Settings = () => {
                                       .from('google_calendar_settings')
                                       .update({
                                         is_connected: false,
-                                        encrypted_access_token: null,
-                                        encrypted_refresh_token: null,
                                         expires_at: null,
                                         calendar_id: null
                                       })
