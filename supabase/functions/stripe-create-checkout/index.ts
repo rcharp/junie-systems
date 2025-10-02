@@ -11,20 +11,18 @@ const STRIPE_TEST_SECRET_KEY = Deno.env.get('STRIPE_TEST_SECRET_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-// Test mode price IDs (replace with your actual Stripe test price IDs)
-// To get these: Go to Stripe Dashboard → Products → Create recurring prices
-// Copy the price IDs that start with price_test_...
+// Test mode price IDs (for testing without real charges)
 const TEST_PRICE_IDS = {
-  professional: 'price_test_YOUR_PROFESSIONAL_PRICE_ID', // Replace with your actual test price ID
-  scale: 'price_test_YOUR_SCALE_PRICE_ID', // Replace with your actual test price ID
-  growth: 'price_test_YOUR_GROWTH_PRICE_ID', // Replace with your actual test price ID
+  professional: 'price_1SDr4LC6VxOVUbRGntrsE4Jq',
+  scale: 'price_1SDr4aC6VxOVUbRGnNLzJdcJ',
+  growth: 'price_1SDr4lC6VxOVUbRGPeikgxmV',
 };
 
-// Live production price IDs (replace when you're ready to go live)
+// Live production price IDs
 const LIVE_PRICE_IDS = {
-  professional: 'price_YOUR_PROFESSIONAL_PRICE_ID',
-  scale: 'price_YOUR_SCALE_PRICE_ID',
-  growth: 'price_YOUR_GROWTH_PRICE_ID',
+  professional: 'price_1SDDa4C6VxOVUbRGmwMZQzSs',
+  scale: 'price_1SDDaMC6VxOVUbRGSicIm5JC',
+  growth: 'price_1SDDaZC6VxOVUbRGGskqR0Rc',
 };
 
 serve(async (req) => {
@@ -154,6 +152,13 @@ serve(async (req) => {
     }
 
     // Create checkout session
+    console.log('Creating checkout session with:', {
+      customer: customerId,
+      price: PRICE_IDS[plan as keyof typeof PRICE_IDS],
+      mode: 'subscription',
+      plan: plan
+    });
+
     const checkoutResponse = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: {
@@ -169,10 +174,14 @@ serve(async (req) => {
         cancel_url: `${req.headers.get('origin')}/pricing`,
         'metadata[supabase_user_id]': user.id,
         'metadata[plan]': plan,
+        allow_promotion_codes: 'true',
       }),
     });
 
     const session = await checkoutResponse.json();
+    
+    console.log('Checkout session response status:', checkoutResponse.status);
+    console.log('Checkout session response:', JSON.stringify(session).substring(0, 200));
 
     if (session.error) {
       console.error('Stripe checkout session error:', session.error);
