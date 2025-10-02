@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { LogOut, LayoutDashboard, Settings, ShieldCheck } from "lucide-react";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,7 +24,7 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
   };
 
   return (
-    <header className={`fixed top-0 w-full z-50 backdrop-blur-sm border-b ${isAdmin ? 'bg-blue-600/95 border-blue-700' : 'bg-background/95 border-border'}`}>
+    <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
         <div className="flex items-center">
           <a href="/" className="flex items-center">
@@ -36,6 +37,12 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
+          {isAdmin && (
+            <Badge className="bg-blue-600 hover:bg-blue-700 text-white text-base px-4 py-1.5 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5" />
+              Admin Access
+            </Badge>
+          )}
           <a href="/#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
             Features
           </a>
