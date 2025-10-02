@@ -13,6 +13,7 @@ import { UserWebhookList } from '@/components/UserWebhookList';
 import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { TodoChecklist } from '@/components/TodoChecklist';
 import { BusinessTypesManager } from '@/components/BusinessTypesManager';
+import { TwilioAutoAssignToggle } from '@/components/TwilioAutoAssignToggle';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -331,10 +332,10 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-6">
+          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">System Overview</TabsTrigger>
-            <TabsTrigger value="business-types" className="text-xs sm:text-sm">Business Types</TabsTrigger>
-            <TabsTrigger value="todos" className="text-xs sm:text-sm">Development Todos</TabsTrigger>
+            <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
+            <TabsTrigger value="todos" className="text-xs sm:text-sm">Todos</TabsTrigger>
           </TabsList>
           
           <TabsContent value="overview" className="space-y-6 sm:space-y-8">
@@ -396,6 +397,58 @@ const AdminDashboard = () => {
             {/* User Business IDs - Paginated */}
             <UserWebhookList />
 
+            {/* Business Types Manager */}
+            <BusinessTypesManager />
+
+            {/* Twilio Auto-Assignment Toggle */}
+            <TwilioAutoAssignToggle />
+
+            {/* Junie Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>About Junie</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm">
+                      <strong>Mission:</strong> Never miss a call with our AI-powered answering service
+                    </p>
+                    <p className="text-sm">
+                      <strong>Features:</strong> 24/7 availability, appointment booking, lead capture, smart call routing
+                    </p>
+                    <p className="text-sm">
+                      <strong>Technology:</strong> Advanced AI with natural language processing, integrated with business systems
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Health</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">API Status</span>
+                      <Badge variant="default">Operational</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Database</span>
+                      <Badge variant="default">Healthy</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">AI Services</span>
+                      <Badge variant="default">Online</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="api" className="space-y-6">
             {/* Google Calendar Availability Testing */}
             <Card>
               <CardHeader className="pb-4">
@@ -487,54 +540,6 @@ const AdminDashboard = () => {
 
             {/* Business Data Requests */}
             <BusinessDataMonitor />
-
-            {/* Junie Info */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>About Junie</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-sm">
-                      <strong>Mission:</strong> Never miss a call with our AI-powered answering service
-                    </p>
-                    <p className="text-sm">
-                      <strong>Features:</strong> 24/7 availability, appointment booking, lead capture, smart call routing
-                    </p>
-                    <p className="text-sm">
-                      <strong>Technology:</strong> Advanced AI with natural language processing, integrated with business systems
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>System Health</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">API Status</span>
-                      <Badge variant="default">Operational</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Database</span>
-                      <Badge variant="default">Healthy</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">AI Services</span>
-                      <Badge variant="default">Online</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="business-types">
-            <BusinessTypesManager />
           </TabsContent>
           
           <TabsContent value="todos">
