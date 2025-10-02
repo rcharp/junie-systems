@@ -9,6 +9,7 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
+const encryptionKey = Deno.env.get('GOOGLE_CALENDAR_ENCRYPTION_KEY')!
 
 // Helper function to get timezone offset
 function getTimezoneOffset(timezone: string): string {
@@ -174,7 +175,12 @@ Deno.serve(async (req) => {
       
       console.log('Encrypted tokens prepared, upserting calendar settings...')
       
-      const { error: upsertError } = await supabase
+      // Set encryption key for this session
+      await supabase.rpc('exec_sql', {
+        sql: `SET app.settings.google_calendar_encryption_key = '${encryptionKey}'`
+      })
+      
+      const { error: upsertError} = await supabase
         .from('google_calendar_settings')
         .upsert({
           user_id: state, // Use state instead of user.id since we validated it above

@@ -697,6 +697,10 @@ export type Database = {
         Args: { token: string }
         Returns: string
       }
+      exec_sql: {
+        Args: { sql: string }
+        Returns: undefined
+      }
       get_appointments_summary: {
         Args: { target_user_id?: string }
         Returns: {

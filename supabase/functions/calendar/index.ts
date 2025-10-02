@@ -10,6 +10,7 @@ const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
 const blandApiKey = Deno.env.get('BLAND_AI_API_KEY')!
+const encryptionKey = Deno.env.get('GOOGLE_CALENDAR_ENCRYPTION_KEY')!
 
 Deno.serve(async (req) => {
   console.log('calendar function called with method:', req.method)
@@ -21,6 +22,12 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+    
+    // Set encryption key for this session
+    await supabase.rpc('exec_sql', {
+      sql: `SET app.settings.google_calendar_encryption_key = '${encryptionKey}'`
+    })
+    
     const url = new URL(req.url)
     const userId = url.pathname.split('/').pop()
 

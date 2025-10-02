@@ -37,6 +37,7 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
+const encryptionKey = Deno.env.get('GOOGLE_CALENDAR_ENCRYPTION_KEY')!
 
 Deno.serve(async (req) => {
   console.log('google-calendar-availability function called with method:', req.method)
@@ -48,6 +49,11 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
+    
+    // Set encryption key for this session
+    await supabase.rpc('exec_sql', {
+      sql: `SET app.settings.google_calendar_encryption_key = '${encryptionKey}'`
+    })
 
     // Try to get user_id from request body first, then fall back to URL path
     let userId;
