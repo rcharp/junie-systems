@@ -17,11 +17,11 @@ const LIVE_PRICE_IDS = {
   growth: 'price_1SDDaZC6VxOVUbRGGskqR0Rc',
 };
 
-// Sandbox/test price IDs (to be updated with actual test price IDs)
+// Sandbox/test price IDs
 const SANDBOX_PRICE_IDS = {
-  professional: 'price_test_professional', // TODO: Replace with actual test price ID
-  scale: 'price_test_scale', // TODO: Replace with actual test price ID
-  growth: 'price_test_growth', // TODO: Replace with actual test price ID
+  professional: 'price_1SDqpKCFxjtRFu5wxezKVrlZ',
+  scale: 'price_1SDqpcCFxjtRFu5w7gC0Ae7o',
+  growth: 'price_1SDqprCFxjtRFu5wkcbEeGdW',
 };
 
 serve(async (req) => {
