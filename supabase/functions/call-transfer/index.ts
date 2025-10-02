@@ -187,8 +187,10 @@ serve(async (req) => {
                 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
                 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
                 
+                const callContext = activeCalls.get(callSid);
+                
                 const response = await fetch(
-                  `${SUPABASE_URL}/functions/v1/transfer-call`,
+                  `${SUPABASE_URL}/functions/v1/transfer-call-webhook/transfer-call`,
                   {
                     method: 'POST',
                     headers: {
@@ -196,8 +198,10 @@ serve(async (req) => {
                       'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
                     },
                     body: JSON.stringify({
-                      call_sid: callSid,
-                      forwarding_number: forwardingNumber
+                      callSid: callSid,
+                      businessId: callContext?.businessId,
+                      userId: callContext?.userId,
+                      agentNumber: forwardingNumber
                     })
                   }
                 );
