@@ -70,6 +70,7 @@ const Settings = () => {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
 
   // Business Info State
   const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
@@ -252,15 +253,25 @@ const Settings = () => {
       
       let detectedProvider = '';
       
+      // Check all identities to see what auth methods are linked
+      const identities = authUser?.identities || [];
+      const hasEmailIdentity = identities.some(i => i.provider === 'email');
+      const hasGoogleIdentity = identities.some(i => i.provider === 'google');
+      
+      // Set hasPassword based on email identity presence
+      setHasPassword(hasEmailIdentity);
+      
       if (authUser?.app_metadata?.provider) {
         console.log('Provider from app_metadata:', authUser.app_metadata.provider);
         detectedProvider = authUser.app_metadata.provider;
         setAuthProvider(detectedProvider);
-      } else if (authUser?.identities && authUser.identities.length > 0) {
-        detectedProvider = authUser.identities[0].provider;
+      } else if (identities.length > 0) {
+        detectedProvider = identities[0].provider;
         console.log('Provider from identities:', detectedProvider);
         setAuthProvider(detectedProvider);
       }
+      
+      console.log('Auth identities:', { hasEmailIdentity, hasGoogleIdentity, identities });
       
       // Extract Google profile data if provider is Google
       if (detectedProvider === 'google') {
@@ -1208,11 +1219,21 @@ const Settings = () => {
 
   const handleUpdatePassword = async () => {
     // Validation
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if (!newPassword || !confirmPassword) {
       toast({
         variant: "destructive",
         title: "Missing fields",
-        description: "Please fill in all password fields"
+        description: "Please enter and confirm your new password"
+      });
+      return;
+    }
+
+    // If user has password, require current password
+    if (hasPassword && !currentPassword) {
+      toast({
+        variant: "destructive",
+        title: "Current password required",
+        description: "Please enter your current password"
       });
       return;
     }
@@ -1238,22 +1259,25 @@ const Settings = () => {
     setUpdatingPassword(true);
 
     try {
-      // First verify current password by signing in
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: userEmail,
-        password: currentPassword
-      });
-
-      if (signInError) {
-        toast({
-          variant: "destructive",
-          title: "Incorrect password",
-          description: "Your current password is incorrect"
+      // If user already has a password, verify current password
+      if (hasPassword) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: userEmail,
+          password: currentPassword
         });
-        return;
+
+        if (signInError) {
+          toast({
+            variant: "destructive",
+            title: "Incorrect password",
+            description: "Your current password is incorrect"
+          });
+          setUpdatingPassword(false);
+          return;
+        }
       }
 
-      // Update password
+      // Update/Set password
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       });
@@ -1265,16 +1289,23 @@ const Settings = () => {
       setNewPassword("");
       setConfirmPassword("");
 
+      // Update hasPassword state if this was first time setting password
+      if (!hasPassword) {
+        setHasPassword(true);
+      }
+
       toast({
-        title: "Password updated",
-        description: "Your password has been successfully updated"
+        title: hasPassword ? "Password updated" : "Password set successfully",
+        description: hasPassword 
+          ? "Your password has been successfully updated"
+          : "You can now sign in with email and password, in addition to Google"
       });
     } catch (error: any) {
       console.error('Error updating password:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || "Failed to update password"
+        description: error.message || `Failed to ${hasPassword ? 'update' : 'set'} password`
       });
     } finally {
       setUpdatingPassword(false);
@@ -1744,16 +1775,21 @@ const Settings = () => {
                     </CardContent>
                   </Card>
 
-                  {/* Password Update - Only show for email/password users */}
-                  {authProvider === 'email' && (
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center">
-                          <Shield className="w-5 h-5 mr-2" />
-                          Change Password
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
+                  {/* Password Management - Available for all users */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center">
+                        <Shield className="w-5 h-5 mr-2" />
+                        {hasPassword ? "Change Password" : "Set Password"}
+                      </CardTitle>
+                      {authProvider === 'google' && !hasPassword && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Set a password to enable email/password login alongside Google sign-in
+                        </p>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {hasPassword && (
                         <div className="space-y-2">
                           <Label htmlFor="currentPassword">Current Password</Label>
                           <Input
@@ -1764,42 +1800,51 @@ const Settings = () => {
                             placeholder="Enter current password"
                           />
                         </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="newPassword">New Password</Label>
-                          <Input
-                            id="newPassword"
-                            type="password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Enter new password"
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            Must be at least 6 characters long
-                          </p>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                          <Input
-                            id="confirmPassword"
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm new password"
-                          />
-                        </div>
+                      )}
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Enter new password"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Must be at least 6 characters long
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Confirm new password"
+                        />
+                      </div>
 
-                        <Button 
-                          onClick={handleUpdatePassword}
-                          disabled={updatingPassword || !currentPassword || !newPassword || !confirmPassword}
-                          className="w-full"
-                        >
-                          {updatingPassword ? "Updating..." : "Update Password"}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  )}
+                      <Button 
+                        onClick={handleUpdatePassword}
+                        disabled={updatingPassword || !newPassword || !confirmPassword || (hasPassword && !currentPassword)}
+                        className="w-full"
+                      >
+                        {updatingPassword 
+                          ? (hasPassword ? "Updating..." : "Setting...") 
+                          : (hasPassword ? "Update Password" : "Set Password")
+                        }
+                      </Button>
+
+                      {authProvider === 'google' && !hasPassword && (
+                        <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
+                          💡 After setting a password, you'll be able to sign in using either Google OAuth or email/password
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
 
                   {/* Danger Zone - Account Deletion */}
                   <Card className="border-destructive/50">
