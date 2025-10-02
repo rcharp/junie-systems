@@ -339,6 +339,9 @@ const AdminDashboard = () => {
           </TabsList>
           
           <TabsContent value="overview" className="space-y-6 sm:space-y-8">
+            {/* Twilio Auto-Assignment Toggle */}
+            <TwilioAutoAssignToggle />
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card>
@@ -399,9 +402,6 @@ const AdminDashboard = () => {
 
             {/* Business Types Manager */}
             <BusinessTypesManager />
-
-            {/* Twilio Auto-Assignment Toggle */}
-            <TwilioAutoAssignToggle />
 
             {/* Junie Info */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
