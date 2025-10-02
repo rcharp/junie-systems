@@ -84,8 +84,13 @@ const Pricing = () => {
 
       console.log('Redirecting to Stripe checkout:', data.url);
       
-      // Direct redirect without delay or toast
-      window.location.href = data.url;
+      // Try to open in same window - this works better in iframes
+      try {
+        window.top!.location.href = data.url;
+      } catch (e) {
+        // Fallback if top is not accessible
+        window.location.href = data.url;
+      }
       
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
