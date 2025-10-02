@@ -78,19 +78,14 @@ serve(async (req) => {
     const phoneNumber = searchData.available_phone_numbers[0].phone_number;
     console.log('Found available number:', phoneNumber);
 
-    // Purchase the phone number with friendly name and emergency address
+    // Purchase the phone number with friendly name
     const purchaseUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers.json`;
     
     const formData = new URLSearchParams();
     formData.append('PhoneNumber', phoneNumber);
     formData.append('FriendlyName', `${businessName} - Junie`);
     
-    // Set Junie's emergency address
-    formData.append('EmergencyAddressSid', 'AD5c6f8c7c8e8a3e3f4c5e6f7a8b9c0d1e');
-    // Emergency address details for Junie (fallback if SID not available)
-    // 123 Junie Street, San Francisco, CA 94102
-    
-    // Configure with Junie TwiML App
+    // Configure with Junie TwiML App if available
     const twilioAppSid = Deno.env.get('TWILIO_TWIML_APP_SID');
     if (twilioAppSid) {
       formData.append('VoiceApplicationSid', twilioAppSid);
