@@ -1323,15 +1323,17 @@ const Settings = () => {
       if (error) throw error;
 
       toast({
-        title: "Account deleted",
-        description: "Your account and all data have been permanently deleted.",
+        title: "Account deleted successfully",
+        description: "Your account and all data have been permanently deleted. Redirecting to login...",
       });
 
       // Clean up auth state locally
       cleanupAuthState();
       
-      // Single redirect to login - edge function already deleted the user
-      window.location.href = '/login';
+      // Delay redirect to allow toast to be visible
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
     } catch (error: any) {
       console.error('Error deleting account:', error);
       toast({
