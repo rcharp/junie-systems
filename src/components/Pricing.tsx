@@ -61,18 +61,36 @@ const Pricing = () => {
     // If logged in, create Stripe checkout session
     setLoading(plan);
     try {
+      console.log('Creating checkout session for plan:', plan);
+      
       const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
         body: { plan: plan.toLowerCase() },
       });
 
-      if (error) throw error;
+      console.log('Checkout response:', { data, error });
 
-      if (data?.url) {
-        window.location.href = data.url;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
       }
-    } catch (error) {
+
+      if (!data) {
+        throw new Error('No data returned from checkout function');
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.url) {
+        console.log('Redirecting to Stripe checkout:', data.url);
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (error: any) {
       console.error('Error creating checkout session:', error);
-      toast.error('Failed to start checkout. Please try again.');
+      toast.error(error.message || 'Failed to start checkout. Please try again.');
     } finally {
       setLoading(null);
     }

@@ -120,8 +120,16 @@ serve(async (req) => {
     const session = await checkoutResponse.json();
 
     if (session.error) {
+      console.error('Stripe checkout session error:', session.error);
       throw new Error(session.error.message);
     }
+
+    if (!session.url) {
+      console.error('No URL returned from Stripe:', session);
+      throw new Error('Stripe did not return a checkout URL');
+    }
+
+    console.log('Successfully created checkout session with URL:', session.url);
 
     return new Response(
       JSON.stringify({ url: session.url }),
