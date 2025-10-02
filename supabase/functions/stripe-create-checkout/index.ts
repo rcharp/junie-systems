@@ -67,7 +67,7 @@ serve(async (req) => {
         },
         body: new URLSearchParams({
           email: user.email!,
-          metadata: `{"supabase_user_id":"${user.id}"}`,
+          'metadata[supabase_user_id]': user.id,
         }),
       });
 
