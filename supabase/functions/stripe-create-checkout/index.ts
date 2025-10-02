@@ -87,8 +87,10 @@ serve(async (req) => {
         },
       });
 
-      if (!verifyResponse.ok) {
-        console.log('Stripe customer not found, will create new one');
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyResponse.ok || verifyData.deleted) {
+        console.log('Stripe customer not found or deleted, will create new one');
         customerId = null; // Customer doesn't exist, need to create new one
         
         // Clear the invalid customer ID from the profile
