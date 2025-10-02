@@ -90,6 +90,16 @@ serve(async (req) => {
       if (!verifyResponse.ok) {
         console.log('Stripe customer not found, will create new one');
         customerId = null; // Customer doesn't exist, need to create new one
+        
+        // Clear the invalid customer ID from the profile
+        const clearData = useTestMode 
+          ? { stripe_test_customer_id: null }
+          : { stripe_customer_id: null };
+        
+        await supabase
+          .from('user_profiles')
+          .update(clearData)
+          .eq('id', user.id);
       } else {
         console.log('Stripe customer verified:', customerId);
       }
