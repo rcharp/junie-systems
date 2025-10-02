@@ -158,11 +158,12 @@ const Settings = () => {
       const { data, error } = await supabase
         .from('business_types')
         .select('*')
-        .eq('is_active', true)
-        .order('display_order');
+        .eq('is_active', true);
       
       if (!error && data) {
-        setBusinessTypes(data);
+        // Sort alphabetically by label
+        const sortedData = [...data].sort((a, b) => a.label.localeCompare(b.label));
+        setBusinessTypes(sortedData);
       }
     };
     

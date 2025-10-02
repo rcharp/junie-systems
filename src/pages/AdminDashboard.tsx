@@ -12,6 +12,7 @@ import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { UserWebhookList } from '@/components/UserWebhookList';
 import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { TodoChecklist } from '@/components/TodoChecklist';
+import { BusinessTypesManager } from '@/components/BusinessTypesManager';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -330,8 +331,9 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-4 sm:mb-6">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">System Overview</TabsTrigger>
+            <TabsTrigger value="business-types" className="text-xs sm:text-sm">Business Types</TabsTrigger>
             <TabsTrigger value="todos" className="text-xs sm:text-sm">Development Todos</TabsTrigger>
           </TabsList>
           
@@ -529,6 +531,10 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="business-types">
+            <BusinessTypesManager />
           </TabsContent>
           
           <TabsContent value="todos">
