@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 const Header = ({ showAuthButtons = true }: HeaderProps) => {
-  const { user, loading, setSigningOut } = useAuth();
+  const { user, loading, isAdmin, setSigningOut } = useAuth();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -23,7 +23,7 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
   };
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
+    <header className={`fixed top-0 w-full z-50 backdrop-blur-sm border-b ${isAdmin ? 'bg-blue-600/95 border-blue-700' : 'bg-background/95 border-border'}`}>
       <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
         <div className="flex items-center">
           <a href="/" className="flex items-center">
