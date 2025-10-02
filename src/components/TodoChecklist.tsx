@@ -95,109 +95,112 @@ function SortableItem({ item, onToggle, onDelete, onPriorityChange, onEdit, isEd
         item.completed ? 'opacity-60 bg-muted/50' : 'hover:bg-muted/50'
       }`}
     >
-      {/* Top row: drag handle, checkbox, text/input, completed icon */}
-      <div className="flex items-center space-x-3 mb-2">
-        <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-          <GripVertical className="h-4 w-4 text-muted-foreground" />
+      {/* Mobile: Two rows. Desktop: Single row */}
+      <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+        {/* First section: drag handle, checkbox, text/input */}
+        <div className="flex items-center space-x-3 flex-1">
+          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          
+          <Checkbox
+            id={item.id}
+            checked={item.completed}
+            onCheckedChange={() => onToggle(item.id)}
+            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+            disabled={isEditing}
+          />
+          
+          {isEditing ? (
+            <div className="flex-1 flex items-center gap-2">
+              <Input
+                value={editingText}
+                onChange={(e) => onEditingTextChange(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    onEdit(item.id, editingText);
+                  } else if (e.key === 'Escape') {
+                    onCancelEdit();
+                  }
+                }}
+                className="h-8 text-sm"
+                autoFocus
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(item.id, editingText)}
+                className="h-8 w-8 p-0"
+              >
+                <Check className="h-4 w-4 text-green-600" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onCancelEdit}
+                className="h-8 w-8 p-0"
+              >
+                <X className="h-4 w-4 text-destructive" />
+              </Button>
+            </div>
+          ) : (
+            <>
+              <label
+                htmlFor={item.id}
+                className={`flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                  item.completed ? 'line-through text-muted-foreground' : ''
+                }`}
+              >
+                {item.text}
+              </label>
+              
+              {item.completed && (
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+              )}
+            </>
+          )}
         </div>
         
-        <Checkbox
-          id={item.id}
-          checked={item.completed}
-          onCheckedChange={() => onToggle(item.id)}
-          className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-          disabled={isEditing}
-        />
-        
-        {isEditing ? (
-          <div className="flex-1 flex items-center gap-2">
-            <Input
-              value={editingText}
-              onChange={(e) => onEditingTextChange(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  onEdit(item.id, editingText);
-                } else if (e.key === 'Escape') {
-                  onCancelEdit();
-                }
+        {/* Second section: priority dropdown, edit button, and trash button */}
+        {!isEditing && (
+          <div className="flex items-center gap-2 ml-10 md:ml-0">
+            <Select value={item.priority} onValueChange={(priority: 'high' | 'medium' | 'low') => onPriorityChange(item.id, priority)}>
+              <SelectTrigger className="w-32 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                onStartEdit(item.id, item.text);
               }}
-              className="h-8 text-sm"
-              autoFocus
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(item.id, editingText)}
-              className="h-8 w-8 p-0"
+              className="transition-opacity h-8"
             >
-              <Check className="h-4 w-4 text-green-600" />
+              <Pencil className="h-4 w-4 text-muted-foreground" />
             </Button>
+            
             <Button
               variant="ghost"
               size="sm"
-              onClick={onCancelEdit}
-              className="h-8 w-8 p-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(item.id);
+              }}
+              className="transition-opacity h-8"
             >
-              <X className="h-4 w-4 text-destructive" />
+              <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
           </div>
-        ) : (
-          <>
-            <label
-              htmlFor={item.id}
-              className={`flex-1 cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
-                item.completed ? 'line-through text-muted-foreground' : ''
-              }`}
-            >
-              {item.text}
-            </label>
-            
-            {item.completed && (
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-            )}
-          </>
         )}
       </div>
-      
-      {/* Bottom row: priority dropdown, edit button, and trash button */}
-      {!isEditing && (
-        <div className="flex items-center gap-2 ml-10">
-          <Select value={item.priority} onValueChange={(priority: 'high' | 'medium' | 'low') => onPriorityChange(item.id, priority)}>
-            <SelectTrigger className="w-32 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onStartEdit(item.id, item.text);
-            }}
-            className="transition-opacity h-8"
-          >
-            <Pencil className="h-4 w-4 text-muted-foreground" />
-          </Button>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(item.id);
-            }}
-            className="transition-opacity h-8"
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
-        </div>
-      )}
     </div>
   );
 }
