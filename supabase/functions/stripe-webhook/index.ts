@@ -49,11 +49,11 @@ serve(async (req) => {
         const subscription = event.data.object;
         const customerId = subscription.customer;
 
-        // Get user by customer ID
+        // Get user by customer ID (check both test and live)
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('id')
-          .eq('stripe_customer_id', customerId)
+          .or(`stripe_customer_id.eq.${customerId},stripe_test_customer_id.eq.${customerId}`)
           .single();
 
         if (profile) {
@@ -78,11 +78,11 @@ serve(async (req) => {
         const subscription = event.data.object;
         const customerId = subscription.customer;
 
-        // Get user by customer ID
+        // Get user by customer ID (check both test and live)
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('id')
-          .eq('stripe_customer_id', customerId)
+          .or(`stripe_customer_id.eq.${customerId},stripe_test_customer_id.eq.${customerId}`)
           .single();
 
         if (profile) {
@@ -104,11 +104,11 @@ serve(async (req) => {
         const invoice = event.data.object;
         const customerId = invoice.customer;
 
-        // Get user by customer ID
+        // Get user by customer ID (check both test and live)
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('id')
-          .eq('stripe_customer_id', customerId)
+          .or(`stripe_customer_id.eq.${customerId},stripe_test_customer_id.eq.${customerId}`)
           .single();
 
         if (profile) {
