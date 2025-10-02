@@ -63,16 +63,9 @@ const Pricing = () => {
     try {
       console.log('Creating checkout session for plan:', plan);
       
-      // Set a timeout for the function call
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout - please try again')), 30000);
-      });
-
-      const functionPromise = supabase.functions.invoke('stripe-create-checkout', {
+      const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
         body: { plan: plan.toLowerCase() },
       });
-
-      const { data, error } = await Promise.race([functionPromise, timeoutPromise]) as any;
 
       console.log('Checkout response:', { data, error });
 
@@ -81,27 +74,18 @@ const Pricing = () => {
         throw new Error(error.message || 'Failed to create checkout session');
       }
 
-      if (!data) {
-        throw new Error('No data returned from checkout function');
+      if (!data || !data.url) {
+        throw new Error('No checkout URL returned');
       }
 
       if (data.error) {
         throw new Error(data.error);
       }
 
-      if (!data.url) {
-        throw new Error('No checkout URL returned');
-      }
-
       console.log('Redirecting to Stripe checkout:', data.url);
       
-      // Show a toast before redirecting
-      toast.success('Redirecting to checkout...');
-      
-      // Small delay to ensure toast shows, then redirect
-      setTimeout(() => {
-        window.location.href = data.url;
-      }, 500);
+      // Direct redirect without delay or toast
+      window.location.href = data.url;
       
     } catch (error: any) {
       console.error('Error creating checkout session:', error);
