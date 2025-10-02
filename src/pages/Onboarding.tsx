@@ -44,7 +44,7 @@ const Onboarding = () => {
   const isCheckingAuthRef = useRef(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [businessTypesList, setBusinessTypesList] = useState<string[]>([]);
+  const [businessTypesList, setBusinessTypesList] = useState<Array<{value: string, label: string}>>([]);
 
   // US states list for Claude matching
   const statesList = [
@@ -60,12 +60,12 @@ const Onboarding = () => {
     const fetchBusinessTypes = async () => {
       const { data, error } = await supabase
         .from('business_types')
-        .select('value')
+        .select('value, label')
         .eq('is_active', true)
-        .order('display_order');
+        .order('label'); // Sort alphabetically by label
       
       if (!error && data) {
-        setBusinessTypesList(data.map(t => t.value));
+        setBusinessTypesList(data);
       }
     };
     
@@ -325,7 +325,7 @@ const Onboarding = () => {
                 address: businessData.address || null,
                 phone: businessData.phone || null,
                 website: savedWebsiteUrl || businessData.website || null,
-                businessTypesList,
+                businessTypesList: businessTypesList.map(t => t.value),
                 statesList
               }
             });
@@ -643,8 +643,8 @@ const Onboarding = () => {
                         address: businessData.address || null,
                         phone: businessData.phone || null,
                         website: savedWebsiteUrl || businessData.website || null,
-                        businessTypesList,
-                        statesList
+                    businessTypesList: businessTypesList.map(t => t.value),
+                    statesList
                       }
                     });
                     
@@ -1015,7 +1015,7 @@ const Onboarding = () => {
               address: businessData.address || null,
               phone: businessData.phone || null,
               website: savedWebsiteUrl || businessData.website || null,
-              businessTypesList,
+              businessTypesList: businessTypesList.map(t => t.value),
               statesList
             }
           });
@@ -1332,17 +1332,11 @@ const Onboarding = () => {
                   onChange={(e) => setVerificationData({...verificationData, business_type: e.target.value})}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <option value="electric">Electric</option>
-                  <option value="garage-door">Garage Door</option>
-                  <option value="handyman">Handyman</option>
-                  <option value="hvac">HVAC</option>
-                  <option value="landscaping">Landscaping</option>
-                  <option value="pest-control">Pest Control</option>
-                  <option value="plumbing">Plumbing</option>
-                  <option value="pool-spa">Pool & Spa</option>
-                  <option value="cleaning">Cleaning</option>
-                  <option value="roofing">Roofing</option>
-                  <option value="other">Other</option>
+                  {businessTypesList.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
