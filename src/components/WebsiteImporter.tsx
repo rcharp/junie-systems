@@ -239,7 +239,7 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
             Enter a Google Business Profile, Yelp page, or website URL to extract and auto-fill your business details
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
           <div className="flex-1">
             <Input
               id="websiteUrl"
@@ -252,7 +252,7 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
           <Button 
             onClick={handleImport}
             disabled={isLoading || !websiteUrl.trim()}
-            className="bg-gradient-primary hover:opacity-90 text-white border-none"
+            className="bg-gradient-primary hover:opacity-90 text-white border-none w-full md:w-auto"
           >
             {isLoading ? (
               <>
