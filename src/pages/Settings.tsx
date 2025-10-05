@@ -2042,7 +2042,8 @@ const Settings = () => {
                       </Button>
                     </div>
                     <div className="space-y-3">
-                      <div className="grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
+                      {/* Mobile header - hidden on desktop */}
+                      <div className="hidden md:grid grid-cols-12 gap-2 text-xs font-medium text-muted-foreground px-1">
                         <div className="col-span-1 text-center">Open</div>
                         <div className="col-span-3">Day</div>
                         <div className="col-span-3">Opening</div>
@@ -2053,7 +2054,8 @@ const Settings = () => {
                         const validationMessage = hour.isOpen ? getTimeValidationMessage(hour.openTime, hour.closeTime) : null;
                         return (
                           <div key={hour.id} className="space-y-2">
-                            <div className="grid grid-cols-12 gap-2 items-center">
+                            {/* Desktop Layout */}
+                            <div className="hidden md:grid grid-cols-12 gap-2 items-center">
                               <div className="col-span-1 flex justify-center">
                                 <Checkbox
                                   checked={hour.isOpen}
@@ -2112,8 +2114,72 @@ const Settings = () => {
                                 </Button>
                               </div>
                             </div>
+                            
+                            {/* Mobile Layout */}
+                            <div className="md:hidden border rounded-lg p-3 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Checkbox
+                                    checked={hour.isOpen}
+                                    onCheckedChange={(checked) => 
+                                      updateBusinessHours(hour.id, 'isOpen', !!checked)
+                                    }
+                                    className="h-4 w-4"
+                                  />
+                                  <Select
+                                    value={hour.day}
+                                    onValueChange={(value) => updateBusinessHours(hour.id, 'day', value)}
+                                    disabled={!hour.isOpen}
+                                  >
+                                    <SelectTrigger className={`h-9 ${!hour.isOpen ? "opacity-50" : ""}`}>
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {Object.entries(dayNames).map(([value, label]) => (
+                                        <SelectItem key={value} value={value}>
+                                          {label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeBusinessHours(hour.id)}
+                                  disabled={businessHours.length <= 1}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <Label className="text-xs text-muted-foreground mb-1">Opening</Label>
+                                  <Input
+                                    type="time"
+                                    value={hour.openTime}
+                                    onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
+                                    disabled={!hour.isOpen}
+                                    className={`h-9 ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs text-muted-foreground mb-1">Closing</Label>
+                                  <Input
+                                    type="time"
+                                    value={hour.closeTime}
+                                    onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
+                                    disabled={!hour.isOpen}
+                                    className={`h-9 ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                            
                             {validationMessage && (
-                              <div className="col-span-12 text-sm text-destructive ml-1">
+                              <div className="text-sm text-destructive ml-1">
                                 {validationMessage}
                               </div>
                             )}
@@ -2273,7 +2339,8 @@ const Settings = () => {
                               <Label htmlFor={`service-description-${index}`} className="text-sm font-medium">
                                 Description (Optional)
                               </Label>
-                              <Input
+                              {/* Textarea on mobile, Input on desktop */}
+                              <Textarea
                                 id={`service-description-${index}`}
                                 placeholder="Brief description of the service"
                                 value={service.description || ""}
@@ -2281,6 +2348,18 @@ const Settings = () => {
                                   updateService(index, 'description', e.target.value);
                                   // Disabled auto-save - require manual save for validation
                                 }}
+                                rows={2}
+                                className="md:hidden resize-none"
+                              />
+                              <Input
+                                id={`service-description-desktop-${index}`}
+                                placeholder="Brief description of the service"
+                                value={service.description || ""}
+                                onChange={(e) => {
+                                  updateService(index, 'description', e.target.value);
+                                  // Disabled auto-save - require manual save for validation
+                                }}
+                                className="hidden md:block"
                               />
                             </div>
                           </div>
