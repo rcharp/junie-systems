@@ -2162,7 +2162,7 @@ const Settings = () => {
                                     value={hour.openTime}
                                     onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
                                     disabled={!hour.isOpen}
-                                    className={`h-9 ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                    className={`h-9 rounded-xl ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
                                 <div>
@@ -2172,7 +2172,7 @@ const Settings = () => {
                                     value={hour.closeTime}
                                     onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
                                     disabled={!hour.isOpen}
-                                    className={`h-9 ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                    className={`h-9 rounded-xl ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
                               </div>
