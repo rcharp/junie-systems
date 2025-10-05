@@ -2116,22 +2116,22 @@ const Settings = () => {
                             </div>
                             
                             {/* Mobile Layout */}
-                            <div className="md:hidden border rounded-lg p-3 space-y-3">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
+                            <div className="md:hidden border rounded-lg p-3 space-y-3 w-full overflow-hidden">
+                              <div className="flex items-center justify-between gap-2 min-w-0">
+                                <div className="flex items-center gap-2 min-w-0 flex-1">
                                   <Checkbox
                                     checked={hour.isOpen}
                                     onCheckedChange={(checked) => 
                                       updateBusinessHours(hour.id, 'isOpen', !!checked)
                                     }
-                                    className="h-4 w-4"
+                                    className="h-4 w-4 flex-shrink-0"
                                   />
                                   <Select
                                     value={hour.day}
                                     onValueChange={(value) => updateBusinessHours(hour.id, 'day', value)}
                                     disabled={!hour.isOpen}
                                   >
-                                    <SelectTrigger className={`h-9 ${!hour.isOpen ? "opacity-50" : ""}`}>
+                                    <SelectTrigger className={`h-9 min-w-0 ${!hour.isOpen ? "opacity-50" : ""}`}>
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -2149,30 +2149,30 @@ const Settings = () => {
                                   size="sm"
                                   onClick={() => removeBusinessHours(hour.id)}
                                   disabled={businessHours.length <= 1}
-                                  className="h-8 w-8 p-0"
+                                  className="h-8 w-8 p-0 flex-shrink-0"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
-                              <div className="space-y-3">
-                                <div>
+                              <div className="space-y-3 w-full">
+                                <div className="w-full">
                                   <Label className="text-xs text-muted-foreground mb-1">Opening</Label>
                                   <Input
                                     type="time"
                                     value={hour.openTime}
                                     onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
                                     disabled={!hour.isOpen}
-                                    className={`h-9 text-sm w-full md:w-auto ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                    className={`h-9 text-sm w-full ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
-                                <div>
+                                <div className="w-full">
                                   <Label className="text-xs text-muted-foreground mb-1">Closing</Label>
                                   <Input
                                     type="time"
                                     value={hour.closeTime}
                                     onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
                                     disabled={!hour.isOpen}
-                                    className={`h-9 text-sm w-full md:w-auto ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                    className={`h-9 text-sm w-full ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
                               </div>
