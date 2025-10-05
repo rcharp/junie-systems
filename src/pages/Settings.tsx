@@ -2154,7 +2154,7 @@ const Settings = () => {
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
-                              <div className="grid grid-cols-2 gap-3">
+                              <div className="space-y-3">
                                 <div>
                                   <Label className="text-xs text-muted-foreground mb-1">Opening</Label>
                                   <Input
@@ -2288,7 +2288,8 @@ const Settings = () => {
                         
                         return (
                           <div key={index} className="space-y-3 p-4 border rounded-lg">
-                            <div className="flex gap-2 items-start">
+                            {/* Desktop Layout */}
+                            <div className="hidden md:flex gap-2 items-start">
                               <div className="flex-1">
                                 <Label htmlFor={`service-name-${index}`} className="text-sm font-medium">
                                   Service Name <span className="text-red-500">*</span>
@@ -2334,6 +2335,59 @@ const Settings = () => {
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               )}
+                            </div>
+                            
+                            {/* Mobile Layout */}
+                            <div className="md:hidden space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 space-y-2">
+                                  <div>
+                                    <Label htmlFor={`service-name-mobile-${index}`} className="text-sm font-medium">
+                                      Service Name <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                      id={`service-name-mobile-${index}`}
+                                      ref={(el) => serviceInputRefs.current[index] = el}
+                                      placeholder="Service name (e.g., Consultation)"
+                                      value={service.name}
+                                      onChange={(e) => {
+                                        updateService(index, 'name', e.target.value);
+                                        // Disabled auto-save - require manual save for validation
+                                      }}
+                                      className={service.name.trim() === '' && validationErrors.services ? "border-red-500" : ""}
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label htmlFor={`service-price-mobile-${index}`} className="text-sm font-medium">
+                                      Price <span className="text-red-500">*</span>
+                                    </Label>
+                                    <div className="relative">
+                                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                                      <Input
+                                        id={`service-price-mobile-${index}`}
+                                        placeholder="0.00"
+                                        value={service.price}
+                                      onChange={(e) => {
+                                        updateService(index, 'price', e.target.value);
+                                        // Disabled auto-save - require manual save for validation
+                                      }}
+                                        className={`pl-6 ${priceErrorClass}`}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                                {services.length > 1 && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeService(index)}
+                                    className="mt-6"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                              </div>
                             </div>
                             <div>
                               <Label htmlFor={`service-description-${index}`} className="text-sm font-medium">
