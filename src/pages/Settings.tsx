@@ -2162,7 +2162,7 @@ const Settings = () => {
                                     value={hour.openTime}
                                     onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
                                     disabled={!hour.isOpen}
-                                    className={`h-9 text-sm w-full ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                    className={`h-9 text-sm max-w-[180px] ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
                                 <div className="w-full">
@@ -2172,7 +2172,7 @@ const Settings = () => {
                                     value={hour.closeTime}
                                     onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
                                     disabled={!hour.isOpen}
-                                    className={`h-9 text-sm w-full ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                    className={`h-9 text-sm max-w-[180px] ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
                               </div>
