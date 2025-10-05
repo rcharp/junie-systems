@@ -2154,25 +2154,25 @@ const Settings = () => {
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
-                              <div className="space-y-3 min-w-0">
-                                <div className="min-w-0">
+                              <div className="space-y-3">
+                                <div>
                                   <Label className="text-xs text-muted-foreground mb-1">Opening</Label>
                                   <Input
                                     type="time"
                                     value={hour.openTime}
                                     onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
                                     disabled={!hour.isOpen}
-                                    className={`h-9 text-sm ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                    className={`h-9 text-sm w-full md:w-auto ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
-                                <div className="min-w-0">
+                                <div>
                                   <Label className="text-xs text-muted-foreground mb-1">Closing</Label>
                                   <Input
                                     type="time"
                                     value={hour.closeTime}
                                     onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
                                     disabled={!hour.isOpen}
-                                    className={`h-9 text-sm ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
+                                    className={`h-9 text-sm w-full md:w-auto ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
                               </div>
