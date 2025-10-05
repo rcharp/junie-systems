@@ -2154,8 +2154,8 @@ const Settings = () => {
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
-                              <div className="space-y-3 w-full flex flex-col items-center">
-                                <div className="w-full max-w-[180px]">
+                              <div className="space-y-3 w-full">
+                                <div className="w-full max-w-[200px] mx-auto">
                                   <Label className="text-xs text-muted-foreground mb-1">Opening</Label>
                                   <Input
                                     type="time"
@@ -2165,7 +2165,7 @@ const Settings = () => {
                                     className={`h-9 text-sm ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
-                                <div className="w-full max-w-[180px]">
+                                <div className="w-full max-w-[200px] mx-auto">
                                   <Label className="text-xs text-muted-foreground mb-1">Closing</Label>
                                   <Input
                                     type="time"
