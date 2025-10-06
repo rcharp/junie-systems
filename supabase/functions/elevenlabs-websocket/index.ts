@@ -52,17 +52,17 @@ async function getForwardingNumber(businessId?: string, userId?: string): Promis
 }
 
 serve(async (req) => {
+  const url = new URL(req.url);
+  const pathname = url.pathname;
+  
+  console.log(`[Request] Method: ${req.method}, Pathname: ${pathname}`);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const url = new URL(req.url);
-  const pathname = url.pathname;
-  
-  console.log(`[Request] Method: ${req.method}, Pathname: ${pathname}, URL: ${req.url}`);
-
-  // Handle incoming Twilio call - match the function name in the path
-  if (pathname.includes("elevenlabs-websocket") && req.method === "POST") {
+  // Handle incoming Twilio call (POST request)
+  if (req.method === "POST" && !pathname.includes("media-stream")) {
     try {
       // Twilio sends application/x-www-form-urlencoded data
       const text = await req.text();
