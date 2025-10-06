@@ -111,7 +111,7 @@ serve(async (req) => {
     }
   }
 
-  if (pathname === "/media-stream") {
+  if (pathname.includes("media-stream")) {
     const upgrade = req.headers.get("upgrade") || "";
     if (upgrade.toLowerCase() !== "websocket") {
       return new Response("Expected WebSocket connection", { status: 400 });
