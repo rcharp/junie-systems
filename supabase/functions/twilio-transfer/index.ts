@@ -100,19 +100,99 @@ serve(async (req) => {
   }
 
   try {
-    const { callSid, businessId, userId, agentNumber } = await req.json();
+    const body = await req.json();
+    console.log('[Transfer] Request received:', JSON.stringify(body, null, 2));
+
+    // Check if this is an ElevenLabs server tool webhook
+    const isElevenLabsWebhook = body.tool_name === 'transfer_call';
     
-    console.log('[Transfer] Request received:', { callSid, businessId, userId, agentNumber });
+    let callSid: string;
+    let businessId: string | null = null;
+    let userId: string | null = null;
+    let agentNumber: string | null = null;
+
+    if (isElevenLabsWebhook) {
+      console.log('[Transfer] ElevenLabs server tool webhook detected');
+      
+      // Extract call SID from conversation metadata or parameters
+      callSid = body.metadata?.call_sid || body.parameters?.call_sid;
+      businessId = body.metadata?.business_id || body.parameters?.business_id;
+      userId = body.metadata?.user_id || body.parameters?.user_id;
+      agentNumber = body.parameters?.agent_number || body.parameters?.phone_number;
+      
+      console.log('[Transfer] Extracted from ElevenLabs webhook:', { 
+        callSid, 
+        businessId, 
+        userId, 
+        agentNumber,
+        conversationId: body.conversation_id 
+      });
+
+      // Log the tool call event to database
+      try {
+        await supabase.from('client_tool_events').insert({
+          call_sid: callSid || 'unknown',
+          tool_name: body.tool_name,
+          tool_call_id: body.tool_call_id,
+          parameters: body.parameters || {},
+          is_error: false
+        });
+      } catch (dbError) {
+        console.error('[Transfer] Failed to log tool event:', dbError);
+      }
+    } else {
+      // Direct call format (legacy)
+      console.log('[Transfer] Direct/legacy format detected');
+      callSid = body.callSid;
+      businessId = body.businessId;
+      userId = body.userId;
+      agentNumber = body.agentNumber;
+    }
 
     if (!callSid) {
-      console.error('[Transfer] No call SID provided');
+      console.error('[Transfer] No call SID provided in request');
+      
+      const errorResponse = isElevenLabsWebhook 
+        ? { error: 'call_sid not found in webhook metadata or parameters' }
+        : { error: 'callSid is required' };
+
+      // Log error for ElevenLabs webhooks
+      if (isElevenLabsWebhook) {
+        try {
+          await supabase.from('client_tool_events').insert({
+            call_sid: 'unknown',
+            tool_name: body.tool_name,
+            tool_call_id: body.tool_call_id,
+            parameters: body.parameters || {},
+            result: 'Error: call_sid not found',
+            is_error: true
+          });
+        } catch (dbError) {
+          console.error('[Transfer] Failed to log error event:', dbError);
+        }
+      }
+      
       return new Response(
-        JSON.stringify({ error: 'callSid is required' }),
+        JSON.stringify(errorResponse),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     const result = await handleCallTransfer(callSid, businessId, userId, agentNumber);
+
+    // Log success for ElevenLabs webhooks
+    if (isElevenLabsWebhook) {
+      try {
+        await supabase.from('client_tool_events').update({
+          result: JSON.stringify(result),
+          is_error: false
+        })
+        .eq('tool_call_id', body.tool_call_id)
+        .eq('call_sid', callSid);
+      } catch (dbError) {
+        console.error('[Transfer] Failed to update tool event:', dbError);
+      }
+    }
 
     return new Response(
       JSON.stringify(result),
