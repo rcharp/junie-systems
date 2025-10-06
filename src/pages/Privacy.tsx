@@ -41,21 +41,62 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">3. Information Sharing</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">3. SMS/Text Messaging Privacy</h2>
+              <p>
+                If you provide us with your mobile phone number, you expressly consent to receive text messages 
+                (SMS) from us regarding your account, appointments, and service-related communications.
+              </p>
+              <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">Collection and Use of Mobile Phone Numbers</h3>
+              <p>
+                We collect mobile phone numbers for the following purposes:
+              </p>
+              <ul className="list-disc ml-6 space-y-2">
+                <li>To communicate with you about appointments and bookings</li>
+                <li>To provide customer service and support</li>
+                <li>To send service notifications and updates</li>
+                <li>To verify your identity and prevent fraud</li>
+              </ul>
+              
+              <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">Mobile Information Sharing Policy</h3>
+              <p className="font-semibold">
+                We do NOT share, sell, rent, or otherwise disclose your mobile phone number or SMS-related 
+                information to third parties or affiliates for marketing or promotional purposes.
+              </p>
+              <p>
+                Your mobile phone number will only be used by Junie for the purposes stated above. We use 
+                Twilio as our messaging service provider to facilitate SMS communications, but your number 
+                is not shared for any marketing purposes outside of our direct service to you.
+              </p>
+
+              <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">Messaging Frequency and Opt-Out</h3>
+              <ul className="list-disc ml-6 space-y-2">
+                <li>Message frequency varies based on your activity and preferences</li>
+                <li>Standard message and data rates may apply</li>
+                <li>You can opt out of SMS messages at any time by replying STOP to any message</li>
+                <li>For help, reply HELP or contact us at support@junie.ai</li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Information Sharing and Third Parties</h2>
               <p>
                 We do not sell, trade, or otherwise transfer your personal information to third parties 
                 without your consent, except as described in this policy. We may share information:
               </p>
               <ul className="list-disc ml-6 space-y-2">
-                <li>With service providers who assist in our operations</li>
+                <li>With service providers who assist in our operations (e.g., Twilio for messaging infrastructure)</li>
                 <li>To comply with legal obligations</li>
                 <li>To protect our rights and safety</li>
                 <li>In connection with a business transfer</li>
               </ul>
+              <p className="mt-3 font-medium">
+                Important: Service providers are contractually obligated to protect your information and 
+                are prohibited from using your mobile phone number for their own marketing purposes.
+              </p>
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">4. Data Security</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Data Security</h2>
               <p>
                 We implement appropriate technical and organizational measures to protect your personal 
                 information against unauthorized access, alteration, disclosure, or destruction. However, 
@@ -64,7 +105,7 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">5. Your Rights</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Your Rights</h2>
               <p>You have the right to:</p>
               <ul className="list-disc ml-6 space-y-2">
                 <li>Access, update, or delete your personal information</li>
@@ -75,7 +116,7 @@ const Privacy = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Contact Us</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Contact Us</h2>
               <p>
                 If you have any questions about this Privacy Policy, please contact us at:
               </p>
