@@ -104,7 +104,9 @@ serve(async (req) => {
     console.log('[Transfer] Request received:', JSON.stringify(body, null, 2));
 
     // Check if this is an ElevenLabs server tool webhook
-    const isElevenLabsWebhook = body.tool_name === 'transfer_call';
+    // ElevenLabs sends: { business_id, forwarding_number, etc }
+    // Legacy sends: { callSid, businessId, userId, agentNumber }
+    const isElevenLabsWebhook = body.business_id && !body.callSid;
     
     let callSid: string;
     let businessId: string | null = null;
