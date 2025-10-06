@@ -54,16 +54,19 @@ async function getForwardingNumber(businessId?: string, userId?: string): Promis
 serve(async (req) => {
   const url = new URL(req.url);
   const upgrade = req.headers.get("upgrade") || "";
+  const method = req.method;
   
-  console.log(`[Request] Method: ${req.method}, URL: ${req.url}, Upgrade: ${upgrade}`);
+  console.log(`[Request] Method: ${method}, URL: ${req.url}`);
+  console.log(`[Request] Headers - Upgrade: ${upgrade}, Connection: ${req.headers.get("connection")}`);
 
-  if (req.method === 'OPTIONS') {
+  if (method === 'OPTIONS') {
+    console.log("[CORS] Handling OPTIONS request");
     return new Response(null, { headers: corsHeaders });
   }
 
   // Handle WebSocket connections for media streaming
   if (upgrade.toLowerCase() === "websocket") {
-    console.log("[WebSocket] Handling WebSocket upgrade");
+    console.log("[WebSocket] ✅ WebSocket upgrade detected - starting WebSocket handler");
     
     const { socket, response } = Deno.upgradeWebSocket(req);
     
