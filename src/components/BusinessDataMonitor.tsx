@@ -249,105 +249,49 @@ export const BusinessDataMonitor: React.FC = () => {
   return (
     <Card className="w-full">
       <CardHeader className="pb-4">
-        {/* Mobile Layout */}
-        <div className="md:hidden space-y-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Database className="h-4 w-4 text-primary" />
-            Business Data Requests
-          </CardTitle>
-          <CardDescription className="text-sm">
-            Monitor POST requests to the get-business-data endpoint
-          </CardDescription>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleManualRequest}
-              disabled={loading}
-              className="flex items-center gap-1 text-xs"
-            >
-              <Send className="h-3 w-3" />
-              Test Request
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="flex items-center gap-1 text-xs"
-            >
-              {isMinimized ? (
-                <>
-                  <Maximize2 className="h-3 w-3" />
-                  Expand
-                </>
-              ) : (
-                <>
-                  <Minimize2 className="h-3 w-3" />
-                  Minimize
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden md:flex justify-between items-start">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-primary" />
-              Business Data Requests
-            </CardTitle>
-            <CardDescription>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg">Business Data Requests</CardTitle>
+            <CardDescription className="mt-1.5">
               Monitor POST requests to the get-business-data endpoint
             </CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleManualRequest}
               disabled={loading}
-              className="flex items-center gap-2"
+              className="shrink-0"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-4 w-4 mr-2" />
               Test Request
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => setIsMinimized(!isMinimized)}
-              className="flex items-center gap-2"
+              className="shrink-0"
             >
-              {isMinimized ? (
-                <>
-                  <Maximize2 className="h-4 w-4" />
-                  Expand
-                </>
-              ) : (
-                <>
-                  <Minimize2 className="h-4 w-4" />
-                  Minimize
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-            >
-              {autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchBusinessDataRequests}
-              disabled={loading}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
             </Button>
           </div>
         </div>
+        {!isMinimized && (
+          <div className="flex items-center justify-between pt-3 border-t mt-3">
+            <p className="text-xs text-muted-foreground">
+              Showing {startIndex + 1}-{actualEndIndex} of {requestData.length}
+            </p>
+            <Button
+              variant={autoRefresh ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className="text-xs"
+            >
+              Auto-refresh {autoRefresh ? 'ON' : 'OFF'}
+            </Button>
+          </div>
+        )}
       </CardHeader>
       {!isMinimized && (
       <CardContent>

@@ -716,104 +716,49 @@ export const WebhookMonitor = () => {
   return (
     <Card>
       <CardHeader className="pb-4">
-        {/* Mobile Layout */}
-        <div className="md:hidden space-y-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Webhook className="h-4 w-4" />
-            Post-Call Data
-          </CardTitle>
-          <CardDescription className="text-sm">
-            Real-time monitoring of completed call summaries and transcripts
-          </CardDescription>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleTestPostCallData}
-              disabled={loading}
-              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 text-xs"
-            >
-              <Activity className="h-3 w-3 mr-1" />
-              Manual Data Call
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsMinimized(!isMinimized)}
-              className="flex items-center gap-1 text-xs"
-            >
-              {isMinimized ? (
-                <>
-                  <Maximize2 className="h-3 w-3" />
-                  Expand
-                </>
-              ) : (
-                <>
-                  <Minimize2 className="h-3 w-3" />
-                  Minimize
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden md:flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Webhook className="h-5 w-5" />
-              Post-Call Data
-            </CardTitle>
-            <CardDescription>
+        <div className="flex items-center justify-between">
+          <div className="flex-1">
+            <CardTitle className="text-lg">Post-Call Data</CardTitle>
+            <CardDescription className="mt-1.5">
               Real-time monitoring of completed call summaries and transcripts
             </CardDescription>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={handleTestPostCallData}
               disabled={loading}
-              className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+              className="shrink-0"
             >
-              <Activity className="h-4 w-4 mr-1" />
+              <Activity className="h-4 w-4 mr-2" />
               Manual Data Call
             </Button>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => setIsMinimized(!isMinimized)}
-              className="flex items-center gap-2"
+              className="shrink-0"
             >
-              {isMinimized ? (
-                <>
-                  <Maximize2 className="h-4 w-4" />
-                  Expand
-                </>
-              ) : (
-                <>
-                  <Minimize2 className="h-4 w-4" />
-                  Minimize
-                </>
-              )}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setAutoRefresh(!autoRefresh)}
-            >
-              {autoRefresh ? 'Auto-refresh ON' : 'Auto-refresh OFF'}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={loading}
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
             </Button>
           </div>
         </div>
+        {!isMinimized && (
+          <div className="flex items-center justify-between pt-3 border-t mt-3">
+            <p className="text-xs text-muted-foreground">
+              Showing {startIndex + 1}-{actualEndIndex} of {webhookData.length}
+            </p>
+            <Button
+              variant={autoRefresh ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className="text-xs"
+            >
+              Auto-refresh {autoRefresh ? 'ON' : 'OFF'}
+            </Button>
+          </div>
+        )}
       </CardHeader>
       {!isMinimized && (
       <CardContent>
