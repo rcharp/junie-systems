@@ -456,17 +456,14 @@ const AdminDashboard = () => {
               <p className="text-sm text-muted-foreground">Real-time monitoring of API endpoints and webhooks</p>
             </div>
 
-            {/* Top Row - Post-Call Data and Business Data Requests */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* 2x2 Grid Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
               {/* Post-Call Data */}
               <WebhookMonitor />
 
               {/* Business Data Requests */}
               <BusinessDataMonitor />
-            </div>
 
-            {/* Bottom Row - Client Tool Events and Calendar Testing */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {/* Client Tool Events Monitor */}
               <ClientToolMonitor />
 
@@ -521,9 +518,9 @@ const AdminDashboard = () => {
                       {calendarAvailability.slots && calendarAvailability.slots.length > 0 ? (
                         <div>
                           <h4 className="font-medium mb-3 text-sm">Available Time Slots ({calendarAvailability.slots.length})</h4>
-                          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                          <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                             {calendarAvailability.slots.map((slot: any, index: number) => (
-                              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border/50">
+                              <div key={index} className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border/50">
                                 <div className="min-w-0 flex-1">
                                   <p className="font-medium text-sm truncate">{slot.humanReadable}</p>
                                   <p className="text-xs text-muted-foreground">
@@ -549,7 +546,7 @@ const AdminDashboard = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center py-12">
+                    <div className="flex items-center justify-center py-8">
                       <p className="text-muted-foreground text-sm text-center">
                         Click "Test Availability" to check Google Calendar availability endpoint
                       </p>
