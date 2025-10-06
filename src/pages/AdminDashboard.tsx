@@ -14,6 +14,7 @@ import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { TodoChecklist } from '@/components/TodoChecklist';
 import { BusinessTypesManager } from '@/components/BusinessTypesManager';
 import { AdminSettings } from '@/components/AdminSettings';
+import { ClientToolMonitor } from '@/components/ClientToolMonitor';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -449,6 +450,9 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="api" className="space-y-6">
+            {/* Client Tool Events Monitor */}
+            <ClientToolMonitor />
+
             {/* Google Calendar Availability Testing */}
             <Card>
               <CardHeader className="pb-4">

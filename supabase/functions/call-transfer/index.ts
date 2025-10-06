@@ -164,6 +164,19 @@ serve(async (req) => {
             console.log(`[II] Tool call ID: ${message.client_tool_call?.tool_call_id}`);
             console.log(`[II] Parameters: ${JSON.stringify(message.client_tool_call?.parameters || {})}`);
 
+            // Log the client tool call event to database
+            if (callSid) {
+              const callContext = activeCalls.get(callSid);
+              await supabase.from('client_tool_events').insert({
+                call_sid: callSid,
+                tool_name: message.client_tool_call?.tool_name,
+                tool_call_id: message.client_tool_call?.tool_call_id,
+                parameters: message.client_tool_call?.parameters || {},
+                business_id: callContext?.businessId,
+                user_id: callContext?.userId
+              });
+            }
+
             if (message.client_tool_call?.tool_name === "transfer_call" && callSid) {
               console.log(`[II] Processing transfer_call for call ${callSid}`);
 
@@ -209,22 +222,44 @@ serve(async (req) => {
                 const result = await response.json();
                 console.log("[II] Supabase Edge Function result:", result);
 
+                const resultMessage = result.success 
+                  ? "Transfer initiated successfully" 
+                  : `Transfer failed: ${result.error}`;
+
+                // Update the event with the result
+                await supabase
+                  .from('client_tool_events')
+                  .update({
+                    result: resultMessage,
+                    is_error: !result.success
+                  })
+                  .eq('tool_call_id', message.client_tool_call.tool_call_id);
+
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
                   tool_call_id: message.client_tool_call.tool_call_id,
-                  result: result.success 
-                    ? "Transfer initiated successfully" 
-                    : `Transfer failed: ${result.error}`,
+                  result: resultMessage,
                   is_error: !result.success
                 }));
 
               } catch (error) {
                 console.error("[II] Error calling Supabase Edge Function:", error);
                 
+                const errorMessage = `Transfer failed: ${error.message}`;
+
+                // Update the event with the error
+                await supabase
+                  .from('client_tool_events')
+                  .update({
+                    result: errorMessage,
+                    is_error: true
+                  })
+                  .eq('tool_call_id', message.client_tool_call.tool_call_id);
+                
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
                   tool_call_id: message.client_tool_call.tool_call_id,
-                  result: `Transfer failed: ${error.message}`,
+                  result: errorMessage,
                   is_error: true
                 }));
               }

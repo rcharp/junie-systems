@@ -382,6 +382,45 @@ export type Database = {
         }
         Relationships: []
       }
+      client_tool_events: {
+        Row: {
+          business_id: string | null
+          call_sid: string
+          created_at: string | null
+          id: string
+          is_error: boolean | null
+          parameters: Json | null
+          result: string | null
+          tool_call_id: string
+          tool_name: string
+          user_id: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          call_sid: string
+          created_at?: string | null
+          id?: string
+          is_error?: boolean | null
+          parameters?: Json | null
+          result?: string | null
+          tool_call_id: string
+          tool_name: string
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          call_sid?: string
+          created_at?: string | null
+          id?: string
+          is_error?: boolean | null
+          parameters?: Json | null
+          result?: string | null
+          tool_call_id?: string
+          tool_name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       google_calendar_settings: {
         Row: {
           appointment_duration: number | null
