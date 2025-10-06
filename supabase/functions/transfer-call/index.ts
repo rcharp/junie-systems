@@ -60,30 +60,7 @@ async function handleCallTransfer(
   console.log('[Transfer] Using agent number:', agentNumber);
 
   try {
-    // Get call details from Twilio
-    const callDetailsUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls/${callSid}.json`;
-    const callDetailsResponse = await fetch(callDetailsUrl, {
-      headers: {
-        'Authorization': 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)
-      }
-    });
-
-    if (!callDetailsResponse.ok) {
-      throw new Error(`Failed to get call details: ${callDetailsResponse.status}`);
-    }
-
-    const callDetails = await callDetailsResponse.json();
-    console.log('[Transfer] Call details:', { 
-      from: callDetails.from, 
-      to: callDetails.to, 
-      status: callDetails.status 
-    });
-
-    // Create a conference and move the caller to it
-    const conferenceName = `transfer-${callSid}`;
-    console.log('[Transfer] Creating conference:', conferenceName);
-
-    // Update the original call to join the conference
+    // Simple approach: just update the call with a Dial verb to the agent
     const updateCallUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls/${callSid}.json`;
     const updateResponse = await fetch(updateCallUrl, {
       method: 'POST',
@@ -92,46 +69,23 @@ async function handleCallTransfer(
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
-        Twiml: `<Response><Say>Please hold while we transfer you.</Say><Dial><Conference>${conferenceName}</Conference></Dial></Response>`
+        Twiml: `<Response><Say>Transferring you now.</Say><Dial>${agentNumber}</Dial></Response>`
       }).toString()
     });
 
     if (!updateResponse.ok) {
-      throw new Error(`Failed to update call: ${updateResponse.status}`);
+      const errorText = await updateResponse.text();
+      console.error('[Transfer] Failed to update call:', errorText);
+      throw new Error(`Failed to transfer call: ${updateResponse.status}`);
     }
 
-    console.log('[Transfer] Caller moved to conference');
-
-    // Wait a moment for the caller to join
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Dial the agent and connect them to the same conference
-    const dialUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`;
-    const dialResponse = await fetch(dialUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`),
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        From: callDetails.to,
-        To: agentNumber,
-        Twiml: `<Response><Dial><Conference>${conferenceName}</Conference></Dial></Response>`
-      }).toString()
-    });
-
-    if (!dialResponse.ok) {
-      throw new Error(`Failed to dial agent: ${dialResponse.status}`);
-    }
-
-    const dialResult = await dialResponse.json();
-    console.log('[Transfer] Agent call initiated:', dialResult.sid);
+    const result = await updateResponse.json();
+    console.log('[Transfer] Call transfer initiated:', result);
 
     return {
       success: true,
-      message: 'Call transfer initiated',
-      conferenceName,
-      agentCallSid: dialResult.sid
+      message: 'Call transferred successfully',
+      callSid: result.sid
     };
   } catch (error) {
     console.error('[Transfer] Error during transfer:', error);
