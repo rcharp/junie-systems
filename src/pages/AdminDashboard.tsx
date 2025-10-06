@@ -449,21 +449,37 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
           
-          <TabsContent value="api">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value="api" className="space-y-6">
+            {/* API Monitoring Section Header */}
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-2">API Monitoring & Testing</h3>
+              <p className="text-sm text-muted-foreground">Real-time monitoring of API endpoints and webhooks</p>
+            </div>
+
+            {/* Top Row - Post-Call Data and Business Data Requests */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {/* Post-Call Data */}
+              <WebhookMonitor />
+
+              {/* Business Data Requests */}
+              <BusinessDataMonitor />
+            </div>
+
+            {/* Bottom Row - Client Tool Events and Calendar Testing */}
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {/* Client Tool Events Monitor */}
               <ClientToolMonitor />
 
               {/* Google Calendar Availability Testing */}
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader className="pb-4">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
+                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                    <div className="flex-1">
+                      <CardTitle className="flex items-center gap-2 text-lg">
                         <Clock className="h-5 w-5" />
                         Google Calendar Availability Test
                       </CardTitle>
-                      <CardDescription>
+                      <CardDescription className="mt-1.5">
                         Test the Google Calendar availability endpoint to see current results
                       </CardDescription>
                     </div>
@@ -472,7 +488,7 @@ const AdminDashboard = () => {
                       disabled={calendarLoading}
                       size="sm"
                       variant="outline"
-                      className="md:w-auto w-full"
+                      className="md:w-auto w-full shrink-0"
                     >
                       {calendarLoading ? (
                         <RefreshCw className="h-4 w-4 animate-spin mr-2" />
@@ -483,20 +499,20 @@ const AdminDashboard = () => {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1">
                   {calendarAvailability ? (
                     <div className="space-y-4">
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-                        <Badge variant={calendarAvailability.available ? "default" : "destructive"} className="text-xs">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant={calendarAvailability.available ? "default" : "destructive"}>
                           {calendarAvailability.available ? "Available" : "Unavailable"}
                         </Badge>
                         {calendarAvailability.timezone && (
-                          <Badge variant="outline" className="text-xs truncate max-w-[120px] sm:max-w-none">
+                          <Badge variant="outline" className="truncate max-w-[150px]">
                             {calendarAvailability.timezone}
                           </Badge>
                         )}
                         {calendarAvailability.duration && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary">
                             {calendarAvailability.duration} min slots
                           </Badge>
                         )}
@@ -504,17 +520,17 @@ const AdminDashboard = () => {
                       
                       {calendarAvailability.slots && calendarAvailability.slots.length > 0 ? (
                         <div>
-                          <h4 className="font-medium mb-3 text-sm sm:text-base">Available Time Slots ({calendarAvailability.slots.length})</h4>
-                          <div className="grid gap-2 max-h-60 overflow-y-auto">
+                          <h4 className="font-medium mb-3 text-sm">Available Time Slots ({calendarAvailability.slots.length})</h4>
+                          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                             {calendarAvailability.slots.map((slot: any, index: number) => (
-                              <div key={index} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-muted rounded-lg space-y-2 sm:space-y-0">
+                              <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border border-border/50">
                                 <div className="min-w-0 flex-1">
-                                  <p className="font-medium text-sm sm:text-base truncate">{slot.humanReadable}</p>
-                                  <p className="text-xs sm:text-sm text-muted-foreground">
+                                  <p className="font-medium text-sm truncate">{slot.humanReadable}</p>
+                                  <p className="text-xs text-muted-foreground">
                                     {slot.startTime} - {slot.endTime}
                                   </p>
                                 </div>
-                                <Badge variant="outline" className="capitalize text-xs w-fit">
+                                <Badge variant="outline" className="capitalize text-xs ml-3 shrink-0">
                                   {slot.timeOfDay}
                                 </Badge>
                               </div>
@@ -533,18 +549,14 @@ const AdminDashboard = () => {
                       )}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground text-sm">
-                      Click "Test Availability" to check Google Calendar availability endpoint
-                    </p>
+                    <div className="flex items-center justify-center py-12">
+                      <p className="text-muted-foreground text-sm text-center">
+                        Click "Test Availability" to check Google Calendar availability endpoint
+                      </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
-
-              {/* Post-Call Data */}
-              <WebhookMonitor />
-
-              {/* Business Data Requests */}
-              <BusinessDataMonitor />
             </div>
           </TabsContent>
           
