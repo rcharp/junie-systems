@@ -559,6 +559,10 @@ const AdminDashboard = () => {
               </Card>
             </div>
           </TabsContent>
+
+          <TabsContent value="todos" className="space-y-6">
+            <TodoChecklist />
+          </TabsContent>
         </Tabs>
       </main>
     </div>
