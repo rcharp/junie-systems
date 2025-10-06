@@ -117,11 +117,11 @@ serve(async (req) => {
     if (isElevenLabsWebhook) {
       console.log('[Transfer] ElevenLabs server tool webhook detected');
       
-      // Get the business_id or forwarding_number from parameters
-      const transferBusinessId = body.parameters?.business_id;
-      const forwardingNumber = body.parameters?.forwarding_number || body.parameters?.phone_number;
+      // Get the business_id and forwarding_number directly from body (not nested in parameters)
+      const transferBusinessId = body.business_id;
+      const forwardingNumber = body.forwarding_number;
       
-      console.log('[Transfer] Parameters:', { transferBusinessId, forwardingNumber });
+      console.log('[Transfer] ElevenLabs data:', { transferBusinessId, forwardingNumber });
       
       // Look up the most recent call for this business (within last 5 minutes)
       if (transferBusinessId) {
@@ -134,7 +134,7 @@ serve(async (req) => {
           .gte('created_at', fiveMinutesAgo)
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
           
         if (mapping && !mappingError) {
           callSid = mapping.call_sid;
