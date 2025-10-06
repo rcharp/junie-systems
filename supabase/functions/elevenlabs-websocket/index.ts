@@ -53,70 +53,18 @@ async function getForwardingNumber(businessId?: string, userId?: string): Promis
 
 serve(async (req) => {
   const url = new URL(req.url);
-  const pathname = url.pathname;
+  const upgrade = req.headers.get("upgrade") || "";
   
-  console.log(`[Request] Method: ${req.method}, Pathname: ${pathname}`);
+  console.log(`[Request] Method: ${req.method}, URL: ${req.url}, Upgrade: ${upgrade}`);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Handle incoming Twilio call (POST request)
-  if (req.method === "POST" && !pathname.includes("media-stream")) {
-    try {
-      // Twilio sends application/x-www-form-urlencoded data
-      const text = await req.text();
-      console.log(`[Twilio] Raw body: ${text.substring(0, 200)}`);
-      
-      const params = new URLSearchParams(text);
-      const callSid = params.get('CallSid');
-      
-      console.log(`[Twilio] Incoming call received with SID: ${callSid}`);
-      console.log(`[Twilio] From: ${params.get('From')}, To: ${params.get('To')}`);
-
-      if (callSid) {
-        activeCalls.set(callSid, {
-          status: "active",
-          from: params.get('From'),
-          to: params.get('To'),
-          started: new Date(),
-          businessId: params.get('BusinessId') || undefined,
-          userId: params.get('UserId') || undefined,
-        });
-      }
-
-      // Return TwiML to connect to our WebSocket media stream
-      const host = req.headers.get('host');
-      const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Connect>
-    <Stream url="wss://${host}/functions/v1/elevenlabs-websocket/media-stream" />
-  </Connect>
-</Response>`;
-
-      console.log(`[Twilio] Returning TwiML with WebSocket URL: wss://${host}/functions/v1/elevenlabs-websocket/media-stream`);
-
-      return new Response(twimlResponse, {
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'text/xml' 
-        }
-      });
-    } catch (error) {
-      console.error('[Twilio] Error processing incoming call:', error);
-      return new Response('Error processing call', { 
-        status: 500,
-        headers: corsHeaders 
-      });
-    }
-  }
-
-  if (pathname.includes("media-stream")) {
-    const upgrade = req.headers.get("upgrade") || "";
-    if (upgrade.toLowerCase() !== "websocket") {
-      return new Response("Expected WebSocket connection", { status: 400 });
-    }
-
+  // Handle WebSocket connections for media streaming
+  if (upgrade.toLowerCase() === "websocket") {
+    console.log("[WebSocket] Handling WebSocket upgrade");
+    
     const { socket, response } = Deno.upgradeWebSocket(req);
     
     let streamSid: string | null = null;
@@ -155,7 +103,6 @@ serve(async (req) => {
 
           case "audio":
             if (message.audio_event?.audio_base_64) {
-              console.log("[II] Received audio from ElevenLabs, sending to Twilio");
               socket.send(JSON.stringify({ 
                 event: "media", 
                 streamSid, 
@@ -364,6 +311,56 @@ serve(async (req) => {
     };
 
     return response;
+  }
+
+  // Handle incoming Twilio call (POST request)
+  if (req.method === "POST") {
+    try {
+      // Twilio sends application/x-www-form-urlencoded data
+      const text = await req.text();
+      console.log(`[Twilio] Raw body: ${text.substring(0, 200)}`);
+      
+      const params = new URLSearchParams(text);
+      const callSid = params.get('CallSid');
+      
+      console.log(`[Twilio] Incoming call received with SID: ${callSid}`);
+      console.log(`[Twilio] From: ${params.get('From')}, To: ${params.get('To')}`);
+
+      if (callSid) {
+        activeCalls.set(callSid, {
+          status: "active",
+          from: params.get('From'),
+          to: params.get('To'),
+          started: new Date(),
+          businessId: params.get('BusinessId') || undefined,
+          userId: params.get('UserId') || undefined,
+        });
+      }
+
+      // Return TwiML to connect to our WebSocket media stream
+      const host = req.headers.get('host');
+      const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Connect>
+    <Stream url="wss://${host}/functions/v1/elevenlabs-websocket" />
+  </Connect>
+</Response>`;
+
+      console.log(`[Twilio] Returning TwiML with WebSocket URL: wss://${host}/functions/v1/elevenlabs-websocket`);
+
+      return new Response(twimlResponse, {
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'text/xml' 
+        }
+      });
+    } catch (error) {
+      console.error('[Twilio] Error processing incoming call:', error);
+      return new Response('Error processing call', { 
+        status: 500,
+        headers: corsHeaders 
+      });
+    }
   }
 
   return new Response("Not Found", { status: 404 });
