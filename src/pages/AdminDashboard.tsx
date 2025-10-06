@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut, Clock, RefreshCw } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
 import { UserWebhookList } from '@/components/UserWebhookList';
@@ -470,9 +471,9 @@ const AdminDashboard = () => {
               {/* Google Calendar Availability Testing */}
               <Card className="flex flex-col">
                 <CardHeader className="pb-4">
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                  <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2 text-lg">
+                      <CardTitle className="text-lg flex items-center gap-2">
                         <Clock className="h-5 w-5" />
                         Google Calendar Availability Test
                       </CardTitle>
@@ -485,7 +486,7 @@ const AdminDashboard = () => {
                       disabled={calendarLoading}
                       size="sm"
                       variant="outline"
-                      className="md:w-auto w-full shrink-0"
+                      className="shrink-0"
                     >
                       {calendarLoading ? (
                         <RefreshCw className="h-4 w-4 animate-spin mr-2" />
@@ -518,21 +519,23 @@ const AdminDashboard = () => {
                       {calendarAvailability.slots && calendarAvailability.slots.length > 0 ? (
                         <div>
                           <h4 className="font-medium mb-3 text-sm">Available Time Slots ({calendarAvailability.slots.length})</h4>
-                          <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                            {calendarAvailability.slots.map((slot: any, index: number) => (
-                              <div key={index} className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border/50">
-                                <div className="min-w-0 flex-1">
-                                  <p className="font-medium text-sm truncate">{slot.humanReadable}</p>
-                                  <p className="text-xs text-muted-foreground">
-                                    {slot.startTime} - {slot.endTime}
-                                  </p>
+                          <ScrollArea className="h-[300px]">
+                            <div className="space-y-2 pr-4">
+                              {calendarAvailability.slots.map((slot: any, index: number) => (
+                                <div key={index} className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border/50">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-medium text-sm truncate">{slot.humanReadable}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {slot.startTime} - {slot.endTime}
+                                    </p>
+                                  </div>
+                                  <Badge variant="outline" className="capitalize text-xs ml-3 shrink-0">
+                                    {slot.timeOfDay}
+                                  </Badge>
                                 </div>
-                                <Badge variant="outline" className="capitalize text-xs ml-3 shrink-0">
-                                  {slot.timeOfDay}
-                                </Badge>
-                              </div>
-                            ))}
-                          </div>
+                              ))}
+                            </div>
+                          </ScrollArea>
                         </div>
                       ) : (
                         <p className="text-muted-foreground text-sm">No available slots found</p>
@@ -546,7 +549,7 @@ const AdminDashboard = () => {
                       )}
                     </div>
                   ) : (
-                    <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center justify-center py-12">
                       <p className="text-muted-foreground text-sm text-center">
                         Click "Test Availability" to check Google Calendar availability endpoint
                       </p>
@@ -555,10 +558,6 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="todos">
-            <TodoChecklist />
           </TabsContent>
         </Tabs>
       </main>
