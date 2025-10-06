@@ -58,8 +58,11 @@ serve(async (req) => {
 
   const url = new URL(req.url);
   const pathname = url.pathname;
+  
+  console.log(`[Request] Method: ${req.method}, Pathname: ${pathname}, URL: ${req.url}`);
 
-  if (pathname === "/incoming-call-eleven" && req.method === "POST") {
+  // Handle incoming Twilio call (root path or /incoming-call-eleven)
+  if ((pathname === "/" || pathname === "/incoming-call-eleven") && req.method === "POST") {
     try {
       // Twilio sends application/x-www-form-urlencoded data
       const text = await req.text();
