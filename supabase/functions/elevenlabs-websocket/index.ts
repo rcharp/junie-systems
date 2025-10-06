@@ -61,8 +61,8 @@ serve(async (req) => {
   
   console.log(`[Request] Method: ${req.method}, Pathname: ${pathname}, URL: ${req.url}`);
 
-  // Handle incoming Twilio call (root path or /incoming-call-eleven)
-  if ((pathname === "/" || pathname === "/incoming-call-eleven") && req.method === "POST") {
+  // Handle incoming Twilio call - match the function name in the path
+  if (pathname.includes("elevenlabs-websocket") && req.method === "POST") {
     try {
       // Twilio sends application/x-www-form-urlencoded data
       const text = await req.text();
