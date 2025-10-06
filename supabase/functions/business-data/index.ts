@@ -91,6 +91,32 @@ serve(async (req) => {
         console.log('ElevenLabs business_id from body:', parsedBody?.business_id);
         console.log('Final business_id used:', conversationBusinessId);
         
+        // Store call_sid for transfer - use a temporary mapping with just business_id since we don't have conversation_id yet
+        if (parsedBody?.call_sid && conversationBusinessId) {
+          const { data: businessSettings } = await supabase
+            .from('business_settings')
+            .select('user_id')
+            .eq('id', conversationBusinessId)
+            .single();
+            
+          // Store most recent call for this business (will be used for transfer lookup)
+          const { error: mappingError } = await supabase
+            .from('conversation_call_mapping')
+            .upsert({
+              conversation_id: `temp_${conversationBusinessId}_${Date.now()}`,
+              call_sid: parsedBody.call_sid,
+              business_id: conversationBusinessId,
+              user_id: businessSettings?.user_id
+            });
+            
+          if (mappingError) {
+            console.error('Error storing call mapping:', mappingError);
+          } else {
+            console.log('Stored call mapping for business:', conversationBusinessId, 'call_sid:', parsedBody.call_sid);
+          }
+        }
+
+        
         // Get actual business data and available times for conversation initiation
         const { data: businessDataForInit, error: businessError } = await supabase
           .from('business_settings')

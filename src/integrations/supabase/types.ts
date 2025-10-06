@@ -421,6 +421,33 @@ export type Database = {
         }
         Relationships: []
       }
+      conversation_call_mapping: {
+        Row: {
+          business_id: string | null
+          call_sid: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          business_id?: string | null
+          call_sid: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          business_id?: string | null
+          call_sid?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       google_calendar_settings: {
         Row: {
           appointment_duration: number | null

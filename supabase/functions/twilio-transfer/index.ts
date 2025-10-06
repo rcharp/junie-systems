@@ -110,22 +110,49 @@ serve(async (req) => {
     let businessId: string | null = null;
     let userId: string | null = null;
     let agentNumber: string | null = null;
+    let conversationId: string | null = null;
 
     if (isElevenLabsWebhook) {
       console.log('[Transfer] ElevenLabs server tool webhook detected');
       
-      // Extract call SID from conversation metadata or parameters
-      callSid = body.metadata?.call_sid || body.parameters?.call_sid;
-      businessId = body.metadata?.business_id || body.parameters?.business_id;
-      userId = body.metadata?.user_id || body.parameters?.user_id;
-      agentNumber = body.parameters?.agent_number || body.parameters?.phone_number;
+      // Get the business_id or forwarding_number from parameters
+      const transferBusinessId = body.parameters?.business_id;
+      const forwardingNumber = body.parameters?.forwarding_number || body.parameters?.phone_number;
+      
+      console.log('[Transfer] Parameters:', { transferBusinessId, forwardingNumber });
+      
+      // Look up the most recent call for this business (within last 5 minutes)
+      if (transferBusinessId) {
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        
+        const { data: mapping, error: mappingError } = await supabase
+          .from('conversation_call_mapping')
+          .select('*')
+          .eq('business_id', transferBusinessId)
+          .gte('created_at', fiveMinutesAgo)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+          
+        if (mapping && !mappingError) {
+          callSid = mapping.call_sid;
+          businessId = mapping.business_id;
+          userId = mapping.user_id;
+          console.log('[Transfer] Found recent call mapping:', { callSid, businessId, userId });
+        } else {
+          console.error('[Transfer] No recent mapping found for business:', transferBusinessId, mappingError);
+        }
+      }
+      
+      agentNumber = forwardingNumber;
+
       
       console.log('[Transfer] Extracted from ElevenLabs webhook:', { 
         callSid, 
         businessId, 
         userId, 
         agentNumber,
-        conversationId: body.conversation_id 
+        conversationId 
       });
 
       // Log the tool call event to database
@@ -135,6 +162,8 @@ serve(async (req) => {
           tool_name: body.tool_name,
           tool_call_id: body.tool_call_id,
           parameters: body.parameters || {},
+          business_id: businessId,
+          user_id: userId,
           is_error: false
         });
       } catch (dbError) {
@@ -150,10 +179,14 @@ serve(async (req) => {
     }
 
     if (!callSid) {
-      console.error('[Transfer] No call SID provided in request');
+      console.error('[Transfer] No call SID provided or found');
       
       const errorResponse = isElevenLabsWebhook 
-        ? { error: 'call_sid not found in webhook metadata or parameters' }
+        ? { 
+            error: 'call_sid not found for conversation', 
+            conversation_id: conversationId,
+            hint: 'Conversation mapping may not have been created yet'
+          }
         : { error: 'callSid is required' };
 
       // Log error for ElevenLabs webhooks
@@ -164,7 +197,7 @@ serve(async (req) => {
             tool_name: body.tool_name,
             tool_call_id: body.tool_call_id,
             parameters: body.parameters || {},
-            result: 'Error: call_sid not found',
+            result: JSON.stringify(errorResponse),
             is_error: true
           });
         } catch (dbError) {
