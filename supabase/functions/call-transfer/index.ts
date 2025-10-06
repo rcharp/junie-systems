@@ -58,36 +58,53 @@ serve(async (req) => {
   const url = new URL(req.url);
   const pathname = url.pathname;
 
-  if (pathname === "/incoming-call-eleven" && (req.method === "GET" || req.method === "POST")) {
-    const body = await req.formData();
-    const callSid = body.get('CallSid') as string;
-    
-    console.log(`[Twilio] Incoming call received with SID: ${callSid}`);
+  if (pathname === "/incoming-call-eleven" && req.method === "POST") {
+    try {
+      // Twilio sends application/x-www-form-urlencoded data
+      const text = await req.text();
+      console.log(`[Twilio] Raw body: ${text.substring(0, 200)}`);
+      
+      const params = new URLSearchParams(text);
+      const callSid = params.get('CallSid');
+      
+      console.log(`[Twilio] Incoming call received with SID: ${callSid}`);
+      console.log(`[Twilio] From: ${params.get('From')}, To: ${params.get('To')}`);
 
-    if (callSid) {
-      activeCalls.set(callSid, {
-        status: "active",
-        from: body.get('From'),
-        to: body.get('To'),
-        started: new Date(),
-        businessId: body.get('BusinessId') as string || undefined,
-        userId: body.get('UserId') as string || undefined,
+      if (callSid) {
+        activeCalls.set(callSid, {
+          status: "active",
+          from: params.get('From'),
+          to: params.get('To'),
+          started: new Date(),
+          businessId: params.get('BusinessId') || undefined,
+          userId: params.get('UserId') || undefined,
+        });
+      }
+
+      // Return TwiML to connect to our WebSocket media stream
+      const host = req.headers.get('host');
+      const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
+<Response>
+  <Connect>
+    <Stream url="wss://${host}/functions/v1/call-transfer/media-stream" />
+  </Connect>
+</Response>`;
+
+      console.log(`[Twilio] Returning TwiML with WebSocket URL: wss://${host}/functions/v1/call-transfer/media-stream`);
+
+      return new Response(twimlResponse, {
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'text/xml' 
+        }
+      });
+    } catch (error) {
+      console.error('[Twilio] Error processing incoming call:', error);
+      return new Response('Error processing call', { 
+        status: 500,
+        headers: corsHeaders 
       });
     }
-
-    const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
-      <Response>
-        <Connect>
-          <Stream url="wss://${req.headers.get('host')}/media-stream" />
-        </Connect>
-      </Response>`;
-
-    return new Response(twimlResponse, {
-      headers: { 
-        ...corsHeaders, 
-        'Content-Type': 'text/xml' 
-      }
-    });
   }
 
   if (pathname === "/media-stream") {
