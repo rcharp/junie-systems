@@ -1,4 +1,4 @@
-// Call transfer function for ElevenLabs WebSocket integration
+// ElevenLabs WebSocket integration - handles incoming calls and real-time audio streaming
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
 
@@ -87,11 +87,11 @@ serve(async (req) => {
       const twimlResponse = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect>
-    <Stream url="wss://${host}/functions/v1/call-transfer/media-stream" />
+    <Stream url="wss://${host}/functions/v1/elevenlabs-websocket/media-stream" />
   </Connect>
 </Response>`;
 
-      console.log(`[Twilio] Returning TwiML with WebSocket URL: wss://${host}/functions/v1/call-transfer/media-stream`);
+      console.log(`[Twilio] Returning TwiML with WebSocket URL: wss://${host}/functions/v1/elevenlabs-websocket/media-stream`);
 
       return new Response(twimlResponse, {
         headers: { 
@@ -212,16 +212,14 @@ serve(async (req) => {
               }
 
               const forwardingNumber = callContext.forwarding_number;
-              console.log(`[II] Calling Supabase Edge Function to transfer to: ${forwardingNumber}`);
+              console.log(`[II] Calling twilio-transfer function to transfer to: ${forwardingNumber}`);
 
               try {
                 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
                 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
                 
-                const callContext = activeCalls.get(callSid);
-                
                 const response = await fetch(
-                  `${SUPABASE_URL}/functions/v1/transfer-call`,
+                  `${SUPABASE_URL}/functions/v1/twilio-transfer`,
                   {
                     method: 'POST',
                     headers: {
@@ -238,7 +236,7 @@ serve(async (req) => {
                 );
 
                 const result = await response.json();
-                console.log("[II] Supabase Edge Function result:", result);
+                console.log("[II] twilio-transfer function result:", result);
 
                 const resultMessage = result.success 
                   ? "Transfer initiated successfully" 
@@ -261,7 +259,7 @@ serve(async (req) => {
                 }));
 
               } catch (error) {
-                console.error("[II] Error calling Supabase Edge Function:", error);
+                console.error("[II] Error calling twilio-transfer function:", error);
                 
                 const errorMessage = `Transfer failed: ${error.message}`;
 

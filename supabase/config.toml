@@ -135,8 +135,8 @@ verify_jwt = false
 [functions.get-business-details]
 verify_jwt = false
 
-[functions.transfer-call]
+[functions.elevenlabs-websocket]
 verify_jwt = false
 
-[functions.call-transfer]
+[functions.twilio-transfer]
 verify_jwt = false
