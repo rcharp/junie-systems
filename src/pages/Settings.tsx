@@ -191,22 +191,6 @@ const Settings = () => {
   // Notifications state
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
-  // Function to validate forwarding number before navigation
-  const validateForwardingNumberBeforeNavigation = useCallback(() => {
-    if (activeTab === "calls") {
-      const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
-      if (digitsOnly.length !== 10) {
-        toast({
-          variant: "destructive",
-          title: "Invalid Forwarding Number",
-          description: "Please enter a valid 10-digit forwarding number before leaving this page.",
-        });
-        return false;
-      }
-    }
-    return true;
-  }, [activeTab, forwardingNumber, toast]);
-
   useEffect(() => {
     // Load business types from database
     const loadBusinessTypes = async () => {
@@ -320,9 +304,6 @@ const Settings = () => {
 
       console.log("Auth identities:", { hasEmailIdentity, hasGoogleIdentity, identities });
 
-      // Extract user metadata for fallback values
-      const userMeta = authUser?.user_metadata;
-
       // Extract Google profile data if provider is Google
       if (detectedProvider === "google") {
         console.log("Extracting Google data...");
@@ -330,6 +311,7 @@ const Settings = () => {
         // Try to get data from identities first, then user_metadata
         const googleIdentity = authUser?.identities?.[0];
         const identityData = googleIdentity?.identity_data;
+        const userMeta = authUser?.user_metadata;
 
         const googleEmail = identityData?.email || userMeta?.email || email;
         const googleAvatar =
@@ -341,6 +323,11 @@ const Settings = () => {
 
         setGoogleEmail(googleEmail);
         setGoogleAvatarUrl(googleAvatar);
+
+        // Auto-fill full name from Google if available
+        if (googleFullName) {
+          setUserFullName(googleFullName);
+        }
       }
 
       // Load user profile data
@@ -351,30 +338,14 @@ const Settings = () => {
         .maybeSingle();
 
       console.log("Profile data from DB:", profileData);
-      console.log("User metadata:", userMeta);
 
-      // Set profile data with fallback to user metadata
       if (profileData) {
-        // Use database value if it exists and is not empty, otherwise fall back to metadata
-        const dbFullName = profileData.full_name?.trim();
-        const metaFullName = userMeta?.full_name?.trim();
-        const finalFullName = dbFullName || metaFullName || "";
-        console.log("Setting full name:", { dbFullName, metaFullName, finalFullName });
-        setUserFullName(finalFullName);
-        
-        const dbCompanyName = profileData.company_name?.trim();
-        const finalCompanyName = dbCompanyName || "";
-        console.log("Setting company name:", { dbCompanyName, finalCompanyName });
-        setUserCompanyName(finalCompanyName);
-        
-        const dbTimezone = profileData.timezone?.trim();
-        const finalTimezone = dbTimezone || "";
-        console.log("Setting timezone:", { dbTimezone, finalTimezone });
-        setUserTimezone(finalTimezone);
-      } else {
-        // No profile in database, use metadata as fallback
-        console.log("No profile data, using metadata");
-        setUserFullName(userMeta?.full_name || "");
+        // Only override full name if it exists in the profile
+        if (profileData.full_name) {
+          setUserFullName(profileData.full_name);
+        }
+        setUserCompanyName(profileData.company_name || "");
+        setUserTimezone(profileData.timezone || "");
       }
 
       // Load business settings
@@ -389,25 +360,15 @@ const Settings = () => {
         setBusinessSettingsId(data.id);
         setBusinessName(data.business_name || "");
         setBusinessType(data.business_type || "");
-        
-        // Populate user profile fields from business settings if user_profiles is empty
-        if (!userCompanyName && data.business_name) {
-          setUserCompanyName(data.business_name);
-        }
-        if (!userTimezone && data.business_timezone) {
-          setUserTimezone(data.business_timezone);
-        }
 
         const loadedBusinessPhone = data.business_phone || "";
+        setBusinessPhone(loadedBusinessPhone);
+
+        // Clear validation error if loaded phone number is valid
         const businessPhoneDigits = loadedBusinessPhone.replace(/\D/g, "");
-        
-        // Format phone number for display
-        let formattedBusinessPhone = businessPhoneDigits;
         if (businessPhoneDigits.length === 10) {
-          formattedBusinessPhone = `(${businessPhoneDigits.slice(0, 3)}) ${businessPhoneDigits.slice(3, 6)}-${businessPhoneDigits.slice(6, 10)}`;
           setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
         }
-        setBusinessPhone(formattedBusinessPhone);
 
         setBusinessAddress(data.business_address || "");
 
@@ -477,15 +438,13 @@ const Settings = () => {
         setBusinessWebsite(data.business_website || "");
 
         const loadedForwardingNumber = data.forwarding_number || "";
+        setForwardingNumber(loadedForwardingNumber);
+
+        // Clear validation error if loaded phone number is valid
         const forwardingDigits = loadedForwardingNumber.replace(/\D/g, "");
-        
-        // Format phone number for display
-        let formattedForwardingNumber = forwardingDigits;
         if (forwardingDigits.length === 10) {
-          formattedForwardingNumber = `(${forwardingDigits.slice(0, 3)}) ${forwardingDigits.slice(3, 6)}-${forwardingDigits.slice(6, 10)}`;
           setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
         }
-        setForwardingNumber(formattedForwardingNumber);
 
         setTwilioPhoneNumber(data.twilio_phone_number || "");
         setUrgentKeywords(data.urgent_keywords || "");
@@ -1125,7 +1084,7 @@ const Settings = () => {
       updateData = {
         business_name: businessName,
         business_type: businessType,
-        business_phone: businessPhone.replace(/\D/g, ""), // Store only digits
+        business_phone: businessPhone,
         business_address: fullAddress,
         business_hours: JSON.stringify(businessHours),
         business_description: businessDescription,
@@ -1136,7 +1095,7 @@ const Settings = () => {
         pricing_structure: finalValidServices.map((s) => `${s.name}: ${s.price}`).join(", "),
       };
     } else if (section === "Call") {
-      // Validate forwarding number (store only digits)
+      // Validate forwarding number
       const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
 
       if (!forwardingNumber || !forwardingNumber.trim()) {
@@ -1159,7 +1118,7 @@ const Settings = () => {
       }
 
       updateData = {
-        forwarding_number: digitsOnly, // Store only digits
+        forwarding_number: forwardingNumber.trim(),
         urgent_keywords: urgentKeywords,
         auto_forward: autoForward,
         common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),
@@ -1559,21 +1518,13 @@ const Settings = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => {
-                    if (validateForwardingNumberBeforeNavigation()) {
-                      navigate("/admin");
-                    }
-                  }}
+                  onClick={() => navigate("/admin")}
                   className="text-primary hover:bg-primary/10 h-8 w-8"
                 >
                   <Shield className="w-4 h-4" />
                 </Button>
               )}
-              <Button variant="ghost" onClick={() => {
-                if (validateForwardingNumberBeforeNavigation()) {
-                  navigate("/dashboard");
-                }
-              }} className="h-8 w-8 p-0">
+              <Button variant="ghost" onClick={() => navigate("/dashboard")} className="h-8 w-8 p-0">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <DropdownMenu>
@@ -1631,22 +1582,14 @@ const Settings = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => {
-                    if (validateForwardingNumberBeforeNavigation()) {
-                      navigate("/admin");
-                    }
-                  }}
+                  onClick={() => navigate("/admin")}
                   className="text-primary hover:bg-primary/10"
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   Admin
                 </Button>
               )}
-              <Button variant="ghost" onClick={() => {
-                if (validateForwardingNumberBeforeNavigation()) {
-                  navigate("/dashboard");
-                }
-              }} className="flex items-center gap-2">
+              <Button variant="ghost" onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 <span>Dashboard</span>
               </Button>
@@ -1774,19 +1717,6 @@ const Settings = () => {
           <Tabs
             value={activeTab}
             onValueChange={(value) => {
-              // Validate forwarding number if leaving the calls tab
-              if (activeTab === "calls" && value !== "calls") {
-                const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
-                if (digitsOnly.length !== 10) {
-                  toast({
-                    variant: "destructive",
-                    title: "Invalid Forwarding Number",
-                    description: "Please enter a valid 10-digit forwarding number before switching tabs.",
-                  });
-                  return; // Prevent tab change
-                }
-              }
-              
               // Check if user has access to Calendar tab
               if (value === "setup" && !featureAccess.appointmentScheduling) {
                 setShowUpgradeDialog(true);
@@ -2236,27 +2166,15 @@ const Settings = () => {
                       type="tel"
                       ref={businessPhoneRef}
                       value={businessPhone}
-                      maxLength={14}
+                      maxLength={10}
                       onChange={(e) => {
-                        // Get only digits from input
-                        const digitsOnly = e.target.value.replace(/\D/g, "");
-                        
-                        // Format as (XXX) XXX-XXXX
-                        let formatted = digitsOnly;
-                        if (digitsOnly.length > 0) {
-                          if (digitsOnly.length <= 3) {
-                            formatted = `(${digitsOnly}`;
-                          } else if (digitsOnly.length <= 6) {
-                            formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3)}`;
-                          } else {
-                            formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
-                          }
-                        }
-                        
-                        setBusinessPhone(formatted);
+                        // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
+                        const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
+                        setBusinessPhone(phoneValue);
 
                         // Only validate if user has entered something
-                        if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+                        const digitsOnly = phoneValue.replace(/\D/g, "");
+                        if (phoneValue.length > 0 && digitsOnly.length !== 10) {
                           setValidationErrors((prev) => ({ ...prev, businessPhone: true }));
                         } else {
                           setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
@@ -2270,7 +2188,7 @@ const Settings = () => {
                           saveSettings("Business");
                         }
                       }}
-                      placeholder="(123)456-7890"
+                      placeholder="10-digit phone number"
                       className={
                         validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
                       }
@@ -2774,42 +2692,27 @@ const Settings = () => {
                   <FeatureGate feature="callTransfers" showUpgradeMessage={true}>
                     <div className="space-y-2">
                       <Label htmlFor="forwardingNumber" className="font-semibold">
-                        Call Forwarding/SMS Notification Number <span className="text-destructive">*</span>
+                        Call Transfer/SMS Notification Number <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         id="forwardingNumber"
                         type="tel"
                         value={forwardingNumber}
-                        maxLength={14}
+                        maxLength={10}
                         onChange={(e) => {
-                          // Get only digits from input
-                          const digitsOnly = e.target.value.replace(/\D/g, "");
-                          
-                          // Format as (XXX) XXX-XXXX
-                          let formatted = digitsOnly;
-                          if (digitsOnly.length > 0) {
-                            if (digitsOnly.length <= 3) {
-                              formatted = `(${digitsOnly}`;
-                            } else if (digitsOnly.length <= 6) {
-                              formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3)}`;
-                            } else {
-                              formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
-                            }
-                          }
-                          
-                          setForwardingNumber(formatted);
+                          // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
+                          const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
+                          setForwardingNumber(phoneValue);
 
-                          // Validate: must have exactly 10 digits or be completely empty during typing
-                          if (digitsOnly.length !== 10) {
+                          // Only validate if user has entered something
+                          const digitsOnly = phoneValue.replace(/\D/g, "");
+                          if (phoneValue.length > 0 && digitsOnly.length !== 10) {
                             setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
                           } else {
                             setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
                           }
 
-                          // Only auto-save if we have exactly 10 digits
-                          if (digitsOnly.length === 10) {
-                            debouncedAutoSave("Call");
-                          }
+                          debouncedAutoSave("Call");
                         }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
@@ -2817,7 +2720,7 @@ const Settings = () => {
                             saveSettings("Call");
                           }
                         }}
-                        placeholder="(123)456-7890"
+                        placeholder="10-digit phone number"
                         required
                         className={
                           validationErrors.forwardingNumber
@@ -2825,16 +2728,12 @@ const Settings = () => {
                             : ""
                         }
                       />
-                      {validationErrors.forwardingNumber && (
-                        <p className="text-sm text-red-500">
-                          {forwardingNumber.length === 0 
-                            ? "Phone number is required" 
-                            : "Phone number must be exactly 10 digits"}
-                        </p>
+                      {validationErrors.forwardingNumber && forwardingNumber.length > 0 && (
+                        <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
                       )}
                       <p className="text-sm text-muted-foreground">
-                        The phone number that you want urgent or emergency calls to be forwarded to, as well as SMS
-                        notifications.
+                        The phone number that you want urgent or emergency calls to be transferred to. You will also get
+                        SMS notifications sent here.
                       </p>
                     </div>
                   </FeatureGate>
@@ -2852,16 +2751,16 @@ const Settings = () => {
                       rows={2}
                     />
                     <p className="text-sm text-muted-foreground">
-                      Comma-separated keywords that trigger urgent call forwarding
+                      Comma-separated keywords that trigger urgent call transfers
                     </p>
                   </div>
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label>Auto-Forward Urgent Calls</Label>
+                        <Label>Automatically Transfer Urgent Calls</Label>
                         <p className="text-sm text-muted-foreground">
-                          Automatically forward calls containing urgent keywords
+                          Automatically transfer calls containing urgent keywords
                         </p>
                       </div>
                       <Switch
