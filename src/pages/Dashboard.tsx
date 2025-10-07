@@ -338,15 +338,25 @@ const Dashboard = () => {
 
         if (callLogs) {
           callLogs.forEach((log) => {
-            // Extract key action from message or call_summary
-            const fullMessage = log.call_summary || log.message || "";
-            const actionDescription = extractCallAction(log.message, log.call_type, log.call_summary);
+            // For calls, show "Incoming call from <name>" or "Incoming call from <phone>"
             const displayName = getContextualCallerName(log.caller_name, log.call_type);
+            
+            let callText;
+            // Check if we have a real caller name (not a generic placeholder)
+            if (displayName.toLowerCase().includes('potential customer') || 
+                displayName.toLowerCase().includes('customer') || 
+                displayName.toLowerCase().includes('client') ||
+                displayName.toLowerCase().includes('caller')) {
+              // Use phone number instead
+              callText = `Incoming call from ${log.phone_number}`;
+            } else {
+              callText = `Incoming call from ${displayName}`;
+            }
 
             activities.push({
               id: log.id,
               time: formatDistanceToNow(new Date(log.created_at), { addSuffix: true }),
-              action: `${displayName} ${actionDescription}`,
+              action: callText,
               type: log.urgency_level === "urgent" ? "error" : log.urgency_level === "high" ? "warning" : "success",
               caller_name: log.caller_name,
               call_type: log.call_type,
@@ -367,10 +377,10 @@ const Dashboard = () => {
 
       if (callMessages) {
         callMessages.forEach((message) => {
-          // For messages, show the actual message content/summary
+          // For messages, show the actual detailed message content
           const displayName = getContextualCallerName(message.caller_name, message.call_type);
           
-          // Use the message directly for voicemails/messages instead of extracting action
+          // Use the full message for context
           const messageText = message.message || "left a voicemail";
           
           activities.push({
