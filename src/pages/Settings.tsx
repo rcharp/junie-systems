@@ -360,7 +360,16 @@ const Settings = () => {
         setBusinessSettingsId(data.id);
         setBusinessName(data.business_name || "");
         setBusinessType(data.business_type || "");
-        setBusinessPhone(data.business_phone || "");
+        
+        const loadedBusinessPhone = data.business_phone || "";
+        setBusinessPhone(loadedBusinessPhone);
+        
+        // Clear validation error if loaded phone number is valid
+        const businessPhoneDigits = loadedBusinessPhone.replace(/\D/g, "");
+        if (businessPhoneDigits.length === 10) {
+          setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
+        }
+        
         setBusinessAddress(data.business_address || "");
 
         // Parse existing address
@@ -427,7 +436,16 @@ const Settings = () => {
         }
         setBusinessDescription(data.business_description || "");
         setBusinessWebsite(data.business_website || "");
-        setForwardingNumber(data.forwarding_number || "");
+        
+        const loadedForwardingNumber = data.forwarding_number || "";
+        setForwardingNumber(loadedForwardingNumber);
+        
+        // Clear validation error if loaded phone number is valid
+        const forwardingDigits = loadedForwardingNumber.replace(/\D/g, "");
+        if (forwardingDigits.length === 10) {
+          setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
+        }
+        
         setTwilioPhoneNumber(data.twilio_phone_number || "");
         setUrgentKeywords(data.urgent_keywords || "");
         setAutoForward(data.auto_forward || false);
