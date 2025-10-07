@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Phone, AlertTriangle } from "lucide-react";
+import { User, AlertTriangle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -107,7 +107,7 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5" />
+            <User className="h-5 w-5" />
             Users
           </CardTitle>
         </CardHeader>
