@@ -52,19 +52,74 @@ export const WebhookMonitor = () => {
       setLoading(true);
       console.log('Starting webhook data fetch...'); // Debug log
       
-      // Fetch recent call logs to show incoming webhook data (show all for admin)
-      const { data: logs, error: logsError } = await supabase
-        .from('call_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
+      // First check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.error('No authenticated user');
+        setWebhookData([]);
+        return;
+      }
+
+      console.log('Fetching call logs for user:', user.id);
+      
+      // Check if user has admin role
+      const { data: userRoles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      
+      const isAdmin = userRoles?.some(r => r.role === 'admin');
+      console.log('User is admin:', isAdmin);
+      
+      let logs;
+      let logsError;
+      
+      if (isAdmin) {
+        // For admin users, fetch all call logs using direct query with service role context
+        // The RLS policies should allow this since we're authenticated
+        const response = await supabase
+          .from('call_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50); // Fetch more for admin view
+        
+        logs = response.data;
+        logsError = response.error;
+      } else {
+        // For regular users, fetch only their own call logs via business_settings
+        const { data: businessSettings } = await supabase
+          .from('business_settings')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (businessSettings) {
+          const response = await supabase
+            .from('call_logs')
+            .select('*')
+            .eq('business_id', businessSettings.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+          
+          logs = response.data;
+          logsError = response.error;
+        }
+      }
 
       if (logsError) {
-        console.error('Supabase error:', logsError);
+        console.error('Supabase error fetching call logs:', logsError);
+        console.error('Error details:', {
+          message: logsError.message,
+          details: logsError.details,
+          hint: logsError.hint,
+          code: logsError.code
+        });
         throw logsError;
       }
 
       console.log('Successfully fetched logs:', logs?.length || 0, 'records'); // Debug log
+      console.log('First log sample:', logs?.[0]); // Debug log
 
       // Filter out logs that don't have meaningful call data before processing
       const filteredLogs = (logs || []).filter(log => {
