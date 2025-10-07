@@ -54,9 +54,8 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
           </a>
         </nav>
         
-        {!loading && (
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            {showAuthButtons && user ? (
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          {!loading && showAuthButtons && user ? (
               <>
                 <Button 
                   variant="ghost" 
@@ -83,7 +82,7 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
                   <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </>
-            ) : (
+            ) : !loading && (
               <>
                 <Button 
                   variant="ghost" 
@@ -103,11 +102,10 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
                 </Button>
               </>
             )}
-          </div>
-        )}
+        </div>
       </div>
     </header>
   );
 };
-
+              
 export default Header;
