@@ -362,13 +362,15 @@ const Settings = () => {
         setBusinessType(data.business_type || "");
 
         const loadedBusinessPhone = data.business_phone || "";
-        setBusinessPhone(loadedBusinessPhone);
-
-        // Clear validation error if loaded phone number is valid
         const businessPhoneDigits = loadedBusinessPhone.replace(/\D/g, "");
+        
+        // Format phone number for display
+        let formattedBusinessPhone = businessPhoneDigits;
         if (businessPhoneDigits.length === 10) {
+          formattedBusinessPhone = `(${businessPhoneDigits.slice(0, 3)}) ${businessPhoneDigits.slice(3, 6)}-${businessPhoneDigits.slice(6, 10)}`;
           setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
         }
+        setBusinessPhone(formattedBusinessPhone);
 
         setBusinessAddress(data.business_address || "");
 
@@ -438,13 +440,15 @@ const Settings = () => {
         setBusinessWebsite(data.business_website || "");
 
         const loadedForwardingNumber = data.forwarding_number || "";
-        setForwardingNumber(loadedForwardingNumber);
-
-        // Clear validation error if loaded phone number is valid
         const forwardingDigits = loadedForwardingNumber.replace(/\D/g, "");
+        
+        // Format phone number for display
+        let formattedForwardingNumber = forwardingDigits;
         if (forwardingDigits.length === 10) {
+          formattedForwardingNumber = `(${forwardingDigits.slice(0, 3)}) ${forwardingDigits.slice(3, 6)}-${forwardingDigits.slice(6, 10)}`;
           setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
         }
+        setForwardingNumber(formattedForwardingNumber);
 
         setTwilioPhoneNumber(data.twilio_phone_number || "");
         setUrgentKeywords(data.urgent_keywords || "");
@@ -1084,7 +1088,7 @@ const Settings = () => {
       updateData = {
         business_name: businessName,
         business_type: businessType,
-        business_phone: businessPhone,
+        business_phone: businessPhone.replace(/\D/g, ""), // Store only digits
         business_address: fullAddress,
         business_hours: JSON.stringify(businessHours),
         business_description: businessDescription,
@@ -1095,7 +1099,7 @@ const Settings = () => {
         pricing_structure: finalValidServices.map((s) => `${s.name}: ${s.price}`).join(", "),
       };
     } else if (section === "Call") {
-      // Validate forwarding number
+      // Validate forwarding number (store only digits)
       const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
 
       if (!forwardingNumber || !forwardingNumber.trim()) {
@@ -1118,7 +1122,7 @@ const Settings = () => {
       }
 
       updateData = {
-        forwarding_number: forwardingNumber.trim(),
+        forwarding_number: digitsOnly, // Store only digits
         urgent_keywords: urgentKeywords,
         auto_forward: autoForward,
         common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),
@@ -2166,15 +2170,27 @@ const Settings = () => {
                       type="tel"
                       ref={businessPhoneRef}
                       value={businessPhone}
-                      maxLength={10}
+                      maxLength={14}
                       onChange={(e) => {
-                        // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
-                        const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
-                        setBusinessPhone(phoneValue);
+                        // Get only digits from input
+                        const digitsOnly = e.target.value.replace(/\D/g, "");
+                        
+                        // Format as (XXX) XXX-XXXX
+                        let formatted = digitsOnly;
+                        if (digitsOnly.length > 0) {
+                          if (digitsOnly.length <= 3) {
+                            formatted = `(${digitsOnly}`;
+                          } else if (digitsOnly.length <= 6) {
+                            formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3)}`;
+                          } else {
+                            formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
+                          }
+                        }
+                        
+                        setBusinessPhone(formatted);
 
                         // Only validate if user has entered something
-                        const digitsOnly = phoneValue.replace(/\D/g, "");
-                        if (phoneValue.length > 0 && digitsOnly.length !== 10) {
+                        if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
                           setValidationErrors((prev) => ({ ...prev, businessPhone: true }));
                         } else {
                           setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
@@ -2698,15 +2714,27 @@ const Settings = () => {
                         id="forwardingNumber"
                         type="tel"
                         value={forwardingNumber}
-                        maxLength={10}
+                        maxLength={14}
                         onChange={(e) => {
-                          // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
-                          const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
-                          setForwardingNumber(phoneValue);
+                          // Get only digits from input
+                          const digitsOnly = e.target.value.replace(/\D/g, "");
+                          
+                          // Format as (XXX) XXX-XXXX
+                          let formatted = digitsOnly;
+                          if (digitsOnly.length > 0) {
+                            if (digitsOnly.length <= 3) {
+                              formatted = `(${digitsOnly}`;
+                            } else if (digitsOnly.length <= 6) {
+                              formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3)}`;
+                            } else {
+                              formatted = `(${digitsOnly.slice(0, 3)}) ${digitsOnly.slice(3, 6)}-${digitsOnly.slice(6, 10)}`;
+                            }
+                          }
+                          
+                          setForwardingNumber(formatted);
 
                           // Only validate if user has entered something
-                          const digitsOnly = phoneValue.replace(/\D/g, "");
-                          if (phoneValue.length > 0 && digitsOnly.length !== 10) {
+                          if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
                             setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
                           } else {
                             setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
