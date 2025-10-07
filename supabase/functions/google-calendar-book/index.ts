@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
+import { decryptToken, encryptToken } from '../_shared/encryption.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,7 +10,6 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
-const encryptionKey = Deno.env.get('GOOGLE_CALENDAR_ENCRYPTION_KEY')!
 
 Deno.serve(async (req) => {
   console.log('google-calendar-book function called with method:', req.method)
@@ -21,11 +21,6 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
-    
-    // Set encryption key for this session
-    await supabase.rpc('exec_sql', {
-      sql: `SET app.settings.google_calendar_encryption_key = '${encryptionKey}'`
-    })
 
     const { 
       userId, 
@@ -84,30 +79,23 @@ Deno.serve(async (req) => {
       duration: appointmentDuration
     })
 
-    // Check if we have encrypted tokens before proceeding
-    if (!calendarSettings.encrypted_access_token && !calendarSettings.encrypted_refresh_token) {
+    // Check if we have encrypted tokens
+    if (!calendarSettings.encrypted_access_token) {
       console.error('No encrypted tokens found in database. User needs to reconnect.')
       throw new Error('Google Calendar tokens not found. Please reconnect your Google Calendar.')
     }
 
-    // Get decrypted tokens using the function
-    const { data: tokenData, error: tokenError } = await supabase.rpc('get_google_calendar_tokens', { 
-      p_user_id: userId 
-    })
-    
-    if (tokenError || !tokenData || tokenData.length === 0) {
-      console.error('Error getting calendar tokens:', tokenError)
-      throw new Error('Failed to retrieve Google Calendar tokens. Please reconnect your Google Calendar.')
-    }
-
-    const calendarData = tokenData[0]
-    let accessToken = calendarData.access_token
-    let refreshToken = calendarData.refresh_token
+    // Decrypt the tokens using shared encryption utility
+    console.log('Decrypting calendar tokens...')
+    let accessToken = await decryptToken(calendarSettings.encrypted_access_token)
+    let refreshToken = calendarSettings.encrypted_refresh_token 
+      ? await decryptToken(calendarSettings.encrypted_refresh_token) 
+      : null
 
     console.log('Retrieved tokens:', {
       hasAccessToken: !!accessToken,
       hasRefreshToken: !!refreshToken,
-      expiresAt: calendarData.expires_at
+      expiresAt: calendarSettings.expires_at
     })
 
     // If we don't have any tokens, user needs to reconnect
@@ -141,13 +129,19 @@ Deno.serve(async (req) => {
         
         console.log('Successfully refreshed access token')
         
-        // Update the stored token using secure function
-        await supabase.rpc('update_google_calendar_tokens', {
-          p_user_id: userId,
-          p_access_token: accessToken,
-          p_refresh_token: tokenResponseData.refresh_token || refreshToken,
-          p_expires_at: newExpiresAt
-        })
+        // Encrypt and update the stored token
+        const encryptedAccessToken = await encryptToken(accessToken)
+        const newRefreshToken = tokenResponseData.refresh_token || refreshToken
+        const encryptedRefreshToken = await encryptToken(newRefreshToken)
+        
+        await supabase
+          .from('google_calendar_settings')
+          .update({
+            encrypted_access_token: encryptedAccessToken,
+            encrypted_refresh_token: encryptedRefreshToken,
+            expires_at: newExpiresAt
+          })
+          .eq('user_id', userId)
       } else {
         console.error('Failed to refresh token:', tokenResponseData)
         throw new Error('Google Calendar tokens are invalid. Please reconnect your Google Calendar.')
@@ -158,9 +152,9 @@ Deno.serve(async (req) => {
       console.error('No valid access token available after refresh attempt.')
       throw new Error('Google Calendar access token is invalid. Please reconnect your Google Calendar.')
     }
-
+    
     // Check if token needs refresh based on expiration
-    const expiresAt = new Date(calendarData.expires_at)
+    const expiresAt = new Date(calendarSettings.expires_at)
     const now = new Date()
 
     if (now >= expiresAt && refreshToken) {
@@ -187,13 +181,19 @@ Deno.serve(async (req) => {
         
         console.log('Successfully refreshed expired access token, expires at:', newExpiresAt)
         
-        // Update the stored token using secure function
-        await supabase.rpc('update_google_calendar_tokens', {
-          p_user_id: userId,
-          p_access_token: accessToken,
-          p_refresh_token: tokenResponseData.refresh_token || refreshToken,
-          p_expires_at: newExpiresAt,
-        })
+        // Encrypt and update the stored token
+        const encryptedAccessToken = await encryptToken(accessToken)
+        const newRefreshToken = tokenResponseData.refresh_token || refreshToken
+        const encryptedRefreshToken = await encryptToken(newRefreshToken)
+        
+        await supabase
+          .from('google_calendar_settings')
+          .update({
+            encrypted_access_token: encryptedAccessToken,
+            encrypted_refresh_token: encryptedRefreshToken,
+            expires_at: newExpiresAt
+          })
+          .eq('user_id', userId)
       } else {
         console.error('Token refresh failed:', tokenResponseData)
         throw new Error('Failed to refresh access token')

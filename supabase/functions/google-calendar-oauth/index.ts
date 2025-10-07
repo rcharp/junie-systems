@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
+import { encryptToken } from '../_shared/encryption.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,7 +10,6 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
-const encryptionKey = Deno.env.get('GOOGLE_CALENDAR_ENCRYPTION_KEY')!
 
 // Helper function to get timezone offset
 function getTimezoneOffset(timezone: string): string {
@@ -162,18 +162,21 @@ Deno.serve(async (req) => {
       const calendarData = await calendarResponse.json()
       console.log('Calendar data:', calendarData)
 
-      // Store calendar settings
+      // Store calendar settings with encrypted tokens
       const expiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
       
-      console.log('Storing calendar settings with tokens...')
+      console.log('Encrypting and storing calendar tokens...')
+      
+      const encryptedAccessToken = await encryptToken(tokenData.access_token)
+      const encryptedRefreshToken = tokenData.refresh_token ? await encryptToken(tokenData.refresh_token) : null
       
       const { error: upsertError} = await supabase
         .from('google_calendar_settings')
         .upsert({
           user_id: state, // Use state instead of user.id since we validated it above
           is_connected: true,
-          encrypted_access_token: tokenData.access_token, // Store directly - protected by RLS
-          encrypted_refresh_token: tokenData.refresh_token,
+          encrypted_access_token: encryptedAccessToken,
+          encrypted_refresh_token: encryptedRefreshToken,
           expires_at: expiresAt,
           calendar_id: calendarData.id,
           timezone: calendarData.timeZone || 'America/New_York',

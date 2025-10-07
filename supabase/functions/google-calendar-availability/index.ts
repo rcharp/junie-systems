@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
+import { decryptToken, encryptToken } from '../_shared/encryption.ts'
 
 // Helper function to get timezone offset in milliseconds
 function getTimezoneOffsetMs(timezone: string, date: Date): number {
@@ -37,7 +38,6 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
-const encryptionKey = Deno.env.get('GOOGLE_CALENDAR_ENCRYPTION_KEY')!
 
 Deno.serve(async (req) => {
   console.log('google-calendar-availability function called with method:', req.method)
@@ -132,44 +132,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Decrypt the tokens
+    // Decrypt the tokens using shared encryption utility
     console.log('Decrypting access token...')
     
-    async function decryptToken(encryptedToken: string): Promise<string> {
-      try {
-        // Prepare encryption key
-        const keyMaterial = new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0'))
-        const iv = new Uint8Array(12) // Same IV used for encryption
-        
-        // Import the decryption key
-        const cryptoKey = await crypto.subtle.importKey(
-          "raw",
-          keyMaterial,
-          "AES-GCM",
-          false,
-          ["decrypt"]
-        )
-        
-        // Decode from base64
-        const encryptedData = Uint8Array.from(atob(encryptedToken), c => c.charCodeAt(0))
-        
-        // Decrypt
-        const decryptedBuffer = await crypto.subtle.decrypt(
-          {
-            name: "AES-GCM",
-            iv: iv
-          },
-          cryptoKey,
-          encryptedData
-        )
-        
-        return new TextDecoder().decode(decryptedBuffer)
-      } catch (error) {
-        console.error('Decryption error:', error)
-        throw new Error('Failed to decrypt token')
-      }
-    }
-
     const accessToken = await decryptToken(encryptedAccessToken)
     const refreshToken = encryptedRefreshToken ? await decryptToken(encryptedRefreshToken) : null
 
@@ -203,34 +168,9 @@ Deno.serve(async (req) => {
         currentAccessToken = tokenData.access_token
         const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
         
-        // Encrypt and update the stored token using direct encryption
+        // Encrypt and update the stored token
         console.log('Encrypting new access token...')
-        
-        // Prepare encryption key and IV
-        const keyMaterial = new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0'))
-        const iv = new Uint8Array(12) // Initialization vector
-        
-        // Import the encryption key
-        const cryptoKey = await crypto.subtle.importKey(
-          "raw",
-          keyMaterial,
-          "AES-GCM",
-          false,
-          ["encrypt"]
-        )
-        
-        // Encrypt the access token
-        const encryptedBuffer = await crypto.subtle.encrypt(
-          {
-            name: "AES-GCM",
-            iv: iv
-          },
-          cryptoKey,
-          new TextEncoder().encode(currentAccessToken)
-        )
-        
-        // Convert to base64 using Deno's btoa
-        const encryptedNewToken = btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer)))
+        const encryptedNewToken = await encryptToken(currentAccessToken)
         
         await supabase
           .from('google_calendar_settings')
