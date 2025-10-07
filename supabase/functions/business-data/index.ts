@@ -135,7 +135,8 @@ serve(async (req) => {
             pricing_structure,
             appointment_booking,
             services_offered,
-            forwarding_number
+            forwarding_number,
+            urgent_keywords
           `)
           .eq('id', conversationBusinessId)
           .maybeSingle();
@@ -230,6 +231,7 @@ serve(async (req) => {
             "available_times": dynamicAvailableTimes,
             "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
             "forwarding_number": addUSCountryCode(businessDataForInit?.forwarding_number || ""),
+            "urgent_keywords": businessDataForInit?.urgent_keywords || "emergency, urgent, asap, immediately",
             "callback_timeframe": "within 24 hours",
             "pronunciations": "HVAC: H vac, hvac: H vac"
           }
@@ -345,7 +347,8 @@ serve(async (req) => {
         ai_personality,
         appointment_booking,
         lead_capture,
-        forwarding_number
+        forwarding_number,
+        urgent_keywords
       `)
       .eq('id', businessId)
       .maybeSingle();
@@ -444,6 +447,7 @@ serve(async (req) => {
         appointment_booking: businessData.appointment_booking || false,
         business_description: businessData.business_description || 'N/A',
         forwarding_number: addUSCountryCode(businessData.forwarding_number || 'N/A'),
+        urgent_keywords: businessData.urgent_keywords || 'emergency, urgent, asap, immediately',
         callback_timeframe: 'within 24 hours'
       },
       available_times: availableTimes,
