@@ -725,6 +725,7 @@ const Settings = () => {
   const updateBusinessHours = (id: number, field: keyof (typeof businessHours)[0], value: string | boolean) => {
     const newHours = businessHours.map((hour) => (hour.id === id ? { ...hour, [field]: value } : hour));
     setBusinessHours(newHours);
+    debouncedAutoSave("Business");
   };
 
   const addBusinessHours = () => {
@@ -2048,7 +2049,7 @@ const Settings = () => {
                         onChange={(e) => {
                           const newName = e.target.value;
                           setBusinessName(newName);
-                          // Disabled auto-save - require manual save for validation
+                          debouncedAutoSave("Business");
                           // Auto-update description when business name changes (with debounce)
                           if (newName && businessType && businessSettingsId) {
                             if (descriptionUpdateTimeout) {
@@ -2087,7 +2088,7 @@ const Settings = () => {
                           onValueChange={(value) => {
                             console.log("Business type changed to:", value);
                             setBusinessType(value);
-                            // Disabled auto-save - require manual save for validation
+                            debouncedAutoSave("Business");
                           }}
                         >
                           <SelectTrigger
@@ -2135,7 +2136,7 @@ const Settings = () => {
                         // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                         const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
                         setBusinessPhone(phoneValue);
-                        // Disabled auto-save - require manual save for validation
+                        debouncedAutoSave("Business");
                       }}
                       placeholder="+1 (555) 123-4567"
                       className={
@@ -2149,7 +2150,7 @@ const Settings = () => {
                       value={addressData}
                       onChange={(newAddressData) => {
                         setAddressData(newAddressData);
-                        // Don't auto-save address changes - require manual save for validation
+                        debouncedAutoSave("Business");
                       }}
                       onAddressComplete={handleAddressSelect}
                       label="Business Address *"
@@ -2331,7 +2332,7 @@ const Settings = () => {
                       value={businessDescription}
                       onChange={(e) => {
                         setBusinessDescription(e.target.value);
-                        // Disabled auto-save - require manual save for validation
+                        debouncedAutoSave("Business");
                       }}
                       placeholder="Brief description of your business and services..."
                       rows={6}
@@ -2361,7 +2362,7 @@ const Settings = () => {
                       value={businessWebsite}
                       onChange={(e) => {
                         setBusinessWebsite(e.target.value);
-                        // Disabled auto-save - require manual save for validation
+                        debouncedAutoSave("Business");
                       }}
                       placeholder="https://www.yourbusiness.com"
                     />
@@ -2491,7 +2492,7 @@ const Settings = () => {
                                       value={service.name}
                                       onChange={(e) => {
                                         updateService(index, "name", e.target.value);
-                                        // Disabled auto-save - require manual save for validation
+                                        debouncedAutoSave("Business");
                                       }}
                                       className={
                                         service.name.trim() === "" && validationErrors.services ? "border-red-500" : ""
@@ -2512,7 +2513,7 @@ const Settings = () => {
                                         value={service.price}
                                         onChange={(e) => {
                                           updateService(index, "price", e.target.value);
-                                          // Disabled auto-save - require manual save for validation
+                                          debouncedAutoSave("Business");
                                         }}
                                         className={`pl-6 ${priceErrorClass}`}
                                       />
@@ -2543,7 +2544,7 @@ const Settings = () => {
                                 value={service.description || ""}
                                 onChange={(e) => {
                                   updateService(index, "description", e.target.value);
-                                  // Disabled auto-save - require manual save for validation
+                                  debouncedAutoSave("Business");
                                 }}
                                 rows={2}
                                 className="md:hidden resize-none"
@@ -2554,7 +2555,7 @@ const Settings = () => {
                                 value={service.description || ""}
                                 onChange={(e) => {
                                   updateService(index, "description", e.target.value);
-                                  // Disabled auto-save - require manual save for validation
+                                  debouncedAutoSave("Business");
                                 }}
                                 className="hidden md:block"
                               />
@@ -2664,7 +2665,7 @@ const Settings = () => {
                       value={urgentKeywords}
                       onChange={(e) => {
                         setUrgentKeywords(e.target.value);
-                        debouncedAutoSave("Calls");
+                        debouncedAutoSave("Call");
                       }}
                       placeholder="emergency, urgent, asap, immediately"
                       rows={2}
@@ -2686,7 +2687,7 @@ const Settings = () => {
                         checked={autoForward}
                         onCheckedChange={(checked) => {
                           setAutoForward(checked);
-                          debouncedAutoSave("Calls");
+                          debouncedAutoSave("Call");
                         }}
                       />
                     </div>
