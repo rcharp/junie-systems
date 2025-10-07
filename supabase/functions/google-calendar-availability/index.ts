@@ -68,11 +68,14 @@ Deno.serve(async (req) => {
     }
 
     console.log('Fetching calendar availability for user:', userId)
+    console.log('Using get_google_calendar_encrypted_tokens RPC function')
 
     // Get user's encrypted calendar tokens
     const { data: calendarTokens, error: tokensError } = await supabase.rpc('get_google_calendar_encrypted_tokens', {
       p_user_id: userId
     })
+    
+    console.log('RPC call result:', { hasData: !!calendarTokens, error: tokensError })
 
     // Also get user profile timezone as backup
     const { data: userProfile } = await supabase
