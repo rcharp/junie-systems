@@ -882,6 +882,7 @@ export type Database = {
           full_name: string
           id: string
           subscription_plan: string
+          twilio_phone_number: string
         }[]
       }
       get_users_with_emails_for_admin: {

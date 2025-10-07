@@ -152,3 +152,6 @@ verify_jwt = false
 
 [functions.send-sms-notification]
 verify_jwt = false
+
+[functions.release-twilio-number]
+verify_jwt = true

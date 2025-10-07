@@ -15,6 +15,7 @@ import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { TodoChecklist } from '@/components/TodoChecklist';
 import { BusinessTypesManager } from '@/components/BusinessTypesManager';
 import { AdminSettings } from '@/components/AdminSettings';
+import { AdminUsersList } from '@/components/AdminUsersList';
 import { ClientToolMonitor } from '@/components/ClientToolMonitor';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
@@ -334,8 +335,9 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-4 sm:mb-6">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm">System Overview</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5 mb-4 sm:mb-6">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
             <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
             <TabsTrigger value="todos" className="text-xs sm:text-sm">Todos</TabsTrigger>
           </TabsList>
@@ -448,6 +450,10 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
+            <AdminUsersList users={users} onRefresh={fetchStats} />
           </TabsContent>
           
           <TabsContent value="api" className="space-y-6">
