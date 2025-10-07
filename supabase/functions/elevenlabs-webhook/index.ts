@@ -550,6 +550,41 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       console.log('Successfully saved call message');
     }
 
+    // Send SMS notification if enabled
+    if (callLogResult && callLogResult.length > 0) {
+      try {
+        console.log('Attempting to send SMS notification for business:', callLogData.business_id);
+        
+        const smsResponse = await fetch(`${supabaseUrl}/functions/v1/send-sms-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({
+            businessId: callLogData.business_id,
+            callerName: analysisData.customer_name?.value || 'Unknown',
+            phoneNumber: String(analysisData.phone_number?.value || ''),
+            callType: callerInfo.call_type || 'general',
+            urgencyLevel: callerInfo.urgency_level || 'medium',
+            message: enhancedCallSummary || webhookData.data?.analysis?.transcript_summary || 'Call completed',
+            email: analysisData.email_address?.value
+          })
+        });
+
+        if (smsResponse.ok) {
+          const smsResult = await smsResponse.json();
+          console.log('SMS notification sent:', smsResult);
+        } else {
+          const errorText = await smsResponse.text();
+          console.error('SMS notification failed:', errorText);
+        }
+      } catch (smsError) {
+        console.error('Error sending SMS notification:', smsError);
+        // Don't fail the whole process if SMS fails
+      }
+    }
+
     console.log('=== WEBHOOK PROCESSING COMPLETED SUCCESSFULLY ===');
 
   } catch (error) {

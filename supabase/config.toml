@@ -149,3 +149,6 @@ verify_jwt = false
 
 [functions.resend-password-reset]
 verify_jwt = false
+
+[functions.send-sms-notification]
+verify_jwt = false
