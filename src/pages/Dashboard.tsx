@@ -20,6 +20,9 @@ import {
   MessageSquare,
   Bot,
   Shield,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -78,6 +81,8 @@ const Dashboard = () => {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [upgradeFeatureName, setUpgradeFeatureName] = useState("");
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "overview");
+  const [activityPage, setActivityPage] = useState(0);
+  const itemsPerPage = 5;
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalCalls: 0,
     totalMessages: 0,
@@ -731,41 +736,80 @@ const Dashboard = () => {
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                     </div>
                   ) : recentActivity.length > 0 ? (
-                    recentActivity.map((activity) => (
-                      <div
-                        key={activity.id}
-                        className="flex items-center space-x-3 cursor-pointer hover:bg-muted/50 p-2 rounded-lg transition-colors"
-                        onClick={() => navigate(`/call/${activity.id}`)}
-                      >
-                        <div
-                          className={`w-2 h-2 rounded-full ${
-                            activity.type === "success"
-                              ? "bg-green-500"
-                              : activity.type === "warning"
-                                ? "bg-yellow-500"
-                                : "bg-red-500"
-                          }`}
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1 gap-2">
-                            <p className="text-sm font-medium text-muted-foreground flex-1">{activity.action}</p>
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              <Badge variant={activity.source === "call" ? "default" : "outline"} className="text-xs">
-                                {activity.source === "call" ? (
-                                  <><Phone className="w-3 h-3 mr-1" /> Call</>
-                                ) : (
-                                  <><MessageSquare className="w-3 h-3 mr-1" /> Message</>
-                                )}
-                              </Badge>
-                              <Badge variant="secondary" className="text-xs">
-                                {activity.call_type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                              </Badge>
+                    <>
+                      {recentActivity
+                        .slice(activityPage * itemsPerPage, (activityPage + 1) * itemsPerPage)
+                        .map((activity) => (
+                          <div
+                            key={activity.id}
+                            className="flex items-center space-x-3 p-2 rounded-lg"
+                          >
+                            <div
+                              className={`w-2 h-2 rounded-full ${
+                                activity.type === "success"
+                                  ? "bg-green-500"
+                                  : activity.type === "warning"
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
+                              }`}
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1 gap-2">
+                                <p className="text-sm font-medium text-muted-foreground flex-1">{activity.action}</p>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Badge variant={activity.source === "call" ? "default" : "outline"} className="text-xs">
+                                    {activity.source === "call" ? (
+                                      <><Phone className="w-3 h-3 mr-1" /> Call</>
+                                    ) : (
+                                      <><MessageSquare className="w-3 h-3 mr-1" /> Message</>
+                                    )}
+                                  </Badge>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {activity.call_type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                                  </Badge>
+                                  {activity.source === "call" && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 px-2"
+                                      onClick={() => navigate(`/call/${activity.id}`)}
+                                    >
+                                      <ExternalLink className="w-3 h-3 mr-1" />
+                                      <span className="text-xs">Details</span>
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                              <p className="text-xs text-muted-foreground">{activity.time}</p>
                             </div>
                           </div>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                        ))}
+                      {recentActivity.length > itemsPerPage && (
+                        <div className="flex items-center justify-between pt-2 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setActivityPage(Math.max(0, activityPage - 1))}
+                            disabled={activityPage === 0}
+                          >
+                            <ChevronLeft className="w-4 h-4 mr-1" />
+                            Previous
+                          </Button>
+                          <span className="text-xs text-muted-foreground">
+                            Page {activityPage + 1} of {Math.ceil(recentActivity.length / itemsPerPage)}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setActivityPage(Math.min(Math.ceil(recentActivity.length / itemsPerPage) - 1, activityPage + 1))}
+                            disabled={activityPage >= Math.ceil(recentActivity.length / itemsPerPage) - 1}
+                          >
+                            Next
+                            <ChevronRight className="w-4 h-4 ml-1" />
+                          </Button>
                         </div>
-                      </div>
-                    ))
+                      )}
+                    </>
                   ) : (
                     <div className="text-center py-4">
                       <p className="text-sm text-muted-foreground">No recent activity</p>
