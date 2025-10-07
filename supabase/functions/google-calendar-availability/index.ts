@@ -96,67 +96,9 @@ Deno.serve(async (req) => {
 
     const calendarSettings = calendarTokens[0]
     
-    // Decrypt the tokens using Web Crypto API
-    const decoder = new TextDecoder()
-    let accessToken = null
-    let refreshToken = null
-    
-    if (calendarSettings.encrypted_access_token) {
-      try {
-        const encryptedData = Uint8Array.from(atob(calendarSettings.encrypted_access_token.replace(/[\n\r\s]/g, '')), c => c.charCodeAt(0))
-        
-        // Import the encryption key
-        const keyMaterial = await crypto.subtle.importKey(
-          'raw',
-          new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0')),
-          { name: 'AES-GCM' },
-          false,
-          ['decrypt']
-        )
-        
-        // Decrypt (assuming 12-byte IV at start of encrypted data, or no IV was used)
-        // If no IV was stored, we need to use the same IV that was used during encryption
-        const decryptedData = await crypto.subtle.decrypt(
-          {
-            name: 'AES-GCM',
-            iv: new Uint8Array(12) // Same IV used during encryption
-          },
-          keyMaterial,
-          encryptedData
-        )
-        
-        accessToken = decoder.decode(decryptedData)
-      } catch (error) {
-        console.error('Failed to decrypt access token:', error)
-      }
-    }
-    
-    if (calendarSettings.encrypted_refresh_token) {
-      try {
-        const encryptedData = Uint8Array.from(atob(calendarSettings.encrypted_refresh_token.replace(/[\n\r\s]/g, '')), c => c.charCodeAt(0))
-        
-        const keyMaterial = await crypto.subtle.importKey(
-          'raw',
-          new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0')),
-          { name: 'AES-GCM' },
-          false,
-          ['decrypt']
-        )
-        
-        const decryptedData = await crypto.subtle.decrypt(
-          {
-            name: 'AES-GCM',
-            iv: new Uint8Array(12)
-          },
-          keyMaterial,
-          encryptedData
-        )
-        
-        refreshToken = decoder.decode(decryptedData)
-      } catch (error) {
-        console.error('Failed to decrypt refresh token:', error)
-      }
-    }
+    // Tokens are now stored directly in the database (protected by RLS)
+    const accessToken = calendarSettings.encrypted_access_token
+    const refreshToken = calendarSettings.encrypted_refresh_token
 
     console.log('Calendar settings:', {
       calendar_id: calendarSettings.calendar_id,
