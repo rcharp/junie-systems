@@ -260,7 +260,7 @@ const NotificationSettings = () => {
                   className="bg-muted cursor-not-allowed"
                 />
                 <p className="text-xs text-muted-foreground">
-                  SMS notifications will be sent to this number. Update this in AI Caller settings.
+                  SMS notifications will be sent to this number. Update this in the Call settings tab.
                 </p>
               </div>
 
