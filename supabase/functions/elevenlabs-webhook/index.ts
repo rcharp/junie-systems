@@ -483,6 +483,13 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
     }
 
     // Save call log to database
+    // Extract call duration from webhook data (in seconds)
+    const callDuration = webhookData.data?.call_duration || 
+                         webhookData.data?.duration || 
+                         webhookData.call_duration || 
+                         webhookData.duration || 
+                         (fullTranscript ? Math.max(60, Math.floor(fullTranscript.length / 50)) : 60); // Estimate from transcript length
+    
     const callLogData = {
       user_id: businessUserId,
       caller_name: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown',
@@ -492,7 +499,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       urgency_level: callerInfo.urgency_level,
       best_time_to_call: callerInfo.best_time_to_call,
       call_type: callerInfo.call_type,
-      call_duration: 0,
+      call_duration: callDuration,
       recording_url: '',
       transcript: fullTranscript,
       call_status: 'completed',
