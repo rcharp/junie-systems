@@ -21,7 +21,6 @@ const ForgotPassword = () => {
 
   const handleResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
       // Validate email
@@ -32,31 +31,23 @@ const ForgotPassword = () => {
           description: validation.error.errors[0].message,
           variant: "destructive",
         });
-        setLoading(false);
         return;
       }
 
-      // Use Resend-based password reset edge function
-      const { data, error } = await supabase.functions.invoke("resend-password-reset", {
-        body: { email },
-      });
-
-      if (error) {
-        console.error("Password reset error:", error);
-        toast({
-          title: "Error",
-          description: error.message || "An error occurred. Please try again later.",
-          variant: "destructive",
-        });
-        setLoading(false);
-        return;
-      }
-
+      // Show success message immediately
       setEmailSent(true);
       toast({
         title: "Reset link sent",
-        description: data?.message || "Check your email for the password reset link.",
+        description: "Check your email for the password reset link.",
       });
+
+      // Send email in background (fire and forget)
+      supabase.functions.invoke("resend-password-reset", {
+        body: { email },
+      }).catch((error) => {
+        console.error("Background email error:", error);
+      });
+
     } catch (error: any) {
       console.error("Password reset error:", error);
       toast({
@@ -64,8 +55,6 @@ const ForgotPassword = () => {
         description: "An error occurred. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -136,10 +125,9 @@ const ForgotPassword = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full h-12 bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary text-white font-semibold shadow-glow transition-all duration-300" 
-                  disabled={loading}
+                  className="w-full h-12 bg-gradient-to-r from-primary to-primary-glow hover:from-primary-glow hover:to-primary text-white font-semibold shadow-glow transition-all duration-300"
                 >
-                  {loading ? "Sending..." : "Send Reset Link"}
+                  Send Reset Link
                 </Button>
 
                 <div className="text-center">
