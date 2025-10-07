@@ -491,12 +491,17 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
                          webhookData.duration || 
                          (fullTranscript ? Math.max(60, Math.floor(fullTranscript.length / 50)) : 60); // Estimate from transcript length
     
+    // Clean up the call summary to use "caller" instead of "user"
+    const cleanedSummary = (webhookData.data?.analysis?.transcript_summary || callerInfo.message || '')
+      .replace(/\bthe user\b/gi, 'the caller')
+      .replace(/\bUser\b/g, 'Caller');
+    
     const callLogData = {
       user_id: businessUserId,
       caller_name: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown',
       phone_number: String(analysisData.phone_number?.value || callerInfo.phone_number || ''),
       email: analysisData.email_address?.value || callerInfo.email || null,
-      message: webhookData.data?.analysis?.transcript_summary || callerInfo.message || '',
+      message: cleanedSummary,
       urgency_level: callerInfo.urgency_level,
       best_time_to_call: callerInfo.best_time_to_call,
       call_type: callerInfo.call_type,
@@ -539,7 +544,9 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       user_id: businessUserId,
       caller_name: analysisData.customer_name?.value || 'Unknown',
       phone_number: String(analysisData.phone_number?.value || ''),
-      message: enhancedCallSummary || webhookData.data?.analysis?.transcript_summary || 'Call completed',
+      message: (enhancedCallSummary || webhookData.data?.analysis?.transcript_summary || 'Call completed')
+        .replace(/\bthe user\b/gi, 'the caller')
+        .replace(/\bUser\b/g, 'Caller'),
       call_type: callerInfo.call_type || 'general',
       urgency_level: callerInfo.urgency_level || 'medium',
       call_id: `call_${Date.now()}`,
