@@ -153,7 +153,7 @@ serve(async (req) => {
           .maybeSingle();
 
         // Fetch calendar settings and available times if appointment booking is enabled
-        let dynamicAvailableTimes = "Please call to schedule";
+        let dynamicAvailableTimes = businessDataForInit?.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
         if (businessDataForInit?.appointment_booking) {
           const { data: calendarSettings } = await supabase
             .from('google_calendar_settings')
@@ -405,7 +405,7 @@ serve(async (req) => {
       .single();
 
     // Generate available times based on business hours or calendar availability
-    let availableTimes = "Please call to schedule"; // Default fallback
+    let availableTimes = businessData.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
 
     if (calendarSettings && calendarSettings.is_connected) {
       try {
