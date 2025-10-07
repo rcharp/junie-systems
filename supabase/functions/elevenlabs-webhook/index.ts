@@ -349,7 +349,7 @@ async function processWebhookInBackground(
     console.log(`Final full transcript length: ${fullTranscript.length}`);
 
     const analysisData = webhookData.data?.analysis?.data_collection_results || {};
-    const businessUserId = await findTargetUserId(analysisData, webhookData, supabase);
+    const { userId: businessUserId, callerId } = await findTargetUserId(analysisData, webhookData, supabase);
     
     if (!businessUserId) {
       console.error('Could not find target user in background processing');
@@ -357,6 +357,7 @@ async function processWebhookInBackground(
     }
 
     console.log('Background processing for user:', businessUserId);
+    console.log('Caller ID from phone system:', callerId);
 
     // Extract caller info using the existing function
     const callerInfo = extractCallerInfo(fullTranscript);
@@ -511,6 +512,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       appointment_date_time: appointmentDateTime?.toISOString() || null,
       service_address: analysisData.service_address?.value || null,
       business_id: analysisData.business_id?.value || null,
+      caller_id: callerId, // The actual incoming phone number from phone system
       metadata: {
         caller_zip: '',
         caller_address: analysisData.service_address?.value || '',
@@ -541,6 +543,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       call_type: callerInfo.call_type || 'general',
       urgency_level: callerInfo.urgency_level || 'medium',
       call_id: `call_${Date.now()}`,
+      caller_id: callerId, // The actual incoming phone number from phone system
       metadata: {
         appointment_scheduled: isAppointmentScheduled,
         formatted_appointment_details: formattedAppointmentDetails
@@ -599,8 +602,8 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
   }
 }
 
-// Helper function to find target user ID
-async function findTargetUserId(analysisData: any, webhookData: any, supabase: any): Promise<string | null> {
+// Helper function to find target user ID and caller ID
+async function findTargetUserId(analysisData: any, webhookData: any, supabase: any): Promise<{ userId: string | null; callerId: string | null }> {
   const conversationId = webhookData.data?.conversation_id;
   const callSid = webhookData.data?.call_id; // ElevenLabs sends call_id in the webhook
   const businessIdFromAnalysis = analysisData?.business_id?.value;
@@ -626,6 +629,7 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
     if (callMapping) {
       console.log('  - Current conversation_id in DB:', callMapping.conversation_id);
       console.log('  - New conversation_id from webhook:', conversationId);
+      console.log('  - Caller ID from mapping:', callMapping.caller_id);
       
       // Update to real conversation_id if it's still temp
       if (callMapping.conversation_id.startsWith('temp_') && conversationId) {
@@ -640,7 +644,7 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
       
       if (callMapping.user_id) {
         console.log('✅✅✅ PRIMARY SUCCESS! Found user_id via call_sid:', callMapping.user_id);
-        return callMapping.user_id;
+        return { userId: callMapping.user_id, callerId: callMapping.caller_id };
       }
     }
   }
@@ -651,7 +655,7 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
     
     const { data: exactMapping, error: exactError } = await supabase
       .from('conversation_call_mapping')
-      .select('user_id, business_id')
+      .select('*')
       .eq('conversation_id', conversationId)
       .maybeSingle();
     
@@ -659,7 +663,7 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
     
     if (exactMapping?.user_id) {
       console.log('✅✅✅ SECONDARY SUCCESS! Found user_id from conversation_id:', exactMapping.user_id);
-      return exactMapping.user_id;
+      return { userId: exactMapping.user_id, callerId: exactMapping.caller_id };
     }
   }
   
@@ -686,7 +690,7 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
     
     if (!updateError && tempMapping.user_id) {
       console.log('✅✅✅ FALLBACK SUCCESS! Updated temp and got user_id:', tempMapping.user_id);
-      return tempMapping.user_id;
+      return { userId: tempMapping.user_id, callerId: tempMapping.caller_id };
     }
   }
 
@@ -694,7 +698,7 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
   console.error('  - conversation_id:', conversationId);
   console.error('  - call_sid:', callSid);
   console.error('  - business_id from analysis:', businessIdFromAnalysis);
-  return null;
+  return { userId: null, callerId: null };
 }
 
 // Helper function to extract caller information
