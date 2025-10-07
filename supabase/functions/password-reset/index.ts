@@ -133,7 +133,7 @@ serve(async (req: Request) => {
     }
 
     // Send password reset email using Supabase Auth
-    const { error: resetError } = await supabase.auth.admin.resetPasswordForEmail(
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
       email,
       {
         redirectTo: `${req.headers.get("origin") || "https://id-preview--dff80483-0259-48f0-b1d3-d00ff4a377ae.lovable.app"}/reset-password`,
