@@ -1079,7 +1079,7 @@ const Settings = () => {
     } else if (section === "Call") {
       // Validate forwarding number
       const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
-      
+
       if (!forwardingNumber || !forwardingNumber.trim()) {
         toast({
           variant: "destructive",
@@ -1088,17 +1088,17 @@ const Settings = () => {
         });
         return;
       }
-      
+
       if (digitsOnly.length !== 10) {
         toast({
           variant: "destructive",
           title: "Invalid Phone Number",
           description: "Forwarding number must be exactly 10 digits",
         });
-        setValidationErrors(prev => ({ ...prev, forwardingNumber: true }));
+        setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
         return;
       }
-      
+
       updateData = {
         forwarding_number: forwardingNumber.trim(),
         urgent_keywords: urgentKeywords,
@@ -2152,15 +2152,15 @@ const Settings = () => {
                         // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                         const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
                         setBusinessPhone(phoneValue);
-                        
+
                         // Only validate if user has entered something
                         const digitsOnly = phoneValue.replace(/\D/g, "");
                         if (phoneValue.length > 0 && digitsOnly.length !== 10) {
-                          setValidationErrors(prev => ({ ...prev, businessPhone: true }));
+                          setValidationErrors((prev) => ({ ...prev, businessPhone: true }));
                         } else {
-                          setValidationErrors(prev => ({ ...prev, businessPhone: false }));
+                          setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
                         }
-                        
+
                         debouncedAutoSave("Business");
                       }}
                       onKeyDown={(e) => {
@@ -2659,7 +2659,7 @@ const Settings = () => {
                         disabled={!!twilioPhoneNumber || assigningPhoneNumber}
                         className="whitespace-nowrap"
                       >
-                        {assigningPhoneNumber ? "Assigning..." : "Get a Free Phone Number"}
+                        {assigningPhoneNumber ? "Assigning..." : "Get Your Phone Number"}
                       </Button>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -2683,15 +2683,15 @@ const Settings = () => {
                           // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                           const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
                           setForwardingNumber(phoneValue);
-                          
+
                           // Only validate if user has entered something
                           const digitsOnly = phoneValue.replace(/\D/g, "");
                           if (phoneValue.length > 0 && digitsOnly.length !== 10) {
-                            setValidationErrors(prev => ({ ...prev, forwardingNumber: true }));
+                            setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
                           } else {
-                            setValidationErrors(prev => ({ ...prev, forwardingNumber: false }));
+                            setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
                           }
-                          
+
                           debouncedAutoSave("Call");
                         }}
                         onKeyDown={(e) => {
@@ -2703,7 +2703,9 @@ const Settings = () => {
                         placeholder="10-digit phone number"
                         required
                         className={
-                          validationErrors.forwardingNumber ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
+                          validationErrors.forwardingNumber
+                            ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                            : ""
                         }
                       />
                       {validationErrors.forwardingNumber && forwardingNumber.length > 0 && (
