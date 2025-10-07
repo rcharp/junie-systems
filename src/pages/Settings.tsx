@@ -177,6 +177,7 @@ const Settings = () => {
     businessDescription: false,
     businessAddress: false,
     services: false,
+    forwardingNumber: false,
   });
 
   // Refs for scrolling to error fields
@@ -2136,13 +2137,25 @@ const Settings = () => {
                         // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                         const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
                         setBusinessPhone(phoneValue);
+                        
+                        // Validate: must be exactly 10 digits
+                        const digitsOnly = phoneValue.replace(/\D/g, "");
+                        if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+                          setValidationErrors(prev => ({ ...prev, businessPhone: true }));
+                        } else {
+                          setValidationErrors(prev => ({ ...prev, businessPhone: false }));
+                        }
+                        
                         debouncedAutoSave("Business");
                       }}
-                      placeholder="+1 (555) 123-4567"
+                      placeholder="10-digit phone number"
                       className={
                         validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
                       }
                     />
+                    {validationErrors.businessPhone && (
+                      <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
+                    )}
                   </div>
 
                   <div className="space-y-2" ref={businessAddressRef}>
@@ -2645,12 +2658,29 @@ const Settings = () => {
                         id="forwardingNumber"
                         value={forwardingNumber}
                         onChange={(e) => {
-                          setForwardingNumber(e.target.value);
+                          // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
+                          const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
+                          setForwardingNumber(phoneValue);
+                          
+                          // Validate: must be exactly 10 digits
+                          const digitsOnly = phoneValue.replace(/\D/g, "");
+                          if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+                            setValidationErrors(prev => ({ ...prev, forwardingNumber: true }));
+                          } else {
+                            setValidationErrors(prev => ({ ...prev, forwardingNumber: false }));
+                          }
+                          
                           debouncedAutoSave("Call");
                         }}
-                        placeholder="+1 (555) 987-6543"
+                        placeholder="10-digit phone number"
                         required
+                        className={
+                          validationErrors.forwardingNumber ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
+                        }
                       />
+                      {validationErrors.forwardingNumber && (
+                        <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
+                      )}
                       <p className="text-sm text-muted-foreground">
                         The phone number that you want urgent or emergency calls to be forwarded to, as well as SMS
                         notifications.
