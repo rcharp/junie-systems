@@ -376,7 +376,13 @@ async function processWebhookInBackground(
     let calendarBookingResult = null;
     const isAppointmentScheduled = analysisData.appointment_scheduled?.value === true;
     
+    console.log('=== CALENDAR BOOKING CHECK ===');
+    console.log('appointment_scheduled flag:', analysisData.appointment_scheduled?.value);
+    console.log('isAppointmentScheduled:', isAppointmentScheduled);
+    console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
+    
     if (isAppointmentScheduled && parsedAppointmentDateTime) {
+      console.log('✅ Conditions met - attempting calendar booking...');
       calendarBookingResult = await handleCalendarBooking({
         isAppointmentScheduled,
         parsedAppointmentDateTime, 
@@ -387,6 +393,20 @@ async function processWebhookInBackground(
         supabaseAdmin: supabase,
         supabaseUrl
       });
+      
+      if (calendarBookingResult) {
+        console.log('✅ Calendar event created:', calendarBookingResult.event?.id);
+      } else {
+        console.log('⚠️ Calendar booking returned null - check logs above for errors');
+      }
+    } else {
+      console.log('❌ Calendar booking skipped:');
+      if (!isAppointmentScheduled) {
+        console.log('  - Reason: appointment_scheduled is not true');
+      }
+      if (!parsedAppointmentDateTime) {
+        console.log('  - Reason: parsedAppointmentDateTime is null');
+      }
     }
 
     // Format appointment details 
@@ -845,30 +865,52 @@ async function handleCalendarBooking({
   supabaseUrl: string
 }) {
   try {
+    console.log('📅 === HANDLE CALENDAR BOOKING START ===');
+    console.log('isAppointmentScheduled:', isAppointmentScheduled);
+    console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
+    console.log('businessUserId:', businessUserId);
+    
     if (!isAppointmentScheduled || !parsedAppointmentDateTime) {
-      console.log('No appointment scheduled or no date/time provided');
+      console.log('❌ No appointment scheduled or no date/time provided');
       return null;
     }
 
     // Check if calendar is connected
+    console.log('Checking calendar connection for user:', businessUserId);
     const { data: calendarData, error: calendarError } = await supabaseAdmin
       .from('google_calendar_settings')
-      .select('is_connected, calendar_id')
+      .select('is_connected, calendar_id, timezone')
       .eq('user_id', businessUserId)
       .single();
 
-    if (calendarError || !calendarData?.is_connected) {
-      console.log('Calendar not connected for user:', businessUserId);
+    console.log('Calendar query result:', { calendarData, calendarError });
+
+    if (calendarError) {
+      console.error('❌ Calendar query error:', calendarError);
+      return null;
+    }
+    
+    if (!calendarData?.is_connected) {
+      console.log('❌ Calendar not connected for user:', businessUserId);
+      console.log('Calendar data:', calendarData);
       return null;
     }
 
-    console.log('Calendar connected, creating event...');
+    console.log('✅ Calendar connected, creating event...');
+    console.log('Calendar ID:', calendarData.calendar_id);
+    console.log('Timezone:', calendarData.timezone);
 
+    // Normalize email before passing to calendar booking
+    let normalizedEmail = analysisData.email_address?.value || callerInfo.email;
+    if (normalizedEmail && typeof normalizedEmail === 'string') {
+      normalizedEmail = normalizedEmail.replace(/ at /gi, '@');
+    }
+    
     // Call the google-calendar-book function
     const bookingPayload = {
       userId: businessUserId,
       customerName: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown Customer',
-      customerEmail: analysisData.email_address?.value || callerInfo.email,
+      customerEmail: normalizedEmail,
       customerPhone: String(analysisData.phone_number?.value || callerInfo.phone_number || ''),
       serviceType: analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
       serviceAddress: analysisData.service_address?.value || '',
