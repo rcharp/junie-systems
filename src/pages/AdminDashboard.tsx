@@ -335,7 +335,7 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-4 sm:mb-6">
+          <TabsList className="w-full grid grid-cols-4 mb-4 sm:mb-6">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
             <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
