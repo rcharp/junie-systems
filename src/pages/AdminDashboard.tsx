@@ -100,8 +100,12 @@ const AdminDashboard = () => {
       const activeUserCount = uniqueActiveUsers.size;
 
       // Fetch users with business IDs and emails for admin view using secure function
+      console.log('🔍 Fetching users with RPC call...');
       const { data: usersData, error: usersError } = await supabase
         .rpc('get_users_with_business_ids_for_admin');
+
+      console.log('👥 Users data result:', usersData);
+      console.log('❌ Users error:', usersError);
 
       if (usersError) {
         console.error('Error fetching users:', usersError);
