@@ -845,6 +845,23 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_google_calendar_tokens_with_key: {
+        Args: { p_encryption_key: string; p_user_id: string }
+        Returns: {
+          access_token: string
+          appointment_duration: number
+          availability_hours: Json
+          calendar_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          is_connected: boolean
+          refresh_token: string
+          timezone: string
+          updated_at: string
+          user_id: string
+        }[]
+      }
       get_secure_appointments_for_admin: {
         Args: { target_user_id?: string }
         Returns: {

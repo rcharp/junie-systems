@@ -49,11 +49,6 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
-    
-    // Set encryption key for this session
-    await supabase.rpc('exec_sql', {
-      sql: `SET app.settings.google_calendar_encryption_key = '${encryptionKey}'`
-    })
 
     // Try to get user_id from request body first, then fall back to URL path
     let userId;
@@ -74,9 +69,10 @@ Deno.serve(async (req) => {
 
     console.log('Fetching calendar availability for user:', userId)
 
-    // Get user's calendar settings with decrypted tokens using the RPC function
-    const { data: calendarTokens, error: tokensError } = await supabase.rpc('get_google_calendar_tokens', {
-      p_user_id: userId
+    // Get user's calendar settings with decrypted tokens using the new RPC function with encryption key
+    const { data: calendarTokens, error: tokensError } = await supabase.rpc('get_google_calendar_tokens_with_key', {
+      p_user_id: userId,
+      p_encryption_key: encryptionKey
     })
 
     // Also get user profile timezone as backup
@@ -160,24 +156,34 @@ Deno.serve(async (req) => {
         currentAccessToken = tokenData.access_token
         const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
         
-        // Encrypt and update the stored token
+        // Encrypt and update the stored token using direct encryption
         console.log('Encrypting new access token...')
-        const { data: encryptedNewToken, error: encryptError } = await supabase.rpc('encrypt_token', {
-          token: currentAccessToken
-        })
+        const encryptedNewToken = Buffer.from(
+          // We'll use a simpler approach - encrypt in the edge function directly
+          await crypto.subtle.encrypt(
+            {
+              name: "AES-GCM",
+              iv: new Uint8Array(12)
+            },
+            await crypto.subtle.importKey(
+              "raw",
+              new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0')),
+              "AES-GCM",
+              false,
+              ["encrypt"]
+            ),
+            new TextEncoder().encode(currentAccessToken)
+          )
+        ).toString('base64')
         
-        if (encryptedNewToken && !encryptError) {
-          await supabase
-            .from('google_calendar_settings')
-            .update({
-              encrypted_access_token: encryptedNewToken,
-              expires_at: newExpiresAt
-            })
-            .eq('user_id', userId)
-          console.log('Updated stored access token')
-        } else {
-          console.error('Failed to encrypt new token:', encryptError)
-        }
+        await supabase
+          .from('google_calendar_settings')
+          .update({
+            encrypted_access_token: encryptedNewToken,
+            expires_at: newExpiresAt
+          })
+          .eq('user_id', userId)
+        console.log('Updated stored access token')
       } else {
         console.error('Token refresh failed:', tokenData)
         throw new Error('Failed to refresh access token')
