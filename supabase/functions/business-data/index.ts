@@ -178,10 +178,19 @@ serve(async (req) => {
                   return slot.humanReadable || `${slot.startTime} - ${slot.endTime}`;
                 });
                 dynamicAvailableTimes = JSON.stringify(timeSlots);
+              } else {
+                // Fallback to business hours if calendar not available
+                console.log('Calendar not available, falling back to business hours');
+                dynamicAvailableTimes = businessDataForInit.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
               }
             } catch (error) {
               console.error('Error fetching calendar availability for conversation initiation:', error);
+              // Fallback to business hours on error
+              dynamicAvailableTimes = businessDataForInit.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
             }
+          } else {
+            // Calendar not connected, use business hours
+            dynamicAvailableTimes = businessDataForInit.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
           }
         }
         
@@ -425,20 +434,24 @@ serve(async (req) => {
             console.log('Formatted slots:', formattedSlots);
             availableTimes = formattedSlots;
           } else {
-            console.log('No slots returned from calendar');
+            console.log('No slots returned from calendar, using business hours');
+            availableTimes = businessData.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
           }
         } else {
-          console.log('Calendar not available or error:', {
+          console.log('Calendar not available or error, falling back to business hours:', {
             hasData: !!availabilityResponse.data,
             error: availabilityResponse.error,
             available: availabilityResponse.data?.available
           });
+          availableTimes = businessData.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
         }
       } catch (error) {
-        console.error('Error fetching calendar availability:', error);
+        console.error('Error fetching calendar availability, falling back to business hours:', error);
+        availableTimes = businessData.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
       }
     } else {
-      console.log('Calendar not connected or settings not found');
+      console.log('Calendar not connected or settings not found, using business hours');
+      availableTimes = businessData.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
     }
 
     // Format the response
