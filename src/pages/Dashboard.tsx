@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,6 +69,7 @@ interface DashboardStats {
 const Dashboard = () => {
   const { user, loading, isAdmin, setSigningOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const { subscriptionPlan, featureAccess } = useSubscription();
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
@@ -76,7 +77,7 @@ const Dashboard = () => {
   const [showSetupGuide, setShowSetupGuide] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [upgradeFeatureName, setUpgradeFeatureName] = useState("");
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "overview");
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalCalls: 0,
     totalMessages: 0,
@@ -86,6 +87,14 @@ const Dashboard = () => {
   });
   const [statsLoading, setStatsLoading] = useState(true);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+
+  // Update active tab when URL parameter changes
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -773,7 +782,10 @@ const Dashboard = () => {
                   <Button
                     className="w-full justify-start"
                     variant="outline"
-                    onClick={() => navigate("/dashboard?tab=messages")}
+                    onClick={() => {
+                      setActiveTab("messages");
+                      navigate("/dashboard?tab=messages");
+                    }}
                   >
                     <MessageSquare className="w-4 h-4 mr-2" />
                     Calls and Messages
