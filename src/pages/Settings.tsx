@@ -2634,6 +2634,8 @@ const Settings = () => {
                     </p>
                   </div>
 
+                  <Separator />
+
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
