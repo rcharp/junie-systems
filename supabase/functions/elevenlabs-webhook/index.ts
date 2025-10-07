@@ -533,13 +533,15 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       .insert([callLogData])
       .select();
 
+    let callLogId = null;
     if (callLogError) {
       console.error('Error saving call log:', callLogError);
     } else {
       console.log('Successfully saved call log:', callLogResult);
+      callLogId = callLogResult?.[0]?.id;
     }
 
-    // Save call message
+    // Save call message linked to the call log
     const callMessageData = {
       user_id: businessUserId,
       caller_name: analysisData.customer_name?.value || 'A potential customer',
@@ -550,6 +552,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       call_type: callerInfo.call_type || 'general',
       urgency_level: callerInfo.urgency_level || 'medium',
       call_id: `call_${Date.now()}`,
+      call_log_id: callLogId, // Link to the call log
       incoming_call_phone_number: incomingCallPhoneNumber, // The actual incoming phone number from phone system
       metadata: {
         appointment_scheduled: isAppointmentScheduled,

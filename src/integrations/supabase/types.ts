@@ -341,6 +341,7 @@ export type Database = {
         Row: {
           best_time_to_call: string | null
           call_id: string | null
+          call_log_id: string | null
           call_type: string
           caller_name: string
           created_at: string
@@ -358,6 +359,7 @@ export type Database = {
         Insert: {
           best_time_to_call?: string | null
           call_id?: string | null
+          call_log_id?: string | null
           call_type: string
           caller_name: string
           created_at?: string
@@ -375,6 +377,7 @@ export type Database = {
         Update: {
           best_time_to_call?: string | null
           call_id?: string | null
+          call_log_id?: string | null
           call_type?: string
           caller_name?: string
           created_at?: string
@@ -389,7 +392,15 @@ export type Database = {
           urgency_level?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "call_messages_call_log_id_fkey"
+            columns: ["call_log_id"]
+            isOneToOne: false
+            referencedRelation: "call_logs"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       client_tool_events: {
         Row: {
