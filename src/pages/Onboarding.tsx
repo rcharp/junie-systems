@@ -45,6 +45,11 @@ const Onboarding = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [businessTypesList, setBusinessTypesList] = useState<Array<{value: string, label: string}>>([]);
+  
+  // Call forwarding state
+  const [forwardingNumber, setForwardingNumber] = useState("");
+  const [forwardingNumberError, setForwardingNumberError] = useState(false);
+  const [savingForwarding, setSavingForwarding] = useState(false);
 
   // US states list for Claude matching
   const statesList = [
@@ -1253,7 +1258,7 @@ const Onboarding = () => {
     }
   };
 
-  const progressValue = (step / 2) * 100;
+  const progressValue = (step / 3) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
@@ -1419,18 +1424,12 @@ const Onboarding = () => {
                 <Button
                   onClick={() => {
                     setShowVerification(false);
-                    toast({
-                      title: "Setup complete!",
-                      description: "Welcome to your AI assistant dashboard",
-                    });
-                    setTimeout(() => {
-                      window.location.href = '/settings?onboarding_complete=true';
-                    }, 500);
+                    setStep(3);
                   }}
                   className="flex-1"
                   size="lg"
                 >
-                  Let's Go!
+                  Continue to Setup
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </div>
@@ -1442,7 +1441,7 @@ const Onboarding = () => {
       {/* Progress indicator */}
       <div className="container mx-auto px-4 py-2">
         <div className="max-w-2xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
-          <span>Step {step} of 2</span>
+          <span>Step {step} of 3</span>
         </div>
       </div>
 
@@ -1453,7 +1452,7 @@ const Onboarding = () => {
 
           {step === 1 ? (
             /* Step 1: Business Information */
-            <div className="space-y-6 animate-slide-up">
+            <div className="space-y-6 animate-slide-up" key="step-1">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                   Let&apos;s find your business
@@ -1600,9 +1599,9 @@ const Onboarding = () => {
                 </a>
               </p>
             </div>
-          ) : (
+          ) : step === 2 ? (
             /* Step 2: Create Account */
-            <div className="space-y-6 animate-slide-up">
+            <div className="space-y-6 animate-slide-up" key="step-2">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                   Create your account
@@ -1740,6 +1739,131 @@ const Onboarding = () => {
                   </a>
                 </p>
               </div>
+            </div>
+          ) : (
+            /* Step 3: Call Forwarding Setup */
+            <div className="space-y-6 animate-slide-up" key="step-3">
+              <div className="text-center space-y-3">
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                  Set your call forwarding number
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  When you can&apos;t take a call, we&apos;ll forward it to this number
+                </p>
+              </div>
+
+              <Card className="border-2 shadow-elegant">
+                <CardContent className="pt-6 space-y-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="forwarding-number">Forwarding Phone Number</Label>
+                    <Input
+                      id="forwarding-number"
+                      type="tel"
+                      placeholder="(555) 123-4567"
+                      value={forwardingNumber}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, "");
+                        if (value.length > 10) value = value.slice(0, 10);
+                        
+                        let formatted = value;
+                        if (value.length >= 6) {
+                          formatted = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
+                        } else if (value.length >= 3) {
+                          formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                        }
+                        
+                        setForwardingNumber(formatted);
+                        setForwardingNumberError(value.length > 0 && value.length !== 10);
+                      }}
+                      className={forwardingNumberError ? "border-destructive" : ""}
+                      autoFocus
+                    />
+                    {forwardingNumberError && (
+                      <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Enter the phone number where you want calls forwarded when you&apos;re unavailable
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={async () => {
+                      const digits = forwardingNumber.replace(/\D/g, "");
+                      if (digits.length !== 10) {
+                        setForwardingNumberError(true);
+                        return;
+                      }
+
+                      setSavingForwarding(true);
+                      try {
+                        const { data: { session } } = await supabase.auth.getSession();
+                        if (!session) {
+                          throw new Error("Not authenticated");
+                        }
+
+                        const { error } = await supabase
+                          .from("business_settings")
+                          .update({ forwarding_number: forwardingNumber })
+                          .eq("user_id", session.user.id);
+
+                        if (error) throw error;
+
+                        toast({
+                          title: "Setup complete!",
+                          description: "Welcome to your AI assistant dashboard",
+                        });
+                        
+                        setTimeout(() => {
+                          window.location.href = '/settings?onboarding_complete=true';
+                        }, 500);
+                      } catch (error: any) {
+                        console.error("Error saving forwarding number:", error);
+                        toast({
+                          title: "Error",
+                          description: "Failed to save forwarding number. Please try again.",
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setSavingForwarding(false);
+                      }
+                    }}
+                    className="w-full h-12 text-base"
+                    size="lg"
+                    disabled={savingForwarding || forwardingNumberError || !forwardingNumber}
+                  >
+                    {savingForwarding ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        Complete Setup
+                        <ArrowRight className="ml-2 w-5 h-5" />
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    onClick={async () => {
+                      // Skip forwarding number setup
+                      toast({
+                        title: "Setup complete!",
+                        description: "You can set your forwarding number later in Settings",
+                      });
+                      
+                      setTimeout(() => {
+                        window.location.href = '/settings?onboarding_complete=true';
+                      }, 500);
+                    }}
+                    className="w-full"
+                    disabled={savingForwarding}
+                  >
+                    Skip for now
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>
