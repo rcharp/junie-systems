@@ -978,6 +978,72 @@ async function parseAppointmentTime(
       console.log('Not a valid ISO date string, trying text parsing...');
     }
     
+    // Helper to convert written numbers to digits
+    const numberWords: { [key: string]: number } = {
+      'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+      'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+      'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+      'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+      'twenty-one': 21, 'twenty-two': 22, 'twenty-three': 23, 'twenty-four': 24,
+      'twenty-five': 25, 'twenty-six': 26, 'twenty-seven': 27, 'twenty-eight': 28,
+      'twenty-nine': 29, 'thirty': 30, 'thirty-one': 31,
+      'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5,
+      'sixth': 6, 'seventh': 7, 'eighth': 8, 'ninth': 9, 'tenth': 10,
+      'eleventh': 11, 'twelfth': 12
+    };
+    
+    const convertNumberWord = (word: string): number | null => {
+      const lower = word.toLowerCase().replace(/\s+/g, '-');
+      return numberWords[lower] || null;
+    };
+    
+    // Try to extract date/time from text like "Wednesday, October eighth from nine forty-five to twelve fifteen"
+    const rangeMatch = appointmentTimeValue.match(
+      /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+([A-Za-z]+)\s+([a-z]+|\d{1,2})(?:st|nd|rd|th)?\s+from\s+([a-z\s-]+)\s+to/i
+    );
+    
+    if (rangeMatch) {
+      const [, dayName, monthName, dayStr, timeStr] = rangeMatch;
+      console.log('Extracted range format:', { dayName, monthName, dayStr, timeStr });
+      
+      const day = convertNumberWord(dayStr) || parseInt(dayStr);
+      
+      // Parse time like "nine forty-five" or "ten"
+      const timeWords = timeStr.trim().split(/\s+/);
+      let hours = 0;
+      let minutes = 0;
+      
+      if (timeWords.length >= 1) {
+        hours = convertNumberWord(timeWords[0]) || parseInt(timeWords[0]) || 0;
+      }
+      if (timeWords.length >= 2) {
+        minutes = convertNumberWord(timeWords[1]) || parseInt(timeWords[1]) || 0;
+      }
+      
+      console.log('Parsed time:', { hours, minutes, day });
+      
+      try {
+        const now = new Date();
+        const months = ['january', 'february', 'march', 'april', 'may', 'june', 
+                       'july', 'august', 'september', 'october', 'november', 'december'];
+        const monthIndex = months.indexOf(monthName.toLowerCase());
+        
+        if (monthIndex !== -1 && day > 0 && hours >= 0) {
+          const appointmentDate = new Date(now.getFullYear(), monthIndex, day, hours, minutes);
+          
+          // If the date is in the past, assume it's next year
+          if (appointmentDate < now) {
+            appointmentDate.setFullYear(now.getFullYear() + 1);
+          }
+          
+          console.log('✅ Parsed range format date to:', appointmentDate.toISOString());
+          return appointmentDate.toISOString();
+        }
+      } catch (parseError) {
+        console.error('Error parsing range format:', parseError);
+      }
+    }
+    
     // Try to extract date/time from text like "Thursday, October 9th at 10 a.m."
     const dateTimeMatch = appointmentTimeValue.match(
       /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s+at\s+)?(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?/i
