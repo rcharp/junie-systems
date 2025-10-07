@@ -351,18 +351,29 @@ const Settings = () => {
         .maybeSingle();
 
       console.log("Profile data from DB:", profileData);
+      console.log("User metadata:", userMeta);
 
       // Set profile data with fallback to user metadata
       if (profileData) {
         // Use database value if it exists and is not empty, otherwise fall back to metadata
         const dbFullName = profileData.full_name?.trim();
         const metaFullName = userMeta?.full_name?.trim();
-        setUserFullName(dbFullName || metaFullName || "");
+        const finalFullName = dbFullName || metaFullName || "";
+        console.log("Setting full name:", { dbFullName, metaFullName, finalFullName });
+        setUserFullName(finalFullName);
         
-        setUserCompanyName(profileData.company_name || "");
-        setUserTimezone(profileData.timezone || "");
+        const dbCompanyName = profileData.company_name?.trim();
+        const finalCompanyName = dbCompanyName || "";
+        console.log("Setting company name:", { dbCompanyName, finalCompanyName });
+        setUserCompanyName(finalCompanyName);
+        
+        const dbTimezone = profileData.timezone?.trim();
+        const finalTimezone = dbTimezone || "";
+        console.log("Setting timezone:", { dbTimezone, finalTimezone });
+        setUserTimezone(finalTimezone);
       } else {
         // No profile in database, use metadata as fallback
+        console.log("No profile data, using metadata");
         setUserFullName(userMeta?.full_name || "");
       }
 
