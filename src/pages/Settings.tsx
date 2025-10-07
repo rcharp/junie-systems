@@ -2153,9 +2153,9 @@ const Settings = () => {
                         const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
                         setBusinessPhone(phoneValue);
                         
-                        // Validate: must be exactly 10 digits
+                        // Only validate if user has entered something
                         const digitsOnly = phoneValue.replace(/\D/g, "");
-                        if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+                        if (phoneValue.length > 0 && digitsOnly.length !== 10) {
                           setValidationErrors(prev => ({ ...prev, businessPhone: true }));
                         } else {
                           setValidationErrors(prev => ({ ...prev, businessPhone: false }));
@@ -2174,7 +2174,7 @@ const Settings = () => {
                         validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
                       }
                     />
-                    {validationErrors.businessPhone && (
+                    {validationErrors.businessPhone && businessPhone.length > 0 && (
                       <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
                     )}
                   </div>
@@ -2684,9 +2684,9 @@ const Settings = () => {
                           const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
                           setForwardingNumber(phoneValue);
                           
-                          // Validate: must be exactly 10 digits
+                          // Only validate if user has entered something
                           const digitsOnly = phoneValue.replace(/\D/g, "");
-                          if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+                          if (phoneValue.length > 0 && digitsOnly.length !== 10) {
                             setValidationErrors(prev => ({ ...prev, forwardingNumber: true }));
                           } else {
                             setValidationErrors(prev => ({ ...prev, forwardingNumber: false }));
@@ -2706,7 +2706,7 @@ const Settings = () => {
                           validationErrors.forwardingNumber ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
                         }
                       />
-                      {validationErrors.forwardingNumber && (
+                      {validationErrors.forwardingNumber && forwardingNumber.length > 0 && (
                         <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
                       )}
                       <p className="text-sm text-muted-foreground">
