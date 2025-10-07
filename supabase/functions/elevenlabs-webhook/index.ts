@@ -492,9 +492,12 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
                          (fullTranscript ? Math.max(60, Math.floor(fullTranscript.length / 50)) : 60); // Estimate from transcript length
     
     // Clean up the call summary to use "caller" instead of "user"
-    const cleanedSummary = (webhookData.data?.analysis?.transcript_summary || callerInfo.message || '')
+    let cleanedSummary = (webhookData.data?.analysis?.transcript_summary || callerInfo.message || '')
       .replace(/\bthe user\b/gi, 'the caller')
       .replace(/\bUser\b/g, 'Caller');
+    
+    // Capitalize "The caller" if it's at the beginning of a sentence
+    cleanedSummary = cleanedSummary.replace(/^the caller/i, 'The caller');
     
     const callLogData = {
       user_id: businessUserId,
@@ -542,13 +545,18 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
     }
 
     // Save call message linked to the call log
+    let callMessage = (enhancedCallSummary || webhookData.data?.analysis?.transcript_summary || 'Call completed')
+      .replace(/\bthe user\b/gi, 'the caller')
+      .replace(/\bUser\b/g, 'Caller');
+    
+    // Capitalize "The caller" if it's at the beginning of a sentence
+    callMessage = callMessage.replace(/^the caller/i, 'The caller');
+    
     const callMessageData = {
       user_id: businessUserId,
       caller_name: analysisData.customer_name?.value || 'A potential customer',
       phone_number: String(analysisData.phone_number?.value || incomingCallPhoneNumber || ''),
-      message: (enhancedCallSummary || webhookData.data?.analysis?.transcript_summary || 'Call completed')
-        .replace(/\bthe user\b/gi, 'the caller')
-        .replace(/\bUser\b/g, 'Caller'),
+      message: callMessage,
       call_type: callerInfo.call_type || 'general',
       urgency_level: callerInfo.urgency_level || 'medium',
       call_id: `call_${Date.now()}`,
