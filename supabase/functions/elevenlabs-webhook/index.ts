@@ -349,7 +349,7 @@ async function processWebhookInBackground(
     console.log(`Final full transcript length: ${fullTranscript.length}`);
 
     const analysisData = webhookData.data?.analysis?.data_collection_results || {};
-    const { userId: businessUserId, callerId: incomingCallPhoneNumber } = await findTargetUserId(analysisData, webhookData, supabase);
+    const { userId: businessUserId, callerId: incomingCallPhoneNumber, businessId } = await findTargetUserId(analysisData, webhookData, supabase);
     
     if (!businessUserId) {
       console.error('Could not find target user in background processing');
@@ -516,7 +516,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       appointment_scheduled: isAppointmentScheduled,
       appointment_date_time: appointmentDateTime?.toISOString() || null,
       service_address: analysisData.service_address?.value || null,
-      business_id: analysisData.business_id?.value || null,
+      business_id: businessId || analysisData.business_id?.value || null,
       incoming_call_phone_number: incomingCallPhoneNumber, // The actual incoming phone number from phone system
       metadata: {
         caller_zip: '',
@@ -662,7 +662,8 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
         // Prefer the incoming phone number from webhook metadata, fallback to mapping
         const finalCallerId = incomingPhoneNumber || callMapping.incoming_call_phone_number;
         console.log('  - Final incoming phone number:', finalCallerId);
-        return { userId: callMapping.user_id, callerId: finalCallerId };
+        console.log('  - business_id from mapping:', callMapping.business_id);
+        return { userId: callMapping.user_id, callerId: finalCallerId, businessId: callMapping.business_id };
       }
     }
   }
@@ -683,7 +684,8 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
       console.log('✅✅✅ SECONDARY SUCCESS! Found user_id from conversation_id:', exactMapping.user_id);
       // Prefer the incoming phone number from webhook metadata, fallback to mapping
       const finalCallerId = incomingPhoneNumber || exactMapping.incoming_call_phone_number;
-      return { userId: exactMapping.user_id, callerId: finalCallerId };
+      console.log('  - business_id from mapping:', exactMapping.business_id);
+      return { userId: exactMapping.user_id, callerId: finalCallerId, businessId: exactMapping.business_id };
     }
   }
   
@@ -712,7 +714,8 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
       console.log('✅✅✅ FALLBACK SUCCESS! Updated temp and got user_id:', tempMapping.user_id);
       // Prefer the incoming phone number from webhook metadata, fallback to mapping
       const finalCallerId = incomingPhoneNumber || tempMapping.incoming_call_phone_number;
-      return { userId: tempMapping.user_id, callerId: finalCallerId };
+      console.log('  - business_id from mapping:', tempMapping.business_id);
+      return { userId: tempMapping.user_id, callerId: finalCallerId, businessId: tempMapping.business_id };
     }
   }
 
@@ -720,7 +723,7 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
   console.error('  - conversation_id:', conversationId);
   console.error('  - call_sid:', callSid);
   console.error('  - business_id from analysis:', businessIdFromAnalysis);
-  return { userId: null, callerId: null };
+  return { userId: null, callerId: null, businessId: null };
 }
 
 // Helper function to extract caller information
