@@ -110,6 +110,20 @@ const CallList = () => {
     }
   };
 
+  const handleMessageClick = async (message: CallMessage) => {
+    // Try to find the associated call_log by call_id
+    if (message.call_id) {
+      const associatedCall = callLogs.find(call => call.call_id === message.call_id);
+      if (associatedCall) {
+        navigate(`/call/${associatedCall.id}`);
+        return;
+      }
+    }
+    
+    // Fallback to message id if no associated call found
+    navigate(`/call/${message.id}`);
+  };
+
   const markMessageAsRead = async (messageId: string) => {
     try {
       const { error } = await supabase
@@ -322,7 +336,7 @@ const CallList = () => {
               <Card 
                 key={message.id} 
                 className={`cursor-pointer hover:shadow-md transition-shadow ${message.status === 'new' ? 'border-primary bg-primary/5' : ''}`}
-                onClick={() => navigate(`/call/${message.id}`)}
+                onClick={() => handleMessageClick(message)}
               >
                 <CardHeader className="pb-3">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
