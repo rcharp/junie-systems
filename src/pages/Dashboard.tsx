@@ -377,16 +377,14 @@ const Dashboard = () => {
 
       if (callMessages) {
         callMessages.forEach((message) => {
-          // For messages, show the actual detailed message content
+          // For messages, show detailed action description
           const displayName = getContextualCallerName(message.caller_name, message.call_type);
-          
-          // Use the full message for context
-          const messageText = message.message || "left a voicemail";
+          const actionDescription = extractCallAction(message.message, message.call_type);
           
           activities.push({
             id: message.id,
             time: formatDistanceToNow(new Date(message.created_at), { addSuffix: true }),
-            action: `${displayName}: ${messageText}`,
+            action: `${displayName} ${actionDescription}`,
             type:
               message.urgency_level === "urgent" ? "error" : message.urgency_level === "high" ? "warning" : "success",
             caller_name: message.caller_name,
