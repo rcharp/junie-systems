@@ -71,7 +71,7 @@ serve(async (req: Request) => {
 
     // Send email using Resend
     const { error: emailError } = await resend.emails.send({
-      from: "Junie AI <onboarding@resend.dev>",
+      from: "Junie AI <noreply@getjunie.com>",
       to: [email],
       subject: "Reset your password",
       html: `
