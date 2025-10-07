@@ -298,6 +298,30 @@ async function processWebhookInBackground(
   try {
     console.log('=== STARTING BACKGROUND PROCESSING ===');
     
+    // Extract conversation_id if available and store it in the mapping
+    const conversationId = webhookData.data?.conversation_id;
+    if (conversationId) {
+      console.log('Updating conversation mapping with conversation_id:', conversationId);
+      
+      // Try to find existing mapping by business_id from webhook data
+      const businessId = webhookData.data?.analysis?.data_collection_results?.business_id?.value;
+      if (businessId) {
+        // Update the temp mapping with the real conversation_id
+        const { error: updateError } = await supabase
+          .from('conversation_call_mapping')
+          .update({ conversation_id: conversationId })
+          .eq('business_id', businessId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (updateError) {
+          console.error('Error updating conversation mapping:', updateError);
+        } else {
+          console.log('Successfully updated mapping with conversation_id');
+        }
+      }
+    }
+    
     // Extract transcript from the webhook data
     let fullTranscript = "";
     const isTestData = webhookData.data && webhookData.data.analysis && webhookData.data.analysis.transcript_summary;
