@@ -86,13 +86,18 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact', head: true });
 
       // Fetch active users (users with activity in last 30 days)
+      // Count distinct users from user_activity table
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
-      const { count: activeUserCount } = await supabase
+      const { data: recentActivityUsers } = await supabase
         .from('user_activity')
-        .select('user_id', { count: 'exact', head: true })
+        .select('user_id')
         .gte('created_at', thirtyDaysAgo.toISOString());
+      
+      // Get unique user IDs to count distinct active users
+      const uniqueActiveUsers = new Set(recentActivityUsers?.map(activity => activity.user_id) || []);
+      const activeUserCount = uniqueActiveUsers.size;
 
       // Fetch users with business IDs and emails for admin view using secure function
       const { data: usersData, error: usersError } = await supabase
