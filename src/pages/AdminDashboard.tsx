@@ -336,7 +336,7 @@ const AdminDashboard = () => {
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="w-full grid grid-cols-4 mb-4 sm:mb-6">
             <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-            <TabsTrigger value="users" className="text-xs sm:text-sm">Users</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm">User Stats</TabsTrigger>
             <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
             <TabsTrigger value="todos" className="text-xs sm:text-sm">Todos</TabsTrigger>
           </TabsList>
@@ -345,6 +345,55 @@ const AdminDashboard = () => {
             {/* Admin Settings */}
             <AdminSettings />
 
+            {/* Business Types Manager */}
+            <BusinessTypesManager />
+
+            {/* Junie Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>About Junie</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <p className="text-sm">
+                      <strong>Mission:</strong> Never miss a call with our AI-powered answering service
+                    </p>
+                    <p className="text-sm">
+                      <strong>Features:</strong> 24/7 availability, appointment booking, lead capture, smart call routing
+                    </p>
+                    <p className="text-sm">
+                      <strong>Technology:</strong> Advanced AI with natural language processing, integrated with business systems
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>System Health</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">API Status</span>
+                      <Badge variant="default">Operational</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Database</span>
+                      <Badge variant="default">Healthy</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">AI Services</span>
+                      <Badge variant="default">Online</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               <Card>
@@ -400,55 +449,6 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
-            {/* Business Types Manager */}
-            <BusinessTypesManager />
-
-            {/* Junie Info */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>About Junie</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-sm">
-                      <strong>Mission:</strong> Never miss a call with our AI-powered answering service
-                    </p>
-                    <p className="text-sm">
-                      <strong>Features:</strong> 24/7 availability, appointment booking, lead capture, smart call routing
-                    </p>
-                    <p className="text-sm">
-                      <strong>Technology:</strong> Advanced AI with natural language processing, integrated with business systems
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>System Health</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">API Status</span>
-                      <Badge variant="default">Operational</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Database</span>
-                      <Badge variant="default">Healthy</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">AI Services</span>
-                      <Badge variant="default">Online</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-6">
             <AdminUsersList users={users} onRefresh={fetchStats} />
           </TabsContent>
           
