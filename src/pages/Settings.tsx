@@ -2659,7 +2659,7 @@ const Settings = () => {
                         disabled={!!twilioPhoneNumber || assigningPhoneNumber}
                         className="whitespace-nowrap"
                       >
-                        {assigningPhoneNumber ? "Assigning..." : "Assign Phone Number"}
+                        {assigningPhoneNumber ? "Assigning..." : "Get a Free Phone Number"}
                       </Button>
                     </div>
                     <p className="text-sm text-muted-foreground">
