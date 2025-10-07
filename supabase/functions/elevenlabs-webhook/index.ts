@@ -506,11 +506,17 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       finalCallType = 'inquiry';
     }
     
+    // Normalize email by replacing " at " with "@"
+    let normalizedEmail = analysisData.email_address?.value || null;
+    if (normalizedEmail && typeof normalizedEmail === 'string') {
+      normalizedEmail = normalizedEmail.replace(/ at /gi, '@');
+    }
+    
     const callLogData = {
       user_id: businessUserId,
       caller_name: analysisData.customer_name?.value || 'A potential customer',
       phone_number: String(analysisData.phone_number?.value || incomingCallPhoneNumber || ''),
-      email: analysisData.email_address?.value || null,
+      email: normalizedEmail,
       message: cleanedSummary,
       urgency_level: callerInfo.urgency_level,
       best_time_to_call: callerInfo.best_time_to_call,
@@ -772,10 +778,11 @@ function extractCallerInfo(transcript: string) {
     info.phone_number = phoneMatch[1].replace(/\D/g, '').trim();
   }
 
-  // Extract email
-  const emailMatch = transcript.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+  // Extract email - handle both "@" and "at" formats
+  const emailMatch = transcript.match(/([a-zA-Z0-9._%+-]+(?:@| at )[a-zA-Z0-9.-]+\.(?:com|org|net|edu|gov|co))/i);
   if (emailMatch) {
-    info.email = emailMatch[1];
+    // Normalize "at" to "@"
+    info.email = emailMatch[1].replace(/ at /i, '@');
   }
 
   // Determine urgency
@@ -913,7 +920,60 @@ async function parseAppointmentTime(
     return null;
   }
 
-  console.log('=== FINDING NEXT AVAILABLE CALENDAR SLOT (UNIFIED LOGIC) ===');
+  console.log('=== PARSING APPOINTMENT TIME ===');
+  console.log('Appointment time value:', appointmentTimeValue);
+  
+  // Try to parse if it's already a valid date/time string
+  if (appointmentTimeValue !== 'DYNAMIC_NEXT_AVAILABLE_SLOT') {
+    try {
+      // Try parsing as ISO date string
+      const parsedDate = new Date(appointmentTimeValue);
+      if (!isNaN(parsedDate.getTime())) {
+        console.log('✅ Parsed as valid date:', parsedDate.toISOString());
+        return parsedDate.toISOString();
+      }
+    } catch (e) {
+      console.log('Not a valid ISO date string, trying text parsing...');
+    }
+    
+    // Try to extract date/time from text like "Thursday, October 9th at 10 a.m."
+    const dateTimeMatch = appointmentTimeValue.match(
+      /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s+at\s+)?(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?/i
+    );
+    
+    if (dateTimeMatch) {
+      const [, dayName, monthName, day, hour, minute, meridiem] = dateTimeMatch;
+      console.log('Extracted date/time components:', { dayName, monthName, day, hour, minute, meridiem });
+      
+      try {
+        const now = new Date();
+        const months = ['january', 'february', 'march', 'april', 'may', 'june', 
+                       'july', 'august', 'september', 'october', 'november', 'december'];
+        const monthIndex = months.indexOf(monthName.toLowerCase());
+        
+        if (monthIndex !== -1) {
+          let hours = parseInt(hour);
+          if (meridiem && meridiem.toLowerCase().includes('p') && hours < 12) {
+            hours += 12;
+          } else if (meridiem && meridiem.toLowerCase().includes('a') && hours === 12) {
+            hours = 0;
+          }
+          
+          const appointmentDate = new Date(now.getFullYear(), monthIndex, parseInt(day), hours, parseInt(minute || '0'));
+          
+          // If the date is in the past, assume it's next year
+          if (appointmentDate < now) {
+            appointmentDate.setFullYear(now.getFullYear() + 1);
+          }
+          
+          console.log('✅ Parsed text date to:', appointmentDate.toISOString());
+          return appointmentDate.toISOString();
+        }
+      } catch (parseError) {
+        console.error('Error parsing text date:', parseError);
+      }
+    }
+  }
   
   // Check for dynamic slot request
   if (appointmentTimeValue === 'DYNAMIC_NEXT_AVAILABLE_SLOT') {
