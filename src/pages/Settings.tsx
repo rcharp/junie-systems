@@ -2740,7 +2740,10 @@ const Settings = () => {
                             setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
                           }
 
-                          debouncedAutoSave("Call");
+                          // Only auto-save if we have exactly 10 digits
+                          if (digitsOnly.length === 10) {
+                            debouncedAutoSave("Call");
+                          }
                         }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
