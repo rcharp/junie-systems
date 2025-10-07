@@ -367,7 +367,8 @@ const Settings = () => {
           const parsedAddress = parseAddress(data.business_address);
           // If we have a state from Claude extraction, use that instead
           if (data.business_address_state_full) {
-            parsedAddress.state = data.business_address_state_full;
+            // Convert full state name to abbreviation
+            parsedAddress.state = convertStateNameToAbbreviation(data.business_address_state_full);
           }
           setAddressData(parsedAddress);
         } else if (data.business_address_state_full) {
@@ -375,7 +376,7 @@ const Settings = () => {
           setAddressData({
             street: "",
             city: "",
-            state: data.business_address_state_full,
+            state: convertStateNameToAbbreviation(data.business_address_state_full),
             zip: "",
           });
         }
@@ -1128,6 +1129,25 @@ const Settings = () => {
       await saveServices(data.id);
       setBusinessSettingsId(data.id);
     }
+  };
+
+  const convertStateNameToAbbreviation = (stateName: string): string => {
+    const stateMap: Record<string, string> = {
+      'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA',
+      'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA',
+      'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA',
+      'Kansas': 'KS', 'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD',
+      'Massachusetts': 'MA', 'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO',
+      'Montana': 'MT', 'Nebraska': 'NE', 'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+      'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH',
+      'Oklahoma': 'OK', 'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+      'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT',
+      'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY',
+      'District of Columbia': 'DC'
+    };
+    
+    // Return the abbreviation if found, otherwise return the original value (might already be abbreviated)
+    return stateMap[stateName] || stateName;
   };
 
   const parseAddress = (addressString: string) => {
