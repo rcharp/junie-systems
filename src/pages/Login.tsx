@@ -12,9 +12,10 @@ import googleLogo from "@/assets/google-logo.svg";
 
 const Login = () => {
   const [searchParams] = useSearchParams();
-  const [email, setEmail] = useState(searchParams.get("email") || "");
+  const [email, setEmail] = useState(searchParams.get("email") || localStorage.getItem("rememberedEmail") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(!!localStorage.getItem("rememberedEmail"));
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
@@ -93,6 +94,13 @@ const Login = () => {
           throw error;
         }
       } else if (data.user) {
+        // Handle remember me
+        if (rememberMe) {
+          localStorage.setItem("rememberedEmail", email);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+        }
+        
         // Redirect to dashboard
         isRedirectingRef.current = true;
         setTimeout(() => {
@@ -270,6 +278,8 @@ const Login = () => {
               <input 
                 type="checkbox" 
                 id="remember" 
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 className="w-4 h-4 text-primary bg-background border rounded focus:ring-primary/50"
               />
               <label htmlFor="remember" className="text-muted-foreground text-sm cursor-pointer">
