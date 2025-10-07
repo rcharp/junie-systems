@@ -2163,6 +2163,12 @@ const Settings = () => {
                         
                         debouncedAutoSave("Business");
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          saveSettings("Business");
+                        }
+                      }}
                       placeholder="10-digit phone number"
                       className={
                         validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
@@ -2687,6 +2693,12 @@ const Settings = () => {
                           }
                           
                           debouncedAutoSave("Call");
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            saveSettings("Call");
+                          }
                         }}
                         placeholder="10-digit phone number"
                         required
