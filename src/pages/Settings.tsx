@@ -320,6 +320,14 @@ const Settings = () => {
 
       console.log("Auth identities:", { hasEmailIdentity, hasGoogleIdentity, identities });
 
+      // Extract user metadata for all auth providers
+      const userMeta = authUser?.user_metadata;
+      
+      // Initialize full name from user metadata if available (for all auth types)
+      if (userMeta?.full_name) {
+        setUserFullName(userMeta.full_name);
+      }
+
       // Extract Google profile data if provider is Google
       if (detectedProvider === "google") {
         console.log("Extracting Google data...");
@@ -327,7 +335,6 @@ const Settings = () => {
         // Try to get data from identities first, then user_metadata
         const googleIdentity = authUser?.identities?.[0];
         const identityData = googleIdentity?.identity_data;
-        const userMeta = authUser?.user_metadata;
 
         const googleEmail = identityData?.email || userMeta?.email || email;
         const googleAvatar =
@@ -340,7 +347,7 @@ const Settings = () => {
         setGoogleEmail(googleEmail);
         setGoogleAvatarUrl(googleAvatar);
 
-        // Auto-fill full name from Google if available
+        // Override full name from Google if available
         if (googleFullName) {
           setUserFullName(googleFullName);
         }
