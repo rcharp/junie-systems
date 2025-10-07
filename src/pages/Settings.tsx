@@ -2651,7 +2651,7 @@ const Settings = () => {
                         required
                       />
                       <p className="text-sm text-muted-foreground">
-                        The phone number that you want urgent or emergency calls will be forwarded to, as well as SMS
+                        The phone number that you want urgent or emergency calls to be forwarded to, as well as SMS
                         notifications.
                       </p>
                     </div>
