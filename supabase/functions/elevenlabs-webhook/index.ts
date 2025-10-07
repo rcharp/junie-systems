@@ -740,13 +740,13 @@ async function handleCalendarBooking({
       customerName: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown Customer',
       customerEmail: analysisData.email_address?.value || callerInfo.email,
       customerPhone: String(analysisData.phone_number?.value || callerInfo.phone_number || ''),
-      serviceType: analysisData.business_name?.value || 'Service Appointment',
+      serviceType: analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
       serviceAddress: analysisData.service_address?.value || '',
       appointmentDateTime: typeof parsedAppointmentDateTime === 'string' ? parsedAppointmentDateTime : parsedAppointmentDateTime.toISOString(),
-      notes: `Service requested: ${analysisData.service_address?.value || 'Service appointment'}`
+      notes: `Service requested: ${analysisData.service_requested?.value || analysisData.service_type?.value || 'Service appointment'}`
     };
 
-    console.log('Calling google-calendar-book with payload:', bookingPayload);
+    console.log('📅 Calling google-calendar-book with payload:', JSON.stringify(bookingPayload, null, 2));
 
     const bookingResponse = await fetch(`${supabaseUrl}/functions/v1/google-calendar-book`, {
       method: 'POST',
@@ -757,14 +757,18 @@ async function handleCalendarBooking({
       body: JSON.stringify(bookingPayload)
     });
 
+    console.log('📅 Calendar booking response status:', bookingResponse.status);
+
     if (bookingResponse.ok) {
       const bookingResult = await bookingResponse.json();
-      console.log('✅ Calendar booking completed successfully:', bookingResult);
+      console.log('✅ Calendar booking completed successfully:', JSON.stringify(bookingResult, null, 2));
       return bookingResult;
     } else {
       const errorText = await bookingResponse.text();
-      console.error('❌ Calendar booking failed:', bookingResponse.status, errorText);
-      return null;
+      console.error('❌ Calendar booking failed:', bookingResponse.status);
+      console.error('❌ Error details:', errorText);
+      // Log to help debug - don't fail silently
+      throw new Error(`Calendar booking failed: ${errorText}`);
     }
 
   } catch (error) {
