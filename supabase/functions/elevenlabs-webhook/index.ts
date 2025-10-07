@@ -349,7 +349,7 @@ async function processWebhookInBackground(
     console.log(`Final full transcript length: ${fullTranscript.length}`);
 
     const analysisData = webhookData.data?.analysis?.data_collection_results || {};
-    const businessUserId = await findTargetUserId(analysisData, supabase);
+    const businessUserId = await findTargetUserId(analysisData, webhookData, supabase);
     
     if (!businessUserId) {
       console.error('Could not find target user in background processing');
@@ -600,7 +600,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
 }
 
 // Helper function to find target user ID
-async function findTargetUserId(analysisData: any, supabase: any): Promise<string | null> {
+async function findTargetUserId(analysisData: any, webhookData: any, supabase: any): Promise<string | null> {
   // Try to find by business_id first
   if (analysisData.business_id?.value) {
     console.log('Looking up user_id for business_id:', analysisData.business_id.value);
@@ -615,6 +615,24 @@ async function findTargetUserId(analysisData: any, supabase: any): Promise<strin
       return businessData.user_id;
     } else {
       console.error('Error finding user by business_id:', businessError);
+    }
+  }
+
+  // Fallback: Try to find by conversation_id in conversation_call_mapping
+  const conversationId = webhookData.data?.conversation_id;
+  if (conversationId) {
+    console.log('Looking up user_id for conversation_id:', conversationId);
+    const { data: mappingData, error: mappingError } = await supabase
+      .from('conversation_call_mapping')
+      .select('user_id, business_id')
+      .eq('conversation_id', conversationId)
+      .single();
+
+    if (mappingData?.user_id) {
+      console.log('Found user_id from conversation_id:', mappingData.user_id);
+      return mappingData.user_id;
+    } else {
+      console.error('Error finding user by conversation_id:', mappingError);
     }
   }
 
