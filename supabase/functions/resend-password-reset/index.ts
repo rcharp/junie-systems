@@ -74,22 +74,34 @@ serve(async (req: Request) => {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
               </head>
-              <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+              <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f9fafb;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-                  <h1 style="color: #333; font-size: 24px; margin-bottom: 20px;">Reset your password</h1>
-                  <p style="color: #555; font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
-                    We received a request to reset your password. Click the button below to create a new password:
-                  </p>
-                  <a href="${data.properties.action_link}" 
-                     style="display: inline-block; background-color: #8B5CF6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 500;">
-                    Reset Password
-                  </a>
-                  <p style="color: #888; font-size: 14px; margin-top: 30px; line-height: 1.5;">
-                    If you didn't request a password reset, you can safely ignore this email.
-                  </p>
-                  <p style="color: #888; font-size: 14px; margin-top: 20px; line-height: 1.5;">
-                    This link will expire in 1 hour for security reasons.
-                  </p>
+                  <div style="background-color: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                    <div style="text-align: center; margin-bottom: 32px;">
+                      <img src="https://dff80483-0259-48f0-b1d3-d00ff4a377ae.lovableproject.com/lovable-uploads/junie-logo.png" alt="Junie AI" style="height: 40px; width: auto;" />
+                    </div>
+                    <h1 style="color: #111827; font-size: 24px; font-weight: 600; margin-bottom: 16px; text-align: center;">Reset your password</h1>
+                    <p style="color: #6b7280; font-size: 16px; line-height: 1.5; margin-bottom: 32px; text-align: center;">
+                      We received a request to reset your password. Click the button below to create a new password:
+                    </p>
+                    <div style="text-align: center; margin-bottom: 32px;">
+                      <a href="${data.properties.action_link}" 
+                         style="display: inline-block; background-color: #8B5CF6; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 16px;">
+                        Reset Password
+                      </a>
+                    </div>
+                    <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; text-align: center; margin-bottom: 12px;">
+                      If you didn't request a password reset, you can safely ignore this email.
+                    </p>
+                    <p style="color: #9ca3af; font-size: 14px; line-height: 1.5; text-align: center;">
+                      This link will expire in 1 hour for security reasons.
+                    </p>
+                  </div>
+                  <div style="text-align: center; margin-top: 24px;">
+                    <p style="color: #9ca3af; font-size: 12px;">
+                      © ${new Date().getFullYear()} Junie AI. All rights reserved.
+                    </p>
+                  </div>
                 </div>
               </body>
             </html>
