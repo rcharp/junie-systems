@@ -14,9 +14,43 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Building, Phone, Bot, Bell, User, Shield, Save, Plus, Trash2, Globe, Calendar, Zap, CheckCircle, XCircle, X, Settings as SettingsIcon, LogOut, AlertTriangle } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import {
+  ArrowLeft,
+  Building,
+  Phone,
+  Bot,
+  Bell,
+  User,
+  Shield,
+  Save,
+  Plus,
+  Trash2,
+  Globe,
+  Calendar,
+  Zap,
+  CheckCircle,
+  XCircle,
+  X,
+  Settings as SettingsIcon,
+  LogOut,
+  AlertTriangle,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { WebhookInfo } from "@/components/WebhookInfo";
 import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
@@ -49,8 +83,8 @@ const Settings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("business");
   const [showCalendarBanner, setShowCalendarBanner] = useState(false);
-  const [calendarBannerType, setCalendarBannerType] = useState<'success' | 'error'>('success');
-  const [calendarBannerMessage, setCalendarBannerMessage] = useState('');
+  const [calendarBannerType, setCalendarBannerType] = useState<"success" | "error">("success");
+  const [calendarBannerMessage, setCalendarBannerMessage] = useState("");
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const { featureAccess } = useSubscription();
@@ -64,7 +98,7 @@ const Settings = () => {
   const [authProvider, setAuthProvider] = useState<string>("");
   const [googleEmail, setGoogleEmail] = useState<string>("");
   const [googleAvatarUrl, setGoogleAvatarUrl] = useState<string>("");
-  
+
   // Password Update State
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -89,15 +123,15 @@ const Settings = () => {
     { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
     { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
   ]);
-  const [services, setServices] = useState<{id?: string, name: string, price: string, description?: string}[]>([
-    { name: "", price: "" }
+  const [services, setServices] = useState<{ id?: string; name: string; price: string; description?: string }[]>([
+    { name: "", price: "" },
   ]);
 
   const [addressData, setAddressData] = useState({
-    street: '',
-    city: '',
-    state: '',
-    zip: ''
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
   });
 
   // Call Settings State
@@ -106,14 +140,12 @@ const Settings = () => {
   const [urgentKeywords, setUrgentKeywords] = useState("");
   const [autoForward, setAutoForward] = useState(false);
   const [assigningPhoneNumber, setAssigningPhoneNumber] = useState(false);
-  
-  
 
   // AI Settings State
   const [aiPersonality, setAiPersonality] = useState("professional");
   const [customGreeting, setCustomGreeting] = useState("");
-  const [commonQuestionsAnswers, setCommonQuestionsAnswers] = useState<{question: string, answer: string}[]>([
-    { question: "", answer: "" }
+  const [commonQuestionsAnswers, setCommonQuestionsAnswers] = useState<{ question: string; answer: string }[]>([
+    { question: "", answer: "" },
   ]);
   const [appointmentBooking, setAppointmentBooking] = useState(false);
   const [leadCapture, setLeadCapture] = useState(true);
@@ -138,13 +170,13 @@ const Settings = () => {
   const [businessTypes, setBusinessTypes] = useState<BusinessType[]>([]);
 
   // Validation error states for visual feedback
-  const [validationErrors, setValidationErrors] = useState<{[key: string]: boolean}>({
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: boolean }>({
     businessName: false,
     businessType: false,
     businessPhone: false,
     businessDescription: false,
     businessAddress: false,
-    services: false
+    services: false,
   });
 
   // Refs for scrolling to error fields
@@ -158,70 +190,66 @@ const Settings = () => {
   // Notifications state
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
-
   useEffect(() => {
     // Load business types from database
     const loadBusinessTypes = async () => {
-      const { data, error } = await supabase
-        .from('business_types')
-        .select('*')
-        .eq('is_active', true);
-      
+      const { data, error } = await supabase.from("business_types").select("*").eq("is_active", true);
+
       if (!error && data) {
         // Sort alphabetically by label
         const sortedData = [...data].sort((a, b) => a.label.localeCompare(b.label));
         setBusinessTypes(sortedData);
       }
     };
-    
+
     loadBusinessTypes();
-    
+
     if (!loading && !user) {
       navigate("/login");
     } else if (user) {
       loadUserSettings(user.id, user.email || "");
       fetchRecentActivity();
     }
-    
+
     // Handle URL parameters for tab selection and calendar status
-    const tab = searchParams.get('tab');
-    const subTab = searchParams.get('subtab');
-    const calendarStatus = searchParams.get('calendar_status');
-    const errorMessage = searchParams.get('error');
-    const onboardingComplete = searchParams.get('onboarding_complete');
-    
-    console.log('Settings URL params:', { tab, subTab });
-    
+    const tab = searchParams.get("tab");
+    const subTab = searchParams.get("subtab");
+    const calendarStatus = searchParams.get("calendar_status");
+    const errorMessage = searchParams.get("error");
+    const onboardingComplete = searchParams.get("onboarding_complete");
+
+    console.log("Settings URL params:", { tab, subTab });
+
     if (tab) {
-      console.log('Setting activeTab to:', tab);
+      console.log("Setting activeTab to:", tab);
       setActiveTab(tab);
     }
-    
-    if (onboardingComplete === 'true') {
+
+    if (onboardingComplete === "true") {
       setShowOnboardingBanner(true);
-      setActiveTab('business'); // Show business tab after onboarding
-      
+      setActiveTab("business"); // Show business tab after onboarding
+
       // Clear URL parameter after processing
       const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.delete('onboarding_complete');
+      newSearchParams.delete("onboarding_complete");
       setSearchParams(newSearchParams, { replace: true });
     }
-    
+
     if (calendarStatus) {
       setShowCalendarBanner(true);
-      setCalendarBannerType(calendarStatus as 'success' | 'error');
-      
-      if (calendarStatus === 'success') {
-        setCalendarBannerMessage('Google Calendar connected successfully!');
-      } else if (calendarStatus === 'error') {
-        setCalendarBannerMessage(errorMessage || 'Failed to connect Google Calendar. Please try again.');
+      setCalendarBannerType(calendarStatus as "success" | "error");
+
+      if (calendarStatus === "success") {
+        setCalendarBannerMessage("Google Calendar connected successfully!");
+      } else if (calendarStatus === "error") {
+        setCalendarBannerMessage(errorMessage || "Failed to connect Google Calendar. Please try again.");
       }
-      
+
       // Clear URL parameters after processing
       const newSearchParams = new URLSearchParams(searchParams);
-      newSearchParams.delete('calendar_status');
-      newSearchParams.delete('error');
-      if (!tab) newSearchParams.delete('tab');
+      newSearchParams.delete("calendar_status");
+      newSearchParams.delete("error");
+      if (!tab) newSearchParams.delete("tab");
       setSearchParams(newSearchParams, { replace: true });
     }
   }, [loading, user, navigate, searchParams, setSearchParams]);
@@ -229,16 +257,16 @@ const Settings = () => {
   const fetchRecentActivity = async () => {
     try {
       const { data: callMessages, error } = await supabase
-        .from('call_messages')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
+        .from("call_messages")
+        .select("*")
+        .eq("user_id", user?.id)
+        .order("created_at", { ascending: false })
         .limit(3);
 
       if (error) throw error;
       setRecentActivity(callMessages || []);
     } catch (error) {
-      console.error('Error fetching recent activity:', error);
+      console.error("Error fetching recent activity:", error);
     }
   };
 
@@ -248,55 +276,53 @@ const Settings = () => {
       setUserEmail(email);
 
       // Get auth provider info and Google metadata
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      console.log('Full auth user data:', authUser);
-      
-      let detectedProvider = '';
-      
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+      console.log("Full auth user data:", authUser);
+
+      let detectedProvider = "";
+
       // Check all identities to see what auth methods are linked
       const identities = authUser?.identities || [];
-      const hasEmailIdentity = identities.some(i => i.provider === 'email');
-      const hasGoogleIdentity = identities.some(i => i.provider === 'google');
-      
+      const hasEmailIdentity = identities.some((i) => i.provider === "email");
+      const hasGoogleIdentity = identities.some((i) => i.provider === "google");
+
       // Set hasPassword based on email identity presence
       setHasPassword(hasEmailIdentity);
-      
+
       if (authUser?.app_metadata?.provider) {
-        console.log('Provider from app_metadata:', authUser.app_metadata.provider);
+        console.log("Provider from app_metadata:", authUser.app_metadata.provider);
         detectedProvider = authUser.app_metadata.provider;
         setAuthProvider(detectedProvider);
       } else if (identities.length > 0) {
         detectedProvider = identities[0].provider;
-        console.log('Provider from identities:', detectedProvider);
+        console.log("Provider from identities:", detectedProvider);
         setAuthProvider(detectedProvider);
       }
-      
-      console.log('Auth identities:', { hasEmailIdentity, hasGoogleIdentity, identities });
-      
+
+      console.log("Auth identities:", { hasEmailIdentity, hasGoogleIdentity, identities });
+
       // Extract Google profile data if provider is Google
-      if (detectedProvider === 'google') {
-        console.log('Extracting Google data...');
-        
+      if (detectedProvider === "google") {
+        console.log("Extracting Google data...");
+
         // Try to get data from identities first, then user_metadata
         const googleIdentity = authUser?.identities?.[0];
         const identityData = googleIdentity?.identity_data;
         const userMeta = authUser?.user_metadata;
-        
+
         const googleEmail = identityData?.email || userMeta?.email || email;
-        const googleAvatar = identityData?.avatar_url || 
-                             identityData?.picture || 
-                             userMeta?.avatar_url ||
-                             userMeta?.picture || "";
-        const googleFullName = identityData?.full_name || 
-                              identityData?.name ||
-                              userMeta?.full_name ||
-                              userMeta?.name || "";
-        
-        console.log('Extracted Google data:', { googleEmail, googleAvatar, googleFullName });
-        
+        const googleAvatar =
+          identityData?.avatar_url || identityData?.picture || userMeta?.avatar_url || userMeta?.picture || "";
+        const googleFullName =
+          identityData?.full_name || identityData?.name || userMeta?.full_name || userMeta?.name || "";
+
+        console.log("Extracted Google data:", { googleEmail, googleAvatar, googleFullName });
+
         setGoogleEmail(googleEmail);
         setGoogleAvatarUrl(googleAvatar);
-        
+
         // Auto-fill full name from Google if available
         if (googleFullName) {
           setUserFullName(googleFullName);
@@ -305,12 +331,12 @@ const Settings = () => {
 
       // Load user profile data
       const { data: profileData } = await supabase
-        .from('user_profiles')
-        .select('full_name, company_name, timezone')
-        .eq('id', userId)
+        .from("user_profiles")
+        .select("full_name, company_name, timezone")
+        .eq("id", userId)
         .maybeSingle();
 
-      console.log('Profile data from DB:', profileData);
+      console.log("Profile data from DB:", profileData);
 
       if (profileData) {
         // Only override full name if it exists in the profile
@@ -322,14 +348,10 @@ const Settings = () => {
       }
 
       // Load business settings
-      const { data, error } = await supabase
-        .from('business_settings')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle();
+      const { data, error } = await supabase.from("business_settings").select("*").eq("user_id", userId).maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error loading settings:', error);
+      if (error && error.code !== "PGRST116") {
+        console.error("Error loading settings:", error);
         return;
       }
 
@@ -351,10 +373,10 @@ const Settings = () => {
         } else if (data.business_address_state_full) {
           // If no full address but we have a state, set that
           setAddressData({
-            street: '',
-            city: '',
+            street: "",
+            city: "",
             state: data.business_address_state_full,
-            zip: ''
+            zip: "",
           });
         }
         // Parse business hours
@@ -365,10 +387,10 @@ const Settings = () => {
               // Ensure each hour entry has an id and proper structure
               const hoursWithIds = hoursData.map((hour, index) => ({
                 id: hour.id || index + 1,
-                day: hour.day || 'monday',
+                day: hour.day || "monday",
                 isOpen: hour.isOpen !== undefined ? hour.isOpen : true,
-                openTime: hour.openTime || '09:00',
-                closeTime: hour.closeTime || '17:00'
+                openTime: hour.openTime || "09:00",
+                closeTime: hour.closeTime || "17:00",
               }));
               setBusinessHours(hoursWithIds);
             } else {
@@ -407,11 +429,10 @@ const Settings = () => {
         setTwilioPhoneNumber(data.twilio_phone_number || "");
         setUrgentKeywords(data.urgent_keywords || "");
         setAutoForward(data.auto_forward || false);
-        
-        
+
         setAiPersonality(data.ai_personality || "professional");
         setCustomGreeting(data.custom_greeting || "");
-        
+
         // Parse common questions from old format or new format
         if (data.common_questions) {
           try {
@@ -427,7 +448,7 @@ const Settings = () => {
             setCommonQuestionsAnswers([{ question: "", answer: "" }]);
           }
         }
-        
+
         setAppointmentBooking(data.appointment_booking || false);
         setLeadCapture(data.lead_capture !== false);
         setEmailNotifications(data.email_notifications !== false);
@@ -436,12 +457,12 @@ const Settings = () => {
         setInstantAlerts(data.instant_alerts !== false);
         setBusinessTimezone(data.business_timezone || "");
         setBusinessTimezoneOffset(data.business_timezone_offset || "");
-        
+
         // Load services from the new services table
         await loadServices(data.id);
       }
     } catch (error) {
-      console.error('Error loading user settings:', error);
+      console.error("Error loading user settings:", error);
     }
   };
 
@@ -458,7 +479,7 @@ const Settings = () => {
     setAssigningPhoneNumber(true);
     try {
       // Extract area code from business phone
-      let areaCode = '800'; // Default fallback
+      let areaCode = "800"; // Default fallback
       if (businessPhone) {
         const phoneMatch = businessPhone.match(/\(?(\d{3})\)?/);
         if (phoneMatch && phoneMatch[1]) {
@@ -470,24 +491,31 @@ const Settings = () => {
         if (zipMatch && zipMatch[1]) {
           const zip = zipMatch[1];
           // Common mappings (simplified)
-          if (zip.startsWith('1')) areaCode = '212'; // NY
-          else if (zip.startsWith('2')) areaCode = '202'; // DC
-          else if (zip.startsWith('3')) areaCode = '404'; // GA
-          else if (zip.startsWith('4')) areaCode = '502'; // KY
-          else if (zip.startsWith('6')) areaCode = '312'; // IL
-          else if (zip.startsWith('7')) areaCode = '214'; // TX
-          else if (zip.startsWith('8')) areaCode = '303'; // CO
-          else if (zip.startsWith('9')) areaCode = '206'; // WA
+          if (zip.startsWith("1"))
+            areaCode = "212"; // NY
+          else if (zip.startsWith("2"))
+            areaCode = "202"; // DC
+          else if (zip.startsWith("3"))
+            areaCode = "404"; // GA
+          else if (zip.startsWith("4"))
+            areaCode = "502"; // KY
+          else if (zip.startsWith("6"))
+            areaCode = "312"; // IL
+          else if (zip.startsWith("7"))
+            areaCode = "214"; // TX
+          else if (zip.startsWith("8"))
+            areaCode = "303"; // CO
+          else if (zip.startsWith("9")) areaCode = "206"; // WA
         }
       }
 
-      console.log('Requesting phone number with area code:', areaCode);
+      console.log("Requesting phone number with area code:", areaCode);
 
-      const { data, error } = await supabase.functions.invoke('purchase-twilio-number', {
+      const { data, error } = await supabase.functions.invoke("purchase-twilio-number", {
         body: {
           areaCode: areaCode,
-          businessId: businessSettingsId
-        }
+          businessId: businessSettingsId,
+        },
       });
 
       if (error) {
@@ -501,10 +529,10 @@ const Settings = () => {
           description: `Your Junie phone number is ${data.phoneNumber}`,
         });
       } else {
-        throw new Error('Failed to assign phone number');
+        throw new Error("Failed to assign phone number");
       }
     } catch (error: any) {
-      console.error('Error assigning phone number:', error);
+      console.error("Error assigning phone number:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to assign phone number. Please try again.",
@@ -518,28 +546,30 @@ const Settings = () => {
   const loadServices = async (businessId: string) => {
     try {
       const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('business_id', businessId)
-        .order('display_order', { ascending: true });
+        .from("services")
+        .select("*")
+        .eq("business_id", businessId)
+        .order("display_order", { ascending: true });
 
       if (error) {
-        console.error('Error loading services:', error);
+        console.error("Error loading services:", error);
         return;
       }
 
       if (data && data.length > 0) {
-        setServices(data.map(service => ({
-          id: service.id,
-          name: service.name,
-          price: service.price || "",
-          description: service.description || ""
-        })));
+        setServices(
+          data.map((service) => ({
+            id: service.id,
+            name: service.name,
+            price: service.price || "",
+            description: service.description || "",
+          })),
+        );
       } else {
         setServices([{ name: "", price: "", description: "" }]);
       }
     } catch (error) {
-      console.error('Error loading services:', error);
+      console.error("Error loading services:", error);
     }
   };
 
@@ -557,31 +587,28 @@ const Settings = () => {
   const removeService = async (index: number) => {
     if (services.length > 1) {
       const serviceToRemove = services[index];
-      
+
       // If service has an ID, delete from database
       if (serviceToRemove.id && businessSettingsId) {
         try {
-          await supabase
-            .from('services')
-            .delete()
-            .eq('id', serviceToRemove.id);
+          await supabase.from("services").delete().eq("id", serviceToRemove.id);
         } catch (error) {
-          console.error('Error deleting service:', error);
+          console.error("Error deleting service:", error);
         }
       }
-      
+
       setServices(services.filter((_, i) => i !== index));
     }
   };
 
-  const updateService = (index: number, field: 'name' | 'price' | 'description', value: string) => {
+  const updateService = (index: number, field: "name" | "price" | "description", value: string) => {
     const newServices = [...services];
-    
+
     // Validate price input to allow only numbers and decimal points
-    if (field === 'price') {
-      const numericValue = value.replace(/[^\d.]/g, '');
+    if (field === "price") {
+      const numericValue = value.replace(/[^\d.]/g, "");
       // Prevent multiple decimal points
-      const parts = numericValue.split('.');
+      const parts = numericValue.split(".");
       if (parts.length > 2) {
         return; // Don't update if multiple decimal points
       }
@@ -589,7 +616,7 @@ const Settings = () => {
     } else {
       newServices[index][field] = value;
     }
-    
+
     setServices(newServices);
   };
 
@@ -610,7 +637,7 @@ const Settings = () => {
     }
   };
 
-  const updateQuestionAnswer = (index: number, field: 'question' | 'answer', value: string) => {
+  const updateQuestionAnswer = (index: number, field: "question" | "answer", value: string) => {
     const newQA = [...commonQuestionsAnswers];
     newQA[index][field] = value;
     setCommonQuestionsAnswers(newQA);
@@ -619,7 +646,7 @@ const Settings = () => {
   const generateBusinessDescription = async () => {
     if (!businessName || !businessType) {
       toast({
-        title: "Missing Information", 
+        title: "Missing Information",
         description: "Please fill in business name and type first to generate a description.",
         variant: "destructive",
       });
@@ -628,21 +655,22 @@ const Settings = () => {
 
     setGeneratingDescription(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-business-description', {
+      const { data, error } = await supabase.functions.invoke("generate-business-description", {
         body: {
           businessName,
           businessType,
-          services: services.filter(s => s.name.trim()),
-          address: addressData.street && addressData.city ? 
-            `${addressData.street}, ${addressData.city}, ${addressData.state}` : 
-            businessAddress,
-          phone: businessPhone
-        }
+          services: services.filter((s) => s.name.trim()),
+          address:
+            addressData.street && addressData.city
+              ? `${addressData.street}, ${addressData.city}, ${addressData.state}`
+              : businessAddress,
+          phone: businessPhone,
+        },
       });
 
       if (error) {
-        console.error('Error generating description:', error);
-        throw new Error(error.message || 'Failed to generate description');
+        console.error("Error generating description:", error);
+        throw new Error(error.message || "Failed to generate description");
       }
 
       if (data?.description) {
@@ -653,7 +681,7 @@ const Settings = () => {
         });
       }
     } catch (error) {
-      console.error('Error generating business description:', error);
+      console.error("Error generating business description:", error);
       toast({
         title: "Generation Failed",
         description: "Unable to generate description. Please try again.",
@@ -666,18 +694,19 @@ const Settings = () => {
 
   const autoUpdateDescription = async (newBusinessName: string) => {
     if (!newBusinessName || !businessType || !businessSettingsId) return;
-    
+
     try {
-      const { data, error } = await supabase.functions.invoke('generate-business-description', {
+      const { data, error } = await supabase.functions.invoke("generate-business-description", {
         body: {
           businessName: newBusinessName,
           businessType,
-          services: services.filter(s => s.name.trim()),
-          address: addressData.street && addressData.city ? 
-            `${addressData.street}, ${addressData.city}, ${addressData.state}` : 
-            businessAddress,
-          phone: businessPhone
-        }
+          services: services.filter((s) => s.name.trim()),
+          address:
+            addressData.street && addressData.city
+              ? `${addressData.street}, ${addressData.city}, ${addressData.state}`
+              : businessAddress,
+          phone: businessPhone,
+        },
       });
 
       if (data?.description && !error) {
@@ -688,43 +717,44 @@ const Settings = () => {
         });
       }
     } catch (error) {
-      console.error('Auto-update description failed:', error);
+      console.error("Auto-update description failed:", error);
     }
   };
 
-  const updateBusinessHours = (id: number, field: keyof typeof businessHours[0], value: string | boolean) => {
-    const newHours = businessHours.map(hour => 
-      hour.id === id ? { ...hour, [field]: value } : hour
-    );
+  const updateBusinessHours = (id: number, field: keyof (typeof businessHours)[0], value: string | boolean) => {
+    const newHours = businessHours.map((hour) => (hour.id === id ? { ...hour, [field]: value } : hour));
     setBusinessHours(newHours);
   };
 
   const addBusinessHours = () => {
-    const newId = Math.max(...businessHours.map(h => h.id), 0) + 1;
-    setBusinessHours([...businessHours, {
-      id: newId,
-      day: "monday",
-      isOpen: true,
-      openTime: "09:00",
-      closeTime: "17:00"
-    }]);
+    const newId = Math.max(...businessHours.map((h) => h.id), 0) + 1;
+    setBusinessHours([
+      ...businessHours,
+      {
+        id: newId,
+        day: "monday",
+        isOpen: true,
+        openTime: "09:00",
+        closeTime: "17:00",
+      },
+    ]);
   };
 
   const removeBusinessHours = (id: number) => {
     if (businessHours.length > 1) {
-      setBusinessHours(businessHours.filter(hour => hour.id !== id));
+      setBusinessHours(businessHours.filter((hour) => hour.id !== id));
     }
   };
 
   const validateTime = (openTime: string, closeTime: string): boolean => {
     const open = new Date(`2000-01-01T${openTime}:00`);
     const close = new Date(`2000-01-01T${closeTime}:00`);
-    
+
     // Check if times are valid (between 00:00 and 23:59)
     if (openTime < "00:00" || openTime > "23:59" || closeTime < "00:00" || closeTime > "23:59") {
       return false;
     }
-    
+
     // Check if close time is after open time (same day only)
     return close > open;
   };
@@ -742,82 +772,80 @@ const Settings = () => {
   const saveServices = async (businessId: string) => {
     try {
       // Delete existing services first
-      await supabase
-        .from('services')
-        .delete()
-        .eq('business_id', businessId);
+      await supabase.from("services").delete().eq("business_id", businessId);
 
       // Insert new services
       const servicesToSave = services
-        .filter(service => service.name.trim())
+        .filter((service) => service.name.trim())
         .map((service, index) => ({
           business_id: businessId,
           name: service.name.trim(),
           price: service.price || null,
           description: service.description || null,
-          display_order: index
+          display_order: index,
         }));
 
       if (servicesToSave.length > 0) {
-        const { error } = await supabase
-          .from('services')
-          .insert(servicesToSave);
+        const { error } = await supabase.from("services").insert(servicesToSave);
 
         if (error) {
-          console.error('Error saving services:', error);
+          console.error("Error saving services:", error);
           throw error;
         }
       }
     } catch (error) {
-      console.error('Error saving services:', error);
+      console.error("Error saving services:", error);
       throw error;
     }
   };
 
   const dayNames = {
     sunday: "Sunday",
-    monday: "Monday", 
+    monday: "Monday",
     tuesday: "Tuesday",
     wednesday: "Wednesday",
     thursday: "Thursday",
     friday: "Friday",
-    saturday: "Saturday"
+    saturday: "Saturday",
   };
 
   // Auto-save function with debouncing
-  const debouncedAutoSave = useCallback((section: string) => {
-    if (autoSaveTimeout) {
-      clearTimeout(autoSaveTimeout);
-    }
-    
-    const timeout = setTimeout(async () => {
-      if (!user) return;
-      
-      setIsAutoSaving(true);
-      try {
-        await saveSettingsInternal(section);
-        toast({
-          title: "Settings saved",
-          description: "Your changes have been automatically saved.",
-        });
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-        toast({
-          title: "Auto-save failed",
-          description: "There was an error saving your settings. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsAutoSaving(false);
+  const debouncedAutoSave = useCallback(
+    (section: string) => {
+      if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
       }
-    }, 3000);
-    
-    setAutoSaveTimeout(timeout);
-  }, [autoSaveTimeout, user, toast]);
+
+      const timeout = setTimeout(async () => {
+        if (!user) return;
+
+        setIsAutoSaving(true);
+        try {
+          await saveSettingsInternal(section);
+          toast({
+            title: "Settings saved",
+            description: "Your changes have been automatically saved.",
+          });
+        } catch (error) {
+          console.error("Auto-save failed:", error);
+          toast({
+            title: "Auto-save failed",
+            description: "There was an error saving your settings. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsAutoSaving(false);
+        }
+      }, 3000);
+
+      setAutoSaveTimeout(timeout);
+    },
+    [autoSaveTimeout, user, toast],
+  );
 
   const saveSettings = async (section: string) => {
     if (!user) return;
-    
+
     setSaving(true);
     try {
       await saveSettingsInternal(section);
@@ -826,9 +854,9 @@ const Settings = () => {
         description: `Your ${section.toLowerCase()} settings have been updated.`,
       });
     } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error("Error saving settings:", error);
       // Only show generic error if it's not a validation error (validation errors show their own toasts)
-      if (!(error instanceof Error && error.message.startsWith('Validation failed'))) {
+      if (!(error instanceof Error && error.message.startsWith("Validation failed"))) {
         toast({
           title: "Error saving settings",
           description: "There was an error saving your settings. Please try again.",
@@ -842,18 +870,18 @@ const Settings = () => {
 
   const saveSettingsInternal = async (section: string) => {
     if (!user) return;
-    
+
     // Handle Profile section separately as it updates user_profiles table
     if (section === "Profile") {
       const { error } = await supabase
-        .from('user_profiles')
+        .from("user_profiles")
         .update({
           full_name: userFullName,
           company_name: userCompanyName,
           timezone: userTimezone,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        .eq("id", user.id);
 
       if (error) {
         throw error;
@@ -868,277 +896,283 @@ const Settings = () => {
 
     let updateData: any = {};
 
-      if (section === "Business") {
-        // Validate ALL fields at once and collect errors
-        console.log("=== VALIDATION DEBUG ===");
-        console.log("Raw businessType value:", JSON.stringify(businessType));
-        console.log("businessType type:", typeof businessType);
-        console.log("businessType length:", businessType?.length);
-        console.log("Validating business fields:", { businessName, businessType, businessPhone, businessDescription });
-        
-        const requiredFields = {
-          businessName: businessName?.trim(),
-          businessType: businessType?.trim() || (!businessType ? "" : businessType), 
-          businessPhone: businessPhone?.trim(),
-          businessDescription: businessDescription?.trim()
-        };
-        
-        console.log("Required fields after processing:", requiredFields);
-        
-        // Validate phone number format
-        const phoneRegex = /^[\d\s\-\(\)\+]+$/;
-        const isValidPhone = !requiredFields.businessPhone || phoneRegex.test(requiredFields.businessPhone);
+    if (section === "Business") {
+      // Validate ALL fields at once and collect errors
+      console.log("=== VALIDATION DEBUG ===");
+      console.log("Raw businessType value:", JSON.stringify(businessType));
+      console.log("businessType type:", typeof businessType);
+      console.log("businessType length:", businessType?.length);
+      console.log("Validating business fields:", { businessName, businessType, businessPhone, businessDescription });
 
-        // Validate services
-        const validServices = services.filter(s => s.name.trim() !== "");
-        const invalidServices = validServices.filter(s => {
-          const priceValue = s.price.trim();
-          return !priceValue || isNaN(parseFloat(priceValue)) || parseFloat(priceValue) <= 0;
-        });
-        
-        // Validate address fields
-        console.log("=== ADDRESS VALIDATION DEBUG ===");
-        console.log("addressData:", JSON.stringify(addressData));
-        
-        const missingAddressFields = [];
-        if (!addressData.street?.trim()) missingAddressFields.push('street address');
-        if (!addressData.city?.trim()) missingAddressFields.push('city');
-        if (!addressData.state?.trim()) missingAddressFields.push('state');
-        if (!addressData.zip?.trim()) missingAddressFields.push('ZIP code');
+      const requiredFields = {
+        businessName: businessName?.trim(),
+        businessType: businessType?.trim() || (!businessType ? "" : businessType),
+        businessPhone: businessPhone?.trim(),
+        businessDescription: businessDescription?.trim(),
+      };
 
-        console.log("Missing address fields:", missingAddressFields);
+      console.log("Required fields after processing:", requiredFields);
 
-        // Validate ZIP code format (must be exactly 5 digits)
-        const zipRegex = /^\d{5}$/;
-        const isValidZip = addressData.zip?.trim() && zipRegex.test(addressData.zip.trim());
-        
-        console.log("ZIP validation:", { zip: addressData.zip, isValidZip });
+      // Validate phone number format
+      const phoneRegex = /^[\d\s\-\(\)\+]+$/;
+      const isValidPhone = !requiredFields.businessPhone || phoneRegex.test(requiredFields.businessPhone);
 
-        // Collect ALL validation errors
-        const newValidationErrors = {
-          businessName: !requiredFields.businessName || requiredFields.businessName === "",
-          businessType: !requiredFields.businessType || requiredFields.businessType === "",
-          businessPhone: !requiredFields.businessPhone || requiredFields.businessPhone === "" || !isValidPhone,
-          businessDescription: !requiredFields.businessDescription || requiredFields.businessDescription === "",
-          businessAddress: missingAddressFields.length > 0 || !isValidZip,
-          services: invalidServices.length > 0 || validServices.length === 0
-        };
+      // Validate services
+      const validServices = services.filter((s) => s.name.trim() !== "");
+      const invalidServices = validServices.filter((s) => {
+        const priceValue = s.price.trim();
+        return !priceValue || isNaN(parseFloat(priceValue)) || parseFloat(priceValue) <= 0;
+      });
 
-        // Build error messages for all issues
-        const errorMessages: string[] = [];
-        
-        if (newValidationErrors.businessName || newValidationErrors.businessType || 
-            newValidationErrors.businessPhone || newValidationErrors.businessDescription) {
-          const missingFields = [];
-          if (newValidationErrors.businessName) missingFields.push('Business Name');
-          if (newValidationErrors.businessType) missingFields.push('Business Type');
-          if (newValidationErrors.businessPhone) {
-            missingFields.push(requiredFields.businessPhone && !isValidPhone ? 'Phone Number (invalid format)' : 'Phone Number');
-          }
-          if (newValidationErrors.businessDescription) missingFields.push('Business Description');
-          errorMessages.push(`Missing/Invalid: ${missingFields.join(', ')}`);
+      // Validate address fields
+      console.log("=== ADDRESS VALIDATION DEBUG ===");
+      console.log("addressData:", JSON.stringify(addressData));
+
+      const missingAddressFields = [];
+      if (!addressData.street?.trim()) missingAddressFields.push("street address");
+      if (!addressData.city?.trim()) missingAddressFields.push("city");
+      if (!addressData.state?.trim()) missingAddressFields.push("state");
+      if (!addressData.zip?.trim()) missingAddressFields.push("ZIP code");
+
+      console.log("Missing address fields:", missingAddressFields);
+
+      // Validate ZIP code format (must be exactly 5 digits)
+      const zipRegex = /^\d{5}$/;
+      const isValidZip = addressData.zip?.trim() && zipRegex.test(addressData.zip.trim());
+
+      console.log("ZIP validation:", { zip: addressData.zip, isValidZip });
+
+      // Collect ALL validation errors
+      const newValidationErrors = {
+        businessName: !requiredFields.businessName || requiredFields.businessName === "",
+        businessType: !requiredFields.businessType || requiredFields.businessType === "",
+        businessPhone: !requiredFields.businessPhone || requiredFields.businessPhone === "" || !isValidPhone,
+        businessDescription: !requiredFields.businessDescription || requiredFields.businessDescription === "",
+        businessAddress: missingAddressFields.length > 0 || !isValidZip,
+        services: invalidServices.length > 0 || validServices.length === 0,
+      };
+
+      // Build error messages for all issues
+      const errorMessages: string[] = [];
+
+      if (
+        newValidationErrors.businessName ||
+        newValidationErrors.businessType ||
+        newValidationErrors.businessPhone ||
+        newValidationErrors.businessDescription
+      ) {
+        const missingFields = [];
+        if (newValidationErrors.businessName) missingFields.push("Business Name");
+        if (newValidationErrors.businessType) missingFields.push("Business Type");
+        if (newValidationErrors.businessPhone) {
+          missingFields.push(
+            requiredFields.businessPhone && !isValidPhone ? "Phone Number (invalid format)" : "Phone Number",
+          );
         }
-
-        if (newValidationErrors.businessAddress) {
-          if (missingAddressFields.length > 0) {
-            errorMessages.push(`Address: ${missingAddressFields.join(', ')}`);
-          }
-          if (!isValidZip && addressData.zip?.trim()) {
-            errorMessages.push('ZIP code must be exactly 5 digits');
-          }
-        }
-
-        if (newValidationErrors.services) {
-          if (validServices.length === 0) {
-            errorMessages.push('At least one service required');
-          } else if (invalidServices.length > 0) {
-            errorMessages.push(`${invalidServices.length} service(s) have invalid prices`);
-          }
-        }
-
-        // If there are ANY errors, show them all and stop
-        if (errorMessages.length > 0) {
-          setValidationErrors(newValidationErrors);
-          
-          toast({
-            title: "Validation Errors",
-            description: errorMessages.join(' • '),
-            variant: "destructive",
-            duration: 5000,
-          });
-          
-          // Scroll to first error field
-          if (newValidationErrors.businessName && businessNameRef.current) {
-            businessNameRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            businessNameRef.current.focus();
-          } else if (newValidationErrors.businessType && businessTypeRef.current) {
-            businessTypeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          } else if (newValidationErrors.businessPhone && businessPhoneRef.current) {
-            businessPhoneRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            businessPhoneRef.current.focus();
-          } else if (newValidationErrors.businessDescription && businessDescriptionRef.current) {
-            businessDescriptionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            businessDescriptionRef.current.focus();
-          } else if (newValidationErrors.businessAddress && businessAddressRef.current) {
-            businessAddressRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          } else if (newValidationErrors.services && servicesRef.current) {
-            servicesRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-          
-          throw new Error("Validation failed: Multiple fields require attention");
-        }
-        
-        console.log("VALIDATION PASSED");
-
-        // After validation passes, we can safely use validServices
-        const finalValidServices = services.filter(s => s.name.trim() !== "");
-
-        // Combine address fields into a single address string
-        const fullAddress = [
-          addressData.street,
-          addressData.city,
-          addressData.state,
-          addressData.zip
-        ].filter(Boolean).join(', ');
-
-        // Clear validation errors if we reach here
-        setValidationErrors({
-          businessName: false,
-          businessType: false,
-          businessPhone: false,
-          businessDescription: false,
-          businessAddress: false,
-          services: false
-        });
-
-        // Auto-detect timezone if not set
-        let timezone = businessTimezone;
-        let timezoneOffset = businessTimezoneOffset;
-        
-        if (!timezone && fullAddress) {
-          const detectedTz = getTimezoneFromAddress(fullAddress);
-          timezone = detectedTz.timezone;
-          timezoneOffset = detectedTz.offset;
-          setBusinessTimezone(timezone);
-          setBusinessTimezoneOffset(timezoneOffset);
-        } else if (!timezone) {
-          const userTz = getUserTimezone();
-          timezone = userTz.timezone;
-          timezoneOffset = userTz.offset;
-          setBusinessTimezone(timezone);
-          setBusinessTimezoneOffset(timezoneOffset);
-        }
-
-        updateData = {
-          business_name: businessName,
-          business_type: businessType,
-          business_phone: businessPhone,
-          business_address: fullAddress,
-          business_hours: JSON.stringify(businessHours),
-          business_description: businessDescription,
-          business_website: businessWebsite,
-          business_timezone: timezone,
-          business_timezone_offset: timezoneOffset,
-          services_offered: JSON.stringify(finalValidServices),
-          pricing_structure: finalValidServices.map(s => `${s.name}: ${s.price}`).join(', ')
-        };
-      } else if (section === "Call") {
-        if (!forwardingNumber || !forwardingNumber.trim()) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Emergency Forwarding Number is required"
-          });
-          return;
-        }
-        updateData = {
-          forwarding_number: forwardingNumber,
-          urgent_keywords: urgentKeywords,
-          auto_forward: autoForward,
-          common_questions: JSON.stringify(commonQuestionsAnswers.filter(qa => qa.question.trim() || qa.answer.trim())),
-        };
-      } else if (section === "AI Assistant") {
-        updateData = {
-          ai_personality: aiPersonality,
-          custom_greeting: customGreeting,
-          appointment_booking: appointmentBooking,
-          lead_capture: leadCapture
-        };
-      } else if (section === "Notifications") {
-        updateData = {
-          email_notifications: emailNotifications,
-          sms_notifications: smsNotifications,
-          push_notifications: pushNotifications,
-          instant_alerts: instantAlerts
-        };
+        if (newValidationErrors.businessDescription) missingFields.push("Business Description");
+        errorMessages.push(`Missing/Invalid: ${missingFields.join(", ")}`);
       }
 
-      const { data, error } = await supabase
-        .from('business_settings')
-        .upsert({
+      if (newValidationErrors.businessAddress) {
+        if (missingAddressFields.length > 0) {
+          errorMessages.push(`Address: ${missingAddressFields.join(", ")}`);
+        }
+        if (!isValidZip && addressData.zip?.trim()) {
+          errorMessages.push("ZIP code must be exactly 5 digits");
+        }
+      }
+
+      if (newValidationErrors.services) {
+        if (validServices.length === 0) {
+          errorMessages.push("At least one service required");
+        } else if (invalidServices.length > 0) {
+          errorMessages.push(`${invalidServices.length} service(s) have invalid prices`);
+        }
+      }
+
+      // If there are ANY errors, show them all and stop
+      if (errorMessages.length > 0) {
+        setValidationErrors(newValidationErrors);
+
+        toast({
+          title: "Validation Errors",
+          description: errorMessages.join(" • "),
+          variant: "destructive",
+          duration: 5000,
+        });
+
+        // Scroll to first error field
+        if (newValidationErrors.businessName && businessNameRef.current) {
+          businessNameRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          businessNameRef.current.focus();
+        } else if (newValidationErrors.businessType && businessTypeRef.current) {
+          businessTypeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else if (newValidationErrors.businessPhone && businessPhoneRef.current) {
+          businessPhoneRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          businessPhoneRef.current.focus();
+        } else if (newValidationErrors.businessDescription && businessDescriptionRef.current) {
+          businessDescriptionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          businessDescriptionRef.current.focus();
+        } else if (newValidationErrors.businessAddress && businessAddressRef.current) {
+          businessAddressRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        } else if (newValidationErrors.services && servicesRef.current) {
+          servicesRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        throw new Error("Validation failed: Multiple fields require attention");
+      }
+
+      console.log("VALIDATION PASSED");
+
+      // After validation passes, we can safely use validServices
+      const finalValidServices = services.filter((s) => s.name.trim() !== "");
+
+      // Combine address fields into a single address string
+      const fullAddress = [addressData.street, addressData.city, addressData.state, addressData.zip]
+        .filter(Boolean)
+        .join(", ");
+
+      // Clear validation errors if we reach here
+      setValidationErrors({
+        businessName: false,
+        businessType: false,
+        businessPhone: false,
+        businessDescription: false,
+        businessAddress: false,
+        services: false,
+      });
+
+      // Auto-detect timezone if not set
+      let timezone = businessTimezone;
+      let timezoneOffset = businessTimezoneOffset;
+
+      if (!timezone && fullAddress) {
+        const detectedTz = getTimezoneFromAddress(fullAddress);
+        timezone = detectedTz.timezone;
+        timezoneOffset = detectedTz.offset;
+        setBusinessTimezone(timezone);
+        setBusinessTimezoneOffset(timezoneOffset);
+      } else if (!timezone) {
+        const userTz = getUserTimezone();
+        timezone = userTz.timezone;
+        timezoneOffset = userTz.offset;
+        setBusinessTimezone(timezone);
+        setBusinessTimezoneOffset(timezoneOffset);
+      }
+
+      updateData = {
+        business_name: businessName,
+        business_type: businessType,
+        business_phone: businessPhone,
+        business_address: fullAddress,
+        business_hours: JSON.stringify(businessHours),
+        business_description: businessDescription,
+        business_website: businessWebsite,
+        business_timezone: timezone,
+        business_timezone_offset: timezoneOffset,
+        services_offered: JSON.stringify(finalValidServices),
+        pricing_structure: finalValidServices.map((s) => `${s.name}: ${s.price}`).join(", "),
+      };
+    } else if (section === "Call") {
+      if (!forwardingNumber || !forwardingNumber.trim()) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Emergency Forwarding Number is required",
+        });
+        return;
+      }
+      updateData = {
+        forwarding_number: forwardingNumber,
+        urgent_keywords: urgentKeywords,
+        auto_forward: autoForward,
+        common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),
+      };
+    } else if (section === "AI Assistant") {
+      updateData = {
+        ai_personality: aiPersonality,
+        custom_greeting: customGreeting,
+        appointment_booking: appointmentBooking,
+        lead_capture: leadCapture,
+      };
+    } else if (section === "Notifications") {
+      updateData = {
+        email_notifications: emailNotifications,
+        sms_notifications: smsNotifications,
+        push_notifications: pushNotifications,
+        instant_alerts: instantAlerts,
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("business_settings")
+      .upsert(
+        {
           user_id: user.id,
           ...updateData,
-          updated_at: new Date().toISOString()
-        }, { 
-          onConflict: 'user_id' 
-        })
-        .select()
-        .single();
+          updated_at: new Date().toISOString(),
+        },
+        {
+          onConflict: "user_id",
+        },
+      )
+      .select()
+      .single();
 
-      if (error) {
-        throw error;
-      }
+    if (error) {
+      throw error;
+    }
 
-      // Save services to the new services table if this is Business section
-      if (section === "Business" && data?.id) {
-        await saveServices(data.id);
-        setBusinessSettingsId(data.id);
-      }
+    // Save services to the new services table if this is Business section
+    if (section === "Business" && data?.id) {
+      await saveServices(data.id);
+      setBusinessSettingsId(data.id);
+    }
   };
 
   const parseAddress = (addressString: string) => {
-    if (!addressString) return { street: '', city: '', state: '', zip: '' };
-    
-    const parts = addressString.split(',').map(part => part.trim());
-    
+    if (!addressString) return { street: "", city: "", state: "", zip: "" };
+
+    const parts = addressString.split(",").map((part) => part.trim());
+
     if (parts.length >= 3) {
-      const street = parts[0] || '';
-      const city = parts[1] || '';
-      
+      const street = parts[0] || "";
+      const city = parts[1] || "";
+
       // Handle both 3-part and 4-part addresses
       if (parts.length === 3) {
         // Format: Street, City, State ZIP
-        const stateZip = parts[2] || '';
+        const stateZip = parts[2] || "";
         const stateZipMatch = stateZip.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
         const state = stateZipMatch ? stateZipMatch[1] : stateZip;
-        const zip = stateZipMatch ? stateZipMatch[2] : '';
+        const zip = stateZipMatch ? stateZipMatch[2] : "";
         return { street, city, state, zip };
       } else if (parts.length >= 4) {
         // Format: Street, City, State, ZIP (or USA/Country)
-        const state = parts[2] || '';
-        let zip = parts[3] || '';
-        
+        const state = parts[2] || "";
+        let zip = parts[3] || "";
+
         // If the 4th part is "USA" or not a valid zip, try to find zip in the 3rd part
-        if (zip === 'USA' || zip === 'United States' || !/^\d{5}(-\d{4})?$/.test(zip)) {
+        if (zip === "USA" || zip === "United States" || !/^\d{5}(-\d{4})?$/.test(zip)) {
           // Try to extract zip from state field
           const stateZipMatch = state.match(/^(.+?)\s+(\d{5}(?:-\d{4})?)$/);
           if (stateZipMatch) {
             return { street, city, state: stateZipMatch[1], zip: stateZipMatch[2] };
           }
           // No valid zip found
-          return { street, city, state, zip: '' };
+          return { street, city, state, zip: "" };
         }
-        
+
         return { street, city, state, zip };
       }
     }
-    
-    return { street: addressString, city: '', state: '', zip: '' };
+
+    return { street: addressString, city: "", state: "", zip: "" };
   };
 
   const handleAddressSelect = (selectedAddress: string) => {
     setBusinessAddress(selectedAddress);
-    
+
     // Auto-detect timezone when address changes (only if not manually set)
     if (!businessTimezone || businessTimezone === getUserTimezone().timezone) {
       const detectedTz = getTimezoneFromAddress(selectedAddress);
@@ -1170,19 +1204,25 @@ const Settings = () => {
     }
     if (extractedData.business_hours) {
       // Try to parse the hours into structured format
-      setBusinessHours(prev => [...prev, {
-        id: Math.max(...prev.map(h => h.id), 0) + 1,
-        day: "monday",
-        isOpen: true,
-        openTime: "09:00",
-        closeTime: "17:00"
-      }]);
+      setBusinessHours((prev) => [
+        ...prev,
+        {
+          id: Math.max(...prev.map((h) => h.id), 0) + 1,
+          day: "monday",
+          isOpen: true,
+          openTime: "09:00",
+          closeTime: "17:00",
+        },
+      ]);
     }
     if (extractedData.services_offered) {
       const servicesText = extractedData.services_offered;
-      const servicesList = servicesText.split(/[,\n]/).map(s => s.trim()).filter(s => s);
+      const servicesList = servicesText
+        .split(/[,\n]/)
+        .map((s) => s.trim())
+        .filter((s) => s);
       if (servicesList.length > 0) {
-        setServices(servicesList.slice(0, 5).map(service => ({ name: service, price: "" })));
+        setServices(servicesList.slice(0, 5).map((service) => ({ name: service, price: "" })));
       }
     }
 
@@ -1190,16 +1230,20 @@ const Settings = () => {
     if (extractedData.business_name && extractedData.business_type) {
       setTimeout(async () => {
         try {
-          const { data, error } = await supabase.functions.invoke('generate-business-description', {
+          const { data, error } = await supabase.functions.invoke("generate-business-description", {
             body: {
               businessName: extractedData.business_name,
               businessType: extractedData.business_type,
-              services: extractedData.services_offered ? 
-                extractedData.services_offered.split(/[,\n]/).map(s => s.trim()).filter(s => s).map(name => ({ name })) : 
-                [],
+              services: extractedData.services_offered
+                ? extractedData.services_offered
+                    .split(/[,\n]/)
+                    .map((s) => s.trim())
+                    .filter((s) => s)
+                    .map((name) => ({ name }))
+                : [],
               address: extractedData.business_address,
-              phone: extractedData.business_phone
-            }
+              phone: extractedData.business_phone,
+            },
           });
 
           if (data?.description && !error) {
@@ -1210,7 +1254,7 @@ const Settings = () => {
             });
           }
         } catch (error) {
-          console.error('Auto-generation failed:', error);
+          console.error("Auto-generation failed:", error);
           // Silently fail - don't show error to user
         }
       }, 1000); // Small delay to let other data populate first
@@ -1223,7 +1267,7 @@ const Settings = () => {
       toast({
         variant: "destructive",
         title: "Missing fields",
-        description: "Please enter and confirm your new password"
+        description: "Please enter and confirm your new password",
       });
       return;
     }
@@ -1233,7 +1277,7 @@ const Settings = () => {
       toast({
         variant: "destructive",
         title: "Current password required",
-        description: "Please enter your current password"
+        description: "Please enter your current password",
       });
       return;
     }
@@ -1242,7 +1286,7 @@ const Settings = () => {
       toast({
         variant: "destructive",
         title: "Passwords don't match",
-        description: "New password and confirmation must match"
+        description: "New password and confirmation must match",
       });
       return;
     }
@@ -1251,7 +1295,7 @@ const Settings = () => {
       toast({
         variant: "destructive",
         title: "Password too short",
-        description: "Password must be at least 6 characters long"
+        description: "Password must be at least 6 characters long",
       });
       return;
     }
@@ -1263,14 +1307,14 @@ const Settings = () => {
       if (hasPassword) {
         const { error: signInError } = await supabase.auth.signInWithPassword({
           email: userEmail,
-          password: currentPassword
+          password: currentPassword,
         });
 
         if (signInError) {
           toast({
             variant: "destructive",
             title: "Incorrect password",
-            description: "Your current password is incorrect"
+            description: "Your current password is incorrect",
           });
           setUpdatingPassword(false);
           return;
@@ -1279,7 +1323,7 @@ const Settings = () => {
 
       // Update/Set password
       const { error: updateError } = await supabase.auth.updateUser({
-        password: newPassword
+        password: newPassword,
       });
 
       if (updateError) throw updateError;
@@ -1296,16 +1340,16 @@ const Settings = () => {
 
       toast({
         title: hasPassword ? "Password updated" : "Password set successfully",
-        description: hasPassword 
+        description: hasPassword
           ? "Your password has been successfully updated"
-          : "You can now sign in with email and password, in addition to Google"
+          : "You can now sign in with email and password, in addition to Google",
       });
     } catch (error: any) {
-      console.error('Error updating password:', error);
+      console.error("Error updating password:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error.message || `Failed to ${hasPassword ? 'update' : 'set'} password`
+        description: error.message || `Failed to ${hasPassword ? "update" : "set"} password`,
       });
     } finally {
       setUpdatingPassword(false);
@@ -1316,8 +1360,8 @@ const Settings = () => {
     setIsDeleting(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('delete-account', {
-        method: 'POST'
+      const { data, error } = await supabase.functions.invoke("delete-account", {
+        method: "POST",
       });
 
       if (error) throw error;
@@ -1329,17 +1373,17 @@ const Settings = () => {
 
       // Clean up auth state locally
       cleanupAuthState();
-      
+
       // Delay redirect to allow toast to be visible
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = "/login";
       }, 2000);
     } catch (error: any) {
-      console.error('Error deleting account:', error);
+      console.error("Error deleting account:", error);
       toast({
         title: "Error deleting account",
         description: error.message || "Failed to delete account. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
       setIsDeleting(false);
       setShowDeleteDialog(false);
@@ -1370,19 +1414,15 @@ const Settings = () => {
           <div className="md:hidden flex items-center justify-between">
             <div className="flex items-center space-x-2 flex-1 min-w-0">
               <Link to="/" className="flex items-center flex-shrink-0">
-                <img 
-                  src="/lovable-uploads/junie-logo.png" 
-                  alt="Junie Logo" 
-                  className="h-6 w-6 sm:h-8 sm:w-8"
-                />
+                <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-6 w-6 sm:h-8 sm:w-8" />
               </Link>
               <h1 className="text-sm sm:text-base font-bold text-primary truncate">Settings</h1>
             </div>
-            
+
             <div className="flex items-center space-x-1">
               {isAdmin && (
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="icon"
                   onClick={() => navigate("/admin")}
                   className="text-primary hover:bg-primary/10 h-8 w-8"
@@ -1404,7 +1444,9 @@ const Settings = () => {
                     recentActivity.slice(0, 3).map((activity) => (
                       <DropdownMenuItem key={activity.id} className="cursor-pointer">
                         <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium">{activity.caller_name} - {activity.call_type}</p>
+                          <p className="text-sm font-medium">
+                            {activity.caller_name} - {activity.call_type}
+                          </p>
                           <p className="text-xs text-muted-foreground">{activity.message.substring(0, 60)}...</p>
                         </div>
                       </DropdownMenuItem>
@@ -1416,13 +1458,17 @@ const Settings = () => {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="ghost" onClick={async () => {
-                try {
-                  await handleRobustSignOut(supabase, setSigningOut);
-                } catch (error: any) {
-                  window.location.href = '/';
-                }
-              }} className="h-8 w-8 p-0">
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  try {
+                    await handleRobustSignOut(supabase, setSigningOut);
+                  } catch (error: any) {
+                    window.location.href = "/";
+                  }
+                }}
+                className="h-8 w-8 p-0"
+              >
                 <LogOut className="w-4 h-4" />
               </Button>
             </div>
@@ -1432,20 +1478,16 @@ const Settings = () => {
           <div className="hidden md:flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Link to="/" className="flex items-center">
-                <img 
-                  src="/lovable-uploads/junie-logo.png" 
-                  alt="Junie Logo" 
-                  className="h-8 w-8"
-                />
+                <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-8 w-8" />
               </Link>
               <h1 className="text-xl font-bold text-primary">Settings</h1>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {isAdmin && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => navigate("/admin")}
                   className="text-primary hover:bg-primary/10"
                 >
@@ -1468,7 +1510,9 @@ const Settings = () => {
                     recentActivity.slice(0, 3).map((activity) => (
                       <DropdownMenuItem key={activity.id} className="cursor-pointer">
                         <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-medium">{activity.caller_name} - {activity.call_type}</p>
+                          <p className="text-sm font-medium">
+                            {activity.caller_name} - {activity.call_type}
+                          </p>
                           <p className="text-xs text-muted-foreground">{activity.message.substring(0, 60)}...</p>
                         </div>
                       </DropdownMenuItem>
@@ -1480,13 +1524,16 @@ const Settings = () => {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="ghost" onClick={async () => {
-                try {
-                  await handleRobustSignOut(supabase, setSigningOut);
-                } catch (error: any) {
-                  window.location.href = '/';
-                }
-              }}>
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  try {
+                    await handleRobustSignOut(supabase, setSigningOut);
+                  } catch (error: any) {
+                    window.location.href = "/";
+                  }
+                }}
+              >
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
               </Button>
@@ -1500,9 +1547,7 @@ const Settings = () => {
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-muted-foreground mb-2">Account Settings</h2>
-            <p className="text-muted-foreground">
-              Configure your Junie assistant and account preferences.
-            </p>
+            <p className="text-muted-foreground">Configure your Junie assistant and account preferences.</p>
           </div>
 
           {/* Upgrade Dialog */}
@@ -1516,10 +1561,12 @@ const Settings = () => {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => {
-                  setShowUpgradeDialog(false);
-                  navigate('/pricing');
-                }}>
+                <AlertDialogAction
+                  onClick={() => {
+                    setShowUpgradeDialog(false);
+                    navigate("/pricing");
+                  }}
+                >
                   View Plans
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -1532,7 +1579,9 @@ const Settings = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5" />
-                  <span className="font-medium">Successfully signed up! Please review and complete your business information below.</span>
+                  <span className="font-medium">
+                    Successfully signed up! Please review and complete your business information below.
+                  </span>
                 </div>
                 <Button
                   variant="ghost"
@@ -1548,40 +1597,40 @@ const Settings = () => {
 
           {/* Calendar Connection Banner */}
           {showCalendarBanner && (
-            <div className={`p-4 rounded-lg border mb-6 ${
-              calendarBannerType === 'success' 
-                ? 'bg-green-50 border-green-200 text-green-800' 
-                : 'bg-red-50 border-red-200 text-red-800'
-            }`}>
+            <div
+              className={`p-4 rounded-lg border mb-6 ${
+                calendarBannerType === "success"
+                  ? "bg-green-50 border-green-200 text-green-800"
+                  : "bg-red-50 border-red-200 text-red-800"
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {calendarBannerType === 'success' ? (
+                  {calendarBannerType === "success" ? (
                     <CheckCircle className="h-5 w-5" />
                   ) : (
                     <XCircle className="h-5 w-5" />
                   )}
                   <span className="font-medium">{calendarBannerMessage}</span>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCalendarBanner(false)}
-                  className="h-6 w-6 p-0"
-                >
+                <Button variant="ghost" size="sm" onClick={() => setShowCalendarBanner(false)} className="h-6 w-6 p-0">
                   <X className="h-4 w-4" />
                 </Button>
               </div>
             </div>
           )}
 
-          <Tabs value={activeTab} onValueChange={(value) => {
-            // Check if user has access to Calendar tab
-            if (value === 'setup' && !featureAccess.appointmentScheduling) {
-              setShowUpgradeDialog(true);
-              return;
-            }
-            setActiveTab(value);
-          }}>
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => {
+              // Check if user has access to Calendar tab
+              if (value === "setup" && !featureAccess.appointmentScheduling) {
+                setShowUpgradeDialog(true);
+                return;
+              }
+              setActiveTab(value);
+            }}
+          >
             <TabsList className="grid w-full grid-cols-5 mb-6 p-1 h-auto">
               <TabsTrigger value="account" className="flex items-center gap-2 py-3.5">
                 <User className="w-4 h-4" />
@@ -1595,11 +1644,12 @@ const Settings = () => {
                 <Bot className="w-4 h-4" />
                 <span className="hidden sm:inline">AI Caller</span>
               </TabsTrigger>
-              <TabsTrigger value="setup" className={`flex items-center gap-2 py-3.5 ${!featureAccess.appointmentScheduling ? 'text-muted-foreground/50' : ''}`}>
+              <TabsTrigger
+                value="setup"
+                className={`flex items-center gap-2 py-3.5 ${!featureAccess.appointmentScheduling ? "text-muted-foreground/50" : ""}`}
+              >
                 <Calendar className="w-4 h-4" />
-                <span className="hidden sm:inline">
-                  Calendar {!featureAccess.appointmentScheduling && "(Pro)"}
-                </span>
+                <span className="hidden sm:inline">Calendar {!featureAccess.appointmentScheduling && "(Pro)"}</span>
               </TabsTrigger>
               <TabsTrigger value="notifications" className="flex items-center gap-2 py-3.5">
                 <Bell className="w-4 h-4" />
@@ -1609,11 +1659,11 @@ const Settings = () => {
 
             {/* Account (User Profile + Billing) */}
             <TabsContent value="account" className="space-y-6">
-              <Tabs 
-                value={searchParams.get('subtab') || 'profile'} 
+              <Tabs
+                value={searchParams.get("subtab") || "profile"}
                 onValueChange={(value) => {
                   const newSearchParams = new URLSearchParams(searchParams);
-                  newSearchParams.set('subtab', value);
+                  newSearchParams.set("subtab", value);
                   setSearchParams(newSearchParams, { replace: true });
                 }}
                 className="w-full"
@@ -1645,26 +1695,20 @@ const Settings = () => {
                     <CardContent className="space-y-6">
                       <div className="space-y-2">
                         <Label htmlFor="userEmail">Email Address</Label>
-                        <Input
-                          id="userEmail"
-                          type="email"
-                          value={userEmail}
-                          disabled
-                          className="bg-muted"
-                        />
+                        <Input id="userEmail" type="email" value={userEmail} disabled className="bg-muted" />
                         <p className="text-xs text-muted-foreground">
                           Email cannot be changed. Contact support if you need to update it.
                         </p>
                       </div>
 
-                      {authProvider === 'google' && (
+                      {authProvider === "google" && (
                         <div className="space-y-2">
                           <Label>Connected Account</Label>
                           <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
                             {googleAvatarUrl && (
-                              <img 
-                                src={googleAvatarUrl} 
-                                alt="Google Profile" 
+                              <img
+                                src={googleAvatarUrl}
+                                alt="Google Profile"
                                 className="w-10 h-10 rounded-full border-2 border-primary/20"
                               />
                             )}
@@ -1672,47 +1716,61 @@ const Settings = () => {
                               <div className="flex items-center gap-2 mb-1">
                                 <Badge variant="secondary" className="bg-white flex items-center gap-1.5">
                                   <svg className="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                    <path
+                                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                                      fill="#4285F4"
+                                    />
+                                    <path
+                                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                                      fill="#34A853"
+                                    />
+                                    <path
+                                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                                      fill="#FBBC05"
+                                    />
+                                    <path
+                                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                                      fill="#EA4335"
+                                    />
                                   </svg>
                                   Google
                                 </Badge>
                               </div>
                               <p className="text-sm font-medium truncate">{googleEmail}</p>
-                              <p className="text-xs text-muted-foreground">
-                                Authenticated via Google
-                              </p>
+                              <p className="text-xs text-muted-foreground">Authenticated via Google</p>
                             </div>
                             <Button
                               variant="destructive"
                               size="sm"
                               onClick={async () => {
-                                if (confirm('Disconnect your Google account? This will also disconnect Google Calendar and sign you out.')) {
+                                if (
+                                  confirm(
+                                    "Disconnect your Google account? This will also disconnect Google Calendar and sign you out.",
+                                  )
+                                ) {
                                   try {
                                     // Disconnect Google Calendar first
                                     const { error: calendarError } = await supabase
-                                      .from('google_calendar_settings')
+                                      .from("google_calendar_settings")
                                       .update({
                                         is_connected: false,
                                         expires_at: null,
-                                        calendar_id: null
+                                        calendar_id: null,
                                       })
-                                      .eq('user_id', user?.id);
+                                      .eq("user_id", user?.id);
 
                                     if (calendarError) {
-                                      console.error('Error disconnecting calendar:', calendarError);
+                                      console.error("Error disconnecting calendar:", calendarError);
                                     }
 
                                     // Sign out and redirect
                                     await handleRobustSignOut(supabase);
                                   } catch (error) {
-                                    console.error('Error disconnecting account:', error);
+                                    console.error("Error disconnecting account:", error);
                                     toast({
                                       variant: "destructive",
                                       title: "Error",
-                                      description: "Failed to disconnect account"
+                                      description: "Failed to disconnect account",
                                     });
                                   }
                                 }
@@ -1753,8 +1811,8 @@ const Settings = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="userTimezone">Timezone</Label>
-                        <Select 
-                          value={userTimezone} 
+                        <Select
+                          value={userTimezone}
                           onValueChange={(value) => {
                             setUserTimezone(value);
                             debouncedAutoSave("Profile");
@@ -1782,7 +1840,7 @@ const Settings = () => {
                         <Shield className="w-5 h-5 mr-2" />
                         {hasPassword ? "Change Password" : "Set Password"}
                       </CardTitle>
-                      {authProvider === 'google' && !hasPassword && (
+                      {authProvider === "google" && !hasPassword && (
                         <p className="text-sm text-muted-foreground mt-2">
                           Set a password to enable email/password login alongside Google sign-in
                         </p>
@@ -1801,7 +1859,7 @@ const Settings = () => {
                           />
                         </div>
                       )}
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="newPassword">New Password</Label>
                         <Input
@@ -1811,11 +1869,9 @@ const Settings = () => {
                           onChange={(e) => setNewPassword(e.target.value)}
                           placeholder="Enter new password"
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Must be at least 6 characters long
-                        </p>
+                        <p className="text-xs text-muted-foreground">Must be at least 6 characters long</p>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="confirmPassword">Confirm New Password</Label>
                         <Input
@@ -1827,20 +1883,26 @@ const Settings = () => {
                         />
                       </div>
 
-                      <Button 
+                      <Button
                         onClick={handleUpdatePassword}
-                        disabled={updatingPassword || !newPassword || !confirmPassword || (hasPassword && !currentPassword)}
+                        disabled={
+                          updatingPassword || !newPassword || !confirmPassword || (hasPassword && !currentPassword)
+                        }
                         className="w-full"
                       >
-                        {updatingPassword 
-                          ? (hasPassword ? "Updating..." : "Setting...") 
-                          : (hasPassword ? "Update Password" : "Set Password")
-                        }
+                        {updatingPassword
+                          ? hasPassword
+                            ? "Updating..."
+                            : "Setting..."
+                          : hasPassword
+                            ? "Update Password"
+                            : "Set Password"}
                       </Button>
 
-                      {authProvider === 'google' && !hasPassword && (
+                      {authProvider === "google" && !hasPassword && (
                         <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md">
-                          💡 After setting a password, you'll be able to sign in using either Google OAuth or email/password
+                          💡 After setting a password, you'll be able to sign in using either Google OAuth or
+                          email/password
                         </p>
                       )}
                     </CardContent>
@@ -1867,7 +1929,7 @@ const Settings = () => {
                           <li>This action is irreversible</li>
                         </ul>
                       </div>
-                      <Button 
+                      <Button
                         variant="destructive"
                         onClick={() => setShowDeleteDialog(true)}
                         className="w-full sm:w-auto"
@@ -1912,12 +1974,8 @@ const Settings = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                <WebsiteImporter 
-                  onDataExtracted={handleWebsiteDataExtracted}
-                  autoSave={true}
-                  className="mb-6"
-                />
-                  
+                  <WebsiteImporter onDataExtracted={handleWebsiteDataExtracted} autoSave={true} className="mb-6" />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="businessName">
@@ -1942,19 +2000,21 @@ const Settings = () => {
                             setDescriptionUpdateTimeout(timeout);
                           }
                         }}
-        onBlur={() => {
-          if (businessName && businessType && businessSettingsId) {
-            // Clear any pending timeout
-            if (descriptionUpdateTimeout) {
-              clearTimeout(descriptionUpdateTimeout);
-              setDescriptionUpdateTimeout(null);
-            }
-            // Immediately update description on blur
-            autoUpdateDescription(businessName);
-          }
-        }}
+                        onBlur={() => {
+                          if (businessName && businessType && businessSettingsId) {
+                            // Clear any pending timeout
+                            if (descriptionUpdateTimeout) {
+                              clearTimeout(descriptionUpdateTimeout);
+                              setDescriptionUpdateTimeout(null);
+                            }
+                            // Immediately update description on blur
+                            autoUpdateDescription(businessName);
+                          }
+                        }}
                         placeholder="Your Business Name"
-                        className={validationErrors.businessName ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+                        className={
+                          validationErrors.businessName ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -1962,12 +2022,22 @@ const Settings = () => {
                         Business Type <span className="text-red-500">*</span>
                       </Label>
                       <div className="flex gap-2">
-                        <Select value={businessType} onValueChange={(value) => {
-                          console.log("Business type changed to:", value);
-                          setBusinessType(value);
-                          // Disabled auto-save - require manual save for validation
-                        }}>
-                          <SelectTrigger ref={businessTypeRef} className={validationErrors.businessType ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500" : ""}>
+                        <Select
+                          value={businessType}
+                          onValueChange={(value) => {
+                            console.log("Business type changed to:", value);
+                            setBusinessType(value);
+                            // Disabled auto-save - require manual save for validation
+                          }}
+                        >
+                          <SelectTrigger
+                            ref={businessTypeRef}
+                            className={
+                              validationErrors.businessType
+                                ? "border-red-500 focus:border-red-500 focus:ring-red-500 ring-red-500"
+                                : ""
+                            }
+                          >
                             <SelectValue placeholder="Select business type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -2003,12 +2073,14 @@ const Settings = () => {
                       value={businessPhone}
                       onChange={(e) => {
                         // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
-                        const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, '');
+                        const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
                         setBusinessPhone(phoneValue);
                         // Disabled auto-save - require manual save for validation
                       }}
                       placeholder="+1 (555) 123-4567"
-                      className={validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+                      className={
+                        validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
+                      }
                     />
                   </div>
 
@@ -2051,7 +2123,9 @@ const Settings = () => {
                         <div className="col-span-2 text-center">Remove</div>
                       </div>
                       {businessHours.map((hour) => {
-                        const validationMessage = hour.isOpen ? getTimeValidationMessage(hour.openTime, hour.closeTime) : null;
+                        const validationMessage = hour.isOpen
+                          ? getTimeValidationMessage(hour.openTime, hour.closeTime)
+                          : null;
                         return (
                           <div key={hour.id} className="space-y-2">
                             {/* Desktop Layout */}
@@ -2059,16 +2133,14 @@ const Settings = () => {
                               <div className="col-span-1 flex justify-center">
                                 <Checkbox
                                   checked={hour.isOpen}
-                                  onCheckedChange={(checked) => 
-                                    updateBusinessHours(hour.id, 'isOpen', !!checked)
-                                  }
+                                  onCheckedChange={(checked) => updateBusinessHours(hour.id, "isOpen", !!checked)}
                                   className="h-4 w-4"
                                 />
                               </div>
                               <div className="col-span-3">
                                 <Select
                                   value={hour.day}
-                                  onValueChange={(value) => updateBusinessHours(hour.id, 'day', value)}
+                                  onValueChange={(value) => updateBusinessHours(hour.id, "day", value)}
                                   disabled={!hour.isOpen}
                                 >
                                   <SelectTrigger className={`h-7 text-sm ${!hour.isOpen ? "opacity-50" : ""}`}>
@@ -2087,7 +2159,7 @@ const Settings = () => {
                                 <Input
                                   type="time"
                                   value={hour.openTime}
-                                  onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
+                                  onChange={(e) => updateBusinessHours(hour.id, "openTime", e.target.value)}
                                   disabled={!hour.isOpen}
                                   className={`h-7 text-sm w-full ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                 />
@@ -2096,7 +2168,7 @@ const Settings = () => {
                                 <Input
                                   type="time"
                                   value={hour.closeTime}
-                                  onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
+                                  onChange={(e) => updateBusinessHours(hour.id, "closeTime", e.target.value)}
                                   disabled={!hour.isOpen}
                                   className={`h-7 text-sm w-full ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                 />
@@ -2114,21 +2186,19 @@ const Settings = () => {
                                 </Button>
                               </div>
                             </div>
-                            
+
                             {/* Mobile Layout */}
                             <div className="md:hidden border rounded-lg p-3 space-y-3 w-full overflow-hidden">
                               <div className="flex items-center justify-between gap-2 min-w-0">
                                 <div className="flex items-center gap-2 min-w-0 flex-1">
                                   <Checkbox
                                     checked={hour.isOpen}
-                                    onCheckedChange={(checked) => 
-                                      updateBusinessHours(hour.id, 'isOpen', !!checked)
-                                    }
+                                    onCheckedChange={(checked) => updateBusinessHours(hour.id, "isOpen", !!checked)}
                                     className="h-4 w-4 flex-shrink-0"
                                   />
                                   <Select
                                     value={hour.day}
-                                    onValueChange={(value) => updateBusinessHours(hour.id, 'day', value)}
+                                    onValueChange={(value) => updateBusinessHours(hour.id, "day", value)}
                                     disabled={!hour.isOpen}
                                   >
                                     <SelectTrigger className={`h-9 min-w-0 ${!hour.isOpen ? "opacity-50" : ""}`}>
@@ -2160,7 +2230,7 @@ const Settings = () => {
                                   <Input
                                     type="time"
                                     value={hour.openTime}
-                                    onChange={(e) => updateBusinessHours(hour.id, 'openTime', e.target.value)}
+                                    onChange={(e) => updateBusinessHours(hour.id, "openTime", e.target.value)}
                                     disabled={!hour.isOpen}
                                     className={`h-9 text-sm ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
@@ -2170,25 +2240,24 @@ const Settings = () => {
                                   <Input
                                     type="time"
                                     value={hour.closeTime}
-                                    onChange={(e) => updateBusinessHours(hour.id, 'closeTime', e.target.value)}
+                                    onChange={(e) => updateBusinessHours(hour.id, "closeTime", e.target.value)}
                                     disabled={!hour.isOpen}
                                     className={`h-9 text-sm ${!hour.isOpen ? "opacity-50" : ""} ${validationMessage ? "border-destructive" : ""}`}
                                   />
                                 </div>
                               </div>
                             </div>
-                            
+
                             {validationMessage && (
-                              <div className="text-sm text-destructive ml-1">
-                                {validationMessage}
-                              </div>
+                              <div className="text-sm text-destructive ml-1">{validationMessage}</div>
                             )}
                           </div>
                         );
                       })}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Add multiple time periods for days with split hours (e.g., lunch breaks). Times must be within the same day (12:00 AM - 11:59 PM).
+                      Add multiple time periods for days with split hours (e.g., lunch breaks). Times must be within the
+                      same day (12:00 AM - 11:59 PM).
                     </p>
                   </div>
 
@@ -2206,7 +2275,11 @@ const Settings = () => {
                       }}
                       placeholder="Brief description of your business and services..."
                       rows={6}
-                      className={validationErrors.businessDescription ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
+                      className={
+                        validationErrors.businessDescription
+                          ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                          : ""
+                      }
                     />
                     <Button
                       type="button"
@@ -2216,8 +2289,8 @@ const Settings = () => {
                       disabled={generatingDescription}
                       className="mt-2 text-sm bg-gradient-primary hover:opacity-90 text-white border-none"
                     >
-                      <Zap className={`w-4 h-4 mr-2 ${generatingDescription ? 'animate-pulse' : ''}`} />
-                      {generatingDescription ? 'Generating...' : 'Generate with AI'}
+                      <Zap className={`w-4 h-4 mr-2 ${generatingDescription ? "animate-pulse" : ""}`} />
+                      {generatingDescription ? "Generating..." : "Generate with AI"}
                     </Button>
                   </div>
 
@@ -2236,10 +2309,10 @@ const Settings = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="businessTimezone">Business Timezone</Label>
-                    <Select 
-                      value={businessTimezone} 
+                    <Select
+                      value={businessTimezone}
                       onValueChange={(value) => {
-                        const tz = getCommonTimezones().find(t => t.value === value);
+                        const tz = getCommonTimezones().find((t) => t.value === value);
                         if (tz) {
                           setBusinessTimezone(tz.value);
                           setBusinessTimezoneOffset(tz.offset);
@@ -2270,22 +2343,24 @@ const Settings = () => {
                       <Label>
                         Services & Pricing <span className="text-red-500">*</span>
                       </Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={addService}
-                      >
+                      <Button type="button" variant="outline" size="sm" onClick={addService}>
                         <Plus className="w-4 h-4 mr-2" />
                         Add Service
                       </Button>
                     </div>
-                    
+
                     <div className="space-y-3">
                       {services.map((service, index) => {
-                        const hasNameButInvalidPrice = service.name.trim() && (!service.price.trim() || isNaN(parseFloat(service.price.trim())) || parseFloat(service.price.trim()) <= 0);
-                        const priceErrorClass = (validationErrors.services && hasNameButInvalidPrice) ? "border-red-500 focus:border-red-500 focus:ring-red-500" : "";
-                        
+                        const hasNameButInvalidPrice =
+                          service.name.trim() &&
+                          (!service.price.trim() ||
+                            isNaN(parseFloat(service.price.trim())) ||
+                            parseFloat(service.price.trim()) <= 0);
+                        const priceErrorClass =
+                          validationErrors.services && hasNameButInvalidPrice
+                            ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                            : "";
+
                         return (
                           <div key={index} className="space-y-3 p-4 border rounded-lg">
                             {/* Desktop Layout */}
@@ -2296,14 +2371,16 @@ const Settings = () => {
                                 </Label>
                                 <Input
                                   id={`service-name-${index}`}
-                                  ref={(el) => serviceInputRefs.current[index] = el}
+                                  ref={(el) => (serviceInputRefs.current[index] = el)}
                                   placeholder="Service name (e.g., Consultation)"
                                   value={service.name}
                                   onChange={(e) => {
-                                    updateService(index, 'name', e.target.value);
+                                    updateService(index, "name", e.target.value);
                                     // Disabled auto-save - require manual save for validation
                                   }}
-                                  className={service.name.trim() === '' && validationErrors.services ? "border-red-500" : ""}
+                                  className={
+                                    service.name.trim() === "" && validationErrors.services ? "border-red-500" : ""
+                                  }
                                 />
                               </div>
                               <div className="w-32">
@@ -2311,15 +2388,17 @@ const Settings = () => {
                                   Price <span className="text-red-500">*</span>
                                 </Label>
                                 <div className="relative">
-                                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                                    $
+                                  </span>
                                   <Input
                                     id={`service-price-${index}`}
                                     placeholder="0.00"
                                     value={service.price}
-                                  onChange={(e) => {
-                                    updateService(index, 'price', e.target.value);
-                                    // Disabled auto-save - require manual save for validation
-                                  }}
+                                    onChange={(e) => {
+                                      updateService(index, "price", e.target.value);
+                                      // Disabled auto-save - require manual save for validation
+                                    }}
                                     className={`pl-6 ${priceErrorClass}`}
                                   />
                                 </div>
@@ -2336,7 +2415,7 @@ const Settings = () => {
                                 </Button>
                               )}
                             </div>
-                            
+
                             {/* Mobile Layout */}
                             <div className="md:hidden space-y-3">
                               <div className="flex items-start justify-between gap-2">
@@ -2347,14 +2426,16 @@ const Settings = () => {
                                     </Label>
                                     <Input
                                       id={`service-name-mobile-${index}`}
-                                      ref={(el) => serviceInputRefs.current[index] = el}
+                                      ref={(el) => (serviceInputRefs.current[index] = el)}
                                       placeholder="Service name (e.g., Consultation)"
                                       value={service.name}
                                       onChange={(e) => {
-                                        updateService(index, 'name', e.target.value);
+                                        updateService(index, "name", e.target.value);
                                         // Disabled auto-save - require manual save for validation
                                       }}
-                                      className={service.name.trim() === '' && validationErrors.services ? "border-red-500" : ""}
+                                      className={
+                                        service.name.trim() === "" && validationErrors.services ? "border-red-500" : ""
+                                      }
                                     />
                                   </div>
                                   <div>
@@ -2362,15 +2443,17 @@ const Settings = () => {
                                       Price <span className="text-red-500">*</span>
                                     </Label>
                                     <div className="relative">
-                                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">$</span>
+                                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                                        $
+                                      </span>
                                       <Input
                                         id={`service-price-mobile-${index}`}
                                         placeholder="0.00"
                                         value={service.price}
-                                      onChange={(e) => {
-                                        updateService(index, 'price', e.target.value);
-                                        // Disabled auto-save - require manual save for validation
-                                      }}
+                                        onChange={(e) => {
+                                          updateService(index, "price", e.target.value);
+                                          // Disabled auto-save - require manual save for validation
+                                        }}
                                         className={`pl-6 ${priceErrorClass}`}
                                       />
                                     </div>
@@ -2399,7 +2482,7 @@ const Settings = () => {
                                 placeholder="Brief description of the service"
                                 value={service.description || ""}
                                 onChange={(e) => {
-                                  updateService(index, 'description', e.target.value);
+                                  updateService(index, "description", e.target.value);
                                   // Disabled auto-save - require manual save for validation
                                 }}
                                 rows={2}
@@ -2410,7 +2493,7 @@ const Settings = () => {
                                 placeholder="Brief description of the service"
                                 value={service.description || ""}
                                 onChange={(e) => {
-                                  updateService(index, 'description', e.target.value);
+                                  updateService(index, "description", e.target.value);
                                   // Disabled auto-save - require manual save for validation
                                 }}
                                 className="hidden md:block"
@@ -2426,10 +2509,14 @@ const Settings = () => {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">
-                      Click "Save Now" to save your changes
-                    </div>
-                    <Button onClick={() => saveSettings("Business")} disabled={saving || isAutoSaving} variant="outline" size="sm" className="bg-gradient-primary hover:opacity-90 text-white border-none">
+                    <div className="text-sm text-muted-foreground">Click "Save Now" to save your changes</div>
+                    <Button
+                      onClick={() => saveSettings("Business")}
+                      disabled={saving || isAutoSaving}
+                      variant="outline"
+                      size="sm"
+                      className="bg-gradient-primary hover:opacity-90 text-white border-none"
+                    >
                       <Save className="w-4 h-4 mr-2" />
                       {saving ? "Saving..." : "Save Now"}
                     </Button>
@@ -2461,7 +2548,9 @@ const Settings = () => {
                 <CardContent className="space-y-6">
                   {/* Junie Phone Number (Read-only) */}
                   <div className="space-y-2 p-4 bg-primary/5 rounded-lg border border-primary/20">
-                    <Label htmlFor="twilioPhoneNumber" className="font-semibold">Your Junie Phone Number</Label>
+                    <Label htmlFor="twilioPhoneNumber" className="font-semibold">
+                      Your Junie Phone Number
+                    </Label>
                     <div className="flex gap-2">
                       <Input
                         id="twilioPhoneNumber"
@@ -2479,7 +2568,8 @@ const Settings = () => {
                       </Button>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      This is your dedicated Junie AI phone number. Share this number with your customers to have calls handled by your AI assistant.
+                      This is your dedicated Junie AI phone number. Share this number with your customers to have calls
+                      handled by your AI assistant.
                     </p>
                   </div>
 
@@ -2488,7 +2578,7 @@ const Settings = () => {
                   <FeatureGate feature="callTransfers" showUpgradeMessage={true}>
                     <div className="space-y-2">
                       <Label htmlFor="forwardingNumber" className="font-semibold">
-                        Emergency Forwarding Number <span className="text-destructive">*</span>
+                        Call Forwarding/SMS Notification Number <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         id="forwardingNumber"
@@ -2501,7 +2591,8 @@ const Settings = () => {
                         required
                       />
                       <p className="text-sm text-muted-foreground">
-                        Your business phone number. Urgent or emergency calls will be forwarded to this number when the AI detects urgent keywords.
+                        Your business phone number. Urgent or emergency calls will be forwarded to this number when the
+                        AI detects urgent keywords.
                       </p>
                     </div>
                   </FeatureGate>
@@ -2523,17 +2614,11 @@ const Settings = () => {
                     </p>
                   </div>
 
-
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Common Questions & Answers</Label>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={addQuestionAnswer}
-                        >
+                        <Button type="button" variant="outline" size="sm" onClick={addQuestionAnswer}>
                           <Plus className="w-4 h-4 mr-2" />
                           Add Question
                         </Button>
@@ -2542,7 +2627,7 @@ const Settings = () => {
                         Pre-program frequently asked questions and their answers for your AI assistant
                       </p>
                     </div>
-                    
+
                     <div className="space-y-3">
                       {commonQuestionsAnswers.map((qa, index) => (
                         <div key={index} className="space-y-3 p-4 border rounded-lg">
@@ -2553,11 +2638,11 @@ const Settings = () => {
                               </Label>
                               <Input
                                 id={`question-${index}`}
-                                ref={(el) => questionInputRefs.current[index] = el}
+                                ref={(el) => (questionInputRefs.current[index] = el)}
                                 placeholder="e.g., What services do you offer?"
                                 value={qa.question}
                                 onChange={(e) => {
-                                  updateQuestionAnswer(index, 'question', e.target.value);
+                                  updateQuestionAnswer(index, "question", e.target.value);
                                   debouncedAutoSave("Call");
                                 }}
                               />
@@ -2583,7 +2668,7 @@ const Settings = () => {
                               placeholder="e.g., We provide 24/7 AI answering services, appointment booking, lead capture, and customer service support."
                               value={qa.answer}
                               onChange={(e) => {
-                                updateQuestionAnswer(index, 'answer', e.target.value);
+                                updateQuestionAnswer(index, "answer", e.target.value);
                                 debouncedAutoSave("Call");
                               }}
                               rows={3}
@@ -2612,14 +2697,19 @@ const Settings = () => {
                         }}
                       />
                     </div>
-
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
                       {isAutoSaving ? "Auto-saving changes..." : "Changes are automatically saved"}
                     </div>
-                    <Button onClick={() => saveSettings("Calls")} disabled={saving || isAutoSaving} variant="outline" size="sm" className="bg-gradient-primary hover:opacity-90 text-white border-none">
+                    <Button
+                      onClick={() => saveSettings("Calls")}
+                      disabled={saving || isAutoSaving}
+                      variant="outline"
+                      size="sm"
+                      className="bg-gradient-primary hover:opacity-90 text-white border-none"
+                    >
                       <Save className="w-4 h-4 mr-2" />
                       {saving ? "Saving..." : "Save Now"}
                     </Button>
@@ -2651,29 +2741,28 @@ const Settings = () => {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Enable Appointment Booking</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Allow AI to automatically schedule appointments directly on your calendar
-                        </p>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Enable Appointment Booking</Label>
+                          <p className="text-sm text-muted-foreground">
+                            Allow AI to automatically schedule appointments directly on your calendar
+                          </p>
+                        </div>
+                        <Switch
+                          checked={appointmentBooking}
+                          onCheckedChange={(checked) => {
+                            setAppointmentBooking(checked);
+                            debouncedAutoSave("Calendar");
+                          }}
+                        />
                       </div>
-                      <Switch
-                        checked={appointmentBooking}
-                         onCheckedChange={(checked) => {
-                          setAppointmentBooking(checked);
-                          debouncedAutoSave("Calendar");
-                        }}
-                      />
                     </div>
 
-                  </div>
-                  
-                  <Separator />
-                  
-                  <GoogleCalendarConnect />
-                </CardContent>
-              </Card>
+                    <Separator />
+
+                    <GoogleCalendarConnect />
+                  </CardContent>
+                </Card>
               </FeatureGate>
             </TabsContent>
 
@@ -2681,7 +2770,6 @@ const Settings = () => {
             <TabsContent value="notifications" className="space-y-6">
               <NotificationSettings />
             </TabsContent>
-
           </Tabs>
         </div>
       </main>
@@ -2703,9 +2791,7 @@ const Settings = () => {
                 <li>Appointments and calendar data</li>
                 <li>All other personal data</li>
               </ul>
-              <p className="font-semibold text-destructive">
-                This action cannot be undone. Are you absolutely sure?
-              </p>
+              <p className="font-semibold text-destructive">This action cannot be undone. Are you absolutely sure?</p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
