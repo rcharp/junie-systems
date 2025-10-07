@@ -2166,6 +2166,7 @@ const Settings = () => {
                       type="tel"
                       ref={businessPhoneRef}
                       value={businessPhone}
+                      maxLength={10}
                       onChange={(e) => {
                         // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                         const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
@@ -2697,6 +2698,7 @@ const Settings = () => {
                         id="forwardingNumber"
                         type="tel"
                         value={forwardingNumber}
+                        maxLength={10}
                         onChange={(e) => {
                           // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                           const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
