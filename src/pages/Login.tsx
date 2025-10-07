@@ -311,18 +311,12 @@ const Login = () => {
           </Button>
           
           <div className="text-center">
-            <button
-              type="button"
+            <Link
+              to="/forgot-password"
               className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
-              onClick={() => {
-                toast({
-                  title: "Password Reset",
-                  description: "Password reset functionality will be added soon!",
-                });
-              }}
             >
               Forgot your password?
-            </button>
+            </Link>
           </div>
           
           <div className="text-center">
