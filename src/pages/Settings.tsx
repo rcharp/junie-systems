@@ -2733,8 +2733,8 @@ const Settings = () => {
                           
                           setForwardingNumber(formatted);
 
-                          // Only validate if user has entered something
-                          if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
+                          // Validate: must have exactly 10 digits or be completely empty during typing
+                          if (digitsOnly.length !== 10) {
                             setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
                           } else {
                             setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
@@ -2756,8 +2756,12 @@ const Settings = () => {
                             : ""
                         }
                       />
-                      {validationErrors.forwardingNumber && forwardingNumber.length > 0 && (
-                        <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
+                      {validationErrors.forwardingNumber && (
+                        <p className="text-sm text-red-500">
+                          {forwardingNumber.length === 0 
+                            ? "Phone number is required" 
+                            : "Phone number must be exactly 10 digits"}
+                        </p>
                       )}
                       <p className="text-sm text-muted-foreground">
                         The phone number that you want urgent or emergency calls to be forwarded to, as well as SMS
