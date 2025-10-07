@@ -493,6 +493,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_logs: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          identifier: string
+          ip_address: unknown | null
+          metadata: Json | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          identifier: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          identifier?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+        }
+        Relationships: []
+      }
       security_audit_log: {
         Row: {
           action: string
@@ -754,6 +781,10 @@ export type Database = {
       authorize_admin_customer_data_access: {
         Args: { justification: string; target_appointment_id?: string }
         Returns: boolean
+      }
+      cleanup_old_rate_limit_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       decrypt_token: {
         Args: { encoded_token: string }

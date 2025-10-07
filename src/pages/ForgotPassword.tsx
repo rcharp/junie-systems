@@ -36,21 +36,32 @@ const ForgotPassword = () => {
         return;
       }
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Call the rate-limited edge function
+      const { data, error } = await supabase.functions.invoke("password-reset", {
+        body: { email },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Password reset error:", error);
+        toast({
+          title: "Error",
+          description: "An error occurred. Please try again later.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
 
       setEmailSent(true);
       toast({
         title: "Reset link sent",
-        description: "Check your email for the password reset link.",
+        description: data?.message || "Check your email for the password reset link.",
       });
     } catch (error: any) {
+      console.error("Password reset error:", error);
       toast({
         title: "Error",
-        description: error.message || "An error occurred. Please try again.",
+        description: "An error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {

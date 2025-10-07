@@ -140,3 +140,6 @@ verify_jwt = false
 
 [functions.twilio-transfer]
 verify_jwt = false
+
+[functions.password-reset]
+verify_jwt = false
