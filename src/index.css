@@ -34,7 +34,7 @@
     --accent-foreground: 0 0% 98%;
 
     /* Success - Nature Green */
-    --success: 142 76% 36%;
+    --success: 142 60% 45%;
     --success-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
@@ -98,7 +98,7 @@
     --accent: 220 75% 60%;
     --accent-foreground: 215 25% 6%;
 
-    --success: 142 76% 45%;
+    --success: 142 60% 50%;
     --success-foreground: 215 25% 6%;
 
     --destructive: 0 75% 60%;
