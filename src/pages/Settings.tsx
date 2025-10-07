@@ -360,16 +360,16 @@ const Settings = () => {
         setBusinessSettingsId(data.id);
         setBusinessName(data.business_name || "");
         setBusinessType(data.business_type || "");
-        
+
         const loadedBusinessPhone = data.business_phone || "";
         setBusinessPhone(loadedBusinessPhone);
-        
+
         // Clear validation error if loaded phone number is valid
         const businessPhoneDigits = loadedBusinessPhone.replace(/\D/g, "");
         if (businessPhoneDigits.length === 10) {
           setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
         }
-        
+
         setBusinessAddress(data.business_address || "");
 
         // Parse existing address
@@ -436,16 +436,16 @@ const Settings = () => {
         }
         setBusinessDescription(data.business_description || "");
         setBusinessWebsite(data.business_website || "");
-        
+
         const loadedForwardingNumber = data.forwarding_number || "";
         setForwardingNumber(loadedForwardingNumber);
-        
+
         // Clear validation error if loaded phone number is valid
         const forwardingDigits = loadedForwardingNumber.replace(/\D/g, "");
         if (forwardingDigits.length === 10) {
           setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
         }
-        
+
         setTwilioPhoneNumber(data.twilio_phone_number || "");
         setUrgentKeywords(data.urgent_keywords || "");
         setAutoForward(data.auto_forward || false);
@@ -2188,7 +2188,7 @@ const Settings = () => {
                           saveSettings("Business");
                         }
                       }}
-                      placeholder="10-digit phone number"
+                      placeholder="(123)456-7890"
                       className={
                         validationErrors.businessPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
                       }
@@ -2720,7 +2720,7 @@ const Settings = () => {
                             saveSettings("Call");
                           }
                         }}
-                        placeholder="10-digit phone number"
+                        placeholder="(123)456-7890"
                         required
                         className={
                           validationErrors.forwardingNumber
