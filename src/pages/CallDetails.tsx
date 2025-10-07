@@ -338,7 +338,7 @@ const CallDetails = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">
-                {callData.phone_number || 'Unknown'} - {getCallReason(callData)}
+                {callData.phone_number || 'Unknown Number'} - {getCallReason(callData)}
               </h2>
               <p className="text-muted-foreground">
                 Call Time: {format(new Date(callData.created_at), 'M/d/yyyy, h:mm:ss a')}
