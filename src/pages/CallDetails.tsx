@@ -39,6 +39,7 @@ interface CallData {
   appointment_date_time?: string;
   service_address?: string;
   call_summary?: string;
+  incoming_call_phone_number?: string;
   metadata?: any;
 }
 
@@ -338,7 +339,7 @@ const CallDetails = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold">
-                {callData.phone_number || 'Unknown Number'} - {getCallReason(callData)}
+                {callData.incoming_call_phone_number || callData.phone_number || 'Unknown Number'} - {getCallReason(callData)}
               </h2>
               <p className="text-muted-foreground">
                 Call Time: {format(new Date(callData.created_at), 'M/d/yyyy, h:mm:ss a')}
