@@ -55,6 +55,7 @@ interface RecentActivity {
   caller_name: string;
   call_type: string;
   created_at: string;
+  source: "call" | "message"; // Track whether it's from call_logs or call_messages
 }
 
 interface DashboardStats {
@@ -336,6 +337,7 @@ const Dashboard = () => {
               caller_name: log.caller_name,
               call_type: log.call_type,
               created_at: log.created_at,
+              source: "call" as const,
             });
           });
         }
@@ -364,6 +366,7 @@ const Dashboard = () => {
             caller_name: message.caller_name,
             call_type: message.call_type,
             created_at: message.created_at,
+            source: "message" as const,
           });
         });
       }
@@ -733,11 +736,20 @@ const Dashboard = () => {
                           }`}
                         />
                         <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center justify-between mb-1 gap-2">
                             <p className="text-sm font-medium text-muted-foreground flex-1">{activity.action}</p>
-                            <Badge variant="secondary" className="text-xs ml-2">
-                              {activity.call_type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
-                            </Badge>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <Badge variant={activity.source === "call" ? "default" : "outline"} className="text-xs">
+                                {activity.source === "call" ? (
+                                  <><Phone className="w-3 h-3 mr-1" /> Call</>
+                                ) : (
+                                  <><MessageSquare className="w-3 h-3 mr-1" /> Message</>
+                                )}
+                              </Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                {activity.call_type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </Badge>
+                            </div>
                           </div>
                           <p className="text-xs text-muted-foreground">{activity.time}</p>
                         </div>
