@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { User, AlertTriangle } from "lucide-react";
+import { Phone, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +26,14 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
   const [unassigningNumber, setUnassigningNumber] = useState<string | null>(null);
   const [showUnassignDialog, setShowUnassignDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(users.length / itemsPerPage);
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return users.slice(startIndex, startIndex + itemsPerPage);
+  }, [users, currentPage]);
 
   const handleAssignNumber = async (userId: string, businessId: string) => {
     setAssigningNumber(userId);
@@ -106,17 +114,24 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Users
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Phone className="h-5 w-5" />
+              Users
+            </CardTitle>
+            {users.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, users.length)} of {users.length}
+              </p>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {users.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-8">No users found</p>
             ) : (
-              users.map((user) => (
+              paginatedUsers.map((user) => (
                 <div
                   key={user.id}
                   className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -170,6 +185,34 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
               ))
             )}
           </div>
+          
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
