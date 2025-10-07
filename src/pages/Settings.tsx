@@ -1077,6 +1077,9 @@ const Settings = () => {
         pricing_structure: finalValidServices.map((s) => `${s.name}: ${s.price}`).join(", "),
       };
     } else if (section === "Call") {
+      // Validate forwarding number
+      const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
+      
       if (!forwardingNumber || !forwardingNumber.trim()) {
         toast({
           variant: "destructive",
@@ -1085,8 +1088,19 @@ const Settings = () => {
         });
         return;
       }
+      
+      if (digitsOnly.length !== 10) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Phone Number",
+          description: "Forwarding number must be exactly 10 digits",
+        });
+        setValidationErrors(prev => ({ ...prev, forwardingNumber: true }));
+        return;
+      }
+      
       updateData = {
-        forwarding_number: forwardingNumber,
+        forwarding_number: forwardingNumber.trim(),
         urgent_keywords: urgentKeywords,
         auto_forward: autoForward,
         common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),
@@ -2131,6 +2145,7 @@ const Settings = () => {
                     </Label>
                     <Input
                       id="businessPhone"
+                      type="tel"
                       ref={businessPhoneRef}
                       value={businessPhone}
                       onChange={(e) => {
@@ -2656,6 +2671,7 @@ const Settings = () => {
                       </Label>
                       <Input
                         id="forwardingNumber"
+                        type="tel"
                         value={forwardingNumber}
                         onChange={(e) => {
                           // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
