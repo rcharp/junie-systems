@@ -49,7 +49,6 @@ const CallList = () => {
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
   const [callMessages, setCallMessages] = useState<CallMessage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'logs' | 'messages'>('logs');
 
   useEffect(() => {
     if (user) {
@@ -190,40 +189,134 @@ const CallList = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Tab Navigation */}
-      <div className="flex space-x-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-        <Button
-          variant={activeTab === 'logs' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('logs')}
-          className="flex-1"
-        >
-          <Phone className="w-4 h-4 mr-2" />
-          Call Logs ({callLogs.length})
-        </Button>
-        <Button
-          variant={activeTab === 'messages' ? 'default' : 'ghost'}
-          onClick={() => setActiveTab('messages')}
-          className="flex-1"
-        >
-          <MessageSquare className="w-4 h-4 mr-2" />
-          Messages ({callMessages.filter(m => m.status === 'new').length} new)
-        </Button>
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Call Logs Section */}
+      <Card className="flex flex-col">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Phone className="w-5 h-5" />
+            Call Logs ({callLogs.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-auto max-h-[600px] space-y-4">
+          {callLogs.length === 0 ? (
+            <div className="text-center py-8">
+              <Phone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No call logs yet</h3>
+              <p className="text-muted-foreground">
+                Your AI assistant&apos;s call history will appear here.
+              </p>
+            </div>
+          ) : (
+            callLogs.map((call) => (
+              <Card 
+                key={call.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate(`/call/${call.id}`)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center space-x-2">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-semibold text-muted-foreground">{cleanCallerName(call.caller_name)}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant={call.call_status === 'completed' ? 'default' : 'secondary'}>
+                          {call.call_status}
+                        </Badge>
+                        <Badge className={getUrgencyColor(call.urgency_level)}>
+                          {call.urgency_level}
+                        </Badge>
+                      </div>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {format(new Date(call.created_at), 'MMM d, h:mm a')}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{call.phone_number}</span>
+                    </div>
+                    {call.call_duration && (
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
+                        <span>{Math.floor(call.call_duration / 60)}m {call.call_duration % 60}s</span>
+                      </div>
+                    )}
+                    <Badge className={getCallTypeColor(call.call_type)}>
+                      {call.call_type}
+                    </Badge>
+                  </div>
+                  
+                  {call.message && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Summary:</label>
+                      <p className="mt-1 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
+                        {call.message}
+                      </p>
+                    </div>
+                  )}
 
-      {/* Messages Tab */}
-      {activeTab === 'messages' && (
-        <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {call.email && (
+                      <div className="flex items-center space-x-2">
+                        <span className="text-muted-foreground font-medium">Email:</span>
+                        <span>{call.email}</span>
+                      </div>
+                    )}
+                    {call.best_time_to_call && (
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-muted-foreground font-medium">Best time:</span>
+                        <span>{call.best_time_to_call}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {(call.recording_url || call.transcript) && (
+                    <div className="flex space-x-2">
+                      {call.recording_url && (
+                        <Button size="sm" variant="outline" className="flex items-center space-x-2">
+                          <Play className="w-4 h-4" />
+                          <span>Play Recording</span>
+                        </Button>
+                      )}
+                      {call.transcript && (
+                        <Button size="sm" variant="outline" className="flex items-center space-x-2">
+                          <Download className="w-4 h-4" />
+                          <span>View Transcript</span>
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Messages Section */}
+      <Card className="flex flex-col">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="w-5 h-5" />
+            Messages ({callMessages.filter(m => m.status === 'new').length} new)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 overflow-auto max-h-[600px] space-y-4">
           {callMessages.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No messages yet</h3>
-                <p className="text-muted-foreground">
-                  When someone calls your AI assistant, their messages will appear here.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="text-center py-8">
+              <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No messages yet</h3>
+              <p className="text-muted-foreground">
+                When someone calls your AI assistant, their messages will appear here.
+              </p>
+            </div>
           ) : (
             callMessages.map((message) => (
               <Card 
@@ -286,7 +379,10 @@ const CallList = () => {
                     <div className="flex justify-end">
                       <Button
                         size="sm"
-                        onClick={() => markMessageAsRead(message.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markMessageAsRead(message.id);
+                        }}
                         className="flex items-center space-x-2"
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -298,115 +394,8 @@ const CallList = () => {
               </Card>
             ))
           )}
-        </div>
-      )}
-
-      {/* Call Logs Tab */}
-      {activeTab === 'logs' && (
-        <div className="space-y-4">
-          {callLogs.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center">
-                <Phone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No call logs yet</h3>
-                <p className="text-muted-foreground">
-                  Your AI assistant's call history will appear here.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            callLogs.map((call) => (
-              <Card 
-                key={call.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/call/${call.id}`)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-muted-foreground">{cleanCallerName(call.caller_name)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={call.call_status === 'completed' ? 'default' : 'secondary'}>
-                          {call.call_status}
-                        </Badge>
-                        <Badge className={getUrgencyColor(call.urgency_level)}>
-                          {call.urgency_level}
-                        </Badge>
-                      </div>
-                    </div>
-                    <span className="text-sm text-muted-foreground">
-                      {format(new Date(call.created_at), 'MMM d, h:mm a')}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>{call.phone_number}</span>
-                    </div>
-                    {call.call_duration && (
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span>{Math.floor(call.call_duration / 60)}m {call.call_duration % 60}s</span>
-                      </div>
-                    )}
-                    <Badge className={getCallTypeColor(call.call_type)}>
-                      {call.call_type}
-                    </Badge>
-                  </div>
-                  
-                  {call.message && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Summary:</label>
-                      <p className="mt-1 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                        {call.message}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Additional call details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {call.email && (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-muted-foreground font-medium">Email:</span>
-                        <span>{call.email}</span>
-                      </div>
-                    )}
-                    {call.best_time_to_call && (
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground font-medium">Best time:</span>
-                        <span>{call.best_time_to_call}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {(call.recording_url || call.transcript) && (
-                    <div className="flex space-x-2">
-                      {call.recording_url && (
-                        <Button size="sm" variant="outline" className="flex items-center space-x-2">
-                          <Play className="w-4 h-4" />
-                          <span>Play Recording</span>
-                        </Button>
-                      )}
-                      {call.transcript && (
-                        <Button size="sm" variant="outline" className="flex items-center space-x-2">
-                          <Download className="w-4 h-4" />
-                          <span>View Transcript</span>
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
