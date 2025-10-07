@@ -69,10 +69,9 @@ Deno.serve(async (req) => {
 
     console.log('Fetching calendar availability for user:', userId)
 
-    // Get user's calendar settings with decrypted tokens using the new RPC function with encryption key
-    const { data: calendarTokens, error: tokensError } = await supabase.rpc('get_google_calendar_tokens_with_key', {
-      p_user_id: userId,
-      p_encryption_key: encryptionKey
+    // Get user's encrypted calendar tokens
+    const { data: calendarTokens, error: tokensError } = await supabase.rpc('get_google_calendar_encrypted_tokens', {
+      p_user_id: userId
     })
 
     // Also get user profile timezone as backup
@@ -93,8 +92,68 @@ Deno.serve(async (req) => {
     }
 
     const calendarSettings = calendarTokens[0]
-    const accessToken = calendarSettings.access_token
-    const refreshToken = calendarSettings.refresh_token
+    
+    // Decrypt the tokens using Web Crypto API
+    const decoder = new TextDecoder()
+    let accessToken = null
+    let refreshToken = null
+    
+    if (calendarSettings.encrypted_access_token) {
+      try {
+        const encryptedData = Uint8Array.from(atob(calendarSettings.encrypted_access_token.replace(/[\n\r\s]/g, '')), c => c.charCodeAt(0))
+        
+        // Import the encryption key
+        const keyMaterial = await crypto.subtle.importKey(
+          'raw',
+          new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0')),
+          { name: 'AES-GCM' },
+          false,
+          ['decrypt']
+        )
+        
+        // Decrypt (assuming 12-byte IV at start of encrypted data, or no IV was used)
+        // If no IV was stored, we need to use the same IV that was used during encryption
+        const decryptedData = await crypto.subtle.decrypt(
+          {
+            name: 'AES-GCM',
+            iv: new Uint8Array(12) // Same IV used during encryption
+          },
+          keyMaterial,
+          encryptedData
+        )
+        
+        accessToken = decoder.decode(decryptedData)
+      } catch (error) {
+        console.error('Failed to decrypt access token:', error)
+      }
+    }
+    
+    if (calendarSettings.encrypted_refresh_token) {
+      try {
+        const encryptedData = Uint8Array.from(atob(calendarSettings.encrypted_refresh_token.replace(/[\n\r\s]/g, '')), c => c.charCodeAt(0))
+        
+        const keyMaterial = await crypto.subtle.importKey(
+          'raw',
+          new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0')),
+          { name: 'AES-GCM' },
+          false,
+          ['decrypt']
+        )
+        
+        const decryptedData = await crypto.subtle.decrypt(
+          {
+            name: 'AES-GCM',
+            iv: new Uint8Array(12)
+          },
+          keyMaterial,
+          encryptedData
+        )
+        
+        refreshToken = decoder.decode(decryptedData)
+      } catch (error) {
+        console.error('Failed to decrypt refresh token:', error)
+      }
+    }
 
     console.log('Calendar settings:', {
       calendar_id: calendarSettings.calendar_id,
