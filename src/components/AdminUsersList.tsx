@@ -1,11 +1,20 @@
-import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
-import { Phone, AlertTriangle } from 'lucide-react';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/hooks/use-toast";
+import { Phone, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface AdminUsersListProps {
   users: any[];
@@ -21,11 +30,11 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
   const handleAssignNumber = async (userId: string, businessId: string) => {
     setAssigningNumber(userId);
     try {
-      const { data, error } = await supabase.functions.invoke('purchase-twilio-number', {
-        body: { 
+      const { data, error } = await supabase.functions.invoke("purchase-twilio-number", {
+        body: {
           user_id: userId,
-          business_id: businessId
-        }
+          business_id: businessId,
+        },
       });
 
       if (error) throw error;
@@ -37,7 +46,7 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
 
       onRefresh();
     } catch (error: any) {
-      console.error('Error assigning phone number:', error);
+      console.error("Error assigning phone number:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to assign phone number",
@@ -54,11 +63,11 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
     setUnassigningNumber(selectedUser.id);
     try {
       // Call edge function to release/deactivate the number
-      const { error } = await supabase.functions.invoke('release-twilio-number', {
-        body: { 
+      const { error } = await supabase.functions.invoke("release-twilio-number", {
+        body: {
           user_id: selectedUser.id,
-          business_id: selectedUser.business_id
-        }
+          business_id: selectedUser.business_id,
+        },
       });
 
       if (error) throw error;
@@ -70,7 +79,7 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
 
       onRefresh();
     } catch (error: any) {
-      console.error('Error unassigning phone number:', error);
+      console.error("Error unassigning phone number:", error);
       toast({
         title: "Error",
         description: error.message || "Failed to unassign phone number",
@@ -84,8 +93,8 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
   };
 
   const formatPhoneNumber = (phoneNumber: string) => {
-    if (!phoneNumber) return '';
-    const cleaned = phoneNumber.replace(/\D/g, '');
+    if (!phoneNumber) return "";
+    const cleaned = phoneNumber.replace(/\D/g, "");
     const match = cleaned.match(/^1?(\d{3})(\d{3})(\d{4})$/);
     if (match) {
       return `+1 (${match[1]}) ${match[2]}-${match[3]}`;
@@ -99,7 +108,7 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5" />
-            User Phone Numbers
+            Users
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -114,9 +123,7 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium truncate">
-                        {user.full_name || user.company_name || user.email}
-                      </p>
+                      <p className="font-medium truncate">{user.full_name || user.company_name || user.email}</p>
                       {user.subscription_plan && (
                         <Badge variant="outline" className="text-xs">
                           {user.subscription_plan}
@@ -124,22 +131,16 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                       )}
                     </div>
                     {user.full_name && user.company_name && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Company: {user.company_name}
-                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">Company: {user.company_name}</p>
                     )}
-                    {!user.full_name && (
-                      <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                    )}
+                    {!user.full_name && <p className="text-sm text-muted-foreground truncate">{user.email}</p>}
                   </div>
 
                   <div className="flex items-center gap-3">
                     {user.twilio_phone_number ? (
                       <>
                         <div className="text-right">
-                          <p className="text-sm font-mono font-medium">
-                            {formatPhoneNumber(user.twilio_phone_number)}
-                          </p>
+                          <p className="text-sm font-mono font-medium">{formatPhoneNumber(user.twilio_phone_number)}</p>
                           <p className="text-xs text-muted-foreground">Junie Number</p>
                         </div>
                         <Button
@@ -151,7 +152,7 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                           }}
                           disabled={!!unassigningNumber}
                         >
-                          {unassigningNumber === user.id ? 'Unassigning...' : 'Unassign'}
+                          {unassigningNumber === user.id ? "Unassigning..." : "Unassign"}
                         </Button>
                       </>
                     ) : (
@@ -161,7 +162,7 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                         onClick={() => handleAssignNumber(user.id, user.business_id)}
                         disabled={assigningNumber === user.id || !user.business_id}
                       >
-                        {assigningNumber === user.id ? 'Assigning...' : 'Assign Number'}
+                        {assigningNumber === user.id ? "Assigning..." : "Assign Number"}
                       </Button>
                     )}
                   </div>
@@ -180,10 +181,13 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
               Unassign Phone Number
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to unassign and deactivate the phone number{' '}
-              <strong>{selectedUser?.twilio_phone_number && formatPhoneNumber(selectedUser.twilio_phone_number)}</strong>{' '}
+              Are you sure you want to unassign and deactivate the phone number{" "}
+              <strong>
+                {selectedUser?.twilio_phone_number && formatPhoneNumber(selectedUser.twilio_phone_number)}
+              </strong>{" "}
               for {selectedUser?.full_name || selectedUser?.email}?
-              <br /><br />
+              <br />
+              <br />
               This will release the number back to Twilio and it will no longer receive calls.
             </AlertDialogDescription>
           </AlertDialogHeader>
