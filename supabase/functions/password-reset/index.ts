@@ -27,7 +27,12 @@ serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
 
     const { email } = await req.json();
 
@@ -132,13 +137,14 @@ serve(async (req: Request) => {
       // Don't fail the request if logging fails
     }
 
-    // Send password reset email using Supabase Auth
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-      email,
-      {
+    // Send password reset email using Supabase Auth Admin API
+    const { data, error: resetError } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email: email,
+      options: {
         redirectTo: `${req.headers.get("origin") || "https://id-preview--dff80483-0259-48f0-b1d3-d00ff4a377ae.lovable.app"}/reset-password`,
       }
-    );
+    });
 
     if (resetError) {
       console.error("Error sending password reset email:", resetError);
