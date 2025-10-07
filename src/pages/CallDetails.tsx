@@ -376,7 +376,18 @@ const CallDetails = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Caller Name</span>
-                    <p className="mt-1">{cleanCallerName(callData.caller_name)}</p>
+                    <p className="mt-1">
+                      {(() => {
+                        const cleanedName = cleanCallerName(callData.caller_name);
+                        // If the name is a generic placeholder, show "No Name Given"
+                        if (cleanedName.toLowerCase().includes('potential customer') || 
+                            cleanedName.toLowerCase().includes('customer') || 
+                            cleanedName.toLowerCase().includes('caller')) {
+                          return 'No Name Given';
+                        }
+                        return cleanedName;
+                      })()}
+                    </p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Phone Number</span>
