@@ -353,14 +353,16 @@ const Dashboard = () => {
 
       if (callMessages) {
         callMessages.forEach((message) => {
-          // Extract key action from message
-          const actionDescription = extractCallAction(message.message, message.call_type);
+          // For messages, show the actual message content/summary
           const displayName = getContextualCallerName(message.caller_name, message.call_type);
-
+          
+          // Use the message directly for voicemails/messages instead of extracting action
+          const messageText = message.message || "left a voicemail";
+          
           activities.push({
             id: message.id,
             time: formatDistanceToNow(new Date(message.created_at), { addSuffix: true }),
-            action: `${displayName} ${actionDescription.replace("called", "left a message")}`,
+            action: `${displayName}: ${messageText}`,
             type:
               message.urgency_level === "urgent" ? "error" : message.urgency_level === "high" ? "warning" : "success",
             caller_name: message.caller_name,
