@@ -259,12 +259,12 @@ const GoogleCalendarConnect = () => {
             {/* Google Profile Display with all calendar info */}
             <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-4">
               <div className="flex items-center gap-3">
-                {googleAvatarUrl && (
-                  <Avatar className="h-12 w-12 border-2 border-primary/20">
-                    <AvatarImage src={googleAvatarUrl} alt="Google Profile" />
-                    <AvatarFallback>{calendarSettings.calendar_id?.charAt(0).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                )}
+                <Avatar className="h-12 w-12 border-2 border-primary/20">
+                  <AvatarImage src={googleAvatarUrl} alt="Calendar Profile" />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {calendarSettings.calendar_id?.charAt(0).toUpperCase() || 'C'}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant="secondary" className="bg-white flex items-center gap-1.5">
