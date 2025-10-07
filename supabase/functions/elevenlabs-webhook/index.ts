@@ -498,9 +498,9 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
     
     const callLogData = {
       user_id: businessUserId,
-      caller_name: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown',
-      phone_number: String(analysisData.phone_number?.value || callerInfo.phone_number || ''),
-      email: analysisData.email_address?.value || callerInfo.email || null,
+      caller_name: analysisData.customer_name?.value || 'A potential customer',
+      phone_number: String(analysisData.phone_number?.value || incomingCallPhoneNumber || ''),
+      email: analysisData.email_address?.value || null,
       message: cleanedSummary,
       urgency_level: callerInfo.urgency_level,
       best_time_to_call: callerInfo.best_time_to_call,
@@ -542,8 +542,8 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
     // Save call message
     const callMessageData = {
       user_id: businessUserId,
-      caller_name: analysisData.customer_name?.value || 'Unknown',
-      phone_number: String(analysisData.phone_number?.value || ''),
+      caller_name: analysisData.customer_name?.value || 'A potential customer',
+      phone_number: String(analysisData.phone_number?.value || incomingCallPhoneNumber || ''),
       message: (enhancedCallSummary || webhookData.data?.analysis?.transcript_summary || 'Call completed')
         .replace(/\bthe user\b/gi, 'the caller')
         .replace(/\bUser\b/g, 'Caller'),
@@ -726,13 +726,13 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
 // Helper function to extract caller information
 function extractCallerInfo(transcript: string) {
   const info = {
-    caller_name: "Sarah",
-    phone_number: "9999999999", 
-    email: "head2dasky@gmail.com",
+    caller_name: "A potential customer",
+    phone_number: "", 
+    email: null,
     message: transcript,
     urgency_level: "medium",
     best_time_to_call: null,
-    call_type: "appointment",
+    call_type: "inquiry",
     appointmentDateTime: null,
     serviceType: null
   };
