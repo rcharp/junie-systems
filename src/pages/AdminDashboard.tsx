@@ -102,17 +102,39 @@ const AdminDashboard = () => {
       const uniqueActiveUsers = new Set(recentActivityUsers?.map(activity => activity.user_id) || []);
       const activeUserCount = uniqueActiveUsers.size;
 
-      // Fetch users with business IDs and emails for admin view
-      console.log('🔍 Fetching users with RPC call...');
-      const { data: usersData, error: usersError } = await supabase
-        .rpc('get_users_with_business_ids_for_admin');
+      // Fetch users directly from tables (admins have full RLS access)
+      console.log('🔍 Fetching users directly from tables...');
+      
+      // Get all user profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      console.log('👥 Users data result:', usersData);
-      console.log('❌ Users error:', usersError);
+      console.log('👥 Profiles data:', profilesData);
+      console.log('❌ Profiles error:', profilesError);
 
-      if (usersError) {
-        console.error('Error fetching users list:', usersError);
-        // Don't throw - just log the error and continue with the count
+      // Get all business settings
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_settings')
+        .select('id, user_id, twilio_phone_number');
+
+      // Combine the data
+      const usersData = profilesData?.map(profile => {
+        const business = businessData?.find(b => b.user_id === profile.id);
+        return {
+          ...profile,
+          business_id: business?.id || null,
+          twilio_phone_number: business?.twilio_phone_number || null,
+          email: null // We'll get this from auth if needed
+        };
+      }) || [];
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+      if (businessError) {
+        console.error('Error fetching business settings:', businessError);
       }
 
       setStats({
