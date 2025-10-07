@@ -191,6 +191,22 @@ const Settings = () => {
   // Notifications state
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
 
+  // Function to validate forwarding number before navigation
+  const validateForwardingNumberBeforeNavigation = useCallback(() => {
+    if (activeTab === "calls") {
+      const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
+      if (digitsOnly.length !== 10) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Forwarding Number",
+          description: "Please enter a valid 10-digit forwarding number before leaving this page.",
+        });
+        return false;
+      }
+    }
+    return true;
+  }, [activeTab, forwardingNumber, toast]);
+
   useEffect(() => {
     // Load business types from database
     const loadBusinessTypes = async () => {
@@ -1522,13 +1538,21 @@ const Settings = () => {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => navigate("/admin")}
+                  onClick={() => {
+                    if (validateForwardingNumberBeforeNavigation()) {
+                      navigate("/admin");
+                    }
+                  }}
                   className="text-primary hover:bg-primary/10 h-8 w-8"
                 >
                   <Shield className="w-4 h-4" />
                 </Button>
               )}
-              <Button variant="ghost" onClick={() => navigate("/dashboard")} className="h-8 w-8 p-0">
+              <Button variant="ghost" onClick={() => {
+                if (validateForwardingNumberBeforeNavigation()) {
+                  navigate("/dashboard");
+                }
+              }} className="h-8 w-8 p-0">
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <DropdownMenu>
@@ -1586,14 +1610,22 @@ const Settings = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate("/admin")}
+                  onClick={() => {
+                    if (validateForwardingNumberBeforeNavigation()) {
+                      navigate("/admin");
+                    }
+                  }}
                   className="text-primary hover:bg-primary/10"
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   Admin
                 </Button>
               )}
-              <Button variant="ghost" onClick={() => navigate("/dashboard")} className="flex items-center gap-2">
+              <Button variant="ghost" onClick={() => {
+                if (validateForwardingNumberBeforeNavigation()) {
+                  navigate("/dashboard");
+                }
+              }} className="flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />
                 <span>Dashboard</span>
               </Button>
