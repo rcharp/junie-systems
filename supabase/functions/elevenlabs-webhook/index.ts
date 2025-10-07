@@ -975,111 +975,92 @@ async function parseAppointmentTime(
         return parsedDate.toISOString();
       }
     } catch (e) {
-      console.log('Not a valid ISO date string, trying text parsing...');
+      console.log('Not a valid ISO date string, trying Claude parsing...');
     }
     
-    // Helper to convert written numbers to digits
-    const numberWords: { [key: string]: number } = {
-      'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-      'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
-      'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
-      'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
-      'twenty-one': 21, 'twenty-two': 22, 'twenty-three': 23, 'twenty-four': 24,
-      'twenty-five': 25, 'twenty-six': 26, 'twenty-seven': 27, 'twenty-eight': 28,
-      'twenty-nine': 29, 'thirty': 30, 'thirty-one': 31,
-      'first': 1, 'second': 2, 'third': 3, 'fourth': 4, 'fifth': 5,
-      'sixth': 6, 'seventh': 7, 'eighth': 8, 'ninth': 9, 'tenth': 10,
-      'eleventh': 11, 'twelfth': 12
-    };
-    
-    const convertNumberWord = (word: string): number | null => {
-      const lower = word.toLowerCase().replace(/\s+/g, '-');
-      return numberWords[lower] || null;
-    };
-    
-    // Try to extract date/time from text like "Wednesday, October eighth from nine forty-five to twelve fifteen"
-    const rangeMatch = appointmentTimeValue.match(
-      /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+([A-Za-z]+)\s+([a-z]+|\d{1,2})(?:st|nd|rd|th)?\s+from\s+([a-z\s-]+)\s+to/i
-    );
-    
-    if (rangeMatch) {
-      const [, dayName, monthName, dayStr, timeStr] = rangeMatch;
-      console.log('Extracted range format:', { dayName, monthName, dayStr, timeStr });
-      
-      const day = convertNumberWord(dayStr) || parseInt(dayStr);
-      
-      // Parse time like "nine forty-five" or "ten"
-      const timeWords = timeStr.trim().split(/\s+/);
-      let hours = 0;
-      let minutes = 0;
-      
-      if (timeWords.length >= 1) {
-        hours = convertNumberWord(timeWords[0]) || parseInt(timeWords[0]) || 0;
+    // Use Claude to parse natural language appointment times
+    try {
+      const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+      if (!anthropicApiKey) {
+        console.error('ANTHROPIC_API_KEY not found');
+        return null;
       }
-      if (timeWords.length >= 2) {
-        minutes = convertNumberWord(timeWords[1]) || parseInt(timeWords[1]) || 0;
+
+      const now = new Date();
+      const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
+      const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+      
+      console.log('Calling Claude to parse appointment time...');
+      console.log('Current date/time:', currentDate, currentTime);
+      
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': anthropicApiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-1-20250805',
+          max_tokens: 1024,
+          tools: [{
+            name: 'parse_datetime',
+            description: 'Parse a natural language date/time description into an ISO 8601 datetime string',
+            input_schema: {
+              type: 'object',
+              properties: {
+                iso_datetime: {
+                  type: 'string',
+                  description: 'The parsed datetime in ISO 8601 format (YYYY-MM-DDTHH:MM:SS.000Z)'
+                }
+              },
+              required: ['iso_datetime']
+            }
+          }],
+          tool_choice: { type: 'tool', name: 'parse_datetime' },
+          messages: [{
+            role: 'user',
+            content: `Current date and time: ${currentDate} ${currentTime} (timezone: America/New_York, UTC-4)
+
+Parse this appointment time into an ISO 8601 datetime string: "${appointmentTimeValue}"
+
+Important:
+- If only a time range is given (like "from nine forty-five to twelve fifteen"), use the START time
+- If the date seems to be in the past, assume it's meant for the future (next occurrence)
+- Convert to UTC timezone (subtract 4 hours from Eastern Time)
+- Return the exact datetime as an ISO 8601 string`
+          }]
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Claude API error:', response.status, errorText);
+        return null;
       }
+
+      const result = await response.json();
+      console.log('Claude response:', JSON.stringify(result, null, 2));
       
-      console.log('Parsed time:', { hours, minutes, day });
-      
-      try {
-        const now = new Date();
-        const months = ['january', 'february', 'march', 'april', 'may', 'june', 
-                       'july', 'august', 'september', 'october', 'november', 'december'];
-        const monthIndex = months.indexOf(monthName.toLowerCase());
+      // Extract the datetime from tool use
+      const toolUse = result.content?.find((c: any) => c.type === 'tool_use');
+      if (toolUse?.input?.iso_datetime) {
+        const parsedDateTime = toolUse.input.iso_datetime;
+        console.log('✅ Claude parsed datetime:', parsedDateTime);
         
-        if (monthIndex !== -1 && day > 0 && hours >= 0) {
-          const appointmentDate = new Date(now.getFullYear(), monthIndex, day, hours, minutes);
-          
-          // If the date is in the past, assume it's next year
-          if (appointmentDate < now) {
-            appointmentDate.setFullYear(now.getFullYear() + 1);
-          }
-          
-          console.log('✅ Parsed range format date to:', appointmentDate.toISOString());
-          return appointmentDate.toISOString();
+        // Validate it's a valid date
+        const validatedDate = new Date(parsedDateTime);
+        if (!isNaN(validatedDate.getTime())) {
+          return validatedDate.toISOString();
         }
-      } catch (parseError) {
-        console.error('Error parsing range format:', parseError);
       }
-    }
-    
-    // Try to extract date/time from text like "Thursday, October 9th at 10 a.m."
-    const dateTimeMatch = appointmentTimeValue.match(
-      /(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s+at\s+)?(\d{1,2})(?::(\d{2}))?\s*(a\.?m\.?|p\.?m\.?)?/i
-    );
-    
-    if (dateTimeMatch) {
-      const [, dayName, monthName, day, hour, minute, meridiem] = dateTimeMatch;
-      console.log('Extracted date/time components:', { dayName, monthName, day, hour, minute, meridiem });
       
-      try {
-        const now = new Date();
-        const months = ['january', 'february', 'march', 'april', 'may', 'june', 
-                       'july', 'august', 'september', 'october', 'november', 'december'];
-        const monthIndex = months.indexOf(monthName.toLowerCase());
-        
-        if (monthIndex !== -1) {
-          let hours = parseInt(hour);
-          if (meridiem && meridiem.toLowerCase().includes('p') && hours < 12) {
-            hours += 12;
-          } else if (meridiem && meridiem.toLowerCase().includes('a') && hours === 12) {
-            hours = 0;
-          }
-          
-          const appointmentDate = new Date(now.getFullYear(), monthIndex, parseInt(day), hours, parseInt(minute || '0'));
-          
-          // If the date is in the past, assume it's next year
-          if (appointmentDate < now) {
-            appointmentDate.setFullYear(now.getFullYear() + 1);
-          }
-          
-          console.log('✅ Parsed text date to:', appointmentDate.toISOString());
-          return appointmentDate.toISOString();
-        }
-      } catch (parseError) {
-        console.error('Error parsing text date:', parseError);
-      }
+      console.error('Could not extract valid datetime from Claude response');
+      return null;
+      
+    } catch (claudeError) {
+      console.error('Error calling Claude for datetime parsing:', claudeError);
+      return null;
     }
   }
   
