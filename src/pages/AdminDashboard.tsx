@@ -112,21 +112,24 @@ const AdminDashboard = () => {
         .order('created_at', { ascending: false });
 
       console.log('👥 Profiles data:', profilesData);
-      console.log('❌ Profiles error:', profilesError);
 
       // Get all business settings
       const { data: businessData, error: businessError } = await supabase
         .from('business_settings')
         .select('id, user_id, twilio_phone_number');
 
-      // Combine the data
+      // Combine the data - now properly showing name, company, and phone
       const usersData = profilesData?.map(profile => {
         const business = businessData?.find(b => b.user_id === profile.id);
         return {
-          ...profile,
+          id: profile.id,
+          email: profile.id, // We use id as placeholder since we can't query auth.users directly
+          full_name: profile.full_name,
+          company_name: profile.company_name,
+          subscription_plan: profile.subscription_plan,
+          created_at: profile.created_at,
           business_id: business?.id || null,
           twilio_phone_number: business?.twilio_phone_number || null,
-          email: null // We'll get this from auth if needed
         };
       }) || [];
 
