@@ -344,6 +344,7 @@ export type Database = {
           email: string | null
           id: string
           message: string
+          metadata: Json | null
           phone_number: string
           status: string | null
           updated_at: string
@@ -359,6 +360,7 @@ export type Database = {
           email?: string | null
           id?: string
           message: string
+          metadata?: Json | null
           phone_number: string
           status?: string | null
           updated_at?: string
@@ -374,6 +376,7 @@ export type Database = {
           email?: string | null
           id?: string
           message?: string
+          metadata?: Json | null
           phone_number?: string
           status?: string | null
           updated_at?: string
