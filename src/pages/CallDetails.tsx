@@ -375,7 +375,13 @@ const CallDetails = () => {
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Phone Number</span>
-                    <p className="mt-1">{callData.phone_number || 'Unknown'}</p>
+                    <p className="mt-1">
+                      {callData.phone_number && callData.phone_number !== 'Unknown' 
+                        ? callData.phone_number 
+                        : callData.incoming_call_phone_number 
+                          ? callData.incoming_call_phone_number.replace(/^\+1/, '')
+                          : 'Unknown'}
+                    </p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Email Address</span>
