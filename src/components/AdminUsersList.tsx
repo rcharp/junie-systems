@@ -114,17 +114,23 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium truncate">{user.full_name || 'Unnamed User'}</p>
+                      <p className="font-medium truncate">
+                        {user.full_name || user.company_name || user.email}
+                      </p>
                       {user.subscription_plan && (
                         <Badge variant="outline" className="text-xs">
                           {user.subscription_plan}
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Company: {user.company_name || 'Not set'}
-                    </p>
+                    {user.full_name && user.company_name && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Company: {user.company_name}
+                      </p>
+                    )}
+                    {!user.full_name && (
+                      <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-3">
