@@ -70,7 +70,7 @@ serve(async (req: Request) => {
     }
 
     // Send email using Resend
-    const { error: emailError } = await resend.emails.send({
+    const { data: emailData, error: emailError } = await resend.emails.send({
       from: "Junie AI <noreply@getjunie.com>",
       to: [email],
       subject: "Reset your password",
@@ -105,6 +105,8 @@ serve(async (req: Request) => {
 
     if (emailError) {
       console.error("Error sending email:", emailError);
+    } else {
+      console.log("Email sent successfully via Resend:", emailData);
     }
 
     // Always return success to prevent email enumeration
