@@ -74,12 +74,10 @@ Deno.serve(async (req) => {
 
     console.log('Fetching calendar availability for user:', userId)
 
-    // Get user's calendar settings and profile timezone
-    const { data: calendarData, error: settingsError } = await supabase
-      .from('google_calendar_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .maybeSingle()
+    // Get user's calendar settings with decrypted tokens using the RPC function
+    const { data: calendarTokens, error: tokensError } = await supabase.rpc('get_google_calendar_tokens', {
+      p_user_id: userId
+    })
 
     // Also get user profile timezone as backup
     const { data: userProfile } = await supabase
@@ -88,8 +86,8 @@ Deno.serve(async (req) => {
       .eq('id', userId)
       .maybeSingle()
 
-    if (settingsError || !calendarData) {
-      console.log('No calendar settings found for user:', userId, settingsError)
+    if (tokensError || !calendarTokens || calendarTokens.length === 0) {
+      console.log('No calendar settings found for user:', userId, tokensError)
       return new Response(JSON.stringify({ 
         available: false, 
         message: 'Google Calendar not connected' 
@@ -98,41 +96,9 @@ Deno.serve(async (req) => {
       })
     }
 
-    const calendarSettings = calendarData
-
-    // Decrypt tokens if they exist
-    let accessToken = null
-    let refreshToken = null
-
-    if (calendarSettings.encrypted_access_token) {
-      try {
-        console.log('Attempting to decrypt access token...')
-        const { data: decryptedAccess, error: decryptError } = await supabase.rpc('decrypt_token', {
-          encoded_token: calendarSettings.encrypted_access_token
-        })
-        console.log('Decryption result:', { success: !!decryptedAccess, hasError: !!decryptError })
-        if (decryptedAccess) {
-          accessToken = decryptedAccess
-        }
-      } catch (error) {
-        console.error('Failed to decrypt access token:', error)
-      }
-    }
-
-    if (calendarSettings.encrypted_refresh_token) {
-      try {
-        console.log('Attempting to decrypt refresh token...')
-        const { data: decryptedRefresh, error: decryptError } = await supabase.rpc('decrypt_token', {
-          encoded_token: calendarSettings.encrypted_refresh_token
-        })
-        console.log('Refresh decryption result:', { success: !!decryptedRefresh, hasError: !!decryptError })
-        if (decryptedRefresh) {
-          refreshToken = decryptedRefresh
-        }
-      } catch (error) {
-        console.error('Failed to decrypt refresh token:', error)
-      }
-    }
+    const calendarSettings = calendarTokens[0]
+    const accessToken = calendarSettings.access_token
+    const refreshToken = calendarSettings.refresh_token
 
     console.log('Calendar settings:', {
       calendar_id: calendarSettings.calendar_id,
