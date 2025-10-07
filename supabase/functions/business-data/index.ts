@@ -382,7 +382,7 @@ serve(async (req) => {
       .single();
 
     // Generate available times based on business hours or calendar availability
-    let availableTimes = businessDataForInit?.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM"; // Default fallback
+    let availableTimes = businessData.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM"; // Default fallback
 
     if (calendarSettings && calendarSettings.is_connected) {
       try {
