@@ -219,7 +219,12 @@ const CallDetails = () => {
     }
     
     // Generate description based on call type and detected service
-    switch (callType) {
+    // If call_type is appointment but no appointment was actually scheduled, treat as inquiry
+    const effectiveCallType = (callType === 'appointment' && !callData.appointment_scheduled && !callData.appointment_date_time) 
+      ? 'inquiry' 
+      : callType;
+    
+    switch (effectiveCallType) {
       case 'appointment':
         return serviceType ? `${serviceType} Appointment` : 'Service Appointment';
       case 'complaint':

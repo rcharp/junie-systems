@@ -499,6 +499,13 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
     // Capitalize "The caller" if it's at the beginning of a sentence
     cleanedSummary = cleanedSummary.replace(/^the caller/i, 'The caller');
     
+    // Determine the correct call_type based on whether an appointment was actually scheduled
+    let finalCallType = callerInfo.call_type;
+    if (finalCallType === 'appointment' && (!isAppointmentScheduled || !appointmentDateTime)) {
+      // If it was marked as appointment but no appointment was actually scheduled, change to inquiry
+      finalCallType = 'inquiry';
+    }
+    
     const callLogData = {
       user_id: businessUserId,
       caller_name: analysisData.customer_name?.value || 'A potential customer',
@@ -507,7 +514,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       message: cleanedSummary,
       urgency_level: callerInfo.urgency_level,
       best_time_to_call: callerInfo.best_time_to_call,
-      call_type: callerInfo.call_type,
+      call_type: finalCallType,
       call_duration: callDuration,
       recording_url: '',
       transcript: fullTranscript,
@@ -557,7 +564,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       caller_name: analysisData.customer_name?.value || 'A potential customer',
       phone_number: String(analysisData.phone_number?.value || incomingCallPhoneNumber || ''),
       message: callMessage,
-      call_type: callerInfo.call_type || 'general',
+      call_type: finalCallType, // Use the corrected call_type
       urgency_level: callerInfo.urgency_level || 'medium',
       call_id: `call_${Date.now()}`,
       call_log_id: callLogId, // Link to the call log
