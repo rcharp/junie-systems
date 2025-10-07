@@ -136,7 +136,8 @@ serve(async (req) => {
             appointment_booking,
             services_offered,
             forwarding_number,
-            urgent_keywords
+            urgent_keywords,
+            auto_forward
           `)
           .eq('id', conversationBusinessId)
           .maybeSingle();
@@ -232,6 +233,7 @@ serve(async (req) => {
             "services": businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
             "forwarding_number": addUSCountryCode(businessDataForInit?.forwarding_number || ""),
             "urgent_keywords": businessDataForInit?.urgent_keywords || "emergency, urgent, asap, immediately",
+            "auto_forward_urgent": String(businessDataForInit?.auto_forward || false),
             "callback_timeframe": "within 24 hours",
             "pronunciations": "HVAC: H vac, hvac: H vac"
           }

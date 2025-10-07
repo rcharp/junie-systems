@@ -2635,6 +2635,24 @@ const Settings = () => {
                   </div>
 
                   <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Auto-Forward Urgent Calls</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Automatically forward calls containing urgent keywords
+                        </p>
+                      </div>
+                      <Switch
+                        checked={autoForward}
+                        onCheckedChange={(checked) => {
+                          setAutoForward(checked);
+                          debouncedAutoSave("Calls");
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label>Common Questions & Answers</Label>
@@ -2700,24 +2718,6 @@ const Settings = () => {
                   </div>
 
                   <Separator />
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Auto-Forward Urgent Calls</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Automatically forward calls containing urgent keywords
-                        </p>
-                      </div>
-                      <Switch
-                        checked={autoForward}
-                        onCheckedChange={(checked) => {
-                          setAutoForward(checked);
-                          debouncedAutoSave("Calls");
-                        }}
-                      />
-                    </div>
-                  </div>
 
                   <div className="flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
