@@ -320,13 +320,8 @@ const Settings = () => {
 
       console.log("Auth identities:", { hasEmailIdentity, hasGoogleIdentity, identities });
 
-      // Extract user metadata for all auth providers
+      // Extract user metadata for fallback values
       const userMeta = authUser?.user_metadata;
-      
-      // Initialize full name from user metadata if available (for all auth types)
-      if (userMeta?.full_name) {
-        setUserFullName(userMeta.full_name);
-      }
 
       // Extract Google profile data if provider is Google
       if (detectedProvider === "google") {
@@ -346,11 +341,6 @@ const Settings = () => {
 
         setGoogleEmail(googleEmail);
         setGoogleAvatarUrl(googleAvatar);
-
-        // Override full name from Google if available
-        if (googleFullName) {
-          setUserFullName(googleFullName);
-        }
       }
 
       // Load user profile data
@@ -362,13 +352,18 @@ const Settings = () => {
 
       console.log("Profile data from DB:", profileData);
 
+      // Set profile data with fallback to user metadata
       if (profileData) {
-        // Only override full name if it exists in the profile
-        if (profileData.full_name) {
-          setUserFullName(profileData.full_name);
-        }
+        // Use database value if it exists and is not empty, otherwise fall back to metadata
+        const dbFullName = profileData.full_name?.trim();
+        const metaFullName = userMeta?.full_name?.trim();
+        setUserFullName(dbFullName || metaFullName || "");
+        
         setUserCompanyName(profileData.company_name || "");
         setUserTimezone(profileData.timezone || "");
+      } else {
+        // No profile in database, use metadata as fallback
+        setUserFullName(userMeta?.full_name || "");
       }
 
       // Load business settings
