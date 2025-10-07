@@ -389,6 +389,14 @@ const Settings = () => {
         setBusinessSettingsId(data.id);
         setBusinessName(data.business_name || "");
         setBusinessType(data.business_type || "");
+        
+        // Populate user profile fields from business settings if user_profiles is empty
+        if (!userCompanyName && data.business_name) {
+          setUserCompanyName(data.business_name);
+        }
+        if (!userTimezone && data.business_timezone) {
+          setUserTimezone(data.business_timezone);
+        }
 
         const loadedBusinessPhone = data.business_phone || "";
         const businessPhoneDigits = loadedBusinessPhone.replace(/\D/g, "");
