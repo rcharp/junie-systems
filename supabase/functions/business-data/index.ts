@@ -85,6 +85,16 @@ serve(async (req) => {
       if (parsedBody?.caller_id || parsedBody?.agent_id || parsedBody?.called_number || parsedBody?.call_sid) {
         console.log('ElevenLabs conversation initiation request detected');
         
+        // SECURITY: Validate ElevenLabs agent_id matches expected value
+        const expectedAgentId = Deno.env.get('ELEVENLABS_AGENT_ID');
+        if (expectedAgentId && parsedBody?.agent_id !== expectedAgentId) {
+          console.error('Invalid agent_id. Expected:', expectedAgentId, 'Got:', parsedBody?.agent_id);
+          return new Response(
+            JSON.stringify({ error: 'Unauthorized: Invalid agent credentials' }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        
         // Get business_id from headers OR body (check both locations)
         const conversationBusinessId = req.headers.get('business_id') || parsedBody?.business_id;
         console.log('ElevenLabs business_id from headers:', req.headers.get('business_id'));

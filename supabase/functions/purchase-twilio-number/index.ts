@@ -18,17 +18,75 @@ serve(async (req) => {
   }
 
   try {
-    const { areaCode, businessId }: PurchaseNumberRequest = await req.json();
-    console.log('Purchasing Twilio number for area code:', areaCode);
+    // SECURITY: Verify admin authorization
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing authorization header' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    // Get Supabase client to fetch business name
+    // Create client with user's JWT to verify admin role
     const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    // Verify user is authenticated
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.error('Authentication error:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user has admin role
+    const { data: isAdmin, error: roleError } = await supabaseClient.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin'
+    });
+
+    if (roleError || !isAdmin) {
+      console.error('Authorization check failed:', roleError);
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: Admin access required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { areaCode, businessId }: PurchaseNumberRequest = await req.json();
+    
+    // INPUT VALIDATION: Validate area code format
+    if (!areaCode || !/^\d{3}$/.test(areaCode)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid area code: must be 3 digits' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // INPUT VALIDATION: Validate business ID is a valid UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!businessId || !uuidRegex.test(businessId)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid business ID format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    console.log('Admin authorized. Purchasing Twilio number for area code:', areaCode);
+
+    // Use service role client for database operations
+    const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     // Fetch business name
-    const { data: businessData, error: businessError } = await supabaseClient
+    const { data: businessData, error: businessError } = await serviceClient
       .from('business_settings')
       .select('business_name')
       .eq('id', businessId)
@@ -111,7 +169,7 @@ serve(async (req) => {
     console.log('Successfully purchased number:', purchaseData);
 
     // Update business_settings with the new Twilio number
-    const { error: updateError } = await supabaseClient
+    const { error: updateError } = await serviceClient
       .from('business_settings')
       .update({ twilio_phone_number: phoneNumber })
       .eq('id', businessId);
