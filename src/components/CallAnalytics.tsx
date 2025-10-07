@@ -49,12 +49,28 @@ const CallAnalytics = () => {
       const days = timeRange === '7d' ? 7 : timeRange === '30d' ? 30 : 90;
       const startDate = subDays(new Date(), days);
       
-      // Fetch call logs
-      const { data: callLogs, error: callError } = await supabase
-        .from('call_logs')
-        .select('*')
+      // Get user's business_id first
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_settings')
+        .select('id')
         .eq('user_id', user?.id)
-        .gte('created_at', startDate.toISOString());
+        .maybeSingle();
+
+      if (businessError) throw businessError;
+
+      let logs: any[] = [];
+      
+      if (businessData) {
+        // Fetch call logs using both user_id and business_id
+        const { data: callLogs, error: callError } = await supabase
+          .from('call_logs')
+          .select('*')
+          .or(`user_id.eq.${user?.id},business_id.eq.${businessData.id}`)
+          .gte('created_at', startDate.toISOString());
+
+        if (callError) throw callError;
+        logs = callLogs || [];
+      }
 
       // Fetch call messages
       const { data: callMessages, error: messageError } = await supabase
@@ -63,10 +79,8 @@ const CallAnalytics = () => {
         .eq('user_id', user?.id)
         .gte('created_at', startDate.toISOString());
 
-      if (callError) throw callError;
       if (messageError) throw messageError;
 
-      const logs = callLogs || [];
       const messages = callMessages || [];
 
       // Calculate metrics
