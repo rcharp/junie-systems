@@ -162,23 +162,32 @@ Deno.serve(async (req) => {
         
         // Encrypt and update the stored token using direct encryption
         console.log('Encrypting new access token...')
-        const encryptedNewToken = Buffer.from(
-          // We'll use a simpler approach - encrypt in the edge function directly
-          await crypto.subtle.encrypt(
-            {
-              name: "AES-GCM",
-              iv: new Uint8Array(12)
-            },
-            await crypto.subtle.importKey(
-              "raw",
-              new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0')),
-              "AES-GCM",
-              false,
-              ["encrypt"]
-            ),
-            new TextEncoder().encode(currentAccessToken)
-          )
-        ).toString('base64')
+        
+        // Prepare encryption key and IV
+        const keyMaterial = new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0'))
+        const iv = new Uint8Array(12) // Initialization vector
+        
+        // Import the encryption key
+        const cryptoKey = await crypto.subtle.importKey(
+          "raw",
+          keyMaterial,
+          "AES-GCM",
+          false,
+          ["encrypt"]
+        )
+        
+        // Encrypt the access token
+        const encryptedBuffer = await crypto.subtle.encrypt(
+          {
+            name: "AES-GCM",
+            iv: iv
+          },
+          cryptoKey,
+          new TextEncoder().encode(currentAccessToken)
+        )
+        
+        // Convert to base64 using Deno's btoa
+        const encryptedNewToken = btoa(String.fromCharCode(...new Uint8Array(encryptedBuffer)))
         
         await supabase
           .from('google_calendar_settings')
