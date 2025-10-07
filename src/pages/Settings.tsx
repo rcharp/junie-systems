@@ -1721,6 +1721,19 @@ const Settings = () => {
           <Tabs
             value={activeTab}
             onValueChange={(value) => {
+              // Validate forwarding number if leaving the calls tab
+              if (activeTab === "calls" && value !== "calls") {
+                const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
+                if (digitsOnly.length !== 10) {
+                  toast({
+                    variant: "destructive",
+                    title: "Invalid Forwarding Number",
+                    description: "Please enter a valid 10-digit forwarding number before switching tabs.",
+                  });
+                  return; // Prevent tab change
+                }
+              }
+              
               // Check if user has access to Calendar tab
               if (value === "setup" && !featureAccess.appointmentScheduling) {
                 setShowUpgradeDialog(true);
