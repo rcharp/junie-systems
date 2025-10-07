@@ -36,16 +36,16 @@ const ForgotPassword = () => {
         return;
       }
 
-      // Call the rate-limited edge function
-      const { data, error } = await supabase.functions.invoke("password-reset", {
-        body: { email },
+      // Use Supabase's built-in password reset with configured SMTP
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {
         console.error("Password reset error:", error);
         toast({
           title: "Error",
-          description: "An error occurred. Please try again later.",
+          description: error.message || "An error occurred. Please try again later.",
           variant: "destructive",
         });
         setLoading(false);
@@ -54,8 +54,8 @@ const ForgotPassword = () => {
 
       setEmailSent(true);
       toast({
-        title: "Reset link sent",
-        description: data?.message || "Check your email for the password reset link.",
+        title: "Email sent!",
+        description: "Check your email for password reset instructions.",
       });
     } catch (error: any) {
       console.error("Password reset error:", error);
