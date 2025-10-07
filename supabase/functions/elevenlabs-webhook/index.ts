@@ -362,9 +362,10 @@ async function processWebhookInBackground(
     // Extract caller info using the existing function
     const callerInfo = extractCallerInfo(fullTranscript);
     
-    // Parse appointment time with calendar integration
-    const parsedAppointmentDateTime = await parseAppointmentTime(
+    // Parse appointment time AND normalize email with Claude in one call
+    const { parsedDateTime: parsedAppointmentDateTime, normalizedEmail } = await parseCallDataWithClaude(
       analysisData.appointment_time?.value,
+      analysisData.email_address?.value || callerInfo.email,
       analysisData.service_address?.value || '',
       businessUserId,
       supabase,
@@ -389,6 +390,7 @@ async function processWebhookInBackground(
         businessUserId,
         callerInfo,
         analysisData,
+        normalizedEmail, // Pass the pre-normalized email
         isManualCall,
         supabaseAdmin: supabase,
         supabaseUrl
@@ -526,17 +528,12 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       finalCallType = 'inquiry';
     }
     
-    // Normalize email by replacing " at " with "@"
-    let normalizedEmail = analysisData.email_address?.value || null;
-    if (normalizedEmail && typeof normalizedEmail === 'string') {
-      normalizedEmail = normalizedEmail.replace(/ at /gi, '@');
-    }
-    
+    // Use the pre-normalized email from parseCallDataWithClaude
     const callLogData = {
       user_id: businessUserId,
       caller_name: analysisData.customer_name?.value || 'A potential customer',
       phone_number: String(analysisData.phone_number?.value || incomingCallPhoneNumber || ''),
-      email: normalizedEmail,
+      email: normalizedEmail, // Already normalized by Claude
       message: cleanedSummary,
       urgency_level: callerInfo.urgency_level,
       best_time_to_call: callerInfo.best_time_to_call,
@@ -851,6 +848,7 @@ async function handleCalendarBooking({
   businessUserId,
   callerInfo,
   analysisData,
+  normalizedEmail,
   isManualCall,
   supabaseAdmin,
   supabaseUrl
@@ -860,6 +858,7 @@ async function handleCalendarBooking({
   businessUserId: string,
   callerInfo: any,
   analysisData: any,
+  normalizedEmail: string | null,
   isManualCall: boolean,
   supabaseAdmin: any,
   supabaseUrl: string
@@ -900,21 +899,15 @@ async function handleCalendarBooking({
     console.log('Calendar ID:', calendarData.calendar_id);
     console.log('Timezone:', calendarData.timezone);
 
-    // Normalize email before passing to calendar booking
-    let normalizedEmail = analysisData.email_address?.value || callerInfo.email;
-    if (normalizedEmail && typeof normalizedEmail === 'string') {
-      normalizedEmail = normalizedEmail
-        .replace(/\s*at\s*/gi, '@')
-        .replace(/\s*dot\s*/gi, '.')
-        .trim();
-      console.log('📧 Email normalization:', { original: analysisData.email_address?.value || callerInfo.email, normalized: normalizedEmail });
-    }
+    // Use the pre-normalized email passed from parseCallDataWithClaude
+    const customerEmail = normalizedEmail || analysisData.email_address?.value || callerInfo.email;
+    console.log('📧 Using email for calendar booking:', customerEmail);
     
     // Call the google-calendar-book function
     const bookingPayload = {
       userId: businessUserId,
       customerName: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown Customer',
-      customerEmail: normalizedEmail,
+      customerEmail: customerEmail,
       customerPhone: String(analysisData.phone_number?.value || callerInfo.phone_number || ''),
       serviceType: analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
       serviceAddress: analysisData.service_address?.value || '',
@@ -953,49 +946,114 @@ async function handleCalendarBooking({
   }
 }
 
-// Helper function to parse appointment time
-async function parseAppointmentTime(
+// Helper function to parse appointment time and normalize email using Claude in one call
+async function parseCallDataWithClaude(
   appointmentTimeValue: string | undefined,
+  emailValue: string | undefined,
   serviceAddress: string,
   businessUserId: string,
   supabaseAdmin: any,
   supabaseUrl: string,
   isManualCall: boolean
-): Promise<string | null> {
-  if (!appointmentTimeValue) {
-    return null;
+): Promise<{ parsedDateTime: string | null; normalizedEmail: string | null }> {
+  console.log('=== PARSING CALL DATA WITH CLAUDE ===');
+  console.log('Appointment time value:', appointmentTimeValue);
+  console.log('Email value:', emailValue);
+  
+  // If no data to parse, return nulls
+  if (!appointmentTimeValue && !emailValue) {
+    return { parsedDateTime: null, normalizedEmail: null };
   }
 
-  console.log('=== PARSING APPOINTMENT TIME ===');
-  console.log('Appointment time value:', appointmentTimeValue);
-  
-  // Try to parse if it's already a valid date/time string
-  if (appointmentTimeValue !== 'DYNAMIC_NEXT_AVAILABLE_SLOT') {
+  // Try to parse datetime if it's already a valid ISO date string
+  let parsedDateTime: string | null = null;
+  if (appointmentTimeValue && appointmentTimeValue !== 'DYNAMIC_NEXT_AVAILABLE_SLOT') {
     try {
-      // Try parsing as ISO date string
       const parsedDate = new Date(appointmentTimeValue);
       if (!isNaN(parsedDate.getTime())) {
-        console.log('✅ Parsed as valid date:', parsedDate.toISOString());
-        return parsedDate.toISOString();
+        console.log('✅ Datetime already valid ISO format:', parsedDate.toISOString());
+        parsedDateTime = parsedDate.toISOString();
       }
     } catch (e) {
-      console.log('Not a valid ISO date string, trying Claude parsing...');
+      console.log('Not a valid ISO date string, will use Claude...');
     }
+  }
+
+  // Simple email normalization first
+  let normalizedEmail: string | null = emailValue || null;
+  if (emailValue && typeof emailValue === 'string') {
+    const simpleNormalized = emailValue
+      .replace(/\s*at\s*/gi, '@')
+      .replace(/\s*dot\s*/gi, '.')
+      .trim();
     
-    // Use Claude to parse natural language appointment times
+    // Check if it looks like a valid email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (emailRegex.test(simpleNormalized)) {
+      normalizedEmail = simpleNormalized;
+      console.log('✅ Email normalized with simple replacement:', normalizedEmail);
+    } else {
+      console.log('Email may need Claude parsing...');
+      normalizedEmail = null; // Will let Claude handle it
+    }
+  }
+
+  // If both are already parsed successfully, return early
+  if (parsedDateTime && normalizedEmail) {
+    console.log('✅ Both datetime and email parsed without Claude');
+    return { parsedDateTime, normalizedEmail };
+  }
+
+  // Handle DYNAMIC_NEXT_AVAILABLE_SLOT
+  if (appointmentTimeValue === 'DYNAMIC_NEXT_AVAILABLE_SLOT' && !parsedDateTime) {
+    console.log('Fetching next available calendar slot...');
+    
+    const { data: calendarUser, error: calendarError } = await supabaseAdmin
+      .from('google_calendar_settings')
+      .select('user_id')
+      .eq('is_connected', true)
+      .eq('user_id', businessUserId)
+      .single();
+
+    if (!calendarError && calendarUser) {
+      console.log('Found connected calendar user:', calendarUser.user_id);
+      try {
+        const availabilityResponse = await fetch(`${supabaseUrl}/functions/v1/google-calendar-availability`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({ user_id: calendarUser.user_id })
+        });
+
+        if (availabilityResponse.ok) {
+          const availabilityData = await availabilityResponse.json();
+          if (availabilityData.available && availabilityData.slots?.length > 0) {
+            parsedDateTime = availabilityData.slots[0].startTime;
+            console.log('✅ Using next available slot:', parsedDateTime);
+          }
+        }
+      } catch (error) {
+        console.error('Error calling availability function:', error);
+      }
+    }
+  }
+
+  // If either still needs parsing, use Claude
+  if (!parsedDateTime || !normalizedEmail) {
     try {
       const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
       if (!anthropicApiKey) {
         console.error('ANTHROPIC_API_KEY not found');
-        return null;
+        return { parsedDateTime, normalizedEmail };
       }
 
       const now = new Date();
-      const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
-      const currentTime = now.toTimeString().split(' ')[0]; // HH:MM:SS
+      const currentDate = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().split(' ')[0];
       
-      console.log('Calling Claude to parse appointment time...');
-      console.log('Current date/time:', currentDate, currentTime);
+      console.log('Calling Claude to parse remaining call data...');
       
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -1008,31 +1066,41 @@ async function parseAppointmentTime(
           model: 'claude-opus-4-1-20250805',
           max_tokens: 1024,
           tools: [{
-            name: 'parse_datetime',
-            description: 'Parse a natural language date/time description into an ISO 8601 datetime string',
+            name: 'parse_call_data',
+            description: 'Parse appointment datetime and/or normalize email address from call data',
             input_schema: {
               type: 'object',
               properties: {
-                iso_datetime: {
+                appointment_datetime: {
                   type: 'string',
-                  description: 'The parsed datetime in ISO 8601 format (YYYY-MM-DDTHH:MM:SS.000Z)'
+                  description: 'The parsed datetime in ISO 8601 format (YYYY-MM-DDTHH:MM:SS.000Z) in UTC timezone. Return null if no datetime to parse.'
+                },
+                normalized_email: {
+                  type: 'string',
+                  description: 'The normalized email address in proper format (e.g., user@domain.com). Return null if no email to parse.'
                 }
-              },
-              required: ['iso_datetime']
+              }
             }
           }],
-          tool_choice: { type: 'tool', name: 'parse_datetime' },
+          tool_choice: { type: 'tool', name: 'parse_call_data' },
           messages: [{
             role: 'user',
             content: `Current date and time: ${currentDate} ${currentTime} (timezone: America/New_York, UTC-4)
 
-Parse this appointment time into an ISO 8601 datetime string: "${appointmentTimeValue}"
-
-Important:
+${!parsedDateTime && appointmentTimeValue ? `Appointment time to parse: "${appointmentTimeValue}"
+Instructions for datetime:
 - If only a time range is given (like "from nine forty-five to twelve fifteen"), use the START time
 - If the date seems to be in the past, assume it's meant for the future (next occurrence)
 - Convert to UTC timezone (subtract 4 hours from Eastern Time)
-- Return the exact datetime as an ISO 8601 string`
+- Return as ISO 8601 string (YYYY-MM-DDTHH:MM:SS.000Z)
+` : ''}
+${!normalizedEmail && emailValue ? `Email to normalize: "${emailValue}"
+Instructions for email:
+- Convert spoken words like "at" to "@" and "dot" to "."
+- Ensure proper email format: user@domain.com
+- Common patterns: "john at gmail dot com" becomes "john@gmail.com"
+` : ''}
+Parse and return the data in the specified format.`
           }]
         })
       });
@@ -1040,87 +1108,31 @@ Important:
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Claude API error:', response.status, errorText);
-        return null;
+        return { parsedDateTime, normalizedEmail };
       }
 
       const result = await response.json();
-      console.log('Claude response:', JSON.stringify(result, null, 2));
+      console.log('Claude parse_call_data response:', JSON.stringify(result, null, 2));
       
-      // Extract the datetime from tool use
       const toolUse = result.content?.find((c: any) => c.type === 'tool_use');
-      if (toolUse?.input?.iso_datetime) {
-        const parsedDateTime = toolUse.input.iso_datetime;
-        console.log('✅ Claude parsed datetime:', parsedDateTime);
-        
-        // Validate it's a valid date
-        const validatedDate = new Date(parsedDateTime);
-        if (!isNaN(validatedDate.getTime())) {
-          return validatedDate.toISOString();
+      if (toolUse?.input) {
+        if (!parsedDateTime && toolUse.input.appointment_datetime) {
+          const dtValue = toolUse.input.appointment_datetime;
+          const validatedDate = new Date(dtValue);
+          if (!isNaN(validatedDate.getTime())) {
+            parsedDateTime = validatedDate.toISOString();
+            console.log('✅ Claude parsed datetime:', parsedDateTime);
+          }
+        }
+        if (!normalizedEmail && toolUse.input.normalized_email) {
+          normalizedEmail = toolUse.input.normalized_email;
+          console.log('✅ Claude normalized email:', normalizedEmail);
         }
       }
-      
-      console.error('Could not extract valid datetime from Claude response');
-      return null;
-      
     } catch (claudeError) {
-      console.error('Error calling Claude for datetime parsing:', claudeError);
-      return null;
-    }
-  }
-  
-  // Check for dynamic slot request
-  if (appointmentTimeValue === 'DYNAMIC_NEXT_AVAILABLE_SLOT') {
-    console.log('Fetching next available calendar slot...');
-    
-    // Find connected calendar user
-    const { data: calendarUser, error: calendarError } = await supabaseAdmin
-      .from('google_calendar_settings')
-      .select('user_id')
-      .eq('is_connected', true)
-      .eq('user_id', businessUserId)
-      .single();
-
-    if (calendarError || !calendarUser) {
-      console.log('No connected calendar found, using fallback time');
-      return null;
-    }
-
-    console.log('Found connected calendar user:', calendarUser.user_id);
-
-    try {
-      const requestPayload = {
-        user_id: calendarUser.user_id
-      };
-      console.log('Calling availability function with payload:', requestPayload);
-      
-      // Call the availability function
-      const availabilityResponse = await fetch(`${supabaseUrl}/functions/v1/google-calendar-availability`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-        },
-        body: JSON.stringify(requestPayload)
-      });
-
-      if (availabilityResponse.ok) {
-        const availabilityData = await availabilityResponse.json();
-        console.log('Availability function response:', availabilityData);
-        console.log('Availability response received');
-        
-        if (availabilityData.available && availabilityData.slots?.length > 0) {
-          const firstSlot = availabilityData.slots[0];
-          console.log('✅ Using next available slot:', firstSlot.startTime);
-          console.log('Slot details:', firstSlot.humanReadable);
-          return firstSlot.startTime;
-        } else {
-          console.log('❌ No available slots found in response');
-        }
-      }
-    } catch (error) {
-      console.error('Error calling availability function:', error);
+      console.error('Error calling Claude API:', claudeError);
     }
   }
 
-  return null;
+  return { parsedDateTime, normalizedEmail };
 }
