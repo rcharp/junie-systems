@@ -380,7 +380,7 @@ const Dashboard = () => {
       const activities: RecentActivity[] = [];
 
       if (businessData) {
-        // Fetch from call_logs using both user_id and business_id
+        // Fetch only from call_logs
         const { data: callLogs, error: logsError } = await supabase
           .from("call_logs")
           .select("*")
@@ -392,20 +392,24 @@ const Dashboard = () => {
 
         if (callLogs) {
           callLogs.forEach((log) => {
-            // For calls, show "Incoming call from <name>" or "Incoming call from <phone>"
             const displayName = getContextualCallerName(log.caller_name, log.call_type);
             
-            let callText;
-            // Check if we have a real caller name (not a generic placeholder)
+            // Determine caller identifier (name or phone)
+            let callerIdentifier;
             if (displayName.toLowerCase().includes('potential customer') || 
                 displayName.toLowerCase().includes('customer') || 
                 displayName.toLowerCase().includes('client') ||
                 displayName.toLowerCase().includes('caller')) {
-              // Use phone number instead
-              callText = `Incoming call from ${log.phone_number}`;
+              callerIdentifier = log.phone_number;
             } else {
-              callText = `Incoming call from ${displayName}`;
+              callerIdentifier = displayName;
             }
+
+            // Get concise summary of the call
+            const summary = summarizeMessage(log.message || log.call_summary || "", log.call_type);
+
+            // Combine: "Incoming call from X. [Summary]"
+            const callText = `Incoming call from ${callerIdentifier}. ${displayName} ${summary}`;
 
             activities.push({
               id: log.id,
@@ -421,37 +425,7 @@ const Dashboard = () => {
         }
       }
 
-      // Also fetch call_messages
-      const { data: callMessages, error: messagesError } = await supabase
-        .from("call_messages")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false })
-        .limit(2);
-
-      if (callMessages) {
-        callMessages.forEach((message) => {
-          // For messages, show concise summary with caller name
-          const displayName = getContextualCallerName(message.caller_name, message.call_type);
-          const summary = summarizeMessage(message.message, message.call_type);
-          
-          activities.push({
-            id: message.id,
-            time: formatDistanceToNow(new Date(message.created_at), { addSuffix: true }),
-            action: `${displayName} ${summary}`,
-            type:
-              message.urgency_level === "urgent" ? "error" : message.urgency_level === "high" ? "warning" : "success",
-            caller_name: message.caller_name,
-            call_type: message.call_type,
-            created_at: message.created_at,
-            source: "message" as const,
-          });
-        });
-      }
-
-      // Sort by created_at and take the most recent 5
-      activities.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      setRecentActivity(activities.slice(0, 5));
+      setRecentActivity(activities);
     } catch (error: any) {
       console.error("Error fetching recent activity:", error);
     } finally {
