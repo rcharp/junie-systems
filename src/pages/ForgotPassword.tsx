@@ -36,9 +36,9 @@ const ForgotPassword = () => {
         return;
       }
 
-      // Use Supabase's built-in password reset with configured SMTP
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+      // Use Resend-based password reset edge function
+      const { data, error } = await supabase.functions.invoke("resend-password-reset", {
+        body: { email },
       });
 
       if (error) {
@@ -54,8 +54,8 @@ const ForgotPassword = () => {
 
       setEmailSent(true);
       toast({
-        title: "Email sent!",
-        description: "Check your email for password reset instructions.",
+        title: "Reset link sent",
+        description: data?.message || "Check your email for the password reset link.",
       });
     } catch (error: any) {
       console.error("Password reset error:", error);
