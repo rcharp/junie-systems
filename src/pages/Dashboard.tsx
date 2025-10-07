@@ -759,18 +759,10 @@ const Dashboard = () => {
                   <Button
                     className="w-full justify-start"
                     variant="outline"
-                    onClick={() => navigate("/settings?tab=calls")}
-                  >
-                    <Phone className="w-4 h-4 mr-2" />
-                    Configure AI Caller
-                  </Button>
-                  <Button
-                    className="w-full justify-start"
-                    variant="outline"
-                    onClick={() => navigate("/settings?tab=ai")}
+                    onClick={() => navigate("/dashboard?tab=messages")}
                   >
                     <MessageSquare className="w-4 h-4 mr-2" />
-                    Review Call Scripts
+                    Calls and Messages
                   </Button>
                   <Button
                     className="w-full justify-start"
@@ -778,16 +770,42 @@ const Dashboard = () => {
                     onClick={() => navigate("/settings?tab=business")}
                   >
                     <Users className="w-4 h-4 mr-2" />
-                    Manage Business Info
+                    Edit Business Info
                   </Button>
                   <Button
                     className="w-full justify-start"
                     variant="outline"
-                    onClick={() => navigate("/settings?tab=ai")}
+                    onClick={() => navigate("/settings?tab=calls")}
                   >
-                    <Settings className="w-4 h-4 mr-2" />
-                    AI Settings
+                    <Phone className="w-4 h-4 mr-2" />
+                    AI Caller Settings
                   </Button>
+                  <FeatureGate 
+                    feature="appointmentScheduling" 
+                    fallback={
+                      <Button
+                        className="w-full justify-start opacity-50"
+                        variant="outline"
+                        disabled
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setShowUpgradeDialog(true);
+                        }}
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Gmail Calendar Settings (Pro)
+                      </Button>
+                    }
+                  >
+                    <Button
+                      className="w-full justify-start"
+                      variant="outline"
+                      onClick={() => navigate("/settings?tab=setup")}
+                    >
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Gmail Calendar Settings
+                    </Button>
+                  </FeatureGate>
                 </CardContent>
               </Card>
             </div>
