@@ -342,6 +342,20 @@ const GoogleCalendarConnect = () => {
                 </p>
               </div>
               
+              {/* Embedded Calendar */}
+              {calendarSettings.calendar_id && calendarSettings.timezone && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Your Calendar</Label>
+                  <div className="w-full rounded-lg overflow-hidden border-2 border-primary/20 shadow-lg">
+                    <iframe
+                      src={`https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarSettings.calendar_id)}&ctz=${encodeURIComponent(calendarSettings.timezone)}&mode=WEEK&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=1&showCalendars=0&showTz=1`}
+                      className="w-full h-[600px] border-0"
+                      title="Google Calendar"
+                    />
+                  </div>
+                </div>
+              )}
+              
               {calendarSettings.calendar_id && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Quick Calendar Access</Label>
