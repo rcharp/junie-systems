@@ -903,7 +903,11 @@ async function handleCalendarBooking({
     // Normalize email before passing to calendar booking
     let normalizedEmail = analysisData.email_address?.value || callerInfo.email;
     if (normalizedEmail && typeof normalizedEmail === 'string') {
-      normalizedEmail = normalizedEmail.replace(/ at /gi, '@');
+      normalizedEmail = normalizedEmail
+        .replace(/\s*at\s*/gi, '@')
+        .replace(/\s*dot\s*/gi, '.')
+        .trim();
+      console.log('📧 Email normalization:', { original: analysisData.email_address?.value || callerInfo.email, normalized: normalizedEmail });
     }
     
     // Call the google-calendar-book function
