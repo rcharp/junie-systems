@@ -256,13 +256,13 @@ const GoogleCalendarConnect = () => {
               <span className="font-medium">Google Calendar Connected</span>
             </div>
             
-            {/* Google Profile Display */}
-            {(googleEmail || googleAvatarUrl) && (
-              <div className="flex items-center gap-3 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+            {/* Google Profile Display with all calendar info */}
+            <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-4">
+              <div className="flex items-center gap-3">
                 {googleAvatarUrl && (
                   <Avatar className="h-12 w-12 border-2 border-primary/20">
                     <AvatarImage src={googleAvatarUrl} alt="Google Profile" />
-                    <AvatarFallback>{googleEmail.charAt(0).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>{calendarSettings.calendar_id?.charAt(0).toUpperCase()}</AvatarFallback>
                   </Avatar>
                 )}
                 <div className="flex-1 min-w-0">
@@ -289,30 +289,25 @@ const GoogleCalendarConnect = () => {
                       Google Calendar
                     </Badge>
                   </div>
-                  <p className="text-sm font-medium truncate">{googleEmail}</p>
+                  <p className="text-sm font-medium truncate">{calendarSettings.calendar_id || 'Not set'}</p>
                   <p className="text-xs text-muted-foreground">Calendar connected</p>
                 </div>
               </div>
-            )}
-            
-            <div className="bg-muted p-4 rounded-lg space-y-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm">
-                  <strong>Calendar ID:</strong> {calendarSettings.calendar_id || 'Not set'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                <span className="text-sm">
-                  <strong>Timezone:</strong> {calendarSettings.timezone || 'Not set'}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm">
-                  <strong>Appointment Duration:</strong> {calendarSettings.appointment_duration || 60} minutes
-                </span>
+              
+              {/* Calendar details */}
+              <div className="space-y-2 pt-2 border-t border-primary/10">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    <strong>Timezone:</strong> {calendarSettings.timezone || 'Not set'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    <strong>Appointment Duration:</strong> {calendarSettings.appointment_duration || 60} minutes
+                  </span>
+                </div>
               </div>
             </div>
 
