@@ -251,9 +251,14 @@ const GoogleCalendarConnect = () => {
       <CardContent className="space-y-4">
         {calendarSettings?.is_connected ? (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-green-600">
-              <CheckCircle className="h-5 w-5" />
-              <span className="font-medium">Google Calendar Connected</span>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                <span className="font-medium">Google Calendar Connected</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Your Google Calendar is now connected! Appointments booked through your AI phone system will automatically appear in your calendar.
+              </p>
             </div>
             
             {/* Google Profile Display with all calendar info */}
@@ -335,12 +340,6 @@ const GoogleCalendarConnect = () => {
 
             {/* Calendar Information and Instructions */}
             <div className="space-y-4">
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">Calendar Integration Active</h4>
-                <p className="text-sm text-blue-700">
-                  Your Google Calendar is now connected! Appointments booked through your AI phone system will automatically appear in your calendar.
-                </p>
-              </div>
               
               {/* Embedded Calendar */}
               {calendarSettings.calendar_id && calendarSettings.timezone && (
