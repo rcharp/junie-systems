@@ -2645,7 +2645,7 @@ const Settings = () => {
                         value={forwardingNumber}
                         onChange={(e) => {
                           setForwardingNumber(e.target.value);
-                          debouncedAutoSave("Calls");
+                          debouncedAutoSave("Call");
                         }}
                         placeholder="+1 (555) 987-6543"
                         required
