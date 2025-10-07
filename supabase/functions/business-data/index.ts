@@ -104,14 +104,14 @@ serve(async (req) => {
             .single();
 
           // Store most recent call for this business (will be used for transfer lookup)
-          // Also capture the caller_id (From number) from the call_sid data
-          const callerId = parsedBody.from || parsedBody.From || null;
+          // Also capture the incoming_call_phone_number (From number) from the call_sid data
+          const incomingCallPhoneNumber = parsedBody.from || parsedBody.From || null;
           const { error: mappingError } = await supabase.from("conversation_call_mapping").upsert({
             conversation_id: `temp_${conversationBusinessId}_${Date.now()}`,
             call_sid: parsedBody.call_sid,
             business_id: conversationBusinessId,
             user_id: businessSettings?.user_id,
-            caller_id: callerId,
+            incoming_call_phone_number: incomingCallPhoneNumber,
           });
 
           if (mappingError) {

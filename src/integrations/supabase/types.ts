@@ -252,12 +252,12 @@ export type Database = {
           call_status: string | null
           call_summary: string | null
           call_type: string
-          caller_id: string | null
           caller_name: string
           created_at: string
           email: string | null
           ended_at: string | null
           id: string
+          incoming_call_phone_number: string | null
           message: string
           metadata: Json | null
           phone_number: string
@@ -281,12 +281,12 @@ export type Database = {
           call_status?: string | null
           call_summary?: string | null
           call_type: string
-          caller_id?: string | null
           caller_name: string
           created_at?: string
           email?: string | null
           ended_at?: string | null
           id?: string
+          incoming_call_phone_number?: string | null
           message: string
           metadata?: Json | null
           phone_number: string
@@ -310,12 +310,12 @@ export type Database = {
           call_status?: string | null
           call_summary?: string | null
           call_type?: string
-          caller_id?: string | null
           caller_name?: string
           created_at?: string
           email?: string | null
           ended_at?: string | null
           id?: string
+          incoming_call_phone_number?: string | null
           message?: string
           metadata?: Json | null
           phone_number?: string
@@ -342,11 +342,11 @@ export type Database = {
           best_time_to_call: string | null
           call_id: string | null
           call_type: string
-          caller_id: string | null
           caller_name: string
           created_at: string
           email: string | null
           id: string
+          incoming_call_phone_number: string | null
           message: string
           metadata: Json | null
           phone_number: string
@@ -359,11 +359,11 @@ export type Database = {
           best_time_to_call?: string | null
           call_id?: string | null
           call_type: string
-          caller_id?: string | null
           caller_name: string
           created_at?: string
           email?: string | null
           id?: string
+          incoming_call_phone_number?: string | null
           message: string
           metadata?: Json | null
           phone_number: string
@@ -376,11 +376,11 @@ export type Database = {
           best_time_to_call?: string | null
           call_id?: string | null
           call_type?: string
-          caller_id?: string | null
           caller_name?: string
           created_at?: string
           email?: string | null
           id?: string
+          incoming_call_phone_number?: string | null
           message?: string
           metadata?: Json | null
           phone_number?: string
@@ -434,28 +434,28 @@ export type Database = {
         Row: {
           business_id: string | null
           call_sid: string
-          caller_id: string | null
           conversation_id: string
           created_at: string | null
           id: string
+          incoming_call_phone_number: string | null
           user_id: string | null
         }
         Insert: {
           business_id?: string | null
           call_sid: string
-          caller_id?: string | null
           conversation_id: string
           created_at?: string | null
           id?: string
+          incoming_call_phone_number?: string | null
           user_id?: string | null
         }
         Update: {
           business_id?: string | null
           call_sid?: string
-          caller_id?: string | null
           conversation_id?: string
           created_at?: string | null
           id?: string
+          incoming_call_phone_number?: string | null
           user_id?: string | null
         }
         Relationships: []
