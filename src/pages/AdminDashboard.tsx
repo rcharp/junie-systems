@@ -70,10 +70,15 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      // Fetch user count
-      const { count: userCount } = await supabase
+      // Fetch user count - directly from user_profiles table
+      const { count: userCount, error: userCountError } = await supabase
         .from('user_profiles')
         .select('*', { count: 'exact', head: true });
+
+      if (userCountError) {
+        console.error('Error fetching user count:', userCountError);
+      }
+      console.log('📊 Total users count:', userCount);
 
       // Fetch call count
       const { count: callCount } = await supabase
@@ -86,7 +91,6 @@ const AdminDashboard = () => {
         .select('*', { count: 'exact', head: true });
 
       // Fetch active users (users with activity in last 30 days)
-      // Count distinct users from user_activity table
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       
@@ -95,11 +99,10 @@ const AdminDashboard = () => {
         .select('user_id')
         .gte('created_at', thirtyDaysAgo.toISOString());
       
-      // Get unique user IDs to count distinct active users
       const uniqueActiveUsers = new Set(recentActivityUsers?.map(activity => activity.user_id) || []);
       const activeUserCount = uniqueActiveUsers.size;
 
-      // Fetch users with business IDs and emails for admin view using secure function
+      // Fetch users with business IDs and emails for admin view
       console.log('🔍 Fetching users with RPC call...');
       const { data: usersData, error: usersError } = await supabase
         .rpc('get_users_with_business_ids_for_admin');
@@ -108,8 +111,8 @@ const AdminDashboard = () => {
       console.log('❌ Users error:', usersError);
 
       if (usersError) {
-        console.error('Error fetching users:', usersError);
-        throw usersError;
+        console.error('Error fetching users list:', usersError);
+        // Don't throw - just log the error and continue with the count
       }
 
       setStats({
