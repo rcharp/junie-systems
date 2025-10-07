@@ -602,51 +602,53 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
 // Helper function to find target user ID
 async function findTargetUserId(analysisData: any, webhookData: any, supabase: any): Promise<string | null> {
   const conversationId = webhookData.data?.conversation_id;
+  const callSid = webhookData.data?.call_id; // ElevenLabs sends call_id in the webhook
   const businessIdFromAnalysis = analysisData?.business_id?.value;
   
   console.log('🔍 FINDING USER DEBUG:');
   console.log('  - conversation_id:', conversationId);
+  console.log('  - call_sid/call_id:', callSid);
   console.log('  - business_id from analysis:', businessIdFromAnalysis);
   
-  // PRIMARY STRATEGY: Look up by conversation_id in the mapping table
-  // This is most reliable since business-data function creates the mapping when call starts
-  if (conversationId) {
-    console.log('🎯 PRIMARY: Looking for temp mapping to update with conversation_id...');
+  // PRIMARY STRATEGY: Match by call_sid if available (most accurate)
+  if (callSid) {
+    console.log('🎯 PRIMARY: Looking for mapping by call_sid:', callSid);
     
-    // Find temp mappings (since we won't have exact match yet on first webhook)
-    const { data: tempMappings, error: tempError } = await supabase
+    const { data: callMapping, error: callError } = await supabase
       .from('conversation_call_mapping')
       .select('*')
-      .like('conversation_id', 'temp_%')
-      .order('created_at', { ascending: false })
-      .limit(5); // Get last 5 recent temp mappings
+      .eq('call_sid', callSid)
+      .maybeSingle();
     
-    console.log('  - temp mappings found:', tempMappings?.length || 0);
-    console.log('  - temp mappings error:', tempError);
+    console.log('  - call_sid mapping found:', callMapping);
+    console.log('  - call_sid mapping error:', callError);
     
-    if (tempMappings && tempMappings.length > 0) {
-      // Use the most recent one (most likely to be the current call)
-      const tempMapping = tempMappings[0];
-      console.log('  - Using most recent temp mapping:', tempMapping.conversation_id);
-      console.log('  - business_id from temp mapping:', tempMapping.business_id);
-      console.log('  - user_id from temp mapping:', tempMapping.user_id);
-      console.log('  - Updating to real conversation_id:', conversationId);
+    if (callMapping) {
+      console.log('  - Current conversation_id in DB:', callMapping.conversation_id);
+      console.log('  - New conversation_id from webhook:', conversationId);
       
-      const { error: updateError } = await supabase
-        .from('conversation_call_mapping')
-        .update({ conversation_id: conversationId })
-        .eq('id', tempMapping.id);
+      // Update to real conversation_id if it's still temp
+      if (callMapping.conversation_id.startsWith('temp_') && conversationId) {
+        console.log('  - Updating temp conversation_id to real one...');
+        const { error: updateError } = await supabase
+          .from('conversation_call_mapping')
+          .update({ conversation_id: conversationId })
+          .eq('id', callMapping.id);
+        
+        console.log('  - Update error:', updateError);
+      }
       
-      console.log('  - Update error:', updateError);
-      
-      if (!updateError && tempMapping.user_id) {
-        console.log('✅✅✅ PRIMARY SUCCESS! Updated temp mapping and got user_id:', tempMapping.user_id);
-        return tempMapping.user_id;
+      if (callMapping.user_id) {
+        console.log('✅✅✅ PRIMARY SUCCESS! Found user_id via call_sid:', callMapping.user_id);
+        return callMapping.user_id;
       }
     }
+  }
+  
+  // SECONDARY STRATEGY: Try exact conversation_id match
+  if (conversationId) {
+    console.log('🔍 SECONDARY: Looking for exact conversation_id match...');
     
-    // Also try exact conversation_id match (in case it was already updated)
-    console.log('  - Trying exact conversation_id match as backup...');
     const { data: exactMapping, error: exactError } = await supabase
       .from('conversation_call_mapping')
       .select('user_id, business_id')
@@ -656,33 +658,42 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
     console.log('  - exact mapping result:', exactMapping);
     
     if (exactMapping?.user_id) {
-      console.log('✅✅✅ PRIMARY SUCCESS! Found user_id from exact conversation_id:', exactMapping.user_id);
+      console.log('✅✅✅ SECONDARY SUCCESS! Found user_id from conversation_id:', exactMapping.user_id);
       return exactMapping.user_id;
     }
   }
   
-  // FALLBACK: Try business_id from analysis if available
-  if (businessIdFromAnalysis) {
-    console.log('🔄 FALLBACK: Looking up by business_id from analysis:', businessIdFromAnalysis);
-    const { data: businessData, error: businessError } = await supabase
-      .from('business_settings')
-      .select('user_id')
-      .eq('id', businessIdFromAnalysis)
-      .maybeSingle();
-
-    console.log('  - business_settings result:', businessData);
-    console.log('  - business_settings error:', businessError);
-
-    if (businessData?.user_id) {
-      console.log('✅✅✅ FALLBACK SUCCESS! Found user_id from business_id:', businessData.user_id);
-      return businessData.user_id;
+  // FALLBACK: Use most recent temp mapping (less reliable but better than nothing)
+  console.log('🔄 FALLBACK: Looking for most recent temp mapping...');
+  const { data: tempMappings, error: tempError } = await supabase
+    .from('conversation_call_mapping')
+    .select('*')
+    .like('conversation_id', 'temp_%')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  
+  console.log('  - temp mappings found:', tempMappings?.length || 0);
+  
+  if (tempMappings && tempMappings.length > 0 && conversationId) {
+    const tempMapping = tempMappings[0];
+    console.log('  - Using most recent temp mapping:', tempMapping.conversation_id);
+    console.log('  - Updating to real conversation_id:', conversationId);
+    
+    const { error: updateError } = await supabase
+      .from('conversation_call_mapping')
+      .update({ conversation_id: conversationId })
+      .eq('id', tempMapping.id);
+    
+    if (!updateError && tempMapping.user_id) {
+      console.log('✅✅✅ FALLBACK SUCCESS! Updated temp and got user_id:', tempMapping.user_id);
+      return tempMapping.user_id;
     }
   }
 
   console.error('❌❌❌ FAILED: Could not find user_id by any method');
   console.error('  - conversation_id:', conversationId);
+  console.error('  - call_sid:', callSid);
   console.error('  - business_id from analysis:', businessIdFromAnalysis);
-  console.error('  - Temp mappings checked:', tempMappings?.length || 0);
   return null;
 }
 
