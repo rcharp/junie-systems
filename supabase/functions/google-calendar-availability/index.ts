@@ -96,16 +96,16 @@ Deno.serve(async (req) => {
 
     const calendarSettings = calendarTokens[0]
     
-    // Tokens are now stored directly in the database (protected by RLS)
-    const accessToken = calendarSettings.encrypted_access_token
-    const refreshToken = calendarSettings.encrypted_refresh_token
+    // Tokens are encrypted in the database, we need to decrypt them
+    const encryptedAccessToken = calendarSettings.encrypted_access_token
+    const encryptedRefreshToken = calendarSettings.encrypted_refresh_token
 
     console.log('Calendar settings:', {
       calendar_id: calendarSettings.calendar_id,
       timezone: calendarSettings.timezone,
       expires_at: calendarSettings.expires_at,
-      has_access_token: !!accessToken,
-      has_refresh_token: !!refreshToken,
+      has_access_token: !!encryptedAccessToken,
+      has_refresh_token: !!encryptedRefreshToken,
       is_connected: calendarSettings.is_connected
     })
 
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    if (!accessToken) {
+    if (!encryptedAccessToken) {
       console.log('No access token found for user:', userId)
       return new Response(JSON.stringify({ 
         available: false, 
@@ -131,6 +131,49 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
+
+    // Decrypt the tokens
+    console.log('Decrypting access token...')
+    
+    async function decryptToken(encryptedToken: string): Promise<string> {
+      try {
+        // Prepare encryption key
+        const keyMaterial = new TextEncoder().encode(encryptionKey.substring(0, 32).padEnd(32, '0'))
+        const iv = new Uint8Array(12) // Same IV used for encryption
+        
+        // Import the decryption key
+        const cryptoKey = await crypto.subtle.importKey(
+          "raw",
+          keyMaterial,
+          "AES-GCM",
+          false,
+          ["decrypt"]
+        )
+        
+        // Decode from base64
+        const encryptedData = Uint8Array.from(atob(encryptedToken), c => c.charCodeAt(0))
+        
+        // Decrypt
+        const decryptedBuffer = await crypto.subtle.decrypt(
+          {
+            name: "AES-GCM",
+            iv: iv
+          },
+          cryptoKey,
+          encryptedData
+        )
+        
+        return new TextDecoder().decode(decryptedBuffer)
+      } catch (error) {
+        console.error('Decryption error:', error)
+        throw new Error('Failed to decrypt token')
+      }
+    }
+
+    const accessToken = await decryptToken(encryptedAccessToken)
+    const refreshToken = encryptedRefreshToken ? await decryptToken(encryptedRefreshToken) : null
+
+    console.log('Tokens decrypted successfully')
 
     // Check if token needs refresh
     const expiresAt = new Date(calendarSettings.expires_at)
