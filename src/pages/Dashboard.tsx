@@ -194,6 +194,60 @@ const Dashboard = () => {
     }
   };
 
+  const summarizeMessage = (message: string, callType: string): string => {
+    if (!message) return "left a voicemail";
+
+    const lowerMessage = message.toLowerCase();
+
+    // Check for appointment scheduling
+    if (lowerMessage.includes("scheduled") || lowerMessage.includes("appointment")) {
+      // Try to extract service type and time details
+      const serviceMatch = message.match(/for\s+([^.]+?)(?:\s+on|\.|at)/i);
+      const dateMatch = message.match(/(?:on|for)\s+([A-Z][a-z]+day,\s+[A-Z][a-z]+\s+\d+(?:st|nd|rd|th)?)/i);
+      const timeMatch = message.match(/at\s+(\d+:\d+\s*(?:am|pm)?)/i);
+      
+      if (serviceMatch && (dateMatch || timeMatch)) {
+        const service = serviceMatch[1].trim();
+        const dateStr = dateMatch ? dateMatch[1] : "";
+        const timeStr = timeMatch ? ` at ${timeMatch[1]}` : "";
+        return `scheduled an appointment for ${service}${dateStr ? ` on ${dateStr}` : ""}${timeStr}`;
+      }
+      return "scheduled an appointment";
+    }
+
+    // Check for availability inquiries
+    if (lowerMessage.includes("availability") || lowerMessage.includes("available")) {
+      return "called to ask what available times you have for a service call. Junie gave them the available times.";
+    }
+
+    // Check for pricing inquiries
+    if (lowerMessage.includes("price") || lowerMessage.includes("cost") || lowerMessage.includes("quote")) {
+      return "called to ask about pricing. Junie provided the information.";
+    }
+
+    // Check for service inquiries
+    if (lowerMessage.includes("service") || lowerMessage.includes("repair")) {
+      return "called to inquire about your services. Junie provided the details.";
+    }
+
+    // Check for emergency calls
+    if (lowerMessage.includes("emergency") || lowerMessage.includes("urgent")) {
+      return "called with an urgent request. Junie handled the call.";
+    }
+
+    // Check for general questions
+    if (lowerMessage.includes("question") || lowerMessage.includes("ask")) {
+      return "called with a question. Junie provided assistance.";
+    }
+
+    // Default: return a shortened version
+    const firstSentence = message.split('.')[0];
+    if (firstSentence.length > 80) {
+      return firstSentence.substring(0, 80) + "...";
+    }
+    return firstSentence;
+  };
+
   const extractCallAction = (message: string, callType: string, callSummary?: string) => {
     if (!message && !callSummary) return "called";
 
@@ -377,16 +431,14 @@ const Dashboard = () => {
 
       if (callMessages) {
         callMessages.forEach((message) => {
-          // For messages, show the full detailed message with caller name
+          // For messages, show concise summary with caller name
           const displayName = getContextualCallerName(message.caller_name, message.call_type);
-          
-          // Use the full message content which contains all the details
-          const messageContent = message.message || "left a voicemail";
+          const summary = summarizeMessage(message.message, message.call_type);
           
           activities.push({
             id: message.id,
             time: formatDistanceToNow(new Date(message.created_at), { addSuffix: true }),
-            action: `${displayName} ${messageContent}`,
+            action: `${displayName} ${summary}`,
             type:
               message.urgency_level === "urgent" ? "error" : message.urgency_level === "high" ? "warning" : "success",
             caller_name: message.caller_name,
