@@ -10,7 +10,6 @@ import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settin
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
-import { UserWebhookList } from '@/components/UserWebhookList';
 import { BusinessDataMonitor } from '@/components/BusinessDataMonitor';
 import { TodoChecklist } from '@/components/TodoChecklist';
 import { BusinessTypesManager } from '@/components/BusinessTypesManager';
@@ -400,9 +399,6 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-
-            {/* User Business IDs - Paginated */}
-            <UserWebhookList />
 
             {/* Business Types Manager */}
             <BusinessTypesManager />
