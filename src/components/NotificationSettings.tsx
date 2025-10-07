@@ -24,7 +24,7 @@ const NotificationSettings = () => {
   const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [forwardingNumber, setForwardingNumber] = useState("");
   const [showTermsWarning, setShowTermsWarning] = useState(false);
-  
+
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -38,13 +38,13 @@ const NotificationSettings = () => {
   const loadNotificationSettings = async () => {
     try {
       const { data, error } = await supabase
-        .from('business_settings')
-        .select('id, email_notifications, sms_notifications, push_notifications, instant_alerts, forwarding_number')
-        .eq('user_id', user?.id)
+        .from("business_settings")
+        .select("id, email_notifications, sms_notifications, push_notifications, instant_alerts, forwarding_number")
+        .eq("user_id", user?.id)
         .single();
 
       if (error) {
-        console.error('Error loading notification settings:', error);
+        console.error("Error loading notification settings:", error);
         return;
       }
 
@@ -57,7 +57,7 @@ const NotificationSettings = () => {
         setForwardingNumber(data.forwarding_number || "");
       }
     } catch (error) {
-      console.error('Error loading notification settings:', error);
+      console.error("Error loading notification settings:", error);
       toast({
         title: "Error",
         description: "Failed to load notification settings",
@@ -73,10 +73,10 @@ const NotificationSettings = () => {
     if (autoSaveTimeout) {
       clearTimeout(autoSaveTimeout);
     }
-    
+
     const timeout = setTimeout(async () => {
       if (!businessSettingsId) return;
-      
+
       setIsAutoSaving(true);
       try {
         await saveNotificationSettingsInternal();
@@ -85,7 +85,7 @@ const NotificationSettings = () => {
           description: "Your notification preferences have been automatically saved.",
         });
       } catch (error) {
-        console.error('Auto-save failed:', error);
+        console.error("Auto-save failed:", error);
         toast({
           title: "Auto-save failed",
           description: "There was an error saving your notification settings. Please try again.",
@@ -95,7 +95,7 @@ const NotificationSettings = () => {
         setIsAutoSaving(false);
       }
     }, 3000);
-    
+
     setAutoSaveTimeout(timeout);
   }, [autoSaveTimeout, businessSettingsId, toast]);
 
@@ -117,7 +117,7 @@ const NotificationSettings = () => {
         description: "Your notification preferences have been updated successfully.",
       });
     } catch (error) {
-      console.error('Error saving notification settings:', error);
+      console.error("Error saving notification settings:", error);
       toast({
         title: "Error",
         description: "Failed to save notification settings. Please try again.",
@@ -131,14 +131,14 @@ const NotificationSettings = () => {
   const saveNotificationSettingsInternal = async () => {
     if (!businessSettingsId) return;
     const { error } = await supabase
-      .from('business_settings')
+      .from("business_settings")
       .update({
         email_notifications: emailNotifications,
         sms_notifications: smsNotifications,
         push_notifications: pushNotifications,
-        instant_alerts: instantAlerts
+        instant_alerts: instantAlerts,
       })
-      .eq('id', businessSettingsId);
+      .eq("id", businessSettingsId);
 
     if (error) {
       throw error;
@@ -153,7 +153,7 @@ const NotificationSettings = () => {
       title: "Urgent call received",
       message: "Emergency service request from Mike Thompson",
       time: "2 minutes ago",
-      method: "SMS + Email"
+      method: "SMS + Email",
     },
     {
       id: 2,
@@ -162,7 +162,7 @@ const NotificationSettings = () => {
       title: "New appointment scheduled",
       message: "Sarah Johnson booked a consultation for tomorrow",
       time: "1 hour ago",
-      method: "Email"
+      method: "Email",
     },
     {
       id: 3,
@@ -171,8 +171,8 @@ const NotificationSettings = () => {
       title: "New lead captured",
       message: "Jennifer Davis interested in pricing information",
       time: "3 hours ago",
-      method: "SMS"
-    }
+      method: "SMS",
+    },
   ];
 
   if (loading) {
@@ -263,7 +263,7 @@ const NotificationSettings = () => {
                   SMS notifications will be sent to this number. Update this in AI Caller settings.
                 </p>
               </div>
-              
+
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="sms-opt-in"
@@ -289,7 +289,8 @@ const NotificationSettings = () => {
                     I agree to receive text messages about potential customer inquiries
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    By checking this box, you consent to receive SMS notifications about new leads and customer messages. Standard messaging rates may apply. You can opt out at any time.
+                    By checking this box, you consent to receive SMS notifications about new leads and customer
+                    messages. Standard messaging rates may apply. You can opt out at any time.
                   </p>
                   {showTermsWarning && (
                     <p className="text-xs text-destructive font-medium">
@@ -341,7 +342,7 @@ const NotificationSettings = () => {
             <div className="text-sm text-muted-foreground">
               {isAutoSaving ? "Auto-saving changes..." : "Changes are automatically saved"}
             </div>
-            <Button 
+            <Button
               onClick={saveNotificationSettings}
               disabled={saving || isAutoSaving}
               variant="outline"
@@ -349,7 +350,7 @@ const NotificationSettings = () => {
               className="bg-gradient-primary hover:opacity-90 text-white border-none"
             >
               <Save className="w-4 h-4 mr-2" />
-              {saving ? "Saving..." : "Save Now"}
+              {saving ? "Saving..." : "Save"}
             </Button>
           </div>
         </CardContent>
@@ -363,17 +364,23 @@ const NotificationSettings = () => {
           <div className="space-y-4">
             {recentNotifications.map((notification) => (
               <div key={notification.id} className="flex items-start space-x-3 p-3 border border-border rounded-lg">
-                <div className={`p-2 rounded-full ${
-                  notification.type === 'urgent' ? 'bg-destructive/10 text-destructive' :
-                  notification.type === 'appointment' ? 'bg-primary/10 text-primary' :
-                  'bg-success/10 text-success'
-                }`}>
+                <div
+                  className={`p-2 rounded-full ${
+                    notification.type === "urgent"
+                      ? "bg-destructive/10 text-destructive"
+                      : notification.type === "appointment"
+                        ? "bg-primary/10 text-primary"
+                        : "bg-success/10 text-success"
+                  }`}
+                >
                   {notification.icon}
                 </div>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center justify-between">
                     <h4 className="font-medium">{notification.title}</h4>
-                    <Badge variant="outline" className="text-xs">{notification.method}</Badge>
+                    <Badge variant="outline" className="text-xs">
+                      {notification.method}
+                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{notification.message}</p>
                   <p className="text-xs text-muted-foreground">{notification.time}</p>

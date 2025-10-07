@@ -2509,7 +2509,7 @@ const Settings = () => {
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">Click "Save Now" to save your changes</div>
+                    <div className="text-sm text-muted-foreground">Click "Save" to save your changes</div>
                     <Button
                       onClick={() => saveSettings("Business")}
                       disabled={saving || isAutoSaving}
@@ -2518,7 +2518,7 @@ const Settings = () => {
                       className="bg-gradient-primary hover:opacity-90 text-white border-none"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      {saving ? "Saving..." : "Save Now"}
+                      {saving ? "Saving..." : "Save"}
                     </Button>
                   </div>
                 </CardContent>
@@ -2711,7 +2711,7 @@ const Settings = () => {
                       className="bg-gradient-primary hover:opacity-90 text-white border-none"
                     >
                       <Save className="w-4 h-4 mr-2" />
-                      {saving ? "Saving..." : "Save Now"}
+                      {saving ? "Saving..." : "Save"}
                     </Button>
                   </div>
                 </CardContent>
