@@ -287,13 +287,13 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                     className={forwardingNumberError ? "border-destructive" : ""}
                     autoFocus
                   />
-                  {forwardingNumberError && (
-                    <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
-                  )}
-                  <p className="text-sm text-muted-foreground">
-                    This is where calls will be transferred when a caller requests to speak with you immediately
-                  </p>
-                </div>
+                    {forwardingNumberError && (
+                      <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Enter the phone number that you want urgent customer calls to be transferred to if they request to speak with a human. You will also receive SMS notifications here.
+                    </p>
+                  </div>
 
                 <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
                   <div className="flex items-start gap-3">
