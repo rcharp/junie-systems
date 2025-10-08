@@ -51,7 +51,9 @@ const NotificationSettings = () => {
       if (data) {
         setBusinessSettingsId(data.id);
         setEmailNotifications(data.email_notifications !== false);
-        setSmsNotifications(data.sms_notifications || false);
+        const smsEnabled = data.sms_notifications || false;
+        setSmsNotifications(smsEnabled);
+        setSmsOptIn(smsEnabled); // If SMS is enabled, they must have agreed to terms
         setPushNotifications(data.push_notifications !== false);
         setInstantAlerts(data.instant_alerts !== false);
         setForwardingNumber(data.forwarding_number || "");
