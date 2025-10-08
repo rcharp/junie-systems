@@ -362,6 +362,10 @@ async function processWebhookInBackground(
     // Extract caller info using the existing function
     const callerInfo = extractCallerInfo(fullTranscript);
     
+    // Extract appointment_notes and service_type from webhook analysis if available
+    const appointmentNotes = webhookData?.data?.analysis?.appointment_notes || null;
+    const serviceTypeFromWebhook = webhookData?.data?.analysis?.service_type || null;
+    
     // Parse appointment time AND normalize email with Claude in one call
     const { parsedDateTime: parsedAppointmentDateTime, normalizedEmail } = await parseCallDataWithClaude(
       analysisData.appointment_time?.value,
@@ -551,6 +555,8 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       service_address: analysisData.service_address?.value || null,
       business_id: businessId || analysisData.business_id?.value || null,
       incoming_call_phone_number: incomingCallPhoneNumber, // The actual incoming phone number from phone system
+      appointment_notes: appointmentNotes,
+      service_type: serviceTypeFromWebhook,
       metadata: {
         caller_zip: '',
         caller_address: analysisData.service_address?.value || '',
@@ -592,6 +598,8 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       call_id: `call_${Date.now()}`,
       call_log_id: callLogId, // Link to the call log
       incoming_call_phone_number: incomingCallPhoneNumber, // The actual incoming phone number from phone system
+      appointment_notes: appointmentNotes,
+      service_type: serviceTypeFromWebhook,
       metadata: {
         appointment_scheduled: isAppointmentScheduled,
         formatted_appointment_details: formattedAppointmentDetails
@@ -909,9 +917,10 @@ async function handleCalendarBooking({
       customerName: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown Customer',
       customerEmail: customerEmail,
       customerPhone: String(analysisData.phone_number?.value || callerInfo.phone_number || ''),
-      serviceType: analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
+      serviceType: serviceTypeFromWebhook || analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
       serviceAddress: analysisData.service_address?.value || '',
       appointmentDateTime: typeof parsedAppointmentDateTime === 'string' ? parsedAppointmentDateTime : parsedAppointmentDateTime.toISOString(),
+      appointmentNotes: appointmentNotes,
       notes: `Service requested: ${analysisData.service_requested?.value || analysisData.service_type?.value || 'Service appointment'}`
     };
 

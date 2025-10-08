@@ -274,7 +274,8 @@ async function handleBookingRequest(supabase: any, userId: string, bookingData: 
     phoneNumber, 
     email, 
     serviceType, 
-    notes 
+    notes,
+    appointmentNotes
   } = bookingData
 
   // Validate required fields
@@ -432,6 +433,7 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
       email: email,
       service_type: serviceType || 'General appointment',
       notes: notes,
+      appointment_notes: appointmentNotes || null,
       preferred_date: new Date(startTime).toISOString().split('T')[0],
       preferred_time: new Date(startTime).toTimeString().split(' ')[0],
       calendar_event_id: eventData.id,

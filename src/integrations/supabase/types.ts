@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       appointments: {
         Row: {
+          appointment_notes: string | null
           calendar_event_id: string | null
           caller_name: string
           created_at: string
@@ -31,6 +32,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          appointment_notes?: string | null
           calendar_event_id?: string | null
           caller_name: string
           created_at?: string
@@ -46,6 +48,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          appointment_notes?: string | null
           calendar_event_id?: string | null
           caller_name?: string
           created_at?: string
@@ -242,6 +245,7 @@ export type Database = {
       call_logs: {
         Row: {
           appointment_date_time: string | null
+          appointment_notes: string | null
           appointment_scheduled: boolean | null
           best_time_to_call: string | null
           business_id: string | null
@@ -264,6 +268,7 @@ export type Database = {
           provider: string | null
           recording_url: string | null
           service_address: string | null
+          service_type: string | null
           transcript: string | null
           updated_at: string
           urgency_level: string
@@ -271,6 +276,7 @@ export type Database = {
         }
         Insert: {
           appointment_date_time?: string | null
+          appointment_notes?: string | null
           appointment_scheduled?: boolean | null
           best_time_to_call?: string | null
           business_id?: string | null
@@ -293,6 +299,7 @@ export type Database = {
           provider?: string | null
           recording_url?: string | null
           service_address?: string | null
+          service_type?: string | null
           transcript?: string | null
           updated_at?: string
           urgency_level: string
@@ -300,6 +307,7 @@ export type Database = {
         }
         Update: {
           appointment_date_time?: string | null
+          appointment_notes?: string | null
           appointment_scheduled?: boolean | null
           best_time_to_call?: string | null
           business_id?: string | null
@@ -322,6 +330,7 @@ export type Database = {
           provider?: string | null
           recording_url?: string | null
           service_address?: string | null
+          service_type?: string | null
           transcript?: string | null
           updated_at?: string
           urgency_level?: string
@@ -339,6 +348,7 @@ export type Database = {
       }
       call_messages: {
         Row: {
+          appointment_notes: string | null
           best_time_to_call: string | null
           call_id: string | null
           call_log_id: string | null
@@ -351,12 +361,14 @@ export type Database = {
           message: string
           metadata: Json | null
           phone_number: string
+          service_type: string | null
           status: string | null
           updated_at: string
           urgency_level: string
           user_id: string
         }
         Insert: {
+          appointment_notes?: string | null
           best_time_to_call?: string | null
           call_id?: string | null
           call_log_id?: string | null
@@ -369,12 +381,14 @@ export type Database = {
           message: string
           metadata?: Json | null
           phone_number: string
+          service_type?: string | null
           status?: string | null
           updated_at?: string
           urgency_level?: string
           user_id: string
         }
         Update: {
+          appointment_notes?: string | null
           best_time_to_call?: string | null
           call_id?: string | null
           call_log_id?: string | null
@@ -387,6 +401,7 @@ export type Database = {
           message?: string
           metadata?: Json | null
           phone_number?: string
+          service_type?: string | null
           status?: string | null
           updated_at?: string
           urgency_level?: string
