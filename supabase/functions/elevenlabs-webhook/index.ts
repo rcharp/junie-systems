@@ -362,8 +362,8 @@ async function processWebhookInBackground(
     // Extract caller info using the existing function
     const callerInfo = extractCallerInfo(fullTranscript);
     
-    // Extract appointment_notes and service_type from webhook analysis if available
-    const appointmentNotes = webhookData?.data?.analysis?.appointment_notes || null;
+    // Extract additional_notes and service_type from webhook analysis if available
+    const additionalNotes = webhookData?.data?.analysis?.additional_notes || null;
     const serviceTypeFromWebhook = webhookData?.data?.analysis?.service_type || null;
     
     // Parse appointment time AND normalize email with Claude in one call
@@ -555,7 +555,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       service_address: analysisData.service_address?.value || null,
       business_id: businessId || analysisData.business_id?.value || null,
       incoming_call_phone_number: incomingCallPhoneNumber, // The actual incoming phone number from phone system
-      appointment_notes: appointmentNotes,
+      additional_notes: additionalNotes,
       service_type: serviceTypeFromWebhook,
       metadata: {
         caller_zip: '',
@@ -598,7 +598,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       call_id: `call_${Date.now()}`,
       call_log_id: callLogId, // Link to the call log
       incoming_call_phone_number: incomingCallPhoneNumber, // The actual incoming phone number from phone system
-      appointment_notes: appointmentNotes,
+      additional_notes: additionalNotes,
       service_type: serviceTypeFromWebhook,
       metadata: {
         appointment_scheduled: isAppointmentScheduled,

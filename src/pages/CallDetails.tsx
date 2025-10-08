@@ -40,7 +40,7 @@ interface CallData {
   service_address?: string;
   call_summary?: string;
   incoming_call_phone_number?: string;
-  appointment_notes?: string;
+  additional_notes?: string;
   service_type?: string;
   metadata?: any;
 }
@@ -480,10 +480,10 @@ const CallDetails = () => {
                       })()}
                     </p>
                   </div>
-                  {callData.appointment_notes && (
+                  {callData.additional_notes && (
                     <div className="col-span-2">
-                      <span className="text-sm font-medium text-muted-foreground">Appointment Notes</span>
-                      <p className="mt-1 whitespace-pre-wrap">{callData.appointment_notes}</p>
+                      <span className="text-sm font-medium text-muted-foreground">Additional Notes</span>
+                      <p className="mt-1 whitespace-pre-wrap">{callData.additional_notes}</p>
                     </div>
                   )}
                 </div>

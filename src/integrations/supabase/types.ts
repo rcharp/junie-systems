@@ -16,7 +16,7 @@ export type Database = {
     Tables: {
       appointments: {
         Row: {
-          appointment_notes: string | null
+          additional_notes: string | null
           calendar_event_id: string | null
           caller_name: string
           created_at: string
@@ -32,7 +32,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          appointment_notes?: string | null
+          additional_notes?: string | null
           calendar_event_id?: string | null
           caller_name: string
           created_at?: string
@@ -48,7 +48,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          appointment_notes?: string | null
+          additional_notes?: string | null
           calendar_event_id?: string | null
           caller_name?: string
           created_at?: string
@@ -244,8 +244,8 @@ export type Database = {
       }
       call_logs: {
         Row: {
+          additional_notes: string | null
           appointment_date_time: string | null
-          appointment_notes: string | null
           appointment_scheduled: boolean | null
           best_time_to_call: string | null
           business_id: string | null
@@ -275,8 +275,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          additional_notes?: string | null
           appointment_date_time?: string | null
-          appointment_notes?: string | null
           appointment_scheduled?: boolean | null
           best_time_to_call?: string | null
           business_id?: string | null
@@ -306,8 +306,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          additional_notes?: string | null
           appointment_date_time?: string | null
-          appointment_notes?: string | null
           appointment_scheduled?: boolean | null
           best_time_to_call?: string | null
           business_id?: string | null
@@ -348,7 +348,7 @@ export type Database = {
       }
       call_messages: {
         Row: {
-          appointment_notes: string | null
+          additional_notes: string | null
           best_time_to_call: string | null
           call_id: string | null
           call_log_id: string | null
@@ -368,7 +368,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          appointment_notes?: string | null
+          additional_notes?: string | null
           best_time_to_call?: string | null
           call_id?: string | null
           call_log_id?: string | null
@@ -388,7 +388,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          appointment_notes?: string | null
+          additional_notes?: string | null
           best_time_to_call?: string | null
           call_id?: string | null
           call_log_id?: string | null
