@@ -397,7 +397,9 @@ async function processWebhookInBackground(
         normalizedEmail, // Pass the pre-normalized email
         isManualCall,
         supabaseAdmin: supabase,
-        supabaseUrl
+        supabaseUrl,
+        serviceType: serviceTypeFromWebhook,
+        additionalNotes
       });
       
       if (calendarBookingResult) {
@@ -859,7 +861,9 @@ async function handleCalendarBooking({
   normalizedEmail,
   isManualCall,
   supabaseAdmin,
-  supabaseUrl
+  supabaseUrl,
+  serviceType,
+  additionalNotes
 }: {
   isAppointmentScheduled: boolean,
   parsedAppointmentDateTime: string | Date | null,
@@ -869,7 +873,9 @@ async function handleCalendarBooking({
   normalizedEmail: string | null,
   isManualCall: boolean,
   supabaseAdmin: any,
-  supabaseUrl: string
+  supabaseUrl: string,
+  serviceType?: string | null,
+  additionalNotes?: string | null
 }) {
   try {
     console.log('📅 === HANDLE CALENDAR BOOKING START ===');
@@ -917,11 +923,11 @@ async function handleCalendarBooking({
       customerName: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown Customer',
       customerEmail: customerEmail,
       customerPhone: String(analysisData.phone_number?.value || callerInfo.phone_number || ''),
-      serviceType: serviceTypeFromWebhook || analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
+      serviceType: serviceType || analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
       serviceAddress: analysisData.service_address?.value || '',
       appointmentDateTime: typeof parsedAppointmentDateTime === 'string' ? parsedAppointmentDateTime : parsedAppointmentDateTime.toISOString(),
-      appointmentNotes: appointmentNotes,
-      notes: `Service requested: ${analysisData.service_requested?.value || analysisData.service_type?.value || 'Service appointment'}`
+      additionalNotes: additionalNotes,
+      notes: `Service requested: ${serviceType || analysisData.service_requested?.value || analysisData.service_type?.value || 'Service appointment'}`
     };
 
     console.log('📅 Calling google-calendar-book with payload:', JSON.stringify(bookingPayload, null, 2));
