@@ -2873,7 +2873,7 @@ const Settings = () => {
                 </CardHeader>
                 <CardContent>
                   <ElevenLabsVoiceChat 
-                    agentId={process.env.ELEVENLABS_AGENT_ID || "agent_1601k5fak9jsfrzsk06455d9f98j"}
+                    agentId="agent_1601k5fak9jsfrzsk06455d9f98j"
                     ambienceAudioUrl="/audio/office-ambience.mp3"
                     onTranscript={(text) => console.log('Voice chat transcript:', text)}
                   />
