@@ -34,6 +34,7 @@ import {
   Settings as SettingsIcon,
   LogOut,
   AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -56,6 +57,7 @@ import NotificationSettings from "@/components/NotificationSettings";
 import { WebsiteImporter } from "@/components/WebsiteImporter";
 import { AddressInput } from "@/components/AddressAutocomplete";
 import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
+import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { getUserTimezone, getTimezoneFromAddress, getCommonTimezones } from "@/lib/timezone-utils";
 import { handleRobustSignOut, cleanupAuthState } from "@/lib/auth-utils";
 import { FeatureGate } from "@/components/FeatureGate";
@@ -87,6 +89,7 @@ const Settings = () => {
   const [calendarBannerMessage, setCalendarBannerMessage] = useState("");
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
   const { featureAccess } = useSubscription();
   console.log("Settings state:", { user: user?.email, loading });
 
@@ -2056,15 +2059,15 @@ const Settings = () => {
                       <Building className="w-5 h-5 mr-2" />
                       Business Information
                     </CardTitle>
-                    {/* <Button 
+                    <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => navigate("/setup-guide")}
-                      className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 text-white border-none"
+                      onClick={() => setShowOnboardingDialog(true)}
+                      className="flex items-center gap-2"
                     >
-                      <Zap className="w-4 h-4" />
-                      Setup Guide
-                    </Button> */}
+                      <RefreshCw className="w-4 h-4" />
+                      Re-run Setup
+                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -2949,6 +2952,12 @@ const Settings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Onboarding Dialog */}
+      <OnboardingDialog 
+        open={showOnboardingDialog} 
+        onOpenChange={setShowOnboardingDialog} 
+      />
     </div>
   );
 };
