@@ -64,7 +64,6 @@ import { FeatureGate } from "@/components/FeatureGate";
 import { useSubscription } from "@/hooks/useSubscription";
 import { BillingSettings } from "@/components/BillingSettings";
 import { CreditCard } from "lucide-react";
-import ElevenLabsVoiceChat from "@/components/ElevenLabsVoiceChat";
 
 // Types
 interface BusinessType {
@@ -2860,23 +2859,6 @@ const Settings = () => {
                       {saving ? "Saving..." : "Save"}
                     </Button>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* ElevenLabs Voice Chat with Office Ambience */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Bot className="w-5 h-5 mr-2" />
-                    Voice Chat with Office Ambience
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ElevenLabsVoiceChat 
-                    agentId="agent_1601k5fak9jsfrzsk06455d9f98j"
-                    ambienceAudioUrl="/audio/office-ambience.mp3"
-                    onTranscript={(text) => console.log('Voice chat transcript:', text)}
-                  />
                 </CardContent>
               </Card>
             </TabsContent>
