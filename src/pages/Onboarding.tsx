@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Search, ArrowRight, Loader2, Globe, MapPin, Building2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Checkbox } from "@/components/ui/checkbox";
 import Header from "@/components/Header";
 
 interface BusinessPrediction {
@@ -50,6 +51,7 @@ const Onboarding = () => {
   const [forwardingNumber, setForwardingNumber] = useState("");
   const [forwardingNumberError, setForwardingNumberError] = useState(false);
   const [savingForwarding, setSavingForwarding] = useState(false);
+  const [smsOptIn, setSmsOptIn] = useState(false);
 
   // US states list for Claude matching
   const statesList = [
@@ -1741,21 +1743,21 @@ const Onboarding = () => {
               </div>
             </div>
           ) : (
-            /* Step 3: Call Forwarding Setup */
+            /* Step 3: Call Transfer Setup */
             <div className="space-y-6 animate-slide-up" key="step-3">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                  Set your call forwarding number
+                  Set your call transfer number
                 </h1>
                 <p className="text-muted-foreground text-lg">
-                  When you can&apos;t take a call, we&apos;ll forward it to this number
+                  Where should we transfer calls when a caller wants to speak to you immediately?
                 </p>
               </div>
 
               <Card className="border-2 shadow-elegant">
                 <CardContent className="pt-6 space-y-6">
                   <div className="space-y-3">
-                    <Label htmlFor="forwarding-number">Forwarding Phone Number</Label>
+                    <Label htmlFor="forwarding-number">Call Transfer Number</Label>
                     <Input
                       id="forwarding-number"
                       type="tel"
@@ -1782,8 +1784,31 @@ const Onboarding = () => {
                       <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
                     )}
                     <p className="text-sm text-muted-foreground">
-                      Enter the phone number where you want calls forwarded when you&apos;re unavailable
+                      This is where calls will be transferred when a caller requests to speak with you immediately
                     </p>
+                  </div>
+
+                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="sms-opt-in"
+                        checked={smsOptIn}
+                        onCheckedChange={(checked) => setSmsOptIn(checked === true)}
+                      />
+                      <div className="space-y-1 flex-1">
+                        <label
+                          htmlFor="sms-opt-in"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                        >
+                          Receive SMS notifications
+                        </label>
+                        <p className="text-sm text-muted-foreground">
+                          By checking this box, you agree to receive text messages (SMS) about appointments, 
+                          call notifications, and service updates at this number. Message and data rates may apply. 
+                          Reply STOP to opt out anytime.
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <Button
@@ -1803,7 +1828,10 @@ const Onboarding = () => {
 
                         const { error } = await supabase
                           .from("business_settings")
-                          .update({ forwarding_number: forwardingNumber })
+                          .update({ 
+                            forwarding_number: forwardingNumber,
+                            sms_notifications: smsOptIn
+                          })
                           .eq("user_id", session.user.id);
 
                         if (error) throw error;
@@ -1817,10 +1845,10 @@ const Onboarding = () => {
                           window.location.href = '/settings?onboarding_complete=true';
                         }, 500);
                       } catch (error: any) {
-                        console.error("Error saving forwarding number:", error);
+                        console.error("Error saving settings:", error);
                         toast({
                           title: "Error",
-                          description: "Failed to save forwarding number. Please try again.",
+                          description: "Failed to save settings. Please try again.",
                           variant: "destructive",
                         });
                       } finally {
