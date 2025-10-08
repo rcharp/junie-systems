@@ -377,7 +377,7 @@ Appointment Details:
 - Customer: ${callerName}
 - Phone: ${phoneNumber}
 - Email: ${email || 'Not provided'}
-- Notes: ${notes || 'None'}
+- Notes: ${additionalNotes || notes || 'None'}
 
 Business Contact: ${businessSettings?.business_phone || 'Not provided'}
     `.trim(),
