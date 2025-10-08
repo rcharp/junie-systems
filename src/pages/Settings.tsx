@@ -1642,9 +1642,19 @@ const Settings = () => {
       {/* Main Content */}
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-muted-foreground mb-2">Account Settings</h2>
-            <p className="text-muted-foreground">Configure your Junie assistant and account preferences.</p>
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h2 className="text-3xl font-bold text-muted-foreground mb-2">Account Settings</h2>
+              <p className="text-muted-foreground">Configure your Junie assistant and account preferences.</p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowOnboardingDialog(true)}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Re-run Setup
+            </Button>
           </div>
 
           {/* Upgrade Dialog */}
@@ -2054,21 +2064,10 @@ const Settings = () => {
             <TabsContent value="business" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center">
-                      <Building className="w-5 h-5 mr-2" />
-                      Business Information
-                    </CardTitle>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setShowOnboardingDialog(true)}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      Re-run Setup
-                    </Button>
-                  </div>
+                  <CardTitle className="flex items-center">
+                    <Building className="w-5 h-5 mr-2" />
+                    Business Information
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <WebsiteImporter onDataExtracted={handleWebsiteDataExtracted} autoSave={true} className="mb-6" />
