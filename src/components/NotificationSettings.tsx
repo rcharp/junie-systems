@@ -268,16 +268,66 @@ const NotificationSettings = () => {
                 <Checkbox
                   id="sms-opt-in"
                   checked={smsOptIn}
-                  onCheckedChange={(checked) => {
+                  onCheckedChange={async (checked) => {
                     setSmsOptIn(checked as boolean);
                     if (checked) {
                       setShowTermsWarning(false);
                       setSmsNotifications(true);
-                    }
-                    if (!checked) {
+                      // Immediately save when enabling SMS
+                      if (businessSettingsId) {
+                        setIsAutoSaving(true);
+                        try {
+                          const { error } = await supabase
+                            .from("business_settings")
+                            .update({ sms_notifications: true })
+                            .eq("id", businessSettingsId);
+                          
+                          if (error) throw error;
+                          
+                          toast({
+                            title: "SMS Notifications Enabled",
+                            description: "You will now receive SMS notifications.",
+                          });
+                        } catch (error) {
+                          console.error("Error enabling SMS:", error);
+                          toast({
+                            title: "Error",
+                            description: "Failed to enable SMS notifications. Please try again.",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setIsAutoSaving(false);
+                        }
+                      }
+                    } else {
                       setSmsNotifications(false);
+                      // Immediately save when disabling SMS
+                      if (businessSettingsId) {
+                        setIsAutoSaving(true);
+                        try {
+                          const { error } = await supabase
+                            .from("business_settings")
+                            .update({ sms_notifications: false })
+                            .eq("id", businessSettingsId);
+                          
+                          if (error) throw error;
+                          
+                          toast({
+                            title: "SMS Notifications Disabled",
+                            description: "You will no longer receive SMS notifications.",
+                          });
+                        } catch (error) {
+                          console.error("Error disabling SMS:", error);
+                          toast({
+                            title: "Error",
+                            description: "Failed to disable SMS notifications. Please try again.",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setIsAutoSaving(false);
+                        }
+                      }
                     }
-                    debouncedAutoSave();
                   }}
                   className={showTermsWarning ? "border-destructive data-[state=checked]:bg-destructive" : ""}
                 />
