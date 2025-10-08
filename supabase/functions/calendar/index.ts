@@ -309,32 +309,61 @@ async function handleBookingRequest(supabase: any, userId: string, bookingData: 
 
   const businessName = businessSettings?.business_name || 'Business'
 
-  // Extract a concise service type from the full service description
-  let conciseServiceType = serviceType;
+  // Extract concise service type - use the actual service from webhook
+  let conciseServiceType = serviceType || 'Service Appointment';
   
-  // Try to extract service type using simple patterns first
-  if (serviceType && serviceType.length > 30) {
-    // Common service patterns
-    if (serviceType.toLowerCase().includes('a/c') || serviceType.toLowerCase().includes('hvac') || serviceType.toLowerCase().includes('air condition')) {
-      conciseServiceType = 'HVAC Service';
-    } else if (serviceType.toLowerCase().includes('plumb')) {
-      conciseServiceType = 'Plumbing Service';
-    } else if (serviceType.toLowerCase().includes('electric')) {
-      conciseServiceType = 'Electrical Service';
-    } else if (serviceType.toLowerCase().includes('heat')) {
-      conciseServiceType = 'Heating Service';
-    } else if (serviceType.toLowerCase().includes('roof')) {
-      conciseServiceType = 'Roofing Service';
-    } else if (serviceType.toLowerCase().includes('repair')) {
-      conciseServiceType = 'Repair Service';
-    } else if (serviceType.toLowerCase().includes('install')) {
-      conciseServiceType = 'Installation Service';
-    } else if (serviceType.toLowerCase().includes('maintenance')) {
-      conciseServiceType = 'Maintenance Service';
+  if (serviceType) {
+    const lower = serviceType.toLowerCase();
+    
+    // Extract specific service details
+    if (lower.includes('a/c') || lower.includes('air condition') || lower.includes('hvac') || lower.includes('ac ')) {
+      if (lower.includes('repair') || lower.includes('fix') || lower.includes('not working')) {
+        conciseServiceType = 'A/C Repair';
+      } else if (lower.includes('install') || lower.includes('replacement')) {
+        conciseServiceType = 'A/C Installation';
+      } else if (lower.includes('coolant') || lower.includes('refill') || lower.includes('recharge')) {
+        conciseServiceType = 'Coolant Refill';
+      } else if (lower.includes('maintenance') || lower.includes('tune') || lower.includes('check')) {
+        conciseServiceType = 'A/C Maintenance';
+      } else {
+        conciseServiceType = 'A/C Service';
+      }
+    } else if (lower.includes('plumb') || lower.includes('pipe') || lower.includes('drain') || lower.includes('leak')) {
+      if (lower.includes('repair') || lower.includes('fix')) {
+        conciseServiceType = 'Plumbing Repair';
+      } else if (lower.includes('install')) {
+        conciseServiceType = 'Plumbing Installation';
+      } else if (lower.includes('clean') || lower.includes('unclog')) {
+        conciseServiceType = 'Drain Cleaning';
+      } else {
+        conciseServiceType = 'Plumbing Service';
+      }
+    } else if (lower.includes('electric')) {
+      if (lower.includes('repair')) {
+        conciseServiceType = 'Electrical Repair';
+      } else if (lower.includes('install')) {
+        conciseServiceType = 'Electrical Installation';
+      } else {
+        conciseServiceType = 'Electrical Service';
+      }
+    } else if (lower.includes('heat')) {
+      if (lower.includes('repair')) {
+        conciseServiceType = 'Heating Repair';
+      } else {
+        conciseServiceType = 'Heating Service';
+      }
+    } else if (lower.includes('roof')) {
+      if (lower.includes('repair') || lower.includes('leak')) {
+        conciseServiceType = 'Roof Repair';
+      } else if (lower.includes('install')) {
+        conciseServiceType = 'Roof Installation';
+      } else {
+        conciseServiceType = 'Roofing Service';
+      }
     } else {
-      // Fallback: take first few words or use generic term
-      const words = serviceType.split(' ').slice(0, 3);
-      conciseServiceType = words.length > 0 ? words.join(' ') : 'Service Appointment';
+      // For other services, keep first 3-4 meaningful words
+      const words = serviceType.trim().split(/\s+/).slice(0, 4);
+      conciseServiceType = words.join(' ');
     }
   }
 
