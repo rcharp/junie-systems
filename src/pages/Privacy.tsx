@@ -43,8 +43,10 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-foreground">3. SMS/Text Messaging Privacy</h2>
               <p>
-                If you provide us with your mobile phone number, you expressly consent to receive text messages (SMS)
-                from us regarding your account, appointments, and service-related communications.
+                SMS notifications are opt-in only. To receive text messages (SMS) from us regarding your account, 
+                appointments, and service-related communications, you must actively enable SMS notifications by 
+                checking the opt-in checkbox on your Settings page. By checking this box, you expressly consent 
+                to receive text messages from us.
               </p>
               <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">
                 Collection and Use of Mobile Phone Numbers
