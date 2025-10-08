@@ -321,12 +321,12 @@ Deno.serve(async (req) => {
       location: serviceAddress || '',
       description: `
 Appointment Details:
-- Service: ${serviceType}
+- Service: ${conciseServiceType}
 - Customer: ${customerName}
 - Phone: ${customerPhone}
 - Email: ${customerEmail || 'Not provided'}
 - Service Location: ${serviceAddress || 'Not provided'}
-- Notes: ${additionalNotes || notes || 'None'}
+${additionalNotes ? `- Additional Notes: ${additionalNotes}` : ''}
 
 Business Contact: ${businessSettings?.business_phone || 'Not provided'}
       `.trim(),
