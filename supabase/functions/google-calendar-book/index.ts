@@ -337,12 +337,7 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
         dateTime: endTimeISO,
         timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
       },
-      attendees: [
-        {
-          email: customerEmail,
-          displayName: customerName,
-        }
-      ].filter(attendee => attendee.email), // Only include if email is provided
+      attendees: [], // Don't include customer email in calendar event
       reminders: {
         useDefault: false,
         overrides: [

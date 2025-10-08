@@ -389,10 +389,7 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
       dateTime: endTime,
       timeZone: businessSettings?.business_timezone || calendarSettings.timezone,
     },
-    attendees: email ? [{
-      email: email,
-      displayName: callerName,
-    }] : [],
+    attendees: [], // Don't include customer email in calendar event
     reminders: {
       useDefault: false,
       overrides: [
