@@ -31,7 +31,8 @@ Deno.serve(async (req) => {
       customerPhone,
       serviceType, 
       serviceAddress,
-      notes 
+      notes,
+      additionalNotes
     } = await req.json()
 
     // Use appointmentDateTime if provided, fallback to startTime for backward compatibility
@@ -325,7 +326,7 @@ Appointment Details:
 - Phone: ${customerPhone}
 - Email: ${customerEmail || 'Not provided'}
 - Service Location: ${serviceAddress || 'Not provided'}
-- Notes: ${notes || 'None'}
+- Notes: ${additionalNotes || notes || 'None'}
 
 Business Contact: ${businessSettings?.business_phone || 'Not provided'}
       `.trim(),
@@ -397,6 +398,7 @@ Business Contact: ${businessSettings?.business_phone || 'Not provided'}
         email: customerEmail,
         service_type: serviceType,
         notes: notes,
+        additional_notes: additionalNotes || null,
         preferred_date: new Date(dateTimeToUse).toISOString().split('T')[0],
         preferred_time: new Date(dateTimeToUse).toTimeString().split(' ')[0],
         calendar_event_id: eventData.id,
