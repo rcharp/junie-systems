@@ -317,7 +317,7 @@ Deno.serve(async (req) => {
 
     // Create the calendar event with a concise, professional title
     const event = {
-      summary: `${customerName} - ${conciseServiceType}`,
+      summary: conciseServiceType,
       location: serviceAddress || '',
       description: `
 Appointment Details:
