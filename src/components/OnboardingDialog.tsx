@@ -307,7 +307,7 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                         htmlFor="sms-opt-in"
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                       >
-                        Receive SMS notifications
+                        Receive SMS notifications <span className="text-red-500">*</span>
                       </label>
                       <p className="text-sm text-muted-foreground">
                         By checking this box, you agree to receive text messages (SMS) about appointments, 
@@ -316,6 +316,11 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                       </p>
                     </div>
                   </div>
+                  {!smsOptIn && (
+                    <p className="text-sm text-destructive">
+                      You must agree to receive SMS notifications to continue
+                    </p>
+                  )}
                 </div>
 
                 <Button
@@ -323,6 +328,15 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                     const digits = forwardingNumber.replace(/\D/g, "");
                     if (digits.length !== 10) {
                       setForwardingNumberError(true);
+                      return;
+                    }
+
+                    if (!smsOptIn) {
+                      toast({
+                        title: "SMS consent required",
+                        description: "Please agree to receive SMS notifications to continue",
+                        variant: "destructive"
+                      });
                       return;
                     }
 
@@ -361,7 +375,7 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                     }
                   }}
                   className="w-full"
-                  disabled={savingForwarding || forwardingNumberError || !forwardingNumber}
+                  disabled={savingForwarding || forwardingNumberError || !forwardingNumber || !smsOptIn}
                 >
                   {savingForwarding ? (
                     <>
