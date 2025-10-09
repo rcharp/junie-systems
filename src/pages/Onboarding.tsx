@@ -34,6 +34,7 @@ const Onboarding = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessPrediction | null>(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const isSelectingBusinessRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -1482,10 +1483,27 @@ const Onboarding = () => {
                             setBusinessSearch(e.target.value);
                             setSelectedBusiness(null);
                             isSelectingBusinessRef.current = false;
+                            setHighlightedIndex(-1);
                           }}
                           onFocus={() => {
                             if (businessSearch.length >= 2 && !selectedBusiness) {
                               setShowResults(true);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (!showResults || searchResults.length === 0) return;
+                            
+                            if (e.key === 'ArrowDown') {
+                              e.preventDefault();
+                              setHighlightedIndex((prev) => 
+                                prev < searchResults.length - 1 ? prev + 1 : prev
+                              );
+                            } else if (e.key === 'ArrowUp') {
+                              e.preventDefault();
+                              setHighlightedIndex((prev) => prev > 0 ? prev - 1 : -1);
+                            } else if (e.key === 'Enter' && highlightedIndex >= 0) {
+                              e.preventDefault();
+                              handleBusinessSelect(searchResults[highlightedIndex]);
                             }
                           }}
                           className="pl-12 h-14 text-base"
@@ -1500,15 +1518,22 @@ const Onboarding = () => {
                           <Card className="absolute w-full mt-2 z-50 shadow-lg border-2">
                             <ScrollArea className="h-[300px]">
                               <div className="p-2">
-                                {searchResults.map((result) => (
+                                {searchResults.map((result, index) => (
                                   <button
                                     key={result.place_id}
                                     onClick={() => handleBusinessSelect(result)}
-                                    className="w-full text-left p-3 hover:bg-muted rounded-lg transition-colors flex items-start gap-3 group"
+                                    onMouseEnter={() => setHighlightedIndex(index)}
+                                    className={`w-full text-left p-3 rounded-lg transition-colors flex items-start gap-3 group ${
+                                      highlightedIndex === index 
+                                        ? 'bg-muted' 
+                                        : 'hover:bg-muted'
+                                    }`}
                                   >
                                     <Building2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                                     <div className="flex-1 min-w-0">
-                                      <p className="font-medium text-foreground group-hover:text-primary truncate">
+                                      <p className={`font-medium truncate ${
+                                        highlightedIndex === index ? 'text-primary' : 'text-foreground group-hover:text-primary'
+                                      }`}>
                                         {result.structured_formatting.main_text}
                                       </p>
                                       <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
