@@ -184,6 +184,8 @@ serve(async (req) => {
                     date: startDate.toISOString().split('T')[0], // YYYY-MM-DD
                     startTime: startDate.toTimeString().slice(0, 5), // HH:mm
                     endTime: endDate.toTimeString().slice(0, 5), // HH:mm
+                    timeOfDay: slot.timeOfDay,
+                    humanReadable: slot.humanReadable,
                   };
                 });
                 dynamicAvailableTimes = JSON.stringify(formattedSlots);
@@ -417,6 +419,8 @@ serve(async (req) => {
                 date: startDate.toISOString().split('T')[0], // YYYY-MM-DD
                 startTime: startDate.toTimeString().slice(0, 5), // HH:mm
                 endTime: endDate.toTimeString().slice(0, 5), // HH:mm
+                timeOfDay: slot.timeOfDay,
+                humanReadable: slot.humanReadable,
               };
             });
 
