@@ -362,9 +362,12 @@ async function processWebhookInBackground(
     // Extract caller info using the existing function
     const callerInfo = extractCallerInfo(fullTranscript);
     
-    // Extract additional_notes and service_type from webhook analysis if available
-    const additionalNotes = webhookData?.data?.analysis?.additional_notes || null;
-    const serviceTypeFromWebhook = webhookData?.data?.analysis?.service_type || null;
+    // Parse customer data including additional notes with Claude
+    const { additionalNotes, serviceType: serviceTypeFromWebhook } = await parseCustomerDataWithClaude(
+      fullTranscript,
+      analysisData,
+      anthropicApiKey
+    );
     
     // Parse appointment time AND normalize email with Claude in one call
     const { parsedDateTime: parsedAppointmentDateTime, normalizedEmail } = await parseCallDataWithClaude(
@@ -1150,4 +1153,91 @@ Parse and return the data in the specified format.`
   }
 
   return { parsedDateTime, normalizedEmail };
+}
+
+// Helper function to parse customer data including additional notes
+async function parseCustomerDataWithClaude(
+  transcript: string,
+  analysisData: any,
+  anthropicApiKey: string
+): Promise<{ additionalNotes: string | null; serviceType: string | null }> {
+  console.log('=== PARSING CUSTOMER DATA WITH CLAUDE ===');
+  
+  if (!transcript || !anthropicApiKey) {
+    return { additionalNotes: null, serviceType: null };
+  }
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': anthropicApiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-opus-4-1-20250805',
+        max_tokens: 2048,
+        tools: [{
+          name: 'extract_customer_data',
+          description: 'Extract additional notes and service type from call transcript',
+          input_schema: {
+            type: 'object',
+            properties: {
+              customerName: { type: 'string', description: 'Customer full name' },
+              customerPhone: { type: 'string', description: 'Customer phone number' },
+              customerEmail: { type: 'string', description: 'Customer email address' },
+              serviceAddress: { type: 'string', description: 'Service location address' },
+              appointmentDetails: { type: 'string', description: 'Appointment date/time details' },
+              serviceRequested: { type: 'string', description: 'Type of service requested (e.g., a/c repair, plumbing)' },
+              appointmentScheduled: { type: 'string', description: 'Yes or No' },
+              businessName: { type: 'string', description: 'Business name from greeting' },
+              additionalNotes: { 
+                type: 'string', 
+                description: 'Any additional important details mentioned by the customer such as gate codes, specific issues, preferences, special instructions, urgency details, or other relevant context. Return null if no additional notes.' 
+              }
+            },
+            required: ['customerName', 'serviceRequested', 'appointmentScheduled']
+          }
+        }],
+        tool_choice: { type: 'tool', name: 'extract_customer_data' },
+        messages: [{
+          role: 'user',
+          content: `Extract customer information from this call transcript. Pay special attention to any additional details the customer provides beyond basic contact info and appointment scheduling.
+
+Call Transcript:
+${transcript}
+
+Extract all customer data including any additional notes or special instructions mentioned.`
+        }]
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Claude API error:', response.status, errorText);
+      return { additionalNotes: null, serviceType: null };
+    }
+
+    const result = await response.json();
+    console.log('Claude extract_customer_data response:', JSON.stringify(result, null, 2));
+    
+    const toolUse = result.content?.find((c: any) => c.type === 'tool_use');
+    if (toolUse?.input) {
+      const extractedData = toolUse.input;
+      console.log('Final extracted customer data:', JSON.stringify(extractedData, null, 2));
+      
+      const additionalNotes = extractedData.additionalNotes || null;
+      const serviceType = extractedData.serviceRequested || null;
+      
+      console.log('📝 Extracted additional notes:', additionalNotes);
+      console.log('🔧 Extracted service type:', serviceType);
+      
+      return { additionalNotes, serviceType };
+    }
+  } catch (error) {
+    console.error('Error calling Claude API for customer data:', error);
+  }
+
+  return { additionalNotes: null, serviceType: null };
 }
