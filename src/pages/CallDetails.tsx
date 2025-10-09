@@ -401,10 +401,6 @@ const CallDetails = () => {
                           : 'Unknown'}
                     </p>
                   </div>
-                  <div>
-                    <span className="text-sm font-medium text-muted-foreground">Email Address</span>
-                    <p className="mt-1">{callData.email || 'N/A'}</p>
-                  </div>
                   {callData.service_address ? (
                     <div>
                       <span className="text-sm font-medium text-muted-foreground">Service Address</span>
@@ -484,12 +480,6 @@ const CallDetails = () => {
                       })()}
                     </p>
                   </div>
-                  {callData.additional_notes && (
-                    <div className="col-span-2">
-                      <span className="text-sm font-medium text-muted-foreground">Additional Notes</span>
-                      <p className="mt-1 whitespace-pre-wrap">{callData.additional_notes}</p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
