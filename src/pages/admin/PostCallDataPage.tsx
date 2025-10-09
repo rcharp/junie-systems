@@ -49,7 +49,7 @@ const PostCallDataPage = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <WebhookMonitor />
+        <WebhookMonitor defaultExpanded={true} />
       </main>
     </div>
   );

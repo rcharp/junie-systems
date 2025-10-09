@@ -34,13 +34,13 @@ interface WebhookData {
   };
 }
 
-export const WebhookMonitor = () => {
+export const WebhookMonitor = ({ defaultExpanded = false }: { defaultExpanded?: boolean }) => {
   const { toast } = useToast();
   const [webhookData, setWebhookData] = useState<WebhookData[]>([]);
   const [loading, setLoading] = useState(true);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [expandedRawData, setExpandedRawData] = useState<Record<string, boolean>>({});
-  const [isMinimized, setIsMinimized] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(!defaultExpanded);
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
   const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());

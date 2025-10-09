@@ -18,9 +18,9 @@ interface ClientToolEvent {
   created_at: string;
 }
 
-export function ClientToolMonitor() {
+export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded?: boolean }) {
   const [events, setEvents] = useState<ClientToolEvent[]>([]);
-  const [isMinimized, setIsMinimized] = useState(true);
+  const [isMinimized, setIsMinimized] = useState(!defaultExpanded);
 
   useEffect(() => {
     // Fetch initial events
