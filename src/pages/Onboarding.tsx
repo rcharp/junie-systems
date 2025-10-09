@@ -51,7 +51,6 @@ const Onboarding = () => {
   const [forwardingNumber, setForwardingNumber] = useState("");
   const [forwardingNumberError, setForwardingNumberError] = useState(false);
   const [savingForwarding, setSavingForwarding] = useState(false);
-  const [smsOptIn, setSmsOptIn] = useState(false);
 
   // US states list for Claude matching
   const statesList = [
@@ -1757,7 +1756,9 @@ const Onboarding = () => {
               <Card className="border-2 shadow-elegant">
                 <CardContent className="pt-6 space-y-6">
                   <div className="space-y-3">
-                    <Label htmlFor="forwarding-number">Call Transfer Number</Label>
+                    <Label htmlFor="forwarding-number">
+                      Call Transfer Number <span className="text-red-500">*</span>
+                    </Label>
                     <Input
                       id="forwarding-number"
                       type="tel"
@@ -1784,31 +1785,8 @@ const Onboarding = () => {
                       <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
                     )}
                     <p className="text-sm text-muted-foreground">
-                      This is where calls will be transferred when a caller requests to speak with you immediately
+                      Enter the phone number where calls will be transferred when a caller requests to speak with you immediately. You will also receive SMS notifications at this number.
                     </p>
-                  </div>
-
-                  <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id="sms-opt-in"
-                        checked={smsOptIn}
-                        onCheckedChange={(checked) => setSmsOptIn(checked === true)}
-                      />
-                      <div className="space-y-1 flex-1">
-                        <label
-                          htmlFor="sms-opt-in"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                        >
-                          Receive SMS notifications
-                        </label>
-                        <p className="text-sm text-muted-foreground">
-                          By checking this box, you agree to receive text messages (SMS) about appointments, 
-                          call notifications, and service updates at this number. Message and data rates may apply. 
-                          Reply STOP to opt out anytime.
-                        </p>
-                      </div>
-                    </div>
                   </div>
 
                   <Button
@@ -1830,7 +1808,7 @@ const Onboarding = () => {
                           .from("business_settings")
                           .update({ 
                             forwarding_number: forwardingNumber,
-                            sms_notifications: smsOptIn
+                            sms_notifications: true
                           })
                           .eq("user_id", session.user.id);
 
@@ -1870,25 +1848,6 @@ const Onboarding = () => {
                         <ArrowRight className="ml-2 w-5 h-5" />
                       </>
                     )}
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    onClick={async () => {
-                      // Skip forwarding number setup
-                      toast({
-                        title: "Setup complete!",
-                        description: "You can set your forwarding number later in Settings",
-                      });
-                      
-                      setTimeout(() => {
-                        window.location.href = '/settings?onboarding_complete=true';
-                      }, 500);
-                    }}
-                    className="w-full"
-                    disabled={savingForwarding}
-                  >
-                    Skip for now
                   </Button>
                 </CardContent>
               </Card>
