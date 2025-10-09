@@ -2077,7 +2077,7 @@ const Settings = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <WebsiteImporter onDataExtracted={handleWebsiteDataExtracted} autoSave={true} className="mb-6" />
+                  <WebsiteImporter onDataExtracted={handleWebsiteDataExtracted} className="mb-6" />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
