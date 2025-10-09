@@ -85,10 +85,6 @@ entrypoint = "supabase/functions/bland-webhook/index.ts"
 verify_jwt = false
 
 [[edge_runtime.policies]]
-entrypoint = "supabase/functions/create-answering-pathway/index.ts"
-verify_jwt = false
-
-[[edge_runtime.policies]]
 entrypoint = "supabase/functions/create-home-service-pathway/index.ts"
 verify_jwt = false
 
@@ -102,9 +98,6 @@ verify_jwt = false
 [functions.business-data]
 verify_jwt = false
 
-[functions.calendar]
-verify_jwt = false
-
 [functions.extract-business-data]
 verify_jwt = false
 
@@ -114,16 +107,10 @@ verify_jwt = false
 [functions.google-calendar-availability]
 verify_jwt = false
 
-[functions.google-calendar-book]
-verify_jwt = false
-
 [functions.bland-webhook]
 verify_jwt = false
 
 [functions.elevenlabs-webhook]
-verify_jwt = false
-
-[functions.transfer-call-webhook]
 verify_jwt = false
 
 [functions.stripe-webhook]
@@ -138,19 +125,10 @@ verify_jwt = false
 [functions.elevenlabs-websocket]
 verify_jwt = false
 
-[functions.twilio-transfer]
-verify_jwt = false
-
 [functions.clear-rate-limits]
 verify_jwt = false
 
-[functions.password-reset]
-verify_jwt = false
-
 [functions.resend-password-reset]
-verify_jwt = false
-
-[functions.send-sms-notification]
 verify_jwt = false
 
 [functions.release-twilio-number]
