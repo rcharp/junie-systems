@@ -261,7 +261,7 @@ serve(async (req) => {
             common_questions: businessDataForInit?.common_questions || "",
             pricing_structure: businessDataForInit?.pricing_structure || "",
             appointment_booking: String(businessDataForInit?.appointment_booking || false),
-            // available_times: dynamicAvailableTimes,
+            available_times: dynamicAvailableTimes,
             services:
               businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
             forwarding_number: addUSCountryCode(businessDataForInit?.forwarding_number || ""),
@@ -485,7 +485,7 @@ serve(async (req) => {
         forwarding_number: addUSCountryCode(businessData.forwarding_number || "N/A"),
         urgent_keywords: businessData.urgent_keywords || "emergency, urgent, asap, immediately",
         callback_timeframe: "within 24 hours",
-        // available_times: availableTimes,
+        available_times: availableTimes,
       },
       error: null,
     };
