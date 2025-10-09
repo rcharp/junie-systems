@@ -239,13 +239,14 @@ Deno.serve(async (req) => {
     const busyTimes = freeBusyData.calendars[calendarId]?.busy || []
     const availabilityHours = calendarSettings.availability_hours || {}
     const appointmentDuration = calendarSettings.appointment_duration || 60 // minutes
+    const MAX_SLOTS = 5 // Only generate 5 slots for performance
 
     // Generate available time slots
     let availableSlots = []
     // Use Google Calendar timezone first, then stored calendar timezone, then user profile timezone, then default
     const userTimezone = googleCalendarTimezone || calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
 
-    console.log('=== STARTING SLOT GENERATION ===')
+    console.log('=== STARTING SLOT GENERATION (MAX 5 SLOTS) ===')
     console.log('Final timezone resolution:')
     console.log('  - Google Calendar timezone:', googleCalendarTimezone)
     console.log('  - Stored calendar timezone:', calendarSettings.timezone)
@@ -255,11 +256,11 @@ Deno.serve(async (req) => {
     console.log('Availability hours:', JSON.stringify(availabilityHours))
     console.log('Current time (now):', now.toISOString())
     
-    // Generate slots for the next 7 days (but stop after finding 5 slots)
-    const maxSlots = 5;
-    let foundEnoughSlots = false;
     
-    for (let dayOffset = 0; dayOffset < 7 && !foundEnoughSlots; dayOffset++) {
+    // Generate slots for the next 7 days (but stop after finding MAX_SLOTS)
+    let slotsFound = 0;
+    
+    for (let dayOffset = 0; dayOffset < 7 && slotsFound < MAX_SLOTS; dayOffset++) {
       const currentDate = new Date(startDate)
       currentDate.setDate(startDate.getDate() + dayOffset)
       
@@ -307,7 +308,7 @@ Deno.serve(async (req) => {
       let currentStart = new Date(utcStartTime)
       const slotIncrement = 15 // Check every 15 minutes for availability
       
-      while (currentStart.getTime() < utcEndTime.getTime() && availableSlots.length < maxSlots) {
+      while (currentStart.getTime() < utcEndTime.getTime() && slotsFound < MAX_SLOTS) {
         // Check if current 15-minute slot is available
         const slotEnd = new Date(currentStart.getTime() + (slotIncrement * 60 * 1000))
         
@@ -369,8 +370,7 @@ Deno.serve(async (req) => {
       // Store blocks for Claude to convert properly, split into appointment-duration chunks
       let slotNumber = 0
       for (const block of availableBlocks) {
-        if (availableSlots.length >= maxSlots) {
-          foundEnoughSlots = true;
+        if (slotsFound >= MAX_SLOTS) {
           break;
         }
         
@@ -383,7 +383,7 @@ Deno.serve(async (req) => {
         let chunkStart = new Date(block.start)
         const blockEnd = new Date(block.end)
         
-        while (chunkStart.getTime() + (appointmentDuration * 60 * 1000) <= blockEnd.getTime() && availableSlots.length < maxSlots) {
+        while (chunkStart.getTime() + (appointmentDuration * 60 * 1000) <= blockEnd.getTime() && slotsFound < MAX_SLOTS) {
           const chunkEnd = new Date(chunkStart.getTime() + (appointmentDuration * 60 * 1000))
           
           // Store the raw times - Claude will convert them properly
@@ -394,14 +394,15 @@ Deno.serve(async (req) => {
             humanReadable: "pending" // Will be formatted by Claude
           })
           
-          console.log(`  Chunk: ${chunkStart.toISOString()} to ${chunkEnd.toISOString()}`)
+          slotsFound++;
+          console.log(`  Chunk ${slotsFound}: ${chunkStart.toISOString()} to ${chunkEnd.toISOString()}`)
           
           // Move to next chunk
           chunkStart = new Date(chunkEnd)
         }
       }
       
-      console.log(`Generated ${availableSlots.length} total slots so far`)
+      console.log(`Generated ${slotsFound} total slots so far`)
     }
 
     console.log(`Generated ${availableSlots.length} available slots`)
@@ -499,7 +500,7 @@ Example: If input is "2025-09-30T13:30:00.000Z" for America/New_York:
 
     return new Response(JSON.stringify({
       available: availableSlots.length > 0,
-      slots: availableSlots.slice(0, 5), // Return first 5 slots
+      slots: availableSlots, // Already limited to MAX_SLOTS during generation
       timezone: calendarSettings.timezone,
       duration: appointmentDuration,
     }), {
