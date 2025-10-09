@@ -1025,6 +1025,51 @@ export const WebhookMonitor = () => {
                   </div>
                 </div>
 
+                {/* Extracted Call Log Object */}
+                <Collapsible 
+                  open={expandedItems[`calllog-${data.id}`] || false}
+                  onOpenChange={(isOpen) => setExpandedItems(prev => ({
+                    ...prev,
+                    [`calllog-${data.id}`]: isOpen
+                  }))}
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start p-0 h-auto"
+                    >
+                      <div className="flex items-center gap-2">
+                        {expandedItems[`calllog-${data.id}`] ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                        <Code className="h-4 w-4" />
+                        <h4 className="text-sm font-medium text-muted-foreground">Extracted Call Log Object</h4>
+                      </div>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <div className="text-xs bg-slate-900 text-green-400 p-4 rounded border max-h-80 overflow-y-auto font-mono">
+                      <pre className="whitespace-pre-wrap">
+                        {JSON.stringify({
+                          business_id: data.business_id,
+                          caller_name: data.caller_name,
+                          phone_number: data.phone_number,
+                          email: data.email,
+                          service_address: data.address,
+                          service_type: data.service_info,
+                          call_summary: data.call_summary,
+                          appointment_scheduled: data.appointment_scheduled === 'Yes',
+                          appointment_date_time: data.appointment_datetime !== 'Not scheduled' ? data.appointment_datetime : null,
+                          transcript: data.transcript?.substring(0, 200) + (data.transcript?.length > 200 ? '...' : ''),
+                          metadata: data.metadata
+                        }, null, 2)}
+                      </pre>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
                 {data.raw_webhook_data && (
                   <Collapsible 
                     open={expandedRawData[data.id]} 
