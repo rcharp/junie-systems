@@ -187,9 +187,17 @@ serve(async (req) => {
           if (calendarSettings && calendarSettings.is_connected) {
             try {
               console.log("Fetching calendar availability for conversation initiation");
-              const availabilityResponse = await supabase.functions.invoke("google-calendar-availability", {
+              
+              // Set a 3-second timeout for calendar availability to prevent ElevenLabs timeout
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Calendar availability timeout')), 3000)
+              );
+              
+              const availabilityPromise = supabase.functions.invoke("google-calendar-availability", {
                 body: { user_id: businessDataForInit.user_id },
               });
+
+              const availabilityResponse = await Promise.race([availabilityPromise, timeoutPromise]) as any;
 
               console.log(
                 "Availability response for conversation initiation:",
@@ -230,6 +238,8 @@ serve(async (req) => {
               }
             } catch (error) {
               console.error("Error fetching calendar availability for conversation initiation:", error);
+              // Fall back to business_hours on timeout or error
+              dynamicAvailableTimes = businessDataForInit?.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
             }
           }
         }
