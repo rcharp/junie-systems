@@ -50,21 +50,22 @@ export const WebhookMonitor = ({ defaultExpanded = false }: { defaultExpanded?: 
   const fetchWebhookData = async () => {
     try {
       setLoading(true);
-      console.log('Starting webhook data fetch...'); // Debug log
+      console.log('🔍 Starting webhook data fetch...'); // Debug log
       
       // Fetch recent call logs - RLS policies will handle access control
       const { data: logs, error: logsError } = await supabase
         .from('call_logs')
         .select('*')
+        .neq('call_type', 'initiation_failure')  // Exclude initiation failures
         .order('created_at', { ascending: false })
         .limit(50);
 
       if (logsError) {
-        console.error('Supabase error fetching call logs:', logsError);
+        console.error('❌ Supabase error fetching call logs:', logsError);
         throw logsError;
       }
 
-      console.log('Successfully fetched logs:', logs?.length || 0, 'records'); // Debug log
+      console.log('✅ Successfully fetched logs:', logs?.length || 0, 'records'); // Debug log
 
       // Filter out logs that don't have meaningful call data before processing
       const filteredLogs = (logs || []).filter(log => {
