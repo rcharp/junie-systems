@@ -416,10 +416,14 @@ const CallDetails = () => {
                       <p className="mt-1">N/A</p>
                     </div>
                   )}
-                  {callData.service_type && (
+                  <div>
+                    <span className="text-sm font-medium text-muted-foreground">Service Type</span>
+                    <p className="mt-1">{callData.service_type || 'N/A'}</p>
+                  </div>
+                  {callData.additional_notes && (
                     <div className="col-span-2">
-                      <span className="text-sm font-medium text-muted-foreground">Service Type</span>
-                      <p className="mt-1">{callData.service_type}</p>
+                      <span className="text-sm font-medium text-muted-foreground">Additional Notes</span>
+                      <p className="mt-1">{callData.additional_notes}</p>
                     </div>
                   )}
                   <div>
