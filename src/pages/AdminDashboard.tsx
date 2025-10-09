@@ -16,6 +16,7 @@ import { BusinessTypesManager } from '@/components/BusinessTypesManager';
 import { AdminSettings } from '@/components/AdminSettings';
 import { AdminUsersList } from '@/components/AdminUsersList';
 import { ClientToolMonitor } from '@/components/ClientToolMonitor';
+import { CallInitiationFailuresMonitor } from '@/components/CallInitiationFailuresMonitor';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -467,71 +468,47 @@ const AdminDashboard = () => {
             {/* API Monitoring Section Header */}
             <div>
               <h3 className="text-xl font-semibold text-foreground mb-2">API Monitoring & Testing</h3>
-              <p className="text-sm text-muted-foreground">Click on any tile to view detailed monitoring</p>
+              <p className="text-sm text-muted-foreground">Real-time monitoring of API endpoints and webhooks</p>
             </div>
 
-            {/* API Tiles Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => navigate('/admin/post-call-data')}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Phone className="h-5 w-5" />
-                    Post Call Data
-                  </CardTitle>
-                  <CardDescription>
-                    Monitor webhook events and call transcripts
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+            {/* API Sub-tabs */}
+            <Tabs defaultValue="post-call-data" className="w-full">
+              <TabsList className="w-full grid grid-cols-4 mb-4">
+                <TabsTrigger value="post-call-data" className="text-xs sm:text-sm">Post Call Data</TabsTrigger>
+                <TabsTrigger value="business-data" className="text-xs sm:text-sm">Business Data</TabsTrigger>
+                <TabsTrigger value="call-failures" className="text-xs sm:text-sm">Call Failures</TabsTrigger>
+                <TabsTrigger value="client-tools" className="text-xs sm:text-sm">Client Tools</TabsTrigger>
+              </TabsList>
 
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => navigate('/admin/business-data-requests')}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    Business Data Requests
-                  </CardTitle>
-                  <CardDescription>
-                    Track business data API requests
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              <TabsContent value="post-call-data">
+                <WebhookMonitor defaultExpanded={true} />
+              </TabsContent>
 
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => navigate('/admin/call-initiation-failures')}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Phone className="h-5 w-5 text-destructive" />
-                    Call Failures
-                  </CardTitle>
-                  <CardDescription>
-                    View failed call initiation attempts
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+              <TabsContent value="business-data">
+                <BusinessDataMonitor defaultExpanded={true} />
+              </TabsContent>
 
-              <Card 
-                className="cursor-pointer hover:shadow-lg transition-shadow"
-                onClick={() => navigate('/admin/client-tool-events')}
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Client Tool Events
-                  </CardTitle>
-                  <CardDescription>
-                    Monitor client tool invocations
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            </div>
+              <TabsContent value="call-failures">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Phone className="w-5 h-5 text-destructive" />
+                      Call Initiation Failures
+                    </CardTitle>
+                    <CardDescription>
+                      Failed attempts to initiate calls via ElevenLabs
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <CallInitiationFailuresMonitor />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="client-tools">
+                <ClientToolMonitor defaultExpanded={true} />
+              </TabsContent>
+            </Tabs>
 
             {/* Google Calendar Availability Testing */}
             <div className="mt-6">
