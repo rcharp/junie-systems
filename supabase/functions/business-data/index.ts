@@ -89,11 +89,38 @@ serve(async (req) => {
           });
         }
 
-        // Get business_id from headers OR body (check both locations)
-        const conversationBusinessId = req.headers.get("business_id") || parsedBody?.business_id;
-        console.log("ElevenLabs business_id from headers:", req.headers.get("business_id"));
-        console.log("ElevenLabs business_id from body:", parsedBody?.business_id);
-        console.log("Final business_id used:", conversationBusinessId);
+        // Get business_id from called_number (Twilio phone number)
+        const calledNumber = parsedBody?.called_number;
+        console.log("ElevenLabs called_number:", calledNumber);
+        
+        if (!calledNumber) {
+          console.error("Missing called_number in ElevenLabs request");
+          return new Response(JSON.stringify({ error: "Missing called_number in request" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Look up business by twilio_phone_number
+        const { data: businessSettings, error: businessLookupError } = await supabase
+          .from("business_settings")
+          .select("id, user_id, twilio_phone_number")
+          .eq("twilio_phone_number", calledNumber)
+          .maybeSingle();
+
+        if (businessLookupError || !businessSettings) {
+          console.error("Error finding business by called_number:", businessLookupError);
+          return new Response(JSON.stringify({ 
+            error: "Business not found for this phone number",
+            called_number: calledNumber 
+          }), {
+            status: 404,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const conversationBusinessId = businessSettings.id;
+        console.log("Found business_id from called_number:", conversationBusinessId);
 
         // Store call_sid for transfer - use a temporary mapping with just business_id since we don't have conversation_id yet
         if (parsedBody?.call_sid && conversationBusinessId) {
