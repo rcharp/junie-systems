@@ -94,12 +94,18 @@ export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterP
 
       if (detailsError) throw detailsError;
 
+      const businessDetails = detailsData?.result || detailsData;
+      
+      if (!businessDetails) {
+        throw new Error('No business details found');
+      }
+
       // Generate business description
       const { data: descData, error: descError } = await supabase.functions.invoke('generate-business-description', {
         body: {
-          businessName: detailsData.result.name,
-          businessType: detailsData.result.types?.[0] || 'business',
-          address: detailsData.result.formatted_address
+          businessName: businessDetails.name,
+          businessType: businessDetails.types?.[0] || 'business',
+          address: businessDetails.formatted_address
         }
       });
 
@@ -108,8 +114,8 @@ export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterP
       // Extract services
       const { data: servicesData, error: servicesError } = await supabase.functions.invoke('extract-services', {
         body: {
-          businessName: detailsData.result.name,
-          businessType: descData.businessType || detailsData.result.types?.[0] || 'business',
+          businessName: businessDetails.name,
+          businessType: descData.businessType || businessDetails.types?.[0] || 'business',
           businessDescription: descData.description
         }
       });
@@ -126,13 +132,13 @@ export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterP
         .from('business_settings')
         .upsert({
           user_id: user.data.user.id,
-          business_name: detailsData.result.name,
-          business_phone: detailsData.result.formatted_phone_number,
-          business_address: detailsData.result.formatted_address,
-          business_hours: detailsData.result.opening_hours?.weekday_text?.join('\n'),
+          business_name: businessDetails.name,
+          business_phone: businessDetails.formatted_phone_number,
+          business_address: businessDetails.formatted_address,
+          business_hours: businessDetails.opening_hours?.weekday_text?.join('\n'),
           business_description: descData.description,
           business_type: descData.businessType,
-          business_website: detailsData.result.website,
+          business_website: businessDetails.website,
         }, {
           onConflict: 'user_id'
         });
@@ -141,9 +147,6 @@ export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterP
 
       // Save services
       if (servicesData?.services && Array.isArray(servicesData.services)) {
-        const user = await supabase.auth.getUser();
-        if (!user.data.user?.id) throw new Error('User not authenticated');
-
         const { data: businessData } = await supabase
           .from('business_settings')
           .select('id')
@@ -168,12 +171,12 @@ export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterP
 
       if (onDataExtracted) {
         onDataExtracted({
-          business_name: detailsData.result.name,
-          business_phone: detailsData.result.formatted_phone_number,
-          business_address: detailsData.result.formatted_address,
+          business_name: businessDetails.name,
+          business_phone: businessDetails.formatted_phone_number,
+          business_address: businessDetails.formatted_address,
           business_description: descData.description,
           business_type: descData.businessType,
-          business_website: detailsData.result.website,
+          business_website: businessDetails.website,
         });
       }
 
