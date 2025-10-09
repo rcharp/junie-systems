@@ -40,6 +40,7 @@ const AdminDashboard = () => {
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [calendarAvailability, setCalendarAvailability] = useState<any>(null);
   const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarTestDuration, setCalendarTestDuration] = useState<number | null>(null);
   
 
   useEffect(() => {
@@ -130,10 +131,16 @@ const AdminDashboard = () => {
 
   const testGoogleCalendarAvailability = async () => {
     setCalendarLoading(true);
+    const startTime = performance.now();
+    
     try {
       const { data, error } = await supabase.functions.invoke('google-calendar-availability', {
         body: { user_id: '54b21009-f5f0-45bf-b126-d11094178719' }
       });
+
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
+      setCalendarTestDuration(duration);
 
       if (error) {
         console.error('Error calling calendar availability:', error);
@@ -148,7 +155,7 @@ const AdminDashboard = () => {
       setCalendarAvailability(data);
       toast({
         title: "Success",
-        description: "Calendar availability fetched successfully",
+        description: `Calendar availability fetched in ${duration}ms`,
       });
     } catch (error) {
       console.error('Error:', error);
@@ -523,20 +530,27 @@ const AdminDashboard = () => {
                           Test the Google Calendar availability endpoint to see current results
                         </CardDescription>
                       </div>
-                      <Button 
-                        onClick={testGoogleCalendarAvailability}
-                        disabled={calendarLoading}
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0"
-                      >
-                        {calendarLoading ? (
-                          <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4 mr-2" />
+                      <div className="flex flex-col items-end gap-2">
+                        <Button 
+                          onClick={testGoogleCalendarAvailability}
+                          disabled={calendarLoading}
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0"
+                        >
+                          {calendarLoading ? (
+                            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                          ) : (
+                            <RefreshCw className="h-4 w-4 mr-2" />
+                          )}
+                          Test Availability
+                        </Button>
+                        {calendarTestDuration !== null && (
+                          <p className="text-xs text-muted-foreground">
+                            Retrieved in {calendarTestDuration}ms
+                          </p>
                         )}
-                        Test Availability
-                      </Button>
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="flex-1">
