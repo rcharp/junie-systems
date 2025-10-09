@@ -34,7 +34,6 @@ import {
   Settings as SettingsIcon,
   LogOut,
   AlertTriangle,
-  RefreshCw,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -53,11 +52,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { WebhookInfo } from "@/components/WebhookInfo";
-import { JuniePhoneDisplay } from "@/components/JuniePhoneDisplay";
 import NotificationSettings from "@/components/NotificationSettings";
+import { WebsiteImporter } from "@/components/WebsiteImporter";
 import { AddressInput } from "@/components/AddressAutocomplete";
 import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
-import { OnboardingDialog } from "@/components/OnboardingDialog";
 import { getUserTimezone, getTimezoneFromAddress, getCommonTimezones } from "@/lib/timezone-utils";
 import { handleRobustSignOut, cleanupAuthState } from "@/lib/auth-utils";
 import { FeatureGate } from "@/components/FeatureGate";
@@ -89,7 +87,6 @@ const Settings = () => {
   const [calendarBannerMessage, setCalendarBannerMessage] = useState("");
   const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
   const { featureAccess } = useSubscription();
   console.log("Settings state:", { user: user?.email, loading });
 
@@ -1098,14 +1095,14 @@ const Settings = () => {
         pricing_structure: finalValidServices.map((s) => `${s.name}: ${s.price}`).join(", "),
       };
     } else if (section === "Call") {
-      // Validate transfer number
+      // Validate forwarding number
       const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
 
       if (!forwardingNumber || !forwardingNumber.trim()) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Emergency Transfer Number is required",
+          description: "Emergency Forwarding Number is required",
         });
         return;
       }
@@ -1114,14 +1111,14 @@ const Settings = () => {
         toast({
           variant: "destructive",
           title: "Invalid Phone Number",
-          description: "Transfer number must be exactly 10 digits",
+          description: "Forwarding number must be exactly 10 digits",
         });
         setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
         return;
       }
 
       updateData = {
-        transfer_number: forwardingNumber.trim(),
+        forwarding_number: forwardingNumber.trim(),
         urgent_keywords: urgentKeywords,
         auto_forward: autoForward,
         common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),
@@ -1292,7 +1289,9 @@ const Settings = () => {
     }
     if (extractedData.business_description) setBusinessDescription(extractedData.business_description);
     if (extractedData.business_website) setBusinessWebsite(extractedData.business_website);
-    if (extractedData.business_type) setBusinessType(extractedData.business_type);
+
+    // Always clear business type on import so user starts fresh
+    setBusinessType("");
 
     if (extractedData.address) {
       setAddressData(extractedData.address);
@@ -1319,11 +1318,6 @@ const Settings = () => {
       if (servicesList.length > 0) {
         setServices(servicesList.slice(0, 5).map((service) => ({ name: service, price: "" })));
       }
-    }
-
-    // Reload services from database if business settings ID exists
-    if (businessSettingsId) {
-      await loadServices(businessSettingsId);
     }
 
     // Auto-generate description after import if we have enough data
@@ -1512,14 +1506,11 @@ const Settings = () => {
         <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
           {/* Mobile Layout */}
           <div className="md:hidden flex items-center justify-between">
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex items-center space-x-2">
-                <Link to="/" className="flex items-center flex-shrink-0">
-                  <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-6 w-6 sm:h-8 sm:w-8" />
-                </Link>
-                <h1 className="text-sm sm:text-base font-bold text-primary truncate">Settings</h1>
-              </div>
-              <JuniePhoneDisplay />
+            <div className="flex items-center space-x-2 flex-1 min-w-0">
+              <Link to="/" className="flex items-center flex-shrink-0">
+                <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-6 w-6 sm:h-8 sm:w-8" />
+              </Link>
+              <h1 className="text-sm sm:text-base font-bold text-primary truncate">Settings</h1>
             </div>
 
             <div className="flex items-center space-x-1">
@@ -1579,14 +1570,11 @@ const Settings = () => {
 
           {/* Desktop Layout */}
           <div className="hidden md:flex items-center justify-between">
-            <div className="flex flex-col space-y-1">
-              <div className="flex items-center space-x-3">
-                <Link to="/" className="flex items-center">
-                  <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-8 w-8" />
-                </Link>
-                <h1 className="text-xl font-bold text-primary">Settings</h1>
-              </div>
-              <JuniePhoneDisplay />
+            <div className="flex items-center space-x-3">
+              <Link to="/" className="flex items-center">
+                <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-8 w-8" />
+              </Link>
+              <h1 className="text-xl font-bold text-primary">Settings</h1>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -1651,11 +1639,9 @@ const Settings = () => {
       {/* Main Content */}
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
         <div className="max-w-4xl mx-auto">
-          <div className="mb-8 flex items-center justify-between">
-            <div>
-              <h2 className="text-3xl font-bold text-muted-foreground mb-2">Account Settings</h2>
-              <p className="text-muted-foreground">Configure your Junie assistant and account preferences.</p>
-            </div>
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-muted-foreground mb-2">Account Settings</h2>
+            <p className="text-muted-foreground">Configure your Junie assistant and account preferences.</p>
           </div>
 
           {/* Upgrade Dialog */}
@@ -2065,32 +2051,24 @@ const Settings = () => {
             <TabsContent value="business" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Building className="w-5 h-5 mr-2" />
-                    Business Information
-                  </CardTitle>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center">
+                      <Building className="w-5 h-5 mr-2" />
+                      Business Information
+                    </CardTitle>
+                    {/* <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => navigate("/setup-guide")}
+                      className="flex items-center gap-2 bg-gradient-primary hover:opacity-90 text-white border-none"
+                    >
+                      <Zap className="w-4 h-4" />
+                      Setup Guide
+                    </Button> */}
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <Card className="bg-primary/5 border-primary/20 mb-6">
-                    <CardContent className="pt-6">
-                      <div className="space-y-4">
-                        <div>
-                          <h3 className="font-semibold mb-1">Import Business Data</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Use the setup wizard to automatically import your business information
-                          </p>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setShowOnboardingDialog(true)}
-                          className="flex items-center gap-2"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                          Import Business Data
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <WebsiteImporter onDataExtracted={handleWebsiteDataExtracted} autoSave={true} className="mb-6" />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -2690,13 +2668,9 @@ const Settings = () => {
                     <div className="flex gap-2">
                       <Input
                         id="twilioPhoneNumber"
-                        value={
-                          twilioPhoneNumber 
-                            ? twilioPhoneNumber.replace(/^\+?1?(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3')
-                            : "Not assigned yet"
-                        }
-                        readOnly
-                        className="bg-background font-mono cursor-default"
+                        value={twilioPhoneNumber || "Not assigned yet"}
+                        disabled
+                        className="bg-muted cursor-not-allowed font-mono"
                       />
                       <Button
                         type="button"
@@ -2718,7 +2692,7 @@ const Settings = () => {
                   <FeatureGate feature="callTransfers" showUpgradeMessage={true}>
                     <div className="space-y-2">
                       <Label htmlFor="forwardingNumber" className="font-semibold">
-                        Call Transfer/SMS Notification Number <span className="text-destructive">*</span>
+                        Call Forwarding/SMS Notification Number <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         id="forwardingNumber"
@@ -2758,8 +2732,8 @@ const Settings = () => {
                         <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
                       )}
                       <p className="text-sm text-muted-foreground">
-                        The phone number that you want urgent or emergency calls to be transferred to. You will also get
-                        SMS notifications sent here.
+                        The phone number that you want urgent or emergency calls to be forwarded to, as well as SMS
+                        notifications.
                       </p>
                     </div>
                   </FeatureGate>
@@ -2770,30 +2744,23 @@ const Settings = () => {
                       id="urgentKeywords"
                       value={urgentKeywords}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        console.log('Urgent keywords input changed:', value);
-                        setUrgentKeywords(value);
+                        setUrgentKeywords(e.target.value);
                         debouncedAutoSave("Call");
                       }}
                       placeholder="emergency, urgent, asap, immediately"
                       rows={2}
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck="false"
-                      data-form-type="other"
                     />
                     <p className="text-sm text-muted-foreground">
-                      Comma-separated keywords that trigger urgent call transfers
+                      Comma-separated keywords that trigger urgent call forwarding
                     </p>
                   </div>
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="space-y-0.5">
-                        <Label>Automatically Transfer Urgent Calls</Label>
+                        <Label>Auto-Forward Urgent Calls</Label>
                         <p className="text-sm text-muted-foreground">
-                          Automatically transfer calls containing urgent keywords
+                          Automatically forward calls containing urgent keywords
                         </p>
                       </div>
                       <Switch
@@ -2982,17 +2949,6 @@ const Settings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Onboarding Dialog */}
-      <OnboardingDialog 
-        open={showOnboardingDialog} 
-        onOpenChange={setShowOnboardingDialog}
-        onDataImported={() => {
-          if (user?.id && user?.email) {
-            loadUserSettings(user.id, user.email);
-          }
-        }}
-      />
     </div>
   );
 };
