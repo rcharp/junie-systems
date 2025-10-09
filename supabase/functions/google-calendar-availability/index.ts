@@ -363,7 +363,7 @@ Deno.serve(async (req) => {
         }
       }
       
-      // Store blocks for Claude to convert properly
+      // Store blocks for Claude to convert properly, split into appointment-duration chunks
       let slotNumber = 0
       for (const block of availableBlocks) {
         slotNumber++
@@ -371,15 +371,26 @@ Deno.serve(async (req) => {
         console.log(`Processing block ${slotNumber}: start=${block.start}, end=${block.end}`)
         console.log(`Start ISO: ${block.start.toISOString()}, End ISO: ${block.end.toISOString()}`)
         
-        // Store the raw times - Claude will convert them properly
-        availableSlots.push({
-          startTime: block.start.toISOString(),
-          endTime: block.end.toISOString(),
-          timeOfDay: "pending", // Will be determined after timezone conversion
-          humanReadable: "pending" // Will be formatted by Claude
-        })
+        // Split the block into appointment-duration chunks
+        let chunkStart = new Date(block.start)
+        const blockEnd = new Date(block.end)
         
-        console.log(`  Block ${slotNumber}: ${block.start.toISOString()} to ${block.end.toISOString()}`)
+        while (chunkStart.getTime() + (appointmentDuration * 60 * 1000) <= blockEnd.getTime()) {
+          const chunkEnd = new Date(chunkStart.getTime() + (appointmentDuration * 60 * 1000))
+          
+          // Store the raw times - Claude will convert them properly
+          availableSlots.push({
+            startTime: chunkStart.toISOString(),
+            endTime: chunkEnd.toISOString(),
+            timeOfDay: "pending", // Will be determined after timezone conversion
+            humanReadable: "pending" // Will be formatted by Claude
+          })
+          
+          console.log(`  Chunk: ${chunkStart.toISOString()} to ${chunkEnd.toISOString()}`)
+          
+          // Move to next chunk
+          chunkStart = new Date(chunkEnd)
+        }
       }
       
       console.log(`Generated ${availableSlots.length} total slots so far`)
