@@ -255,8 +255,11 @@ Deno.serve(async (req) => {
     console.log('Availability hours:', JSON.stringify(availabilityHours))
     console.log('Current time (now):', now.toISOString())
     
-    // Generate slots for the next 7 days
-    for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    // Generate slots for the next 7 days (but stop after finding 5 slots)
+    const maxSlots = 5;
+    let foundEnoughSlots = false;
+    
+    for (let dayOffset = 0; dayOffset < 7 && !foundEnoughSlots; dayOffset++) {
       const currentDate = new Date(startDate)
       currentDate.setDate(startDate.getDate() + dayOffset)
       
@@ -304,7 +307,7 @@ Deno.serve(async (req) => {
       let currentStart = new Date(utcStartTime)
       const slotIncrement = 15 // Check every 15 minutes for availability
       
-      while (currentStart.getTime() < utcEndTime.getTime()) {
+      while (currentStart.getTime() < utcEndTime.getTime() && availableSlots.length < maxSlots) {
         // Check if current 15-minute slot is available
         const slotEnd = new Date(currentStart.getTime() + (slotIncrement * 60 * 1000))
         
@@ -366,6 +369,11 @@ Deno.serve(async (req) => {
       // Store blocks for Claude to convert properly, split into appointment-duration chunks
       let slotNumber = 0
       for (const block of availableBlocks) {
+        if (availableSlots.length >= maxSlots) {
+          foundEnoughSlots = true;
+          break;
+        }
+        
         slotNumber++
         
         console.log(`Processing block ${slotNumber}: start=${block.start}, end=${block.end}`)
@@ -375,7 +383,7 @@ Deno.serve(async (req) => {
         let chunkStart = new Date(block.start)
         const blockEnd = new Date(block.end)
         
-        while (chunkStart.getTime() + (appointmentDuration * 60 * 1000) <= blockEnd.getTime()) {
+        while (chunkStart.getTime() + (appointmentDuration * 60 * 1000) <= blockEnd.getTime() && availableSlots.length < maxSlots) {
           const chunkEnd = new Date(chunkStart.getTime() + (appointmentDuration * 60 * 1000))
           
           // Store the raw times - Claude will convert them properly
