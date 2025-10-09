@@ -2746,11 +2746,15 @@ const Settings = () => {
                       id="urgentKeywords"
                       value={urgentKeywords}
                       onChange={(e) => {
-                        setUrgentKeywords(e.target.value);
+                        const value = e.target.value;
+                        console.log('Urgent keywords input changed:', value);
+                        setUrgentKeywords(value);
                         debouncedAutoSave("Call");
                       }}
                       placeholder="emergency, urgent, asap, immediately"
                       rows={2}
+                      autoComplete="off"
+                      spellCheck="false"
                     />
                     <p className="text-sm text-muted-foreground">
                       Comma-separated keywords that trigger urgent call transfers
