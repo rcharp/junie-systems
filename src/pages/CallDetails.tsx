@@ -416,12 +416,6 @@ const CallDetails = () => {
                     <span className="text-sm font-medium text-muted-foreground">Service Type</span>
                     <p className="mt-1">{callData.service_type || 'N/A'}</p>
                   </div>
-                  {callData.additional_notes && (
-                    <div className="col-span-2">
-                      <span className="text-sm font-medium text-muted-foreground">Additional Notes</span>
-                      <p className="mt-1">{callData.additional_notes}</p>
-                    </div>
-                  )}
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Appointment Scheduled</span>
                     <p className="mt-1">{callData.appointment_scheduled ? 'Yes' : 'No'}</p>
@@ -480,6 +474,12 @@ const CallDetails = () => {
                       })()}
                     </p>
                   </div>
+                  {callData.additional_notes && (
+                    <div className="col-span-2">
+                      <span className="text-sm font-medium text-muted-foreground">Additional Notes</span>
+                      <p className="mt-1">{callData.additional_notes}</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

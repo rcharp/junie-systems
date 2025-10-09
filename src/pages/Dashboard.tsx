@@ -778,7 +778,8 @@ const Dashboard = () => {
                         .map((activity) => (
                           <div
                             key={activity.id}
-                            className="flex items-center space-x-3 p-2 rounded-lg"
+                            className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
+                            onClick={() => activity.source === "call" && navigate(`/call/${activity.id}`)}
                           >
                             <div
                               className={`w-2 h-2 rounded-full ${
@@ -803,17 +804,6 @@ const Dashboard = () => {
                                   <Badge variant="secondary" className="text-xs">
                                     {activity.call_type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                                   </Badge>
-                                  {activity.source === "call" && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 px-2"
-                                      onClick={() => navigate(`/call/${activity.id}`)}
-                                    >
-                                      <ExternalLink className="w-3 h-3 mr-1" />
-                                      <span className="text-xs">Details</span>
-                                    </Button>
-                                  )}
                                 </div>
                               </div>
                               <p className="text-xs text-muted-foreground">{activity.time}</p>
