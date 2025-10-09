@@ -175,8 +175,11 @@ const Login = () => {
               console.log('Session established successfully');
               const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
               console.log(`Redirecting to ${redirectPath}`);
+              
+              // Set flag and use navigate instead of window.location to prevent flicker
               isRedirectingRef.current = true;
-              window.location.href = redirectPath;
+              sessionStorage.setItem('oauth_completing', 'true');
+              navigate(redirectPath);
             } catch (error) {
               console.error('Error establishing session:', error);
               toast({
