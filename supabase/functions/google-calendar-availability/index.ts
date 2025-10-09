@@ -499,7 +499,7 @@ Example: If input is "2025-09-30T13:30:00.000Z" for America/New_York:
 
     return new Response(JSON.stringify({
       available: availableSlots.length > 0,
-      slots: availableSlots.slice(0, 10), // Return first 10 slots
+      slots: availableSlots.slice(0, 5), // Return first 5 slots
       timezone: calendarSettings.timezone,
       duration: appointmentDuration,
     }), {
