@@ -547,7 +547,10 @@ const AdminDashboard = () => {
                         </Button>
                         {calendarTestDuration !== null && (
                           <p className="text-xs text-muted-foreground">
-                            Retrieved in {calendarTestDuration}ms
+                            Retrieved in {calendarTestDuration < 1000 
+                              ? `${(calendarTestDuration / 1000).toFixed(2)}s`
+                              : `${Math.floor(calendarTestDuration / 60000)}m ${((calendarTestDuration % 60000) / 1000).toFixed(1)}s`
+                            }
                           </p>
                         )}
                       </div>
