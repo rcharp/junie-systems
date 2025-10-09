@@ -359,12 +359,10 @@ async function processWebhookInBackground(
     console.log('Background processing for user:', businessUserId);
     console.log('Incoming call phone number:', incomingCallPhoneNumber);
 
-    // Extract caller info using the existing function
-    const callerInfo = extractCallerInfo(fullTranscript);
-    
-    // Extract additional_notes and service_type from webhook data_collection_results
-    const additionalNotes = analysisData.additional_notes?.value || null;
-    const serviceTypeFromWebhook = analysisData.service_requested?.value || analysisData.service_type?.value || null;
+    // Extract caller info and additional data from webhook
+    const callerInfo = extractCallerInfo(fullTranscript, analysisData);
+    const additionalNotes = callerInfo.additional_notes;
+    const serviceTypeFromWebhook = callerInfo.service_type;
     
     // Parse appointment time AND normalize email with Claude in one call
     const { parsedDateTime: parsedAppointmentDateTime, normalizedEmail } = await parseCallDataWithClaude(
@@ -777,8 +775,8 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
   return { userId: null, callerId: null, businessId: null };
 }
 
-// Helper function to extract caller information
-function extractCallerInfo(transcript: string) {
+// Helper function to extract caller information from transcript and webhook data
+function extractCallerInfo(transcript: string, analysisData?: any) {
   const info = {
     caller_name: "A potential customer",
     phone_number: "", 
@@ -788,8 +786,15 @@ function extractCallerInfo(transcript: string) {
     best_time_to_call: null,
     call_type: "inquiry",
     appointmentDateTime: null,
-    serviceType: null
+    serviceType: null,
+    additional_notes: null
   };
+
+  // Extract additional_notes and service_type from webhook data if available
+  if (analysisData) {
+    info.additional_notes = analysisData.additional_notes?.value || null;
+    info.serviceType = analysisData.service_requested?.value || analysisData.service_type?.value || null;
+  }
 
   if (!transcript) return info;
 
