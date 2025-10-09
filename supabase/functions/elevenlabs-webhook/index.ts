@@ -46,22 +46,45 @@ serve(async (req) => {
     }
 
     // Handle call initiation failure events
-    if (webhookData.event_type === 'call_initiation_failure') {
+    if (webhookData.type === 'call_initiation_failure') {
       console.log('🔴 CALL INITIATION FAILURE DETECTED');
       console.log('Failure data:', JSON.stringify(webhookData, null, 2));
+      
+      const failureData = webhookData.data;
+      
+      // Extract phone number from metadata based on provider type
+      let phoneNumber = 'unknown';
+      if (failureData?.metadata?.type === 'twilio' && failureData?.metadata?.body?.To) {
+        phoneNumber = failureData.metadata.body.To;
+      } else if (failureData?.metadata?.type === 'sip' && failureData?.metadata?.body?.call_sid) {
+        phoneNumber = failureData.metadata.body.call_sid;
+      }
+      
+      // Build summary from failure reason and metadata
+      let summary = `Call initiation failed - Reason: ${failureData?.failure_reason || 'unknown'}`;
+      if (failureData?.metadata?.type === 'twilio') {
+        const status = failureData.metadata.body?.CallStatus;
+        const duration = failureData.metadata.body?.CallDuration;
+        summary += ` (Twilio Status: ${status || 'unknown'}, Duration: ${duration || 0}s)`;
+      } else if (failureData?.metadata?.type === 'sip') {
+        const sipCode = failureData.metadata.body?.sip_status_code;
+        const sipStatus = failureData.metadata.body?.sip_status;
+        summary += ` (SIP: ${sipCode || 'unknown'} ${sipStatus || ''})`;
+      }
       
       // Store the failure in database for tracking
       const { error: logError } = await supabase
         .from('call_logs')
         .insert({
-          user_id: webhookData.metadata?.user_id || null,
-          business_id: webhookData.metadata?.business_id || null,
+          user_id: null, // Will be populated via conversation mapping if available
+          business_id: null,
           caller_name: 'Call Initiation Failed',
-          caller_phone: webhookData.phone_number || 'unknown',
-          status: 'failed',
+          phone_number: phoneNumber,
+          call_status: 'failed',
           call_type: 'initiation_failure',
-          summary: `Call failed to initiate: ${webhookData.error_message || 'Unknown error'}`,
-          raw_webhook_data: webhookData,
+          call_summary: summary,
+          metadata: webhookData,
+          call_id: failureData?.conversation_id || null,
           created_at: new Date().toISOString()
         });
       
