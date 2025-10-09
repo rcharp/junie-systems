@@ -463,8 +463,8 @@ serve(async (req) => {
         forwarding_number: addUSCountryCode(businessData.forwarding_number || "N/A"),
         urgent_keywords: businessData.urgent_keywords || "emergency, urgent, asap, immediately",
         callback_timeframe: "within 24 hours",
+        available_times: availableTimes,
       },
-      available_times: availableTimes,
       error: null,
     };
 
