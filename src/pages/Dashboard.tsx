@@ -518,11 +518,7 @@ const Dashboard = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
-      </div>
-    );
+    return null; // Don't show loading spinner to prevent flicker
   }
 
   // Don't render dashboard until we've checked onboarding status
