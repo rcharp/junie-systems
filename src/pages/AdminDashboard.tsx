@@ -473,11 +473,12 @@ const AdminDashboard = () => {
 
             {/* API Sub-tabs */}
             <Tabs defaultValue="post-call-data" className="w-full">
-              <TabsList className="w-full grid grid-cols-4 mb-4">
+              <TabsList className="w-full grid grid-cols-5 mb-4">
                 <TabsTrigger value="post-call-data" className="text-xs sm:text-sm">Post Call Data</TabsTrigger>
                 <TabsTrigger value="business-data" className="text-xs sm:text-sm">Business Data</TabsTrigger>
                 <TabsTrigger value="call-failures" className="text-xs sm:text-sm">Call Failures</TabsTrigger>
                 <TabsTrigger value="client-tools" className="text-xs sm:text-sm">Client Tools</TabsTrigger>
+                <TabsTrigger value="calendar-test" className="text-xs sm:text-sm">Calendar Test</TabsTrigger>
               </TabsList>
 
               <TabsContent value="post-call-data">
@@ -508,40 +509,37 @@ const AdminDashboard = () => {
               <TabsContent value="client-tools">
                 <ClientToolMonitor defaultExpanded={true} />
               </TabsContent>
-            </Tabs>
 
-            {/* Google Calendar Availability Testing */}
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Calendar Integration Testing</h3>
-              <Card className="flex flex-col">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Clock className="h-5 w-5" />
-                        Google Calendar Availability Test
-                      </CardTitle>
-                      <CardDescription className="mt-1.5">
-                        Test the Google Calendar availability endpoint to see current results
-                      </CardDescription>
+              <TabsContent value="calendar-test">
+                <Card className="flex flex-col">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Clock className="h-5 w-5" />
+                          Google Calendar Availability Test
+                        </CardTitle>
+                        <CardDescription className="mt-1.5">
+                          Test the Google Calendar availability endpoint to see current results
+                        </CardDescription>
+                      </div>
+                      <Button 
+                        onClick={testGoogleCalendarAvailability}
+                        disabled={calendarLoading}
+                        size="sm"
+                        variant="outline"
+                        className="shrink-0"
+                      >
+                        {calendarLoading ? (
+                          <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                        )}
+                        Test Availability
+                      </Button>
                     </div>
-                    <Button 
-                      onClick={testGoogleCalendarAvailability}
-                      disabled={calendarLoading}
-                      size="sm"
-                      variant="outline"
-                      className="shrink-0"
-                    >
-                      {calendarLoading ? (
-                        <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                      ) : (
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                      )}
-                      Test Availability
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-1">
+                  </CardHeader>
+                  <CardContent className="flex-1">
                   {calendarAvailability ? (
                     <div className="space-y-4">
                       <div className="flex flex-wrap items-center gap-2">
@@ -601,7 +599,8 @@ const AdminDashboard = () => {
                   )}
                 </CardContent>
               </Card>
-            </div>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="todos" className="space-y-6">
