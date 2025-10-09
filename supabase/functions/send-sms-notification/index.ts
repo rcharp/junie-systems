@@ -14,6 +14,7 @@ interface SMSNotificationRequest {
   urgencyLevel: string;
   message: string;
   email?: string;
+  callId?: string;
 }
 
 serve(async (req) => {
@@ -41,7 +42,8 @@ serve(async (req) => {
       callType, 
       urgencyLevel, 
       message,
-      email 
+      email,
+      callId
     }: SMSNotificationRequest = await req.json();
 
     console.log(`Processing SMS notification for business ${businessId}`);
@@ -89,9 +91,10 @@ serve(async (req) => {
       throw new Error('No Twilio phone number available');
     }
 
-    // Format the SMS message - concise format
+    // Format the SMS message - concise format with dashboard link
     const urgencyEmoji = urgencyLevel === 'high' || urgencyLevel === 'emergency' ? '🚨 ' : '📞 ';
-    const smsBody = `${urgencyEmoji}${callerName} - ${callType}\n${message.substring(0, 60)}${message.length > 60 ? '...' : ''}\n${phoneNumber}${email ? ` | ${email}` : ''}`;
+    const dashboardLink = callId ? `\n\nView: https://junie-ai.lovable.app/call/${callId}` : '';
+    const smsBody = `${urgencyEmoji}${callerName} - ${callType}\n${message.substring(0, 60)}${message.length > 60 ? '...' : ''}\n${phoneNumber}${email ? ` | ${email}` : ''}${dashboardLink}`;
 
     // Send SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
