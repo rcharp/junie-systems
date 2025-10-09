@@ -33,9 +33,54 @@ serve(async (req) => {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const rawBody = await req.text();
-    console.log('Raw body received:', rawBody.substring(0, 200));
-
+    console.log('Raw body received:', rawBody.substring(0, 500));
+    
+    // Parse the webhook data first to check event type
     let webhookData;
+    try {
+      webhookData = JSON.parse(rawBody);
+      console.log('Webhook event type:', webhookData.event_type || 'unknown');
+    } catch (e) {
+      console.log('Could not parse as JSON, treating as raw data');
+      webhookData = { raw: rawBody };
+    }
+
+    // Handle call initiation failure events
+    if (webhookData.event_type === 'call_initiation_failure') {
+      console.log('🔴 CALL INITIATION FAILURE DETECTED');
+      console.log('Failure data:', JSON.stringify(webhookData, null, 2));
+      
+      // Store the failure in database for tracking
+      const { error: logError } = await supabase
+        .from('call_logs')
+        .insert({
+          user_id: webhookData.metadata?.user_id || null,
+          business_id: webhookData.metadata?.business_id || null,
+          caller_name: 'Call Initiation Failed',
+          caller_phone: webhookData.phone_number || 'unknown',
+          status: 'failed',
+          call_type: 'initiation_failure',
+          summary: `Call failed to initiate: ${webhookData.error_message || 'Unknown error'}`,
+          raw_webhook_data: webhookData,
+          created_at: new Date().toISOString()
+        });
+      
+      if (logError) {
+        console.error('Error logging call initiation failure:', logError);
+      } else {
+        console.log('✅ Call initiation failure logged to database');
+      }
+      
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Call initiation failure logged',
+        timestamp: new Date().toISOString()
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Continue processing for transcript events
     let isManualCall = false;
     
     // Handle empty body - check if it's a manual test call
@@ -233,22 +278,12 @@ serve(async (req) => {
         };
       }
     } else {
-      try {
-        webhookData = JSON.parse(rawBody);
-        // Check if this is a manual call by webhook_id
-        if (webhookData.webhook_id === '9ef6aa65-a653-41c3-83e4-50a54f2a3fc5') {
-          isManualCall = true;
-          console.log('🧪 Detected manual test call by webhook_id');
-        }
-        console.log('Successfully parsed webhook JSON data');
-      } catch (parseError) {
-        console.error('Error parsing webhook JSON:', parseError);
-        webhookData = {
-          message: "Webhook data received",
-          timestamp: new Date().toISOString(),
-          fullTranscript: rawBody
-        };
+      // Already parsed above, just check for manual call
+      if (webhookData.webhook_id === '9ef6aa65-a653-41c3-83e4-50a54f2a3fc5') {
+        isManualCall = true;
+        console.log('🧪 Detected manual test call by webhook_id');
       }
+      console.log('Successfully parsed webhook JSON data');
     }
 
     // Start background processing (don't wait for it)
