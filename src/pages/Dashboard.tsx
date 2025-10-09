@@ -103,6 +103,12 @@ const Dashboard = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    // Clear OAuth flag if present
+    const oauthCompleting = sessionStorage.getItem('oauth_completing');
+    if (oauthCompleting) {
+      sessionStorage.removeItem('oauth_completing');
+    }
+    
     if (!loading && !user) {
       navigate("/login");
     }
@@ -517,7 +523,10 @@ const Dashboard = () => {
     }
   };
 
-  if (loading) {
+  // Check if we're in the middle of OAuth flow
+  const isOAuthCompleting = sessionStorage.getItem('oauth_completing') === 'true';
+  
+  if (loading || isOAuthCompleting) {
     return null; // Don't show loading spinner to prevent flicker
   }
 

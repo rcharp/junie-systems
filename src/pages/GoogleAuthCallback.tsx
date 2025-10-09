@@ -66,6 +66,10 @@ const GoogleAuthCallback = () => {
           // Fallback for non-popup case (direct navigation to callback URL)
           const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
           console.log(`Not a popup, redirecting to ${redirectPath}...`);
+          
+          // Set flag to prevent flicker during redirect
+          sessionStorage.setItem('oauth_completing', 'true');
+          
           setTimeout(() => {
             window.location.href = redirectPath;
           }, 1500);
