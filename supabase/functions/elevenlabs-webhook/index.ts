@@ -407,7 +407,37 @@ async function processWebhookInBackground(
     console.log(`Final full transcript length: ${fullTranscript.length}`);
 
     const analysisData = webhookData.data?.analysis?.data_collection_results || {};
-    const { userId: businessUserId, callerId: incomingCallPhoneNumber, businessId } = await findTargetUserId(analysisData, webhookData, supabase);
+    let { userId: businessUserId, callerId: incomingCallPhoneNumber, businessId } = await findTargetUserId(analysisData, webhookData, supabase);
+    
+    // MANUAL CALL FALLBACK: If no user found and this is a manual call with webhook_id, look it up
+    if (!businessUserId && isManualCall && webhookData.webhook_id) {
+      console.log('🧪 MANUAL CALL: Attempting to find user by webhook_id:', webhookData.webhook_id);
+      
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('webhook_id', webhookData.webhook_id)
+        .maybeSingle();
+      
+      if (profileData?.id) {
+        businessUserId = profileData.id;
+        console.log('✅ Found user from webhook_id:', businessUserId);
+        
+        // Also try to get their business_id
+        const { data: businessData } = await supabase
+          .from('business_settings')
+          .select('id')
+          .eq('user_id', businessUserId)
+          .maybeSingle();
+        
+        if (businessData?.id) {
+          businessId = businessData.id;
+          console.log('✅ Found business_id:', businessId);
+        }
+      } else {
+        console.error('❌ Could not find user by webhook_id:', webhookData.webhook_id, profileError);
+      }
+    }
     
     if (!businessUserId) {
       console.error('Could not find target user in background processing');
