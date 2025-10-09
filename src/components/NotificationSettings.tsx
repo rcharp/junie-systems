@@ -39,7 +39,7 @@ const NotificationSettings = () => {
     try {
       const { data, error } = await supabase
         .from("business_settings")
-        .select("id, email_notifications, sms_notifications, push_notifications, instant_alerts, forwarding_number")
+        .select("id, email_notifications, sms_notifications, push_notifications, instant_alerts, transfer_number")
         .eq("user_id", user?.id)
         .single();
 
@@ -56,7 +56,7 @@ const NotificationSettings = () => {
         setSmsOptIn(smsEnabled); // If SMS is enabled, they must have agreed to terms
         setPushNotifications(data.push_notifications !== false);
         setInstantAlerts(data.instant_alerts !== false);
-        setForwardingNumber(data.forwarding_number || "");
+        setForwardingNumber(data.transfer_number || "");
       }
     } catch (error) {
       console.error("Error loading notification settings:", error);

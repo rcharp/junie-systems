@@ -1137,7 +1137,7 @@ const Onboarding = () => {
             business_description: claudeData.description || businessData.editorial_summary?.overview || null,
             business_type_full_name: businessData.types?.join(', ') || null,
             business_timezone: 'America/New_York',
-            forwarding_number: forwardingNumber,
+            transfer_number: forwardingNumber,
             sms_notifications: true,
           }, { 
             onConflict: 'user_id'

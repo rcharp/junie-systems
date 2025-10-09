@@ -19,7 +19,7 @@ async function getForwardingNumber(businessId?: string, userId?: string): Promis
     
     let query = supabase
       .from('business_settings')
-      .select('forwarding_number')
+      .select('transfer_number')
       .limit(1);
     
     if (businessId) {
@@ -38,13 +38,13 @@ async function getForwardingNumber(businessId?: string, userId?: string): Promis
       return "+12345";
     }
     
-    if (!data || !data.forwarding_number) {
-      console.log("[Transfer] No forwarding number found, using default");
+    if (!data || !data.transfer_number) {
+      console.log("[Transfer] No transfer number found, using default");
       return "+12345";
     }
     
-    console.log(`[Transfer] Found forwarding number: ${data.forwarding_number}`);
-    return data.forwarding_number;
+    console.log(`[Transfer] Found transfer number: ${data.transfer_number}`);
+    return data.transfer_number;
   } catch (error) {
     console.error("[Transfer] Exception fetching forwarding number:", error);
     return "+12345";
@@ -152,8 +152,8 @@ serve(async (req) => {
               console.log(`[II] Processing transfer_call for call ${callSid}`);
 
               const callContext = activeCalls.get(callSid);
-              if (!callContext || !callContext.forwarding_number) {
-                console.error("[II] No forwarding number found in call context");
+              if (!callContext || !callContext.transfer_number) {
+                console.error("[II] No transfer number found in call context");
                 
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
@@ -164,7 +164,7 @@ serve(async (req) => {
                 break;
               }
 
-              const forwardingNumber = callContext.forwarding_number;
+              const forwardingNumber = callContext.transfer_number;
               console.log(`[II] Calling twilio-transfer function to transfer to: ${forwardingNumber}`);
 
               try {
@@ -265,13 +265,13 @@ serve(async (req) => {
                 ...existingCall,
                 status: "active", 
                 streamSid,
-                forwarding_number: forwardingNumber
+                transfer_number: forwardingNumber
               });
               
               console.log(`[Twilio] Call context: ${JSON.stringify({
                 callSid,
                 streamSid,
-                forwarding_number: forwardingNumber
+                transfer_number: forwardingNumber
               })}`);
             }
             break;

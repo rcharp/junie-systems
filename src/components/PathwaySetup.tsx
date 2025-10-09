@@ -33,7 +33,7 @@ A: We offer flexible pricing plans starting from basic call handling to comprehe
 
 Q: Can you integrate with my existing systems?
 A: Yes, we can integrate with most scheduling systems, CRMs, and business tools. Let me connect you with our technical team.`,
-    forwarding_number: '',
+    transfer_number: '',
   });
 
   const [addressData, setAddressData] = useState({
@@ -245,12 +245,12 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="forwarding_number">Forwarding Number (Optional)</Label>
+          <Label htmlFor="transfer_number">Transfer Number (Optional)</Label>
           <Input
-            id="forwarding_number"
+            id="transfer_number"
             placeholder="+1234567890"
-            value={formData.forwarding_number}
-            onChange={(e) => handleInputChange('forwarding_number', e.target.value)}
+            value={formData.transfer_number}
+            onChange={(e) => handleInputChange('transfer_number', e.target.value)}
           />
           <p className="text-sm text-muted-foreground">
             Number to transfer calls to when human assistance is needed

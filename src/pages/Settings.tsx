@@ -440,7 +440,7 @@ const Settings = () => {
         setBusinessDescription(data.business_description || "");
         setBusinessWebsite(data.business_website || "");
 
-        const loadedForwardingNumber = data.forwarding_number || "";
+        const loadedForwardingNumber = data.transfer_number || "";
         setForwardingNumber(loadedForwardingNumber);
 
         // Clear validation error if loaded phone number is valid
@@ -1121,7 +1121,7 @@ const Settings = () => {
       }
 
       updateData = {
-        forwarding_number: forwardingNumber.trim(),
+        transfer_number: forwardingNumber.trim(),
         urgent_keywords: urgentKeywords,
         auto_forward: autoForward,
         common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),

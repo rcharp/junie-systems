@@ -127,7 +127,6 @@ export type Database = {
           created_at: string
           custom_greeting: string | null
           email_notifications: boolean | null
-          forwarding_number: string | null
           id: string
           instant_alerts: boolean | null
           lead_capture: boolean | null
@@ -137,6 +136,7 @@ export type Database = {
           record_calls: boolean | null
           services_offered: string | null
           sms_notifications: boolean | null
+          transfer_number: string | null
           twilio_phone_number: string | null
           updated_at: string
           urgent_keywords: string | null
@@ -161,7 +161,6 @@ export type Database = {
           created_at?: string
           custom_greeting?: string | null
           email_notifications?: boolean | null
-          forwarding_number?: string | null
           id?: string
           instant_alerts?: boolean | null
           lead_capture?: boolean | null
@@ -171,6 +170,7 @@ export type Database = {
           record_calls?: boolean | null
           services_offered?: string | null
           sms_notifications?: boolean | null
+          transfer_number?: string | null
           twilio_phone_number?: string | null
           updated_at?: string
           urgent_keywords?: string | null
@@ -195,7 +195,6 @@ export type Database = {
           created_at?: string
           custom_greeting?: string | null
           email_notifications?: boolean | null
-          forwarding_number?: string | null
           id?: string
           instant_alerts?: boolean | null
           lead_capture?: boolean | null
@@ -205,6 +204,7 @@ export type Database = {
           record_calls?: boolean | null
           services_offered?: string | null
           sms_notifications?: boolean | null
+          transfer_number?: string | null
           twilio_phone_number?: string | null
           updated_at?: string
           urgent_keywords?: string | null
