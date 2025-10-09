@@ -26,6 +26,7 @@ import {
   Clock
 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { JuniePhoneDisplay } from "@/components/JuniePhoneDisplay";
 
 const SetupGuide = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -190,6 +191,7 @@ const SetupGuide = () => {
             <div>
               <h1 className="text-xl font-bold text-primary">Setup Guide</h1>
               <p className="text-sm text-muted-foreground">Get your AI assistant ready in minutes</p>
+              <JuniePhoneDisplay />
             </div>
           </div>
           

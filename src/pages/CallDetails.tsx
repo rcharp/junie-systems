@@ -13,6 +13,7 @@ import { formatInTimeZone } from "date-fns-tz";
 import { Link } from "react-router-dom";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { cleanTranscript } from "@/lib/transcript-utils";
+import { JuniePhoneDisplay } from "@/components/JuniePhoneDisplay";
 import { cleanCallerName } from "@/lib/caller-utils";
 
 interface CallData {

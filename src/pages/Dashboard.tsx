@@ -49,6 +49,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { FeatureGate } from "@/components/FeatureGate";
 import { useSubscription } from "@/hooks/useSubscription";
+import { JuniePhoneDisplay } from "@/components/JuniePhoneDisplay";
 
 interface RecentActivity {
   id: string;
@@ -540,11 +541,14 @@ const Dashboard = () => {
         <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
           {/* Mobile Layout */}
           <div className="md:hidden flex items-center justify-between">
-            <div className="flex items-center space-x-2 flex-1 min-w-0">
-              <a href="/" className="flex items-center flex-shrink-0">
-                <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-6 w-6 sm:h-8 sm:w-8" />
-              </a>
-              <h1 className="text-sm sm:text-base font-bold text-primary truncate">Dashboard</h1>
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="flex items-center space-x-2">
+                <a href="/" className="flex items-center flex-shrink-0">
+                  <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-6 w-6 sm:h-8 sm:w-8" />
+                </a>
+                <h1 className="text-sm sm:text-base font-bold text-primary truncate">Dashboard</h1>
+              </div>
+              <JuniePhoneDisplay />
             </div>
 
             <div className="flex items-center space-x-1">
@@ -592,10 +596,14 @@ const Dashboard = () => {
 
           {/* Desktop Layout */}
           <div className="hidden md:flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <a href="/" className="flex items-center">
-                <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-8 w-8" />
-              </a>
+            <div className="flex flex-col space-y-1">
+              <div className="flex items-center space-x-3">
+                <a href="/" className="flex items-center">
+                  <img src="/lovable-uploads/junie-logo.png" alt="Junie Logo" className="h-8 w-8" />
+                </a>
+                <h1 className="text-xl font-bold text-primary">Dashboard</h1>
+              </div>
+              <JuniePhoneDisplay />
             </div>
 
             <div className="flex items-center space-x-4">
