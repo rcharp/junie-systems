@@ -2744,7 +2744,7 @@ const Settings = () => {
                       rows={2}
                     />
                     <p className="text-sm text-muted-foreground">
-                      Comma-separated keywords that trigger urgent call forwarding
+                      Comma-separated keywords that trigger urgent call transfer
                     </p>
                   </div>
 
