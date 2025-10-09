@@ -1425,7 +1425,7 @@ const Onboarding = () => {
                 <Button
                   onClick={() => {
                     setShowVerification(false);
-                    setStep(3);
+                    setStep(4);
                   }}
                   className="flex-1"
                   size="lg"
@@ -1442,7 +1442,7 @@ const Onboarding = () => {
       {/* Progress indicator */}
       <div className="container mx-auto px-4 py-2">
         <div className="max-w-2xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
-          <span>Step {step} of 3</span>
+          <span>Step {step > 2 ? step - 1 : step} of 3</span>
         </div>
       </div>
 
@@ -1848,6 +1848,15 @@ const Onboarding = () => {
                         <ArrowRight className="ml-2 w-5 h-5" />
                       </>
                     )}
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(1)}
+                    className="w-full"
+                    disabled={savingForwarding}
+                  >
+                    ← Back
                   </Button>
                 </CardContent>
               </Card>
