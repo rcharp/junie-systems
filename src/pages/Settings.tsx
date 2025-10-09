@@ -55,7 +55,6 @@ import {
 import { WebhookInfo } from "@/components/WebhookInfo";
 import { JuniePhoneDisplay } from "@/components/JuniePhoneDisplay";
 import NotificationSettings from "@/components/NotificationSettings";
-import { WebsiteImporter } from "@/components/WebsiteImporter";
 import { AddressInput } from "@/components/AddressAutocomplete";
 import GoogleCalendarConnect from "@/components/GoogleCalendarConnect";
 import { OnboardingDialog } from "@/components/OnboardingDialog";
@@ -1657,14 +1656,6 @@ const Settings = () => {
               <h2 className="text-3xl font-bold text-muted-foreground mb-2">Account Settings</h2>
               <p className="text-muted-foreground">Configure your Junie assistant and account preferences.</p>
             </div>
-            <Button 
-              variant="outline" 
-              onClick={() => setShowOnboardingDialog(true)}
-              className="flex items-center gap-2"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Re-run Setup
-            </Button>
           </div>
 
           {/* Upgrade Dialog */}
@@ -2080,7 +2071,26 @@ const Settings = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <WebsiteImporter onDataExtracted={handleWebsiteDataExtracted} className="mb-6" />
+                  <Card className="bg-primary/5 border-primary/20 mb-6">
+                    <CardContent className="pt-6">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-semibold mb-1">Import Business Data</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Use the setup wizard to automatically import your business information
+                          </p>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowOnboardingDialog(true)}
+                          className="flex items-center gap-2"
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          Import Business Data
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
