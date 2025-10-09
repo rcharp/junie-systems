@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    // SECURITY: Verify admin authorization
+    // SECURITY: Verify user authorization
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
       return new Response(
@@ -27,7 +27,7 @@ serve(async (req) => {
       );
     }
 
-    // Create client with user's JWT to verify admin role
+    // Create client with user's JWT
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -41,20 +41,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ error: 'Unauthorized: Invalid token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Check if user has admin role
-    const { data: isAdmin, error: roleError } = await supabaseClient.rpc('has_role', {
-      _user_id: user.id,
-      _role: 'admin'
-    });
-
-    if (roleError || !isAdmin) {
-      console.error('Authorization check failed:', roleError);
-      return new Response(
-        JSON.stringify({ error: 'Forbidden: Admin access required' }),
-        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -77,28 +63,43 @@ serve(async (req) => {
       );
     }
 
-    console.log('Admin authorized. Purchasing Twilio number for area code:', areaCode);
-
     // Use service role client for database operations
     const serviceClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Fetch business name
+    // Verify user owns this business OR is admin
     const { data: businessData, error: businessError } = await serviceClient
       .from('business_settings')
-      .select('business_name')
+      .select('user_id, business_name')
       .eq('id', businessId)
       .single();
 
     if (businessError || !businessData) {
       console.error('Error fetching business data:', businessError);
-      throw new Error('Failed to fetch business information');
+      return new Response(
+        JSON.stringify({ error: 'Business not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Check if user is admin
+    const { data: isAdmin } = await supabaseClient.rpc('has_role', {
+      _user_id: user.id,
+      _role: 'admin'
+    });
+
+    // Allow if user owns the business OR is admin
+    if (businessData.user_id !== user.id && !isAdmin) {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden: You can only purchase numbers for your own business' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const businessName = businessData.business_name || 'Business';
-    console.log('Business name:', businessName);
+    console.log('User authorized. Purchasing Twilio number for business:', businessName);
 
     // Get Twilio credentials from environment
     const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
