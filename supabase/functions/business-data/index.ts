@@ -175,13 +175,17 @@ serve(async (req) => {
                 availabilityResponse.data.slots?.length > 0
               ) {
                 const slots = availabilityResponse.data.slots.slice(0, 5); // Show first 5 available slots
-                // Format as JSON string with full slot objects
-                const formattedSlots = slots.map((slot: any) => ({
-                  startTime: slot.startTime,
-                  endTime: slot.endTime,
-                  timeOfDay: slot.timeOfDay,
-                  humanReadable: slot.humanReadable,
-                }));
+                // Format as JSON string with date and time separated
+                const formattedSlots = slots.map((slot: any) => {
+                  const startDate = new Date(slot.startTime);
+                  const endDate = new Date(slot.endTime);
+                  
+                  return {
+                    date: startDate.toISOString().split('T')[0], // YYYY-MM-DD
+                    startTime: startDate.toTimeString().slice(0, 5), // HH:mm
+                    endTime: endDate.toTimeString().slice(0, 5), // HH:mm
+                  };
+                });
                 dynamicAvailableTimes = JSON.stringify(formattedSlots);
               }
             } catch (error) {
@@ -404,13 +408,17 @@ serve(async (req) => {
           console.log("Number of slots:", slots.length);
 
           if (slots.length > 0) {
-            // Format the slots as JSON string with full slot objects
-            const formattedSlots = slots.map((slot: any) => ({
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              timeOfDay: slot.timeOfDay,
-              humanReadable: slot.humanReadable,
-            }));
+            // Format the slots as JSON string with date and time separated
+            const formattedSlots = slots.map((slot: any) => {
+              const startDate = new Date(slot.startTime);
+              const endDate = new Date(slot.endTime);
+              
+              return {
+                date: startDate.toISOString().split('T')[0], // YYYY-MM-DD
+                startTime: startDate.toTimeString().slice(0, 5), // HH:mm
+                endTime: endDate.toTimeString().slice(0, 5), // HH:mm
+              };
+            });
 
             console.log("Formatted slots:", formattedSlots);
             availableTimes = JSON.stringify(formattedSlots);
