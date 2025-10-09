@@ -2670,7 +2670,11 @@ const Settings = () => {
                     <div className="flex gap-2">
                       <Input
                         id="twilioPhoneNumber"
-                        value={twilioPhoneNumber || "Not assigned yet"}
+                        value={
+                          twilioPhoneNumber 
+                            ? twilioPhoneNumber.replace(/^\+?1?(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3')
+                            : "Not assigned yet"
+                        }
                         readOnly
                         className="bg-background font-mono cursor-default"
                       />
