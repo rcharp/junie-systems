@@ -467,21 +467,75 @@ const AdminDashboard = () => {
             {/* API Monitoring Section Header */}
             <div>
               <h3 className="text-xl font-semibold text-foreground mb-2">API Monitoring & Testing</h3>
-              <p className="text-sm text-muted-foreground">Real-time monitoring of API endpoints and webhooks</p>
+              <p className="text-sm text-muted-foreground">Click on any tile to view detailed monitoring</p>
             </div>
 
-            {/* 2x2 Grid Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-              {/* Post-Call Data */}
-              <WebhookMonitor />
+            {/* API Tiles Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate('/admin/post-call-data')}
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    Post Call Data
+                  </CardTitle>
+                  <CardDescription>
+                    Monitor webhook events and call transcripts
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
-              {/* Business Data Requests */}
-              <BusinessDataMonitor />
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate('/admin/business-data-requests')}
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    Business Data Requests
+                  </CardTitle>
+                  <CardDescription>
+                    Track business data API requests
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
-              {/* Client Tool Events Monitor */}
-              <ClientToolMonitor />
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate('/admin/call-initiation-failures')}
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-destructive" />
+                    Call Failures
+                  </CardTitle>
+                  <CardDescription>
+                    View failed call initiation attempts
+                  </CardDescription>
+                </CardHeader>
+              </Card>
 
-              {/* Google Calendar Availability Testing */}
+              <Card 
+                className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => navigate('/admin/client-tool-events')}
+              >
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Client Tool Events
+                  </CardTitle>
+                  <CardDescription>
+                    Monitor client tool invocations
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+
+            {/* Google Calendar Availability Testing */}
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Calendar Integration Testing</h3>
               <Card className="flex flex-col">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">

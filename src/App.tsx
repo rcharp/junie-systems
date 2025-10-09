@@ -15,6 +15,10 @@ import GoogleAuth from "./pages/GoogleAuth";
 import GoogleAuthCallback from "./pages/GoogleAuthCallback";
 import SetupGuide from "./pages/SetupGuide";
 import AdminDashboard from "./pages/AdminDashboard";
+import PostCallDataPage from "./pages/admin/PostCallDataPage";
+import BusinessDataRequestsPage from "./pages/admin/BusinessDataRequestsPage";
+import CallInitiationFailuresPage from "./pages/admin/CallInitiationFailuresPage";
+import ClientToolEventsPage from "./pages/admin/ClientToolEventsPage";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import PricingPage from "./pages/PricingPage";
@@ -43,6 +47,10 @@ const App = () => (
             <Route path="/google-auth-callback" element={<GoogleAuthCallback />} />
             <Route path="/setup-guide" element={<SetupGuide />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/post-call-data" element={<PostCallDataPage />} />
+            <Route path="/admin/business-data-requests" element={<BusinessDataRequestsPage />} />
+            <Route path="/admin/call-initiation-failures" element={<CallInitiationFailuresPage />} />
+            <Route path="/admin/client-tool-events" element={<ClientToolEventsPage />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/pricing" element={<PricingPage />} />
