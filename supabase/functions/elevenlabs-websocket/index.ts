@@ -13,9 +13,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 const activeCalls = new Map<string, any>();
 
-async function getForwardingNumber(businessId?: string, userId?: string): Promise<string> {
+async function getTransferNumber(businessId?: string, userId?: string): Promise<string> {
   try {
-    console.log(`[Transfer] Fetching forwarding number for businessId: ${businessId}, userId: ${userId}`);
+    console.log(`[Transfer] Fetching transfer number for businessId: ${businessId}, userId: ${userId}`);
     
     let query = supabase
       .from('business_settings')
@@ -34,7 +34,7 @@ async function getForwardingNumber(businessId?: string, userId?: string): Promis
     const { data, error } = await query.maybeSingle();
     
     if (error) {
-      console.error("[Transfer] Error fetching forwarding number:", error);
+      console.error("[Transfer] Error fetching transfer number:", error);
       return "+12345";
     }
     
@@ -46,7 +46,7 @@ async function getForwardingNumber(businessId?: string, userId?: string): Promis
     console.log(`[Transfer] Found transfer number: ${data.transfer_number}`);
     return data.transfer_number;
   } catch (error) {
-    console.error("[Transfer] Exception fetching forwarding number:", error);
+    console.error("[Transfer] Exception fetching transfer number:", error);
     return "+12345";
   }
 }
@@ -158,14 +158,14 @@ serve(async (req) => {
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
                   tool_call_id: message.client_tool_call.tool_call_id,
-                  result: "No forwarding number available",
+                  result: "No transfer number available",
                   is_error: true
                 }));
                 break;
               }
 
-              const forwardingNumber = callContext.transfer_number;
-              console.log(`[II] Calling twilio-transfer function to transfer to: ${forwardingNumber}`);
+              const transferNumber = callContext.transfer_number;
+              console.log(`[II] Calling twilio-transfer function to transfer to: ${transferNumber}`);
 
               try {
                 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -183,7 +183,7 @@ serve(async (req) => {
                       callSid: callSid,
                       businessId: callContext?.businessId,
                       userId: callContext?.userId,
-                      agentNumber: forwardingNumber
+                      agentNumber: transferNumber
                     })
                   }
                 );
@@ -256,7 +256,7 @@ serve(async (req) => {
             if (callSid) {
               const existingCall = activeCalls.get(callSid) || {};
               
-              const forwardingNumber = await getForwardingNumber(
+              const transferNumber = await getTransferNumber(
                 existingCall.businessId, 
                 existingCall.userId
               );
@@ -265,13 +265,13 @@ serve(async (req) => {
                 ...existingCall,
                 status: "active", 
                 streamSid,
-                transfer_number: forwardingNumber
+                transfer_number: transferNumber
               });
               
               console.log(`[Twilio] Call context: ${JSON.stringify({
                 callSid,
                 streamSid,
-                transfer_number: forwardingNumber
+                transfer_number: transferNumber
               })}`);
             }
             break;
