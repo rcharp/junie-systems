@@ -175,19 +175,14 @@ serve(async (req) => {
                 availabilityResponse.data.slots?.length > 0
               ) {
                 const slots = availabilityResponse.data.slots.slice(0, 5); // Show first 5 available slots
-                // Format as JSON string with date and time separated
-                const formattedSlots = slots.map((slot: any) => {
-                  const startDate = new Date(slot.startTime);
-                  const endDate = new Date(slot.endTime);
-                  
-                  return {
-                    date: startDate.toISOString().split('T')[0], // YYYY-MM-DD
-                    startTime: startDate.toTimeString().slice(0, 5), // HH:mm
-                    endTime: endDate.toTimeString().slice(0, 5), // HH:mm
-                    timeOfDay: slot.timeOfDay,
-                    humanReadable: slot.humanReadable,
-                  };
-                });
+                // Format as JSON string with date and time separated (times already in user's timezone from Claude)
+                const formattedSlots = slots.map((slot: any) => ({
+                  date: slot.humanReadable.split(',')[1].trim().split(' ').slice(0, 3).join('-'), // Extract date from humanReadable
+                  startTime: slot.humanReadable.match(/(\d{1,2}:\d{2})\s*(am|pm)/i)?.[0] || slot.startTime,
+                  endTime: slot.humanReadable.match(/-(\d{1,2}:\d{2})\s*(am|pm)/i)?.[1] + ' ' + slot.humanReadable.match(/-(\d{1,2}:\d{2})\s*(am|pm)/i)?.[2] || slot.endTime,
+                  timeOfDay: slot.timeOfDay,
+                  humanReadable: slot.humanReadable,
+                }));
                 dynamicAvailableTimes = JSON.stringify(formattedSlots);
               }
             } catch (error) {
@@ -410,15 +405,26 @@ serve(async (req) => {
           console.log("Number of slots:", slots.length);
 
           if (slots.length > 0) {
-            // Format the slots as JSON string with date and time separated
+            // Format the slots - extract properly formatted times from humanReadable since it's already in user's timezone
             const formattedSlots = slots.map((slot: any) => {
-              const startDate = new Date(slot.startTime);
-              const endDate = new Date(slot.endTime);
+              // Extract date in YYYY-MM-DD format from humanReadable (e.g., "Thursday, October 9, 2025")
+              const dateMatch = slot.humanReadable.match(/(\w+),\s+(\w+)\s+(\d+),\s+(\d+)/);
+              const monthMap: {[key: string]: string} = {
+                'January': '01', 'February': '02', 'March': '03', 'April': '04',
+                'May': '05', 'June': '06', 'July': '07', 'August': '08',
+                'September': '09', 'October': '10', 'November': '11', 'December': '12'
+              };
+              const date = dateMatch ? `${dateMatch[4]}-${monthMap[dateMatch[2]]}-${dateMatch[3].padStart(2, '0')}` : '';
+              
+              // Extract times from humanReadable (e.g., "1:15 pm-2:15 pm")
+              const timeMatch = slot.humanReadable.match(/(\d{1,2}:\d{2})\s*(am|pm)\s*-\s*(\d{1,2}:\d{2})\s*(am|pm)/i);
+              const startTime = timeMatch ? `${timeMatch[1]} ${timeMatch[2]}` : '';
+              const endTime = timeMatch ? `${timeMatch[3]} ${timeMatch[4]}` : '';
               
               return {
-                date: startDate.toISOString().split('T')[0], // YYYY-MM-DD
-                startTime: startDate.toTimeString().slice(0, 5), // HH:mm
-                endTime: endDate.toTimeString().slice(0, 5), // HH:mm
+                date,
+                startTime,
+                endTime,
                 timeOfDay: slot.timeOfDay,
                 humanReadable: slot.humanReadable,
               };
