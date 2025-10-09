@@ -122,32 +122,76 @@ serve(async (req) => {
       throw new Error('Twilio credentials not configured');
     }
 
-    // Search for available numbers in the area code
-    const searchUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/AvailablePhoneNumbers/US/Local.json?AreaCode=${areaCode}&Limit=1`;
-    
     const basicAuth = btoa(`${twilioAccountSid}:${twilioAuthToken}`);
+
+    // Function to search for available numbers by area code
+    const searchForNumber = async (searchAreaCode: string) => {
+      const searchUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/AvailablePhoneNumbers/US/Local.json?AreaCode=${searchAreaCode}&Limit=1`;
+      
+      console.log(`Searching for available numbers in area code: ${searchAreaCode}`);
+      const searchResponse = await fetch(searchUrl, {
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+        },
+      });
+
+      if (!searchResponse.ok) {
+        const errorText = await searchResponse.text();
+        console.error('Twilio search error:', errorText);
+        return null;
+      }
+
+      const searchData = await searchResponse.json();
+      
+      if (searchData.available_phone_numbers && searchData.available_phone_numbers.length > 0) {
+        return searchData.available_phone_numbers[0].phone_number;
+      }
+      
+      return null;
+    };
+
+    // Try primary area code first
+    let phoneNumber = await searchForNumber(areaCode);
     
-    console.log('Searching for available numbers...');
-    const searchResponse = await fetch(searchUrl, {
-      headers: {
-        'Authorization': `Basic ${basicAuth}`,
-      },
-    });
-
-    if (!searchResponse.ok) {
-      const errorText = await searchResponse.text();
-      console.error('Twilio search error:', errorText);
-      throw new Error(`Failed to search for phone numbers: ${searchResponse.statusText}`);
+    // If no numbers found, try nearby area codes based on state
+    if (!phoneNumber) {
+      console.log(`No numbers found for area code ${areaCode}, trying alternatives...`);
+      
+      // Get state from business address to find nearby area codes
+      const { data: stateData } = await serviceClient
+        .from('business_settings')
+        .select('business_address_state_full, business_address')
+        .eq('id', businessId)
+        .single();
+      
+      // Map of states to alternative area codes
+      const stateAreaCodes: { [key: string]: string[] } = {
+        'Virginia': ['571', '804', '757', '540', '276'],
+        'Florida': ['305', '954', '561', '407', '813', '727', '850', '386'],
+        'New York': ['212', '718', '917', '646', '347', '516', '631'],
+        'California': ['310', '424', '213', '323', '818', '626', '714', '949'],
+        'Texas': ['214', '469', '972', '817', '682', '281', '713', '832']
+      };
+      
+      const stateName = stateData?.business_address_state_full || 'Virginia';
+      const alternativeCodes = stateAreaCodes[stateName] || ['571', '703', '202'];
+      
+      // Try each alternative area code
+      for (const altCode of alternativeCodes) {
+        if (altCode === areaCode) continue; // Skip the one we already tried
+        
+        phoneNumber = await searchForNumber(altCode);
+        if (phoneNumber) {
+          console.log(`Found number in alternative area code: ${altCode}`);
+          break;
+        }
+      }
     }
 
-    const searchData = await searchResponse.json();
-    console.log('Available numbers:', searchData);
-
-    if (!searchData.available_phone_numbers || searchData.available_phone_numbers.length === 0) {
-      throw new Error(`No available phone numbers found for area code ${areaCode}`);
+    if (!phoneNumber) {
+      throw new Error(`No available phone numbers found for area code ${areaCode} or nearby area codes`);
     }
 
-    const phoneNumber = searchData.available_phone_numbers[0].phone_number;
     console.log('Found available number:', phoneNumber);
 
     // Purchase the phone number with friendly name
