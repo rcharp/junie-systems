@@ -2671,8 +2671,8 @@ const Settings = () => {
                       <Input
                         id="twilioPhoneNumber"
                         value={twilioPhoneNumber || "Not assigned yet"}
-                        disabled
-                        className="bg-muted cursor-not-allowed font-mono"
+                        readOnly
+                        className="bg-background font-mono cursor-default"
                       />
                       <Button
                         type="button"
