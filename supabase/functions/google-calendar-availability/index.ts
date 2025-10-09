@@ -489,12 +489,9 @@ Example: If input is "2025-09-30T13:30:00.000Z" for America/New_York:
       console.log('No available slots to convert');
     }
 
-    // Format available_times as a JSON string
-    const availableTimesString = JSON.stringify(availableSlots.slice(0, 10));
-    
     return new Response(JSON.stringify({
       available: availableSlots.length > 0,
-      available_times: availableTimesString,
+      slots: availableSlots.slice(0, 10), // Return first 10 slots
       timezone: calendarSettings.timezone,
       duration: appointmentDuration,
     }), {
