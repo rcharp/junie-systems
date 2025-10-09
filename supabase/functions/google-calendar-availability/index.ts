@@ -186,9 +186,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Get the next 7 days for availability checking
+    // Query 4 days instead of 7 since we only need 5 slots (performance optimization)
     const startDate = new Date()
-    const endDate = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000)) // 7 days from now
+    const endDate = new Date(Date.now() + (4 * 24 * 60 * 60 * 1000)) // 4 days from now
 
     const timeMin = startDate.toISOString()
     const timeMax = endDate.toISOString()
@@ -196,13 +196,28 @@ Deno.serve(async (req) => {
     // Use primary calendar if no specific calendar_id is set
     const calendarId = calendarSettings.calendar_id || 'primary'
     
-    // Get calendar timezone from Google Calendar API
-    const calendarInfoResponse = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}`, {
-      headers: {
-        'Authorization': `Bearer ${currentAccessToken}`,
-        'Content-Type': 'application/json',
-      },
-    })
+    // Fetch calendar timezone and busy times in parallel for better performance
+    console.log('Fetching calendar data in parallel...')
+    const [calendarInfoResponse, freeBusyResponse] = await Promise.all([
+      fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}`, {
+        headers: {
+          'Authorization': `Bearer ${currentAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }),
+      fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${currentAccessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          timeMin,
+          timeMax,
+          items: [{ id: calendarId }],
+        }),
+      })
+    ])
 
     let googleCalendarTimezone = null
     if (calendarInfoResponse.ok) {
@@ -212,20 +227,6 @@ Deno.serve(async (req) => {
     } else {
       console.log('Failed to get calendar info, using stored timezone')
     }
-    
-    // Fetch busy times from Google Calendar
-    const freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${currentAccessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        timeMin,
-        timeMax,
-        items: [{ id: calendarId }],
-      }),
-    })
 
     console.log('FreeBusy request sent to calendar ID:', calendarId)
 
@@ -257,10 +258,10 @@ Deno.serve(async (req) => {
     console.log('Current time (now):', now.toISOString())
     
     
-    // Generate slots for the next 7 days (but stop after finding MAX_SLOTS)
+    // Generate slots for the next 4 days (reduced from 7 since we only need 5 slots)
     let slotsFound = 0;
     
-    for (let dayOffset = 0; dayOffset < 7 && slotsFound < MAX_SLOTS; dayOffset++) {
+    for (let dayOffset = 0; dayOffset < 4 && slotsFound < MAX_SLOTS; dayOffset++) {
       const currentDate = new Date(startDate)
       currentDate.setDate(startDate.getDate() + dayOffset)
       
