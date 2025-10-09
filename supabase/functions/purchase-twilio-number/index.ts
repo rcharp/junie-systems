@@ -85,15 +85,28 @@ serve(async (req) => {
     }
 
     // Check if user is admin
-    const { data: isAdmin } = await supabaseClient.rpc('has_role', {
+    const { data: isAdmin, error: roleError } = await supabaseClient.rpc('has_role', {
       _user_id: user.id,
       _role: 'admin'
     });
 
+    console.log('User ID:', user.id);
+    console.log('Business owner ID:', businessData.user_id);
+    console.log('Is admin:', isAdmin);
+    console.log('Role check error:', roleError);
+
     // Allow if user owns the business OR is admin
     if (businessData.user_id !== user.id && !isAdmin) {
+      console.error('Authorization failed - user does not own business and is not admin');
       return new Response(
-        JSON.stringify({ error: 'Forbidden: You can only purchase numbers for your own business' }),
+        JSON.stringify({ 
+          error: 'Forbidden: You can only purchase numbers for your own business',
+          debug: {
+            userId: user.id,
+            businessOwnerId: businessData.user_id,
+            isAdmin: isAdmin
+          }
+        }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
