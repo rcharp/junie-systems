@@ -248,9 +248,9 @@ const NotificationSettings = () => {
                 />
               </div>
 
-              {/* Forwarding Number Display */}
+              {/* Transfer Number Display */}
               <div className="space-y-2">
-                <Label htmlFor="forwarding-number" className="text-sm font-medium">
+                <Label htmlFor="transfer-number" className="text-sm font-medium">
                   SMS Notification Number
                 </Label>
                 <Input
