@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, Loader2, Building2, MapPin } from 'lucide-react';
@@ -204,73 +205,103 @@ export const WebsiteImporter = ({ onDataExtracted, className }: WebsiteImporterP
   };
 
   return (
-    <Card className={`bg-primary/5 border-primary/20 ${className}`}>
-      <CardContent className="pt-6">
-        <div className="space-y-2 mb-3">
-          <Label htmlFor="businessSearch">Import Business Information</Label>
-          <p className="text-sm text-muted-foreground">
-            Search for your business to automatically import details
-          </p>
-        </div>
-        <div className="relative" ref={searchContainerRef}>
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
-          <Input
-            id="businessSearch"
-            type="text"
-            placeholder="Search for your business..."
-            value={businessSearch}
-            onChange={(e) => {
-              setBusinessSearch(e.target.value);
-              setSelectedBusiness(null);
-              isSelectingBusinessRef.current = false;
-            }}
-            onFocus={() => {
-              if (businessSearch.length >= 2 && !selectedBusiness) {
-                setShowResults(true);
-              }
-            }}
-            className="pl-12 h-12"
-            disabled={isLoading}
-          />
-          {searchLoading && (
-            <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-muted-foreground" />
-          )}
-          
-          {showResults && searchResults.length > 0 && (
-            <Card className="absolute w-full mt-2 z-50 shadow-lg border-2">
-              <ScrollArea className="h-[200px]">
-                <div className="p-2">
-                  {searchResults.map((result) => (
-                    <button
-                      key={result.place_id}
-                      onClick={() => handleBusinessSelect(result)}
-                      disabled={isLoading}
-                      className="w-full text-left p-3 hover:bg-muted rounded-lg transition-colors flex items-start gap-3 group disabled:opacity-50"
-                    >
-                      <Building2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-foreground group-hover:text-primary truncate">
-                          {result.structured_formatting.main_text}
-                        </p>
-                        <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {result.structured_formatting.secondary_text}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </ScrollArea>
-            </Card>
-          )}
-        </div>
-        {isLoading && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Importing business data...</span>
+    <>
+      <Card className={`bg-primary/5 border-primary/20 ${className}`}>
+        <CardContent className="pt-6">
+          <div className="space-y-2 mb-3">
+            <Label htmlFor="businessSearch">Import Business Information</Label>
+            <p className="text-sm text-muted-foreground">
+              Search for your business to automatically import details
+            </p>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div className="relative" ref={searchContainerRef}>
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground z-10" />
+            <Input
+              id="businessSearch"
+              type="text"
+              placeholder="Search for your business..."
+              value={businessSearch}
+              onChange={(e) => {
+                setBusinessSearch(e.target.value);
+                setSelectedBusiness(null);
+                isSelectingBusinessRef.current = false;
+              }}
+              onFocus={() => {
+                if (businessSearch.length >= 2 && !selectedBusiness) {
+                  setShowResults(true);
+                }
+              }}
+              className="pl-12 h-12"
+              disabled={isLoading}
+            />
+            {searchLoading && (
+              <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-muted-foreground" />
+            )}
+            
+            {showResults && searchResults.length > 0 && (
+              <Card className="absolute w-full mt-2 z-50 shadow-lg border-2">
+                <ScrollArea className="h-[200px]">
+                  <div className="p-2">
+                    {searchResults.map((result) => (
+                      <button
+                        key={result.place_id}
+                        onClick={() => handleBusinessSelect(result)}
+                        disabled={isLoading}
+                        className="w-full text-left p-3 hover:bg-muted rounded-lg transition-colors flex items-start gap-3 group disabled:opacity-50"
+                      >
+                        <Building2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground group-hover:text-primary truncate">
+                            {result.structured_formatting.main_text}
+                          </p>
+                          <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            {result.structured_formatting.secondary_text}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              </Card>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Dialog open={isLoading} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              Importing Business Data
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span>Fetching business details...</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse delay-75" />
+                <span>Generating business description...</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse delay-150" />
+                <span>Extracting services...</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse delay-300" />
+                <span>Saving to database...</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              This may take a few moments. Please don't close this window.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
