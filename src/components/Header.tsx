@@ -35,14 +35,13 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
             />
           </a>
           {showAuthButtons && user && isAdmin && (
-            <Badge 
-              className="bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base px-3 sm:px-4 py-1 sm:py-1.5 flex items-center gap-1.5 sm:gap-2 font-semibold shadow-md cursor-pointer transition-all"
-              style={{ boxShadow: '0 0 0 2px #60a5fa' }}
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white border-2 border-blue-400 rounded-full text-sm sm:text-base px-3 sm:px-4 py-1 sm:py-1.5 flex items-center gap-1.5 sm:gap-2 font-semibold shadow-md cursor-pointer transition-all"
               onClick={() => navigate('/admin')}
             >
               <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Admin Access</span>
-            </Badge>
+            </button>
           )}
         </div>
         
