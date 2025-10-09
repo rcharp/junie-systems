@@ -57,46 +57,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        // Don't update state if we're in the process of signing out
-        if (signingOutRef.current) {
-          return;
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Defer admin status check to prevent auth deadlock
-          setTimeout(() => {
-            checkAdminStatus(session.user.id);
-          }, 0);
-        } else {
-          setIsAdmin(false);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // Check for existing session
+    let mounted = true;
+    
+    // Check for existing session first
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        // Defer admin status check to prevent auth deadlock
         setTimeout(() => {
-          checkAdminStatus(session.user.id);
+          if (mounted) checkAdminStatus(session.user.id);
         }, 0);
       }
       
       setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted || signingOutRef.current) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          setTimeout(() => {
+            if (mounted) checkAdminStatus(session.user.id);
+          }, 0);
+        } else {
+          setIsAdmin(false);
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
