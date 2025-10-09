@@ -2754,7 +2754,10 @@ const Settings = () => {
                       placeholder="emergency, urgent, asap, immediately"
                       rows={2}
                       autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
                       spellCheck="false"
+                      data-form-type="other"
                     />
                     <p className="text-sm text-muted-foreground">
                       Comma-separated keywords that trigger urgent call transfers
