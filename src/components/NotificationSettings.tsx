@@ -22,7 +22,7 @@ const NotificationSettings = () => {
   const [businessSettingsId, setBusinessSettingsId] = useState<string | null>(null);
   const [autoSaveTimeout, setAutoSaveTimeout] = useState<NodeJS.Timeout | null>(null);
   const [isAutoSaving, setIsAutoSaving] = useState(false);
-  const [forwardingNumber, setForwardingNumber] = useState("");
+  const [transferNumber, setTransferNumber] = useState("");
   const [showTermsWarning, setShowTermsWarning] = useState(false);
 
   const { user } = useAuth();
@@ -56,7 +56,7 @@ const NotificationSettings = () => {
         setSmsOptIn(smsEnabled); // If SMS is enabled, they must have agreed to terms
         setPushNotifications(data.push_notifications !== false);
         setInstantAlerts(data.instant_alerts !== false);
-        setForwardingNumber(data.transfer_number || "");
+        setTransferNumber(data.transfer_number || "");
       }
     } catch (error) {
       console.error("Error loading notification settings:", error);
@@ -250,14 +250,14 @@ const NotificationSettings = () => {
                 />
               </div>
 
-              {/* Forwarding Number Display */}
+              {/* Transfer Number Display */}
               <div className="space-y-2">
-                <Label htmlFor="forwarding-number" className="text-sm font-medium">
+                <Label htmlFor="transfer-number" className="text-sm font-medium">
                   SMS Notification Number
                 </Label>
                 <Input
-                  id="forwarding-number"
-                  value={forwardingNumber || "Not set"}
+                  id="transfer-number"
+                  value={transferNumber || "Not set"}
                   disabled
                   className="bg-muted cursor-not-allowed"
                 />

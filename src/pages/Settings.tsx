@@ -1098,14 +1098,14 @@ const Settings = () => {
         pricing_structure: finalValidServices.map((s) => `${s.name}: ${s.price}`).join(", "),
       };
     } else if (section === "Call") {
-      // Validate forwarding number
+      // Validate transfer number
       const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
 
       if (!forwardingNumber || !forwardingNumber.trim()) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Emergency Forwarding Number is required",
+          description: "Emergency Transfer Number is required",
         });
         return;
       }
@@ -1114,7 +1114,7 @@ const Settings = () => {
         toast({
           variant: "destructive",
           title: "Invalid Phone Number",
-          description: "Forwarding number must be exactly 10 digits",
+          description: "Transfer number must be exactly 10 digits",
         });
         setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
         return;

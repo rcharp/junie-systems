@@ -48,10 +48,10 @@ const Onboarding = () => {
   const { toast } = useToast();
   const [businessTypesList, setBusinessTypesList] = useState<Array<{value: string, label: string}>>([]);
   
-  // Call forwarding state
-  const [forwardingNumber, setForwardingNumber] = useState("");
-  const [forwardingNumberError, setForwardingNumberError] = useState(false);
-  const [savingForwarding, setSavingForwarding] = useState(false);
+  // Call transfer state
+  const [transferNumber, setTransferNumber] = useState("");
+  const [transferNumberError, setTransferNumberError] = useState(false);
+  const [savingTransfer, setSavingTransfer] = useState(false);
 
   // US states list for Claude matching
   const statesList = [
@@ -1122,7 +1122,7 @@ const Onboarding = () => {
           }
         }
         
-        // Save business settings with Claude-enhanced data and forwarding number
+        // Save business settings with Claude-enhanced data and transfer number
         const { data: businessSettingsResult, error: businessError } = await supabase
           .from('business_settings')
           .upsert({
@@ -1137,7 +1137,7 @@ const Onboarding = () => {
             business_description: claudeData.description || businessData.editorial_summary?.overview || null,
             business_type_full_name: businessData.types?.join(', ') || null,
             business_timezone: 'America/New_York',
-            transfer_number: forwardingNumber,
+            transfer_number: transferNumber,
             sms_notifications: true,
           }, { 
             onConflict: 'user_id'
@@ -1659,10 +1659,10 @@ const Onboarding = () => {
                       Call Transfer Number <span className="text-red-500">*</span>
                     </Label>
                     <Input
-                      id="forwarding-number"
+                      id="transfer-number"
                       type="tel"
                       placeholder="(555) 123-4567"
-                      value={forwardingNumber}
+                      value={transferNumber}
                       onChange={(e) => {
                         let value = e.target.value.replace(/\D/g, "");
                         if (value.length > 10) value = value.slice(0, 10);
@@ -1674,13 +1674,13 @@ const Onboarding = () => {
                           formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
                         }
                         
-                        setForwardingNumber(formatted);
-                        setForwardingNumberError(value.length > 0 && value.length !== 10);
+                        setTransferNumber(formatted);
+                        setTransferNumberError(value.length > 0 && value.length !== 10);
                       }}
-                      className={forwardingNumberError ? "border-destructive" : ""}
+                      className={transferNumberError ? "border-destructive" : ""}
                       autoFocus
                     />
-                    {forwardingNumberError && (
+                    {transferNumberError && (
                       <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
                     )}
                     <p className="text-sm text-muted-foreground">
@@ -1690,9 +1690,9 @@ const Onboarding = () => {
 
                   <Button
                     onClick={() => {
-                      const digits = forwardingNumber.replace(/\D/g, "");
+                      const digits = transferNumber.replace(/\D/g, "");
                       if (digits.length !== 10) {
-                        setForwardingNumberError(true);
+                        setTransferNumberError(true);
                         return;
                       }
                       // Just move to next step, don't save yet
@@ -1700,7 +1700,7 @@ const Onboarding = () => {
                     }}
                     className="w-full h-12 text-base"
                     size="lg"
-                    disabled={forwardingNumberError || !forwardingNumber}
+                    disabled={transferNumberError || !transferNumber}
                   >
                     Continue to Create Account
                     <ArrowRight className="ml-2 w-5 h-5" />

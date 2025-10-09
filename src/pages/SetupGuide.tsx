@@ -360,9 +360,9 @@ const SetupGuide = () => {
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h3 className="font-semibold text-blue-900 mb-2">📞 Call Forwarding Setup</h3>
+                      <h3 className="font-semibold text-blue-900 mb-2">📞 Call Transfer Setup</h3>
                       <p className="text-blue-800 text-sm mb-3">
-                        Forward your business calls to Junie when you can't answer. No new phone system required!
+                        Transfer your business calls to Junie when you can't answer. No new phone system required!
                       </p>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between bg-white rounded p-2">
@@ -372,7 +372,7 @@ const SetupGuide = () => {
                             Copy
                           </Button>
                         </div>
-                        <p className="text-xs text-blue-700">Use this number for call forwarding setup</p>
+                        <p className="text-xs text-blue-700">Use this number for call transfer setup</p>
                       </div>
                     </div>
 
@@ -382,7 +382,7 @@ const SetupGuide = () => {
                         <div className="space-y-3">
                           <div className="border rounded-lg p-3">
                             <h4 className="font-medium">Verizon</h4>
-                            <p className="text-sm text-muted-foreground mb-2">Dial *72 + forwarding number</p>
+                            <p className="text-sm text-muted-foreground mb-2">Dial *72 + transfer number</p>
                             <Button size="sm" variant="outline" className="w-full">
                               <ExternalLink className="w-3 h-3 mr-1" />
                               View Instructions
@@ -390,7 +390,7 @@ const SetupGuide = () => {
                           </div>
                           <div className="border rounded-lg p-3">
                             <h4 className="font-medium">AT&T</h4>
-                            <p className="text-sm text-muted-foreground mb-2">Dial *72 + forwarding number</p>
+                            <p className="text-sm text-muted-foreground mb-2">Dial *72 + transfer number</p>
                             <Button size="sm" variant="outline" className="w-full">
                               <ExternalLink className="w-3 h-3 mr-1" />
                               View Instructions

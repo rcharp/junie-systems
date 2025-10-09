@@ -8,7 +8,7 @@ const HowItWorks = () => {
       icon: <Settings className="w-8 h-8" />,
       step: "STEP 1",
       title: "Connect your business line",
-      description: "Set up call forwarding from your existing business number to Junie in under 5 minutes. No new phone system required."
+      description: "Set up call transfer from your existing business number to Junie in under 5 minutes. No new phone system required."
     },
     {
       icon: <CheckCircle className="w-8 h-8" />,
@@ -26,7 +26,7 @@ const HowItWorks = () => {
       icon: <MessageSquare className="w-8 h-8" />,
       step: "STEP 4",
       title: "Never miss another call",
-      description: "Junie handles incoming calls 24/7, captures leads, schedules appointments, and forwards urgent matters instantly via text or email."
+      description: "Junie handles incoming calls 24/7, captures leads, schedules appointments, and transfers urgent matters instantly via text or email."
     }
   ];
 
