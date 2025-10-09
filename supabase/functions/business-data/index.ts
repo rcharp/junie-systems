@@ -176,13 +176,29 @@ serve(async (req) => {
               ) {
                 const slots = availabilityResponse.data.slots.slice(0, 5); // Show first 5 available slots
                 // Format as JSON string with date and time separated (times already in user's timezone from Claude)
-                const formattedSlots = slots.map((slot: any) => ({
-                  date: slot.humanReadable.split(',')[1].trim().split(' ').slice(0, 3).join('-'), // Extract date from humanReadable
-                  startTime: slot.humanReadable.match(/(\d{1,2}:\d{2})\s*(am|pm)/i)?.[0] || slot.startTime,
-                  endTime: slot.humanReadable.match(/-(\d{1,2}:\d{2})\s*(am|pm)/i)?.[1] + ' ' + slot.humanReadable.match(/-(\d{1,2}:\d{2})\s*(am|pm)/i)?.[2] || slot.endTime,
-                  timeOfDay: slot.timeOfDay,
-                  humanReadable: slot.humanReadable,
-                }));
+                const formattedSlots = slots.map((slot: any) => {
+                  // Extract date in YYYY-MM-DD format from humanReadable
+                  const dateMatch = slot.humanReadable.match(/(\w+),\s+(\w+)\s+(\d+),\s+(\d+)/);
+                  const monthMap: {[key: string]: string} = {
+                    'January': '01', 'February': '02', 'March': '03', 'April': '04',
+                    'May': '05', 'June': '06', 'July': '07', 'August': '08',
+                    'September': '09', 'October': '10', 'November': '11', 'December': '12'
+                  };
+                  const date = dateMatch ? `${dateMatch[4]}-${monthMap[dateMatch[2]]}-${dateMatch[3].padStart(2, '0')}` : '';
+                  
+                  // Extract times from humanReadable
+                  const timeMatch = slot.humanReadable.match(/(\d{1,2}:\d{2})\s*(am|pm)\s*-\s*(\d{1,2}:\d{2})\s*(am|pm)/i);
+                  const startTime = timeMatch ? `${timeMatch[1]} ${timeMatch[2]}` : '';
+                  const endTime = timeMatch ? `${timeMatch[3]} ${timeMatch[4]}` : '';
+                  
+                  return {
+                    date,
+                    startTime,
+                    endTime,
+                    timeOfDay: slot.timeOfDay,
+                    humanReadable: slot.humanReadable,
+                  };
+                });
                 dynamicAvailableTimes = JSON.stringify(formattedSlots);
               }
             } catch (error) {
