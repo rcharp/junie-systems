@@ -22,7 +22,7 @@ export const CallInitiationFailuresMonitor = () => {
     try {
       const { data, error } = await supabase
         .from('call_logs')
-        .select('*')
+        .select('id, phone_number, created_at, call_summary, metadata')
         .eq('call_type', 'initiation_failure')
         .order('created_at', { ascending: false });
 
