@@ -109,13 +109,12 @@ const Onboarding = () => {
     checkUser();
   }, [navigate]);
 
-  // Auto-proceed to business setup for authenticated users at step 2
+  // Show verification when step changes to 2
   useEffect(() => {
-    if (step === 2 && isAuthenticated) {
-      // Automatically trigger business data saving for already-authenticated users
-      handleAuthenticatedUserSetup();
+    if (step === 2 && !showVerification) {
+      setShowVerification(true);
     }
-  }, [step, isAuthenticated]);
+  }, [step, showVerification]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -1123,7 +1122,7 @@ const Onboarding = () => {
           }
         }
         
-        // Save business settings with Claude-enhanced data
+        // Save business settings with Claude-enhanced data and forwarding number
         const { data: businessSettingsResult, error: businessError } = await supabase
           .from('business_settings')
           .upsert({
@@ -1138,6 +1137,8 @@ const Onboarding = () => {
             business_description: claudeData.description || businessData.editorial_summary?.overview || null,
             business_type_full_name: businessData.types?.join(', ') || null,
             business_timezone: 'America/New_York',
+            forwarding_number: forwardingNumber,
+            sms_notifications: true,
           }, { 
             onConflict: 'user_id'
           })
@@ -1426,12 +1427,12 @@ const Onboarding = () => {
                 <Button
                   onClick={() => {
                     setShowVerification(false);
-                    setStep(4);
+                    setStep(3);
                   }}
                   className="flex-1"
                   size="lg"
                 >
-                  Continue to Setup
+                  Continue to Call Setup
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </div>
@@ -1443,7 +1444,7 @@ const Onboarding = () => {
       {/* Progress indicator */}
       <div className="container mx-auto px-4 py-2">
         <div className="max-w-2xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
-          <span>Step {step > 2 ? step - 1 : step} of 3</span>
+          <span>Step {Math.min(step, 4)} of 4</span>
         </div>
       </div>
 
@@ -1618,16 +1619,106 @@ const Onboarding = () => {
                 </CardContent>
               </Card>
 
-              <p className="text-center text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <a href="/login" className="text-primary hover:underline font-medium">
-                  Sign in
-                </a>
-              </p>
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="ghost"
+                  onClick={() => window.location.href = '/'}
+                  className="text-muted-foreground"
+                >
+                  ← Back
+                </Button>
+                <p className="text-center text-sm text-muted-foreground">
+                  Already have an account?{" "}
+                  <a href="/login" className="text-primary hover:underline font-medium">
+                    Sign in
+                  </a>
+                </p>
+              </div>
             </div>
           ) : step === 2 ? (
-            /* Step 2: Create Account */
+            /* Step 2: Verify Business Details */
             <div className="space-y-6 animate-slide-up" key="step-2">
+              {/* This will be shown via the verification overlay */}
+            </div>
+          ) : step === 3 ? (
+            /* Step 3: Call Transfer Setup */
+            <div className="space-y-6 animate-slide-up" key="step-3">
+              <div className="text-center space-y-3">
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+                  Set your call transfer number
+                </h1>
+                <p className="text-muted-foreground text-lg">
+                  Where should we transfer calls when a caller wants to speak to you immediately?
+                </p>
+              </div>
+
+              <Card className="border-2 shadow-elegant">
+                <CardContent className="pt-6 space-y-6">
+                  <div className="space-y-3">
+                    <Label htmlFor="forwarding-number">
+                      Call Transfer Number <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="forwarding-number"
+                      type="tel"
+                      placeholder="(555) 123-4567"
+                      value={forwardingNumber}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, "");
+                        if (value.length > 10) value = value.slice(0, 10);
+                        
+                        let formatted = value;
+                        if (value.length >= 6) {
+                          formatted = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
+                        } else if (value.length >= 3) {
+                          formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                        }
+                        
+                        setForwardingNumber(formatted);
+                        setForwardingNumberError(value.length > 0 && value.length !== 10);
+                      }}
+                      className={forwardingNumberError ? "border-destructive" : ""}
+                      autoFocus
+                    />
+                    {forwardingNumberError && (
+                      <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      Enter the phone number where calls will be transferred when a caller requests to speak with you immediately. You will also receive SMS notifications at this number.
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => {
+                      const digits = forwardingNumber.replace(/\D/g, "");
+                      if (digits.length !== 10) {
+                        setForwardingNumberError(true);
+                        return;
+                      }
+                      // Just move to next step, don't save yet
+                      setStep(4);
+                    }}
+                    className="w-full h-12 text-base"
+                    size="lg"
+                    disabled={forwardingNumberError || !forwardingNumber}
+                  >
+                    Continue to Create Account
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(2)}
+                    className="w-full"
+                  >
+                    ← Back
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          ) : step === 4 ? (
+            /* Step 4: Create Account */
+            <div className="space-y-6 animate-slide-up" key="step-4">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                   Create your account
@@ -1753,7 +1844,7 @@ const Onboarding = () => {
               <div className="flex justify-between items-center">
                 <Button
                   variant="ghost"
-                  onClick={() => setStep(1)}
+                  onClick={() => setStep(3)}
                   className="text-muted-foreground"
                 >
                   ← Back
@@ -1766,127 +1857,7 @@ const Onboarding = () => {
                 </p>
               </div>
             </div>
-          ) : (
-            /* Step 3: Call Transfer Setup */
-            <div className="space-y-6 animate-slide-up" key="step-3">
-              <div className="text-center space-y-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                  Set your call transfer number
-                </h1>
-                <p className="text-muted-foreground text-lg">
-                  Where should we transfer calls when a caller wants to speak to you immediately?
-                </p>
-              </div>
-
-              <Card className="border-2 shadow-elegant">
-                <CardContent className="pt-6 space-y-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="forwarding-number">
-                      Call Transfer Number <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      id="forwarding-number"
-                      type="tel"
-                      placeholder="(555) 123-4567"
-                      value={forwardingNumber}
-                      onChange={(e) => {
-                        let value = e.target.value.replace(/\D/g, "");
-                        if (value.length > 10) value = value.slice(0, 10);
-                        
-                        let formatted = value;
-                        if (value.length >= 6) {
-                          formatted = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
-                        } else if (value.length >= 3) {
-                          formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
-                        }
-                        
-                        setForwardingNumber(formatted);
-                        setForwardingNumberError(value.length > 0 && value.length !== 10);
-                      }}
-                      className={forwardingNumberError ? "border-destructive" : ""}
-                      autoFocus
-                    />
-                    {forwardingNumberError && (
-                      <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      Enter the phone number where calls will be transferred when a caller requests to speak with you immediately. You will also receive SMS notifications at this number.
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={async () => {
-                      const digits = forwardingNumber.replace(/\D/g, "");
-                      if (digits.length !== 10) {
-                        setForwardingNumberError(true);
-                        return;
-                      }
-
-                      setSavingForwarding(true);
-                      try {
-                        const { data: { session } } = await supabase.auth.getSession();
-                        if (!session) {
-                          throw new Error("Not authenticated");
-                        }
-
-                        const { error } = await supabase
-                          .from("business_settings")
-                          .update({ 
-                            forwarding_number: forwardingNumber,
-                            sms_notifications: true
-                          })
-                          .eq("user_id", session.user.id);
-
-                        if (error) throw error;
-
-                        toast({
-                          title: "Setup complete!",
-                          description: "Welcome to your AI assistant dashboard",
-                        });
-                        
-                        setTimeout(() => {
-                          window.location.href = '/settings?onboarding_complete=true';
-                        }, 500);
-                      } catch (error: any) {
-                        console.error("Error saving settings:", error);
-                        toast({
-                          title: "Error",
-                          description: "Failed to save settings. Please try again.",
-                          variant: "destructive",
-                        });
-                      } finally {
-                        setSavingForwarding(false);
-                      }
-                    }}
-                    className="w-full h-12 text-base"
-                    size="lg"
-                    disabled={savingForwarding || forwardingNumberError || !forwardingNumber}
-                  >
-                    {savingForwarding ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        Complete Setup
-                        <ArrowRight className="ml-2 w-5 h-5" />
-                      </>
-                    )}
-                  </Button>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => setStep(1)}
-                    className="w-full"
-                    disabled={savingForwarding}
-                  >
-                    ← Back
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
