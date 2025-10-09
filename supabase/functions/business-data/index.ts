@@ -172,15 +172,10 @@ serve(async (req) => {
               if (
                 availabilityResponse.data &&
                 !availabilityResponse.error &&
-                availabilityResponse.data.slots?.length > 0
+                availabilityResponse.data.available_times
               ) {
-                const slots = availabilityResponse.data.slots.slice(0, 5); // Show first 5 available slots
-                // Format as JSON string similar to business_hours format
-                const timeSlots = slots.map((slot: any) => {
-                  // Use the humanReadable field which should already be properly formatted
-                  return slot.humanReadable || `${slot.startTime} - ${slot.endTime}`;
-                });
-                dynamicAvailableTimes = JSON.stringify(timeSlots);
+                // Use the available_times string directly (it's already a JSON string)
+                dynamicAvailableTimes = availabilityResponse.data.available_times;
               }
             } catch (error) {
               console.error("Error fetching calendar availability for conversation initiation:", error);
@@ -397,24 +392,12 @@ serve(async (req) => {
         console.log("Full availability response:", JSON.stringify(availabilityResponse, null, 2));
 
         if (availabilityResponse.data && !availabilityResponse.error && availabilityResponse.data.available) {
-          const slots = availabilityResponse.data.slots || [];
-          console.log("Calendar slots received:", slots);
-          console.log("Number of slots:", slots.length);
-          console.log("First slot sample:", slots[0]);
-
-          if (slots.length > 0) {
-            // Format the slots exactly as requested in your example
-            const formattedSlots = slots.map((slot: any) => ({
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              timeOfDay: slot.timeOfDay,
-              humanReadable: slot.humanReadable,
-            }));
-
-            console.log("Formatted slots:", formattedSlots);
-            availableTimes = formattedSlots;
+          // Use the available_times string directly (it's already a JSON string)
+          if (availabilityResponse.data.available_times) {
+            console.log("Using available_times string from calendar:", availabilityResponse.data.available_times);
+            availableTimes = availabilityResponse.data.available_times;
           } else {
-            console.log("No slots returned from calendar");
+            console.log("No available_times in response");
           }
         } else {
           console.log("Calendar not available or error:", {
