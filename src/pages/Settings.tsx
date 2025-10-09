@@ -135,7 +135,7 @@ const Settings = () => {
   });
 
   // Call Settings State
-  const [forwardingNumber, setForwardingNumber] = useState("");
+  const [transferNumber, setTransferNumber] = useState("");
   const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
   const [urgentKeywords, setUrgentKeywords] = useState("");
   const [autoForward, setAutoForward] = useState(false);
@@ -177,7 +177,7 @@ const Settings = () => {
     businessDescription: false,
     businessAddress: false,
     services: false,
-    forwardingNumber: false,
+    transferNumber: false,
   });
 
   // Refs for scrolling to error fields
@@ -437,13 +437,13 @@ const Settings = () => {
         setBusinessDescription(data.business_description || "");
         setBusinessWebsite(data.business_website || "");
 
-        const loadedForwardingNumber = data.transfer_number || "";
-        setForwardingNumber(loadedForwardingNumber);
+        const loadedTransferNumber = data.transfer_number || "";
+        setTransferNumber(loadedTransferNumber);
 
         // Clear validation error if loaded phone number is valid
-        const forwardingDigits = loadedForwardingNumber.replace(/\D/g, "");
-        if (forwardingDigits.length === 10) {
-          setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
+        const transferDigits = loadedTransferNumber.replace(/\D/g, "");
+        if (transferDigits.length === 10) {
+          setValidationErrors((prev) => ({ ...prev, transferNumber: false }));
         }
 
         setTwilioPhoneNumber(data.twilio_phone_number || "");
@@ -1095,30 +1095,31 @@ const Settings = () => {
         pricing_structure: finalValidServices.map((s) => `${s.name}: ${s.price}`).join(", "),
       };
     } else if (section === "Call") {
-      // Validate forwarding number
-      const digitsOnly = forwardingNumber?.replace(/\D/g, "") || "";
+      // Validate transfer number
+      const digitsOnly = transferNumber?.replace(/\D/g, "") || "";
 
-      if (!forwardingNumber || !forwardingNumber.trim()) {
+      if (!transferNumber || !transferNumber.trim()) {
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "Emergency Forwarding Number is required",
+          title: "Validation Error",
+          description: "Emergency Transfer Number is required",
         });
+        setValidationErrors((prev) => ({ ...prev, transferNumber: true }));
         return;
       }
 
       if (digitsOnly.length !== 10) {
         toast({
           variant: "destructive",
-          title: "Invalid Phone Number",
-          description: "Forwarding number must be exactly 10 digits",
+          title: "Validation Error",
+          description: "Transfer number must be exactly 10 digits",
         });
-        setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
+        setValidationErrors((prev) => ({ ...prev, transferNumber: true }));
         return;
       }
 
       updateData = {
-        forwarding_number: forwardingNumber.trim(),
+        transfer_number: transferNumber.trim(),
         urgent_keywords: urgentKeywords,
         auto_forward: autoForward,
         common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),
@@ -2068,7 +2069,7 @@ const Settings = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <WebsiteImporter onDataExtracted={handleWebsiteDataExtracted} autoSave={true} className="mb-6" />
+                  <WebsiteImporter onDataExtracted={handleWebsiteDataExtracted} className="mb-6" />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -2691,44 +2692,36 @@ const Settings = () => {
 
                   <FeatureGate feature="callTransfers" showUpgradeMessage={true}>
                     <div className="space-y-2">
-                      <Label htmlFor="forwardingNumber" className="font-semibold">
-                        Call Forwarding/SMS Notification Number <span className="text-destructive">*</span>
+                      <Label htmlFor="transferNumber" className="font-semibold">
+                        Call Transfer/SMS Notification Number <span className="text-destructive">*</span>
                       </Label>
                       <Input
-                        id="forwardingNumber"
+                        id="transferNumber"
                         type="tel"
-                        value={forwardingNumber}
+                        value={transferNumber}
                         maxLength={10}
                         onChange={(e) => {
                           // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
                           const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
-                          setForwardingNumber(phoneValue);
+                          setTransferNumber(phoneValue);
 
                           // Only validate if user has entered something
                           const digitsOnly = phoneValue.replace(/\D/g, "");
                           if (phoneValue.length > 0 && digitsOnly.length !== 10) {
-                            setValidationErrors((prev) => ({ ...prev, forwardingNumber: true }));
+                            setValidationErrors((prev) => ({ ...prev, transferNumber: true }));
                           } else {
-                            setValidationErrors((prev) => ({ ...prev, forwardingNumber: false }));
-                          }
-
-                          debouncedAutoSave("Call");
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            saveSettings("Call");
+                            setValidationErrors((prev) => ({ ...prev, transferNumber: false }));
                           }
                         }}
-                        placeholder="10-digit phone number"
+                        placeholder="Enter 10-digit phone number"
                         required
                         className={
-                          validationErrors.forwardingNumber
+                          validationErrors.transferNumber
                             ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                             : ""
                         }
                       />
-                      {validationErrors.forwardingNumber && forwardingNumber.length > 0 && (
+                      {validationErrors.transferNumber && transferNumber.length > 0 && (
                         <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
                       )}
                       <p className="text-sm text-muted-foreground">
