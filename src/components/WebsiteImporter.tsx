@@ -65,10 +65,13 @@ export const WebsiteImporter = ({ onDataExtracted, autoSave = false, className }
       });
 
       if (error) {
-        throw error;
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to extract business data');
       }
 
-      if (data.success && data.data) {
+      console.log('Extraction response:', data);
+
+      if (data?.success && data?.data) {
         console.log('Extracted data:', data.data);
         
         // Parse address into separate fields
