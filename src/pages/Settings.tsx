@@ -1293,9 +1293,7 @@ const Settings = () => {
     }
     if (extractedData.business_description) setBusinessDescription(extractedData.business_description);
     if (extractedData.business_website) setBusinessWebsite(extractedData.business_website);
-
-    // Always clear business type on import so user starts fresh
-    setBusinessType("");
+    if (extractedData.business_type) setBusinessType(extractedData.business_type);
 
     if (extractedData.address) {
       setAddressData(extractedData.address);
@@ -1322,6 +1320,11 @@ const Settings = () => {
       if (servicesList.length > 0) {
         setServices(servicesList.slice(0, 5).map((service) => ({ name: service, price: "" })));
       }
+    }
+
+    // Reload services from database if business settings ID exists
+    if (businessSettingsId) {
+      await loadServices(businessSettingsId);
     }
 
     // Auto-generate description after import if we have enough data
