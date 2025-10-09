@@ -89,9 +89,9 @@ serve(async (req) => {
       throw new Error('No Twilio phone number available');
     }
 
-    // Format the SMS message
+    // Format the SMS message - concise format
     const urgencyEmoji = urgencyLevel === 'high' || urgencyLevel === 'emergency' ? '🚨 ' : '📞 ';
-    const smsBody = `${urgencyEmoji}New ${callType} call!\n\nFrom: ${callerName}\nPhone: ${phoneNumber}${email ? `\nEmail: ${email}` : ''}\nUrgency: ${urgencyLevel.toUpperCase()}\n\nMessage: ${message.substring(0, 100)}${message.length > 100 ? '...' : ''}`;
+    const smsBody = `${urgencyEmoji}${callerName} - ${callType}\n${message.substring(0, 60)}${message.length > 60 ? '...' : ''}\n${phoneNumber}${email ? ` | ${email}` : ''}`;
 
     // Send SMS via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
