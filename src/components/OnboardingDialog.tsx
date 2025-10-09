@@ -23,10 +23,10 @@ interface BusinessPrediction {
 interface OnboardingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDataImported?: () => void;
 }
 
-export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) => {
-  const [step, setStep] = useState(1);
+export const OnboardingDialog = ({ open, onOpenChange, onDataImported }: OnboardingDialogProps) => {
   const [businessSearch, setBusinessSearch] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [useWebsite, setUseWebsite] = useState(false);
@@ -35,10 +35,6 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
   const [searchLoading, setSearchLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [selectedBusiness, setSelectedBusiness] = useState<BusinessPrediction | null>(null);
-  const [forwardingNumber, setForwardingNumber] = useState("");
-  const [forwardingNumberError, setForwardingNumberError] = useState(false);
-  const [savingForwarding, setSavingForwarding] = useState(false);
-  const [smsOptIn, setSmsOptIn] = useState(false);
   const isSelectingBusinessRef = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
   const searchContainerRef = useRef<HTMLDivElement>(null);
@@ -94,57 +90,136 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
     setSelectedBusiness(business);
     setBusinessSearch(business.structured_formatting.main_text);
     setShowResults(false);
-    setStep(2);
-    setTimeout(() => {
-      isSelectingBusinessRef.current = false;
-    }, 500);
+    setLoading(true);
+
+    try {
+      // Get business details
+      const { data: detailsData, error: detailsError } = await supabase.functions.invoke('get-business-details', {
+        body: { placeId: business.place_id }
+      });
+
+      if (detailsError) throw detailsError;
+
+      const businessDetails = detailsData?.result || detailsData;
+      
+      if (!businessDetails) {
+        throw new Error('No business details found');
+      }
+
+      // Generate business description
+      const { data: descData, error: descError } = await supabase.functions.invoke('generate-business-description', {
+        body: {
+          businessName: businessDetails.name,
+          businessType: businessDetails.types?.[0] || 'business',
+          address: businessDetails.formatted_address
+        }
+      });
+
+      if (descError) throw descError;
+
+      // Extract services
+      const { data: servicesData, error: servicesError } = await supabase.functions.invoke('extract-services', {
+        body: {
+          businessName: businessDetails.name,
+          businessType: descData.businessType || businessDetails.types?.[0] || 'business',
+          businessDescription: descData.description
+        }
+      });
+
+      if (servicesError) throw servicesError;
+
+      // Save to database
+      const user = await supabase.auth.getUser();
+      if (!user.data.user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error: saveError } = await supabase
+        .from('business_settings')
+        .upsert({
+          user_id: user.data.user.id,
+          business_name: businessDetails.name,
+          business_phone: businessDetails.formatted_phone_number,
+          business_address: businessDetails.formatted_address,
+          business_hours: businessDetails.opening_hours?.weekday_text?.join('\n'),
+          business_description: descData.description,
+          business_type: descData.businessType,
+          business_website: businessDetails.website,
+        }, {
+          onConflict: 'user_id'
+        });
+
+      if (saveError) throw saveError;
+
+      // Save services
+      if (servicesData?.services && Array.isArray(servicesData.services)) {
+        const { data: businessData } = await supabase
+          .from('business_settings')
+          .select('id')
+          .eq('user_id', user.data.user.id)
+          .single();
+
+        if (businessData) {
+          const servicesWithBusinessId = servicesData.services.map((service: any, index: number) => ({
+            business_id: businessData.id,
+            name: service.name,
+            description: service.description,
+            price: service.price,
+            display_order: index,
+            is_active: true
+          }));
+
+          await supabase.from('services').upsert(servicesWithBusinessId, {
+            onConflict: 'business_id,name'
+          });
+        }
+      }
+
+      toast({
+        title: "Success",
+        description: "Business data imported successfully!",
+      });
+
+      // Notify parent component
+      if (onDataImported) {
+        onDataImported();
+      }
+
+      // Close dialog
+      handleClose();
+    } catch (error: any) {
+      console.error('Error importing business data:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to import business data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+      setTimeout(() => {
+        isSelectingBusinessRef.current = false;
+      }, 500);
+    }
   };
 
-  const handleBusinessContinue = () => {
-    if (useWebsite && !websiteUrl) {
-      toast({
-        title: "Website required",
-        description: "Please enter your business website",
-        variant: "destructive"
-      });
-      return;
-    }
-    if (!useWebsite && (!businessSearch || !selectedBusiness)) {
-      toast({
-        title: "Business selection required",
-        description: "Please select a business from the search results",
-        variant: "destructive"
-      });
-      return;
-    }
-    setStep(2);
-  };
 
   const handleClose = () => {
-    setStep(1);
     setBusinessSearch("");
     setWebsiteUrl("");
     setUseWebsite(false);
     setSelectedBusiness(null);
-    setForwardingNumber("");
-    setSmsOptIn(false);
     onOpenChange(false);
   };
 
-  const progressValue = step === 1 ? 50 : 100;
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">
-            {step === 1 ? "Update Business Information" : "Update Call Transfer Settings"}
-          </DialogTitle>
-        </DialogHeader>
-
-        <Progress value={progressValue} className="h-2 mb-4" />
-
-        {step === 1 ? (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">
+              Import Business Information
+            </DialogTitle>
+          </DialogHeader>
           <div className="space-y-6">
             <Card className="border-2">
               <CardHeader>
@@ -173,6 +248,7 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                         }}
                         className="pl-12 h-12"
                         autoFocus
+                        disabled={loading}
                       />
                       {searchLoading && (
                         <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-muted-foreground" />
@@ -186,7 +262,8 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                                 <button
                                   key={result.place_id}
                                   onClick={() => handleBusinessSelect(result)}
-                                  className="w-full text-left p-3 hover:bg-muted rounded-lg transition-colors flex items-start gap-3 group"
+                                  disabled={loading}
+                                  className="w-full text-left p-3 hover:bg-muted rounded-lg transition-colors flex items-start gap-3 group disabled:opacity-50"
                                 >
                                   <Building2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                                   <div className="flex-1 min-w-0">
@@ -219,6 +296,7 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                       variant="outline"
                       onClick={() => setUseWebsite(true)}
                       className="w-full"
+                      disabled={loading}
                     >
                       <Globe className="w-4 h-4 mr-2" />
                       Use my website instead
@@ -235,22 +313,15 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
                         onChange={(e) => setWebsiteUrl(e.target.value)}
                         className="pl-12 h-12"
                         autoFocus
+                        disabled={loading}
                       />
                     </div>
-
-                    <Button
-                      onClick={handleBusinessContinue}
-                      className="w-full"
-                      disabled={!websiteUrl}
-                    >
-                      Continue
-                      <ArrowRight className="ml-2 w-5 h-5" />
-                    </Button>
 
                     <Button
                       variant="ghost"
                       onClick={() => setUseWebsite(false)}
                       className="w-full"
+                      disabled={loading}
                     >
                       Search for my business instead
                     </Button>
@@ -259,150 +330,42 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
               </CardContent>
             </Card>
           </div>
-        ) : (
-          <div className="space-y-6">
-            <Card className="border-2">
-              <CardContent className="pt-6 space-y-6">
-                <div className="space-y-3">
-                  <Label htmlFor="forwarding-number">Call Transfer Number</Label>
-                  <Input
-                    id="forwarding-number"
-                    type="tel"
-                    placeholder="(555) 123-4567"
-                    value={forwardingNumber}
-                    onChange={(e) => {
-                      let value = e.target.value.replace(/\D/g, "");
-                      if (value.length > 10) value = value.slice(0, 10);
-                      
-                      let formatted = value;
-                      if (value.length >= 6) {
-                        formatted = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
-                      } else if (value.length >= 3) {
-                        formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
-                      }
-                      
-                      setForwardingNumber(formatted);
-                      setForwardingNumberError(value.length > 0 && value.length !== 10);
-                    }}
-                    className={forwardingNumberError ? "border-destructive" : ""}
-                    autoFocus
-                  />
-                    {forwardingNumberError && (
-                      <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
-                    )}
-                    <p className="text-sm text-muted-foreground">
-                      Enter the phone number that you want urgent customer calls to be transferred to if they request to speak with a human. You will also receive SMS notifications here.
-                    </p>
-                  </div>
+        </DialogContent>
+      </Dialog>
 
-                <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
-                  <div className="flex items-start gap-3">
-                    <Checkbox
-                      id="sms-opt-in"
-                      checked={smsOptIn}
-                      onCheckedChange={(checked) => setSmsOptIn(checked === true)}
-                    />
-                    <div className="space-y-1 flex-1">
-                      <label
-                        htmlFor="sms-opt-in"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        Receive SMS notifications <span className="text-red-500">*</span>
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        By checking this box, you agree to receive text messages (SMS) about appointments, 
-                        call notifications, and service updates at this number. Message and data rates may apply. 
-                        Reply STOP to opt out anytime.
-                      </p>
-                    </div>
-                  </div>
-                  {!smsOptIn && (
-                    <p className="text-sm text-destructive">
-                      You must agree to receive SMS notifications to continue
-                    </p>
-                  )}
-                </div>
-
-                <Button
-                  onClick={async () => {
-                    const digits = forwardingNumber.replace(/\D/g, "");
-                    if (digits.length !== 10) {
-                      setForwardingNumberError(true);
-                      return;
-                    }
-
-                    if (!smsOptIn) {
-                      toast({
-                        title: "SMS consent required",
-                        description: "Please agree to receive SMS notifications to continue",
-                        variant: "destructive"
-                      });
-                      return;
-                    }
-
-                    setSavingForwarding(true);
-                    try {
-                      const { data: { session } } = await supabase.auth.getSession();
-                      if (!session) {
-                        throw new Error("Not authenticated");
-                      }
-
-                      const { error } = await supabase
-                        .from("business_settings")
-                        .update({ 
-                          forwarding_number: forwardingNumber,
-                          sms_notifications: smsOptIn
-                        })
-                        .eq("user_id", session.user.id);
-
-                      if (error) throw error;
-
-                      toast({
-                        title: "Settings updated!",
-                        description: "Your call transfer settings have been saved",
-                      });
-                      
-                      handleClose();
-                    } catch (error: any) {
-                      console.error("Error saving settings:", error);
-                      toast({
-                        title: "Error",
-                        description: "Failed to save settings. Please try again.",
-                        variant: "destructive",
-                      });
-                    } finally {
-                      setSavingForwarding(false);
-                    }
-                  }}
-                  className="w-full"
-                  disabled={savingForwarding || forwardingNumberError || !forwardingNumber || !smsOptIn}
-                >
-                  {savingForwarding ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      Save Settings
-                      <ArrowRight className="ml-2 w-5 h-5" />
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                  className="w-full"
-                  disabled={savingForwarding}
-                >
-                  ← Back
-                </Button>
-              </CardContent>
-            </Card>
+      <Dialog open={loading} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              Importing Business Data
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col gap-3 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span>Fetching business details...</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse delay-75" />
+                <span>Generating business description...</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse delay-150" />
+                <span>Extracting services...</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse delay-300" />
+                <span>Saving to database...</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              This may take a few moments. Please don't close this window.
+            </p>
           </div>
-        )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

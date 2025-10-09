@@ -2986,7 +2986,12 @@ const Settings = () => {
       {/* Onboarding Dialog */}
       <OnboardingDialog 
         open={showOnboardingDialog} 
-        onOpenChange={setShowOnboardingDialog} 
+        onOpenChange={setShowOnboardingDialog}
+        onDataImported={() => {
+          if (user?.id && user?.email) {
+            loadUserSettings(user.id, user.email);
+          }
+        }}
       />
     </div>
   );
