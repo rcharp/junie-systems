@@ -863,6 +863,29 @@ async function findTargetUserId(analysisData: any, webhookData: any, supabase: a
   return { userId: null, callerId: null, businessId: null };
 }
 
+// Helper function to format additional notes
+function formatAdditionalNotes(notes: string | null): string | null {
+  if (!notes) return null;
+  
+  // Number word to digit mapping
+  const numberWords: { [key: string]: string } = {
+    'zero': '0', 'one': '1', 'two': '2', 'three': '3', 'four': '4',
+    'five': '5', 'six': '6', 'seven': '7', 'eight': '8', 'nine': '9'
+  };
+  
+  // Convert number words to digits
+  let formatted = notes.toLowerCase();
+  Object.keys(numberWords).forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'g');
+    formatted = formatted.replace(regex, numberWords[word]);
+  });
+  
+  // Capitalize first letter
+  formatted = formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  
+  return formatted;
+}
+
 // Helper function to extract caller information from transcript and webhook data
 function extractCallerInfo(transcript: string, analysisData?: any) {
   const info = {
@@ -880,7 +903,8 @@ function extractCallerInfo(transcript: string, analysisData?: any) {
 
   // Extract additional_notes and service_type from webhook data if available
   if (analysisData) {
-    info.additional_notes = analysisData.additional_notes?.value || null;
+    const rawNotes = analysisData.additional_notes?.value || null;
+    info.additional_notes = formatAdditionalNotes(rawNotes);
     info.service_type = analysisData.service_requested?.value || analysisData.service_type?.value || null;
   }
 
