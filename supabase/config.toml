@@ -134,5 +134,5 @@ verify_jwt = false
 [functions.release-twilio-number]
 verify_jwt = true
 
-[functions.get-availability-by-phone]
+[functions.get-available-times]
 verify_jwt = false
