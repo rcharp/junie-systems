@@ -17,6 +17,7 @@ serve(async (req) => {
     console.log('=== GET AVAILABILITY BY PHONE ENDPOINT CALLED ===');
     
     const requestBody = await req.json();
+    console.log('Request body:', JSON.stringify(requestBody));
     const { called_number } = requestBody;
     
     if (!called_number) {
@@ -62,15 +63,18 @@ serve(async (req) => {
 
     console.log('Found business for user_id:', businessSettings.user_id);
 
-    // Log the tool call to client_tool_events
+    // Log the tool call to client_tool_events (don't await to avoid blocking)
     const toolCallId = `get_available_times_${Date.now()}`;
-    await supabase.from('client_tool_events').insert({
-      call_sid: requestBody.call_sid || 'unknown',
+    supabase.from('client_tool_events').insert({
+      call_sid: requestBody.call_sid || requestBody.conversation_id || 'direct_call',
       tool_name: 'get_available_times',
       tool_call_id: toolCallId,
-      parameters: { called_number, normalized_number: normalizedNumber },
+      parameters: { called_number, normalized_number: normalizedNumber, full_request: requestBody },
       business_id: businessSettings.user_id,
       user_id: businessSettings.user_id
+    }).then(({ error: logError }) => {
+      if (logError) console.error('Failed to log tool call:', logError);
+      else console.log('Successfully logged tool call to client_tool_events');
     });
 
     // Call the google-calendar-availability function
@@ -91,15 +95,18 @@ serve(async (req) => {
 
     console.log('Successfully retrieved availability');
 
-    // Update the tool call event with the result
-    await supabase.from('client_tool_events')
+    // Update the tool call event with the result (don't await to avoid blocking)
+    supabase.from('client_tool_events')
       .update({ 
         result: JSON.stringify({ 
           success: true, 
           availability_count: availabilityData?.available_times?.length || 0 
         })
       })
-      .eq('tool_call_id', toolCallId);
+      .eq('tool_call_id', toolCallId)
+      .then(({ error: updateError }) => {
+        if (updateError) console.error('Failed to update tool call result:', updateError);
+      });
 
     return new Response(
       JSON.stringify({
@@ -113,24 +120,22 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in get-available-times function:', error);
     
-    // Log error to client_tool_events if we have the data
-    try {
-      const requestBody = await req.clone().json();
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const supabase = createClient(supabaseUrl, supabaseServiceKey);
-      
-      await supabase.from('client_tool_events').insert({
-        call_sid: requestBody.call_sid || 'unknown',
-        tool_name: 'get_available_times',
-        tool_call_id: `get_available_times_error_${Date.now()}`,
-        parameters: requestBody,
-        result: error.message,
-        is_error: true
-      });
-    } catch (logError) {
-      console.error('Failed to log error to client_tool_events:', logError);
-    }
+    // Log error to client_tool_events
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const errorSupabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    errorSupabase.from('client_tool_events').insert({
+      call_sid: 'error_' + Date.now(),
+      tool_name: 'get_available_times',
+      tool_call_id: `get_available_times_error_${Date.now()}`,
+      parameters: { error_context: 'Failed to parse request or process' },
+      result: error.message,
+      is_error: true
+    }).then(({ error: logError }) => {
+      if (logError) console.error('Failed to log error:', logError);
+      else console.log('Logged error to client_tool_events');
+    });
     
     return new Response(
       JSON.stringify({ error: error.message }),
