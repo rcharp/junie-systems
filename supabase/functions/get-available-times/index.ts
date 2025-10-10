@@ -73,11 +73,11 @@ serve(async (req) => {
       else console.log('Successfully logged tool call to client_tool_events');
     });
 
-    // Call the google-calendar-availability function
+    // Call the google-calendar-availability function with limit=1 for fast response
     const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
       'google-calendar-availability',
       {
-        body: { user_id: businessSettings.user_id }
+        body: { user_id: businessSettings.user_id, limit: 1 }
       }
     );
 
@@ -103,6 +103,24 @@ serve(async (req) => {
       .then(({ error: updateError }) => {
         if (updateError) console.error('Failed to update tool call result:', updateError);
       });
+
+    // Background task: fetch more availability slots for future calls
+    EdgeRuntime.waitUntil(
+      (async () => {
+        try {
+          console.log('Background: fetching additional availability slots...');
+          await supabase.functions.invoke(
+            'google-calendar-availability',
+            {
+              body: { user_id: businessSettings.user_id, limit: 5, skip: 1 }
+            }
+          );
+          console.log('Background: additional slots fetched successfully');
+        } catch (bgError) {
+          console.error('Background task error:', bgError);
+        }
+      })()
+    );
 
     return new Response(
       JSON.stringify({

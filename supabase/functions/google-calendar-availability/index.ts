@@ -51,15 +51,19 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
     // Try to get user_id from request body first, then fall back to URL path
-    let userId;
+    let userId, limit, skip;
     try {
       const body = await req.json();
       userId = body.user_id;
-      console.log('Extracted user_id from request body:', userId);
+      limit = body.limit || 5; // Default to 5 slots
+      skip = body.skip || 0; // Default to 0 (no skip)
+      console.log('Extracted from request body:', { userId, limit, skip });
     } catch (error) {
       // If no body or JSON parsing fails, try URL path
       const url = new URL(req.url);
       userId = url.pathname.split('/').pop();
+      limit = 5;
+      skip = 0;
       console.log('Extracted user_id from URL path:', userId);
     }
 
@@ -384,8 +388,17 @@ Deno.serve(async (req) => {
         let chunkStart = new Date(block.start)
         const blockEnd = new Date(block.end)
         
+        let skippedInBlock = 0;
         while (chunkStart.getTime() + (appointmentDuration * 60 * 1000) <= blockEnd.getTime() && slotsFound < MAX_SLOTS) {
           const chunkEnd = new Date(chunkStart.getTime() + (appointmentDuration * 60 * 1000))
+          
+          // Skip slots if requested
+          if (skippedInBlock < skip) {
+            skippedInBlock++;
+            chunkStart = new Date(chunkEnd);
+            console.log(`  Skipping slot (skip=${skip}, skipped=${skippedInBlock})`);
+            continue;
+          }
           
           // Store the raw times - Claude will convert them properly
           availableSlots.push({
@@ -401,6 +414,9 @@ Deno.serve(async (req) => {
           // Move to next chunk
           chunkStart = new Date(chunkEnd)
         }
+        
+        // Update skip count for next block
+        skip = Math.max(0, skip - skippedInBlock);
       }
       
       console.log(`Generated ${slotsFound} total slots so far`)
