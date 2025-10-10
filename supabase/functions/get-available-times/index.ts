@@ -77,7 +77,7 @@ serve(async (req) => {
     const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
       'google-calendar-availability',
       {
-        body: { userId: businessSettings.user_id }
+        body: { user_id: businessSettings.user_id }
       }
     );
 
