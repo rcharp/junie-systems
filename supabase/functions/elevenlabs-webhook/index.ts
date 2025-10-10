@@ -874,14 +874,14 @@ function extractCallerInfo(transcript: string, analysisData?: any) {
     best_time_to_call: null,
     call_type: "inquiry",
     appointmentDateTime: null,
-    serviceType: null,
+    service_type: null,
     additional_notes: null
   };
 
   // Extract additional_notes and service_type from webhook data if available
   if (analysisData) {
     info.additional_notes = analysisData.additional_notes?.value || null;
-    info.serviceType = analysisData.service_requested?.value || analysisData.service_type?.value || null;
+    info.service_type = analysisData.service_requested?.value || analysisData.service_type?.value || null;
   }
 
   if (!transcript) return info;
