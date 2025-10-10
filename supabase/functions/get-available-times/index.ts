@@ -18,31 +18,27 @@ serve(async (req) => {
     
     const requestBody = await req.json();
     console.log('Request body:', JSON.stringify(requestBody));
-    const { called_number } = requestBody;
+    const { business_id } = requestBody;
     
-    if (!called_number) {
+    if (!business_id) {
       return new Response(
-        JSON.stringify({ error: 'called_number is required' }),
+        JSON.stringify({ error: 'business_id is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('Looking up business by phone number:', called_number);
-    
-    // Normalize phone number - add +1 if not present
-    const normalizedNumber = called_number.startsWith('+') ? called_number : `+1${called_number}`;
-    console.log('Normalized phone number:', normalizedNumber);
+    console.log('Looking up business by business_id:', business_id);
 
     // Create Supabase client with service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find business by phone number (try normalized version first, then original)
+    // Find business by business_id
     const { data: businessSettings, error: businessError } = await supabase
       .from('business_settings')
       .select('user_id, business_name')
-      .eq('twilio_phone_number', normalizedNumber)
+      .eq('id', business_id)
       .maybeSingle();
 
     if (businessError) {
@@ -54,9 +50,9 @@ serve(async (req) => {
     }
 
     if (!businessSettings) {
-      console.error('No business found for phone number:', called_number);
+      console.error('No business found for business_id:', business_id);
       return new Response(
-        JSON.stringify({ error: 'No business found for this phone number' }),
+        JSON.stringify({ error: 'No business found for this business_id' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -69,7 +65,7 @@ serve(async (req) => {
       call_sid: requestBody.call_sid || requestBody.conversation_id || 'direct_call',
       tool_name: 'get_available_times',
       tool_call_id: toolCallId,
-      parameters: { called_number, normalized_number: normalizedNumber, full_request: requestBody },
+      parameters: { business_id, full_request: requestBody },
       business_id: businessSettings.user_id,
       user_id: businessSettings.user_id
     }).then(({ error: logError }) => {
