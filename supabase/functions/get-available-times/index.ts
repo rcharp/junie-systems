@@ -26,17 +26,21 @@ serve(async (req) => {
     }
 
     console.log('Looking up business by phone number:', called_number);
+    
+    // Normalize phone number - add +1 if not present
+    const normalizedNumber = called_number.startsWith('+') ? called_number : `+1${called_number}`;
+    console.log('Normalized phone number:', normalizedNumber);
 
     // Create Supabase client with service role
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Find business by phone number
+    // Find business by phone number (try normalized version first, then original)
     const { data: businessSettings, error: businessError } = await supabase
       .from('business_settings')
       .select('user_id, business_name')
-      .eq('twilio_phone_number', called_number)
+      .eq('twilio_phone_number', normalizedNumber)
       .maybeSingle();
 
     if (businessError) {
