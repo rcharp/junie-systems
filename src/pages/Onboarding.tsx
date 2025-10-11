@@ -504,9 +504,6 @@ const Onboarding = () => {
       console.log("saveBusinessData called with userId:", userId);
       console.log("verificationData:", verificationData);
       console.log("transferNumber:", transferNumber);
-      
-      setExtractingData(true);
-      setExtractionProgress(10);
 
       const savedBusiness = sessionStorage.getItem("selectedBusiness");
       console.log("savedBusiness from sessionStorage:", savedBusiness);
@@ -515,8 +512,6 @@ const Onboarding = () => {
         console.error("No business data available to save");
         throw new Error("No business data available");
       }
-
-      setExtractionProgress(30);
       
       let businessData: any = savedBusiness ? JSON.parse(savedBusiness) : {};
       console.log("businessData:", businessData);
@@ -534,8 +529,6 @@ const Onboarding = () => {
         throw profileError;
       }
       console.log("Profile created:", profileData);
-
-      setExtractionProgress(50);
 
       const defaultHours = [
         { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
@@ -567,8 +560,6 @@ const Onboarding = () => {
       }
       console.log("Business settings saved:", businessSettingsResult);
 
-      setExtractionProgress(70);
-
       // Extract and save services
       if (businessSettingsResult?.id) {
         const { data: servicesData, error: servicesError } = await supabase.functions.invoke("extract-services", {
@@ -584,8 +575,6 @@ const Onboarding = () => {
         } else {
           console.log("Services extracted:", servicesData);
         }
-
-        setExtractionProgress(85);
 
         if (servicesData?.services) {
           const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
@@ -628,8 +617,6 @@ const Onboarding = () => {
       }
 
       sessionStorage.removeItem("selectedBusiness");
-      setExtractionProgress(100);
-      setExtractingData(false);
 
       toast({
         title: "Setup complete!",
