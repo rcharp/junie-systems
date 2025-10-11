@@ -1468,14 +1468,6 @@ const Settings = () => {
       // After deletion is initiated, sign out
       setSigningOut(true);
       await handleRobustSignOut(supabase, setSigningOut);
-
-      // Show toast after logout completes
-      setTimeout(() => {
-        toast({
-          title: "Account deleted",
-          description: "Your account has been deleted and you have been signed out.",
-        });
-      }, 100);
     } catch (error: any) {
       console.error("Error during account deletion:", error);
       toast({
