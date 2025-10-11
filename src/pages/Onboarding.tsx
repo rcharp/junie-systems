@@ -44,6 +44,7 @@ const Onboarding = () => {
   const [verificationData, setVerificationData] = useState<any>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const isCheckingAuthRef = useRef(false);
+  const isOnboardingFlowRef = useRef(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [businessTypesList, setBusinessTypesList] = useState<Array<{ value: string; label: string }>>([]);
@@ -138,6 +139,13 @@ const Onboarding = () => {
       } = await supabase.auth.getSession();
       if (session) {
         setIsAuthenticated(true);
+        
+        // Don't redirect if user is in the middle of onboarding flow
+        if (isOnboardingFlowRef.current) {
+          isCheckingAuthRef.current = false;
+          return;
+        }
+        
         // Check if user has already completed setup
         const { data: businessSettings } = await supabase
           .from("business_settings")
@@ -647,6 +655,9 @@ const Onboarding = () => {
 
   const handleGoogleSignup = async () => {
     setLoading(true);
+    // Mark that we're starting the onboarding flow
+    isOnboardingFlowRef.current = true;
+    
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
