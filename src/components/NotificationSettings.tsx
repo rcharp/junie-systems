@@ -238,10 +238,6 @@ const NotificationSettings = () => {
                   id="sms-notifications"
                   checked={smsNotifications}
                   onCheckedChange={(checked) => {
-                    if (!smsOptIn && checked) {
-                      setShowTermsWarning(true);
-                      return;
-                    }
                     setSmsNotifications(checked);
                     debouncedAutoSave();
                   }}
@@ -272,31 +268,17 @@ const NotificationSettings = () => {
                     setSmsOptIn(checked as boolean);
                     if (checked) {
                       setShowTermsWarning(false);
-                      setSmsNotifications(true);
-                    }
-                    if (!checked) {
-                      setSmsNotifications(false);
                     }
                     debouncedAutoSave();
                   }}
-                  className={showTermsWarning ? "border-destructive data-[state=checked]:bg-destructive" : ""}
                 />
                 <div className="grid gap-1.5 leading-none">
                   <Label
                     htmlFor="sms-opt-in"
-                    className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${showTermsWarning ? "text-destructive" : ""}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                   >
-                    I agree to receive text messages about potential customer inquiries
+                    By checking this box, I agree to receive SMS text messages from Junie regarding appointment reminders and updates. Message frequency varies. Message and data rates may apply. Text HELP for help, STOP to cancel at any time.
                   </Label>
-                  <p className="text-xs text-muted-foreground">
-                    By checking this box, you consent to receive SMS notifications about new leads and customer
-                    messages. Standard messaging rates may apply. You can opt out at any time.
-                  </p>
-                  {showTermsWarning && (
-                    <p className="text-xs text-destructive font-medium">
-                      Please agree to the terms to enable SMS notifications
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
