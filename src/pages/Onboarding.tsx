@@ -263,43 +263,23 @@ const Onboarding = () => {
 
       if (error) throw error;
 
-      // Store business data
+      // Store business data for later enhancement
       sessionStorage.setItem("selectedBusiness", JSON.stringify(data));
       
       let businessData = data;
       
-      // Use Claude to enhance the data
-      let claudeData: any = {};
-      try {
-        const { data: generatedData } = await supabase.functions.invoke("generate-business-description", {
-          body: {
-            businessName: businessData.name,
-            businessType: businessData.types?.[0] || "other",
-            services: [],
-            address: businessData.address,
-            phone: businessData.phone,
-            website: businessData.website,
-            businessTypesList: businessTypesList.map((t) => t.value),
-            statesList,
-          },
-        });
-        if (generatedData) claudeData = generatedData;
-      } catch (error) {
-        console.error("Error generating with Claude:", error);
-      }
-      
-      // Set verification data with extracted information
+      // Set verification data with basic information (AI enhancement happens during save)
       setVerificationData({
         business_name: businessData.name || businessSearch,
         business_phone: businessData.phone || "",
         business_address: businessData.address || "",
-        business_type: claudeData.businessType || findBestBusinessType(businessData.types),
+        business_type: findBestBusinessType(businessData.types),
         business_website: businessData.website || "",
         business_timezone: "America/New_York",
-        business_description: claudeData.description || "",
+        business_description: "", // Will be generated during final save
       });
       
-      // Move to verification step
+      // Move to verification step immediately
       setStep(2);
       isSelectingBusinessRef.current = false;
     } catch (error: any) {
@@ -535,16 +515,43 @@ const Onboarding = () => {
         { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
       ];
 
-      // Save business settings with verified data
+      // Generate AI-enhanced description during final save
+      let enhancedDescription = verificationData.business_description;
+      let enhancedBusinessType = verificationData.business_type;
+      
+      try {
+        const { data: generatedData } = await supabase.functions.invoke("generate-business-description", {
+          body: {
+            businessName: verificationData.business_name,
+            businessType: verificationData.business_type,
+            services: [],
+            address: verificationData.business_address,
+            phone: verificationData.business_phone,
+            website: verificationData.business_website,
+            businessTypesList: businessTypesList.map((t) => t.value),
+            statesList,
+          },
+        });
+        if (generatedData) {
+          enhancedDescription = generatedData.description || enhancedDescription;
+          enhancedBusinessType = generatedData.businessType || enhancedBusinessType;
+        }
+      } catch (error) {
+        console.error("Error generating description with AI:", error);
+      }
+
+      setExtractionProgress(50);
+
+      // Save business settings with AI-enhanced data
       const { data: businessSettingsResult, error: businessError } = await supabase.from("business_settings")
         .upsert({
           user_id: userId,
           business_name: verificationData.business_name,
-          business_type: verificationData.business_type,
+          business_type: enhancedBusinessType,
           business_phone: verificationData.business_phone,
           business_address: verificationData.business_address,
           business_website: verificationData.business_website,
-          business_description: verificationData.business_description,
+          business_description: enhancedDescription,
           business_hours: JSON.stringify(defaultHours),
           business_timezone: verificationData.business_timezone || "America/New_York",
           transfer_number: transferNumber.replace(/\D/g, ""),
@@ -558,12 +565,14 @@ const Onboarding = () => {
       }
       console.log("Business settings saved:", businessSettingsResult);
 
+      setExtractionProgress(70);
+
       // Extract and save services
       if (businessSettingsResult?.id) {
         const { data: servicesData, error: servicesError } = await supabase.functions.invoke("extract-services", {
           body: {
             businessName: verificationData.business_name,
-            businessType: verificationData.business_type,
+            businessType: enhancedBusinessType,
             website: verificationData.business_website,
           },
         });
