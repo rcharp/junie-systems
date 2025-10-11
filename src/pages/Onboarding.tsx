@@ -265,15 +265,9 @@ const Onboarding = () => {
       // Store business data
       sessionStorage.setItem("selectedBusiness", JSON.stringify(data));
       
-      // Now extract and process the business data
-      setExtractingData(true);
-      setExtractionProgress(20);
-      
       let businessData = data;
       
-      setExtractionProgress(40);
-      
-      // Use Claude to enhance the data
+      // Use Claude to enhance the data (no overlay)
       let claudeData: any = {};
       try {
         const { data: generatedData } = await supabase.functions.invoke("generate-business-description", {
@@ -293,8 +287,6 @@ const Onboarding = () => {
         console.error("Error generating with Claude:", error);
       }
       
-      setExtractionProgress(80);
-      
       // Set verification data with extracted information
       setVerificationData({
         business_name: businessData.name || businessSearch,
@@ -305,17 +297,11 @@ const Onboarding = () => {
         business_timezone: "America/New_York",
       });
       
-      setExtractionProgress(100);
-      setExtractingData(false);
-      
       // Move to verification step
-      setTimeout(() => {
-        setStep(2);
-        isSelectingBusinessRef.current = false;
-      }, 500);
+      setStep(2);
+      isSelectingBusinessRef.current = false;
     } catch (error: any) {
       console.error("Error getting business details:", error);
-      setExtractingData(false);
       toast({
         title: "Error",
         description: "Failed to fetch business details",
@@ -345,16 +331,13 @@ const Onboarding = () => {
       return;
     }
     
-    // Extract data from website
+    // Extract data from website (no overlay)
     try {
-      setExtractingData(true);
-      setExtractionProgress(20);
+      setLoading(true);
       
       const { data: extractedData } = await supabase.functions.invoke("extract-business-data", {
         body: { url: websiteUrl },
       });
-      
-      setExtractionProgress(40);
       
       let businessData: any = {};
       if (extractedData?.success && extractedData?.data) {
@@ -374,8 +357,6 @@ const Onboarding = () => {
       
       // Store for later
       sessionStorage.setItem("selectedBusiness", JSON.stringify(businessData));
-      
-      setExtractionProgress(60);
       
       // Use Claude to enhance
       let claudeData: any = {};
@@ -397,8 +378,6 @@ const Onboarding = () => {
         console.error("Error with Claude:", error);
       }
       
-      setExtractionProgress(80);
-      
       setVerificationData({
         business_name: businessData.name || businessSearch || "My Business",
         business_phone: businessData.phone || "",
@@ -408,17 +387,16 @@ const Onboarding = () => {
         business_timezone: "America/New_York",
       });
       
-      setExtractionProgress(100);
-      setExtractingData(false);
       setStep(2);
     } catch (error: any) {
       console.error("Error extracting data:", error);
-      setExtractingData(false);
       toast({
         title: "Error",
         description: "Failed to extract business data",
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
