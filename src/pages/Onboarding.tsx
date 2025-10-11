@@ -159,21 +159,19 @@ const Onboarding = () => {
   // Helper function to find the best matching business type
   const findBestBusinessType = (googleTypes: string[] = []): string => {
     // Filter out generic types
-    const genericTypes = ['establishment', 'point_of_interest'];
-    const specificTypes = googleTypes.filter(t => !genericTypes.includes(t));
-    
+    const genericTypes = ["establishment", "point_of_interest"];
+    const specificTypes = googleTypes.filter((t) => !genericTypes.includes(t));
+
     // Try to match against our business types list
     for (const type of specificTypes) {
-      const match = businessTypesList.find(bt => 
-        bt.value === type || 
-        type.includes(bt.value) || 
-        bt.value.includes(type)
+      const match = businessTypesList.find(
+        (bt) => bt.value === type || type.includes(bt.value) || bt.value.includes(type),
       );
       if (match) return match.value;
     }
-    
+
     // If no match, return the first specific type or 'other'
-    return specificTypes[0] || 'other';
+    return specificTypes[0] || "other";
   };
 
   // Show verification when step changes to 2
@@ -183,12 +181,12 @@ const Onboarding = () => {
         try {
           // First, check if we have business data from the selection in sessionStorage
           const savedBusiness = sessionStorage.getItem("selectedBusiness");
-          
+
           if (savedBusiness) {
             // New user flow - use the data from business selection
             const businessData = JSON.parse(savedBusiness);
             console.log("Loading verification data from selected business:", businessData);
-            
+
             setVerificationData({
               business_name: businessData.name || businessSearch || "",
               business_phone: businessData.phone || "",
@@ -199,14 +197,16 @@ const Onboarding = () => {
             });
           } else {
             // Returning user - try to load from database
-            const { data: { session } } = await supabase.auth.getSession();
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
             if (session) {
               const { data: businessSettings, error } = await supabase
                 .from("business_settings")
                 .select("*")
                 .eq("user_id", session.user.id)
                 .maybeSingle();
-              
+
               if (!error && businessSettings) {
                 console.log("Loading verification data from database:", businessSettings);
                 setVerificationData({
@@ -224,7 +224,7 @@ const Onboarding = () => {
           console.error("Error loading verification data:", error);
         }
       };
-      
+
       loadVerificationData();
       setShowVerification(true);
     }
@@ -1587,7 +1587,7 @@ const Onboarding = () => {
                   className="flex-1"
                   size="lg"
                 >
-                  Continue to Call Setup
+                  Looks good!
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </div>
