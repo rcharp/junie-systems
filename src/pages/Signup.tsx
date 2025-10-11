@@ -222,10 +222,28 @@ const Signup = () => {
             }
             
             setLoading(false);
+          } else if (event.data?.type === 'google-oauth-error') {
+            window.removeEventListener('message', handleMessage);
+            popup?.close();
+            setLoading(false);
+            toast({
+              title: "Sign-up error",
+              description: event.data?.error || "Failed to sign up with Google.",
+              variant: "destructive",
+            });
           }
         };
 
         window.addEventListener('message', handleMessage);
+
+        // Check if popup was closed manually
+        const checkClosed = setInterval(() => {
+          if (popup?.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener('message', handleMessage);
+            setLoading(false);
+          }
+        }, 1000);
         
         // Check if popup was blocked
         if (!popup || popup.closed) {
