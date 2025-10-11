@@ -1459,7 +1459,7 @@ const Settings = () => {
       setSigningOut(true);
       await handleRobustSignOut(supabase, setSigningOut);
 
-      // After sign out, show the deleting overlay and start deletion
+      // After sign out completes, show the deleting overlay
       setIsDeleting(true);
       
       // Initiate account deletion in background
@@ -1469,11 +1469,13 @@ const Settings = () => {
         console.error('Background deletion error:', error);
       });
 
-      // Show toast after sign out
-      toast({
-        title: "Account deleted",
-        description: "Your account is being deleted. You have been signed out.",
-      });
+      // Show toast only after logout is complete
+      setTimeout(() => {
+        toast({
+          title: "Account deleted",
+          description: "Your account is being deleted. You have been signed out.",
+        });
+      }, 100);
     } catch (error: any) {
       console.error("Error during account deletion:", error);
       toast({
