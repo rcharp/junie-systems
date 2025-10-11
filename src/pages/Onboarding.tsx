@@ -254,6 +254,8 @@ const Onboarding = () => {
 
     try {
       setLoading(true);
+      setExtractingData(true);
+      setExtractionProgress(10);
       
       // Fetch detailed business information
       const { data, error } = await supabase.functions.invoke("get-business-details", {
@@ -265,9 +267,11 @@ const Onboarding = () => {
       // Store business data
       sessionStorage.setItem("selectedBusiness", JSON.stringify(data));
       
+      setExtractionProgress(40);
+      
       let businessData = data;
       
-      // Use Claude to enhance the data (no overlay)
+      // Use Claude to enhance the data
       let claudeData: any = {};
       try {
         const { data: generatedData } = await supabase.functions.invoke("generate-business-description", {
@@ -287,6 +291,8 @@ const Onboarding = () => {
         console.error("Error generating with Claude:", error);
       }
       
+      setExtractionProgress(80);
+      
       // Set verification data with extracted information
       setVerificationData({
         business_name: businessData.name || businessSearch,
@@ -297,11 +303,17 @@ const Onboarding = () => {
         business_timezone: "America/New_York",
       });
       
+      setExtractionProgress(100);
+      setExtractingData(false);
+      
       // Move to verification step
-      setStep(2);
-      isSelectingBusinessRef.current = false;
+      setTimeout(() => {
+        setStep(2);
+        isSelectingBusinessRef.current = false;
+      }, 500);
     } catch (error: any) {
       console.error("Error getting business details:", error);
+      setExtractingData(false);
       toast({
         title: "Error",
         description: "Failed to fetch business details",
