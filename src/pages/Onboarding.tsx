@@ -40,6 +40,7 @@ const Onboarding = () => {
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const [extractingData, setExtractingData] = useState(false);
   const [extractionProgress, setExtractionProgress] = useState(0);
+  const [settingUpAccount, setSettingUpAccount] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [verificationData, setVerificationData] = useState<any>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -505,6 +506,8 @@ const Onboarding = () => {
       console.log("verificationData:", verificationData);
       console.log("transferNumber:", transferNumber);
 
+      setSettingUpAccount(true);
+
       const savedBusiness = sessionStorage.getItem("selectedBusiness");
       console.log("savedBusiness from sessionStorage:", savedBusiness);
 
@@ -617,6 +620,7 @@ const Onboarding = () => {
       }
 
       sessionStorage.removeItem("selectedBusiness");
+      setSettingUpAccount(false);
 
       toast({
         title: "Setup complete!",
@@ -628,7 +632,7 @@ const Onboarding = () => {
       }, 500);
     } catch (error: any) {
       console.error("Error saving business data:", error);
-      setExtractingData(false);
+      setSettingUpAccount(false);
       toast({
         title: "Setup failed",
         description: error.message,
@@ -723,6 +727,25 @@ const Onboarding = () => {
               <div className="space-y-2">
                 <Progress value={extractionProgress} className="h-2" />
                 <p className="text-xs text-center text-muted-foreground">{extractionProgress}% complete</p>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Setting Up Account Overlay */}
+      {settingUpAccount && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+          <Card className="w-full max-w-md mx-4 p-8">
+            <div className="space-y-6">
+              <div className="text-center space-y-2">
+                <div className="flex justify-center mb-4">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold">Setting up your account</h3>
+                <p className="text-sm text-muted-foreground">
+                  Creating your profile, configuring business settings, and getting everything ready...
+                </p>
               </div>
             </div>
           </Card>
