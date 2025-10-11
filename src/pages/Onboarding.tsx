@@ -54,6 +54,72 @@ const Onboarding = () => {
   const [transferNumberError, setTransferNumberError] = useState(false);
   const [savingTransfer, setSavingTransfer] = useState(false);
 
+  // Helper function to parse Google opening hours
+  const parseGoogleOpeningHours = (weekdayText: string[]) => {
+    const dayMap: { [key: string]: number } = {
+      "Monday": 1,
+      "Tuesday": 2,
+      "Wednesday": 3,
+      "Thursday": 4,
+      "Friday": 5,
+      "Saturday": 6,
+      "Sunday": 0,
+    };
+
+    const dayNameMap: { [key: number]: string } = {
+      1: "monday",
+      2: "tuesday",
+      3: "wednesday",
+      4: "thursday",
+      5: "friday",
+      6: "saturday",
+      0: "sunday",
+    };
+
+    const hours = [];
+    
+    for (const line of weekdayText) {
+      // Format: "Monday: 9:00 AM – 5:00 PM" or "Monday: Closed"
+      const match = line.match(/^([A-Za-z]+):\s*(.+)$/);
+      if (!match) continue;
+      
+      const [, dayName, timeInfo] = match;
+      const dayId = dayMap[dayName];
+      const day = dayNameMap[dayId];
+      
+      if (!day) continue;
+      
+      if (timeInfo.toLowerCase().includes('closed')) {
+        hours.push({ id: dayId, day, isOpen: false, openTime: "09:00", closeTime: "17:00" });
+      } else {
+        // Parse time range: "9:00 AM – 5:00 PM"
+        const timeMatch = timeInfo.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+        if (timeMatch) {
+          const [, openHour, openMin, openPeriod, closeHour, closeMin, closePeriod] = timeMatch;
+          
+          // Convert to 24-hour format
+          let openHour24 = parseInt(openHour);
+          let closeHour24 = parseInt(closeHour);
+          
+          if (openPeriod.toUpperCase() === 'PM' && openHour24 !== 12) openHour24 += 12;
+          if (openPeriod.toUpperCase() === 'AM' && openHour24 === 12) openHour24 = 0;
+          if (closePeriod.toUpperCase() === 'PM' && closeHour24 !== 12) closeHour24 += 12;
+          if (closePeriod.toUpperCase() === 'AM' && closeHour24 === 12) closeHour24 = 0;
+          
+          const openTime = `${String(openHour24).padStart(2, '0')}:${openMin}`;
+          const closeTime = `${String(closeHour24).padStart(2, '0')}:${closeMin}`;
+          
+          hours.push({ id: dayId, day, isOpen: true, openTime, closeTime });
+        } else {
+          // Fallback to default if parsing fails
+          hours.push({ id: dayId, day, isOpen: true, openTime: "09:00", closeTime: "17:00" });
+        }
+      }
+    }
+    
+    return hours;
+  };
+
   // US states list for Claude matching
   const statesList = [
     "AL",
@@ -505,13 +571,26 @@ const Onboarding = () => {
       }
       console.log("Profile created:", profileData);
 
-      const defaultHours = [
+      // Parse business hours from saved data or use defaults
+      let businessHours = [
         { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
         { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
         { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
         { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
         { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
       ];
+      
+      // Try to parse opening hours from Google Places data
+      if (businessData.openingHours && Array.isArray(businessData.openingHours)) {
+        try {
+          const parsedHours = parseGoogleOpeningHours(businessData.openingHours);
+          if (parsedHours.length > 0) {
+            businessHours = parsedHours;
+          }
+        } catch (error) {
+          console.error("Error parsing opening hours:", error);
+        }
+      }
 
       // Generate AI-enhanced description during final save
       let enhancedDescription = verificationData.business_description;
@@ -550,7 +629,7 @@ const Onboarding = () => {
           business_address: verificationData.business_address,
           business_website: verificationData.business_website,
           business_description: enhancedDescription,
-          business_hours: JSON.stringify(defaultHours),
+          business_hours: JSON.stringify(businessHours),
           business_timezone: verificationData.business_timezone || "America/New_York",
           transfer_number: transferNumber.replace(/\D/g, ""),
         }, { onConflict: "user_id" })
