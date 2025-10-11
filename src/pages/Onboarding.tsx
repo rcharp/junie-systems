@@ -1577,7 +1577,6 @@ const Onboarding = () => {
                   className="flex-1"
                   size="lg"
                 >
-                  <ArrowLeft className="mr-2 w-5 h-5" />
                   Back
                 </Button>
                 <Button
