@@ -182,16 +182,14 @@ const Onboarding = () => {
     return specificTypes[0] || "other";
   };
 
-  // Show verification when step changes to 2
+  // Load verification data when step changes to 2
   useEffect(() => {
-    if (step === 2 && !showVerification) {
+    if (step === 2) {
       const loadVerificationData = async () => {
         try {
-          // First, check if we have business data from the selection in sessionStorage
           const savedBusiness = sessionStorage.getItem("selectedBusiness");
 
           if (savedBusiness) {
-            // New user flow - use the data from business selection
             const businessData = JSON.parse(savedBusiness);
             console.log("Loading verification data from selected business:", businessData);
 
@@ -203,30 +201,6 @@ const Onboarding = () => {
               business_website: businessData.website || (useWebsite ? websiteUrl : ""),
               business_timezone: "America/New_York",
             });
-          } else {
-            // Returning user - try to load from database
-            const {
-              data: { session },
-            } = await supabase.auth.getSession();
-            if (session) {
-              const { data: businessSettings, error } = await supabase
-                .from("business_settings")
-                .select("*")
-                .eq("user_id", session.user.id)
-                .maybeSingle();
-
-              if (!error && businessSettings) {
-                console.log("Loading verification data from database:", businessSettings);
-                setVerificationData({
-                  business_name: businessSettings.business_name || "",
-                  business_phone: businessSettings.business_phone || "",
-                  business_address: businessSettings.business_address || "",
-                  business_type: businessSettings.business_type || "other",
-                  business_website: businessSettings.business_website || "",
-                  business_timezone: businessSettings.business_timezone || "America/New_York",
-                });
-              }
-            }
           }
         } catch (error) {
           console.error("Error loading verification data:", error);
@@ -234,9 +208,8 @@ const Onboarding = () => {
       };
 
       loadVerificationData();
-      setShowVerification(true);
     }
-  }, [step, showVerification, businessSearch, useWebsite, websiteUrl, businessTypesList]);
+  }, [step, businessSearch, useWebsite, websiteUrl, businessTypesList]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -319,7 +292,7 @@ const Onboarding = () => {
       // Store business data for later use
       sessionStorage.setItem("selectedBusiness", JSON.stringify(data));
 
-      // Automatically move to next step
+      // Move to verification step
       setTimeout(() => {
         setStep(2);
         isSelectingBusinessRef.current = false;
@@ -357,305 +330,9 @@ const Onboarding = () => {
     setStep(2);
   };
 
-  const handleAuthenticatedUserSetup = async () => {
-    // This function handles business setup for users who are already authenticated
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        console.error("No session found for authenticated user");
-        return;
-      }
-
-      console.log("Setting up business data for authenticated user:", session.user.id);
-
-      // Show extraction overlay
-      setExtractingData(true);
-      setExtractionProgress(10);
-
-      // Save business data
-      const savedBusiness = sessionStorage.getItem("selectedBusiness");
-      const savedWebsiteUrl = useWebsite ? websiteUrl : null;
-
-      if (savedBusiness || savedWebsiteUrl) {
-        try {
-          setExtractionProgress(20);
-          let businessData: any = {};
-
-          // If user provided a website URL, extract data from it
-          if (savedWebsiteUrl) {
-            console.log("Extracting business data from website:", savedWebsiteUrl);
-            try {
-              const { data: extractedData, error: extractError } = await supabase.functions.invoke(
-                "extract-business-data",
-                {
-                  body: { url: savedWebsiteUrl },
-                },
-              );
-
-              if (!extractError && extractedData?.success && extractedData?.data) {
-                console.log("Successfully extracted data from website:", extractedData.data);
-                businessData = {
-                  name: extractedData.data.business_name,
-                  phone: extractedData.data.business_phone,
-                  address: extractedData.data.business_address,
-                  website: savedWebsiteUrl,
-                  description: extractedData.data.business_description,
-                  types: extractedData.data.business_type ? [extractedData.data.business_type] : [],
-                  services: extractedData.data.services_offered,
-                  pricing: extractedData.data.pricing_structure,
-                  hours: extractedData.data.business_hours,
-                };
-              } else {
-                console.error("Error extracting data from website:", extractError);
-                // Continue with minimal data
-                businessData = {
-                  name: businessSearch || "My Business",
-                  website: savedWebsiteUrl,
-                };
-              }
-            } catch (extractError) {
-              console.error("Error calling extract-business-data function:", extractError);
-              // Continue with minimal data
-              businessData = {
-                name: businessSearch || "My Business",
-                website: savedWebsiteUrl,
-              };
-            }
-          } else if (savedBusiness) {
-            businessData = JSON.parse(savedBusiness);
-          }
-
-          console.log("Saving business data:", businessData);
-          setExtractionProgress(30);
-
-          // Ensure user profile exists
-          const { error: profileError } = await supabase.from("user_profiles").upsert(
-            {
-              id: session.user.id,
-              company_name: businessData.name || businessSearch || "My Business",
-              subscription_plan: "free",
-              subscription_status: "active",
-            },
-            { onConflict: "id" },
-          );
-
-          if (profileError) {
-            console.error("Error creating profile:", profileError);
-          }
-
-          setExtractionProgress(40);
-
-          // Use Claude to determine business type, state, and description
-          let claudeData: any = {};
-          try {
-            const { data: generatedData, error: claudeError } = await supabase.functions.invoke(
-              "generate-business-description",
-              {
-                body: {
-                  businessName: businessData.name || businessSearch || "My Business",
-                  businessType: businessData.types?.[0] || "other",
-                  services: [],
-                  address: businessData.address || null,
-                  phone: businessData.phone || null,
-                  website: savedWebsiteUrl || businessData.website || null,
-                  businessTypesList: businessTypesList.map((t) => t.value),
-                  statesList,
-                },
-              },
-            );
-
-            if (!claudeError && generatedData) {
-              claudeData = generatedData;
-              console.log("Claude generated data:", claudeData);
-            }
-          } catch (error) {
-            console.error("Error generating with Claude:", error);
-          }
-
-          setExtractionProgress(60);
-
-          // Default business hours
-          const defaultHours = [
-            { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-            { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-            { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-            { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-            { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          ];
-
-          // Save business settings
-          const { data: businessSettingsResult, error: businessError } = await supabase
-            .from("business_settings")
-            .upsert(
-              {
-                user_id: session.user.id,
-                business_name: businessData.name || businessSearch || "My Business",
-                business_type: claudeData.businessType || businessData.types?.[0] || "other",
-                business_phone: businessData.phone || null,
-                business_address: businessData.address || null,
-                business_address_state_full: claudeData.state || null,
-                business_website: savedWebsiteUrl || businessData.website || null,
-                business_hours: JSON.stringify(defaultHours),
-                business_description: claudeData.description || businessData.editorial_summary?.overview || null,
-                business_type_full_name: businessData.types?.join(", ") || null,
-                business_timezone: "America/New_York",
-              },
-              {
-                onConflict: "user_id",
-              },
-            )
-            .select("id")
-            .single();
-
-          setExtractionProgress(70);
-
-          if (businessError) {
-            console.error("Error saving business settings:", businessError);
-          } else {
-            console.log("Business data saved successfully");
-
-            // Extract services
-            if (businessSettingsResult?.id) {
-              try {
-                setExtractionProgress(80);
-                const { data: servicesData, error: servicesError } = await supabase.functions.invoke(
-                  "extract-services",
-                  {
-                    body: {
-                      businessName: businessData.name || businessSearch || "My Business",
-                      businessType: claudeData.businessType || businessData.types?.[0] || "other",
-                      website: savedWebsiteUrl || businessData.website,
-                      businessDescription: claudeData.description || businessData.editorial_summary?.overview,
-                    },
-                  },
-                );
-
-                setExtractionProgress(90);
-
-                const businessId = businessSettingsResult.id;
-
-                if (!servicesError && servicesData?.services) {
-                  const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
-                    business_id: businessId,
-                    name: service.name,
-                    price: service.price,
-                    description: service.description,
-                    display_order: index,
-                    is_active: true,
-                  }));
-
-                  await supabase.from("services").insert(servicesToInsert);
-                  console.log("Services saved successfully");
-                }
-
-                // Purchase Twilio number for the business
-                try {
-                  console.log("Attempting to purchase Twilio number...");
-
-                  // Extract area code from address or phone
-                  let areaCode = "800"; // Default fallback
-                  if (businessData.phone) {
-                    // Try to extract area code from phone number
-                    const phoneMatch = businessData.phone.match(/\(?(\d{3})\)?/);
-                    if (phoneMatch && phoneMatch[1]) {
-                      areaCode = phoneMatch[1];
-                    }
-                  } else if (businessData.address) {
-                    // Try to extract ZIP code and convert to area code (simplified)
-                    const zipMatch = businessData.address.match(/\b(\d{5})\b/);
-                    if (zipMatch && zipMatch[1]) {
-                      // Use first 3 digits of ZIP as rough area code approximation
-                      // This is simplified - in production you'd use a proper ZIP to area code mapping
-                      const zip = zipMatch[1];
-                      // Common mappings (simplified)
-                      if (zip.startsWith("1"))
-                        areaCode = "212"; // NY
-                      else if (zip.startsWith("2"))
-                        areaCode = "202"; // DC
-                      else if (zip.startsWith("3"))
-                        areaCode = "404"; // GA
-                      else if (zip.startsWith("4"))
-                        areaCode = "502"; // KY
-                      else if (zip.startsWith("6"))
-                        areaCode = "312"; // IL
-                      else if (zip.startsWith("7"))
-                        areaCode = "214"; // TX
-                      else if (zip.startsWith("8"))
-                        areaCode = "303"; // CO
-                      else if (zip.startsWith("9")) areaCode = "206"; // WA
-                    }
-                  }
-
-                  const { data: twilioData, error: twilioError } = await supabase.functions.invoke(
-                    "purchase-twilio-number",
-                    {
-                      body: {
-                        areaCode: areaCode,
-                        businessId: businessSettingsResult.id,
-                      },
-                    },
-                  );
-
-                  if (twilioError) {
-                    console.error("Error purchasing Twilio number:", twilioError);
-                  } else if (twilioData?.success) {
-                    console.log("Successfully purchased Twilio number:", twilioData.phoneNumber);
-                  }
-                } catch (twilioError) {
-                  console.error("Error calling purchase-twilio-number:", twilioError);
-                  // Don't fail onboarding if Twilio purchase fails
-                }
-              } catch (servicesError) {
-                console.error("Error extracting services:", servicesError);
-              }
-            }
-          }
-
-          // Clear sessionStorage
-          sessionStorage.removeItem("selectedBusiness");
-
-          setExtractionProgress(100);
-
-          // Show verification step
-          setExtractingData(false);
-          setShowVerification(true);
-          setVerificationData({
-            business_name: businessData.name || businessSearch || "My Business",
-            business_phone: businessData.phone || null,
-            business_address: businessData.address || null,
-            business_type: claudeData.businessType || businessData.types?.[0] || "other",
-            business_website: savedWebsiteUrl || businessData.website || null,
-            business_timezone: "America/New_York",
-          });
-        } catch (error: any) {
-          console.error("Setup error:", error);
-          setExtractingData(false);
-          toast({
-            title: "Setup failed",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error("Error in authenticated user setup:", error);
-      setExtractingData(false);
-      toast({
-        title: "Error",
-        description: "Failed to complete setup. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleGoogleSignup = async () => {
     setLoading(true);
-    // Mark that we're starting the onboarding flow
     isOnboardingFlowRef.current = true;
     
     try {
@@ -673,7 +350,6 @@ const Onboarding = () => {
       }
 
       if (data?.url) {
-        // Open OAuth in popup window (like calendar integration)
         const width = 600;
         const height = 700;
         const left = window.screen.width / 2 - width / 2;
@@ -685,7 +361,6 @@ const Onboarding = () => {
           `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`,
         );
 
-        // Listen for OAuth completion
         const handleMessage = async (event: MessageEvent) => {
           if (event.origin !== window.location.origin) return;
 
@@ -695,7 +370,6 @@ const Onboarding = () => {
 
             console.log("Received session tokens from popup");
 
-            // Establish session in parent window using tokens from popup
             if (event.data.session) {
               const { data, error } = await supabase.auth.setSession({
                 access_token: event.data.session.access_token,
@@ -715,393 +389,204 @@ const Onboarding = () => {
 
               console.log("Session established successfully:", data.session?.user.id);
 
-              // Show extraction overlay
-              setExtractingData(true);
-              setExtractionProgress(10);
-
-              // Save business data if available
-              const savedBusiness = sessionStorage.getItem("selectedBusiness");
-              const savedWebsiteUrl = useWebsite ? websiteUrl : null;
-
-              if ((savedBusiness || savedWebsiteUrl) && data.session?.user.id) {
-                try {
-                  setExtractionProgress(20);
-                  let businessData: any = {};
-
-                  // If user provided a website URL, extract data from it
-                  if (savedWebsiteUrl) {
-                    console.log("Extracting business data from website:", savedWebsiteUrl);
-                    try {
-                      const { data: extractedData, error: extractError } = await supabase.functions.invoke(
-                        "extract-business-data",
-                        {
-                          body: { url: savedWebsiteUrl },
-                        },
-                      );
-
-                      if (!extractError && extractedData?.success && extractedData?.data) {
-                        console.log("Successfully extracted data from website:", extractedData.data);
-                        businessData = {
-                          name: extractedData.data.business_name,
-                          phone: extractedData.data.business_phone,
-                          address: extractedData.data.business_address,
-                          website: savedWebsiteUrl,
-                          description: extractedData.data.business_description,
-                          types: extractedData.data.business_type ? [extractedData.data.business_type] : [],
-                          services: extractedData.data.services_offered,
-                          pricing: extractedData.data.pricing_structure,
-                          hours: extractedData.data.business_hours,
-                        };
-                      } else {
-                        console.error("Error extracting data from website:", extractError);
-                        // Continue with minimal data
-                        businessData = {
-                          name: businessSearch || "My Business",
-                          website: savedWebsiteUrl,
-                        };
-                      }
-                    } catch (extractError) {
-                      console.error("Error calling extract-business-data function:", extractError);
-                      // Continue with minimal data
-                      businessData = {
-                        name: businessSearch || "My Business",
-                        website: savedWebsiteUrl,
-                      };
-                    }
-                  } else if (savedBusiness) {
-                    businessData = JSON.parse(savedBusiness);
-                  }
-
-                  console.log("Saving business data:", businessData);
-                  setExtractionProgress(30);
-
-                  // Create user profile if it doesn't exist
-                  const { error: profileError } = await supabase.from("user_profiles").upsert(
-                    {
-                      id: data.session.user.id,
-                      company_name: businessData.name || businessSearch || "My Business",
-                      subscription_plan: "free",
-                      subscription_status: "active",
-                    },
-                    { onConflict: "id" },
-                  );
-
-                  if (profileError) {
-                    console.error("Error creating profile:", profileError);
-                  }
-
-                  setExtractionProgress(40);
-
-                  // Use Claude to determine business type, state, and description
-                  let claudeData: any = {};
-                  try {
-                    const { data: generatedData, error: claudeError } = await supabase.functions.invoke(
-                      "generate-business-description",
-                      {
-                        body: {
-                          businessName: businessData.name || businessSearch || "My Business",
-                          businessType: businessData.types?.[0] || "other",
-                          services: [],
-                          address: businessData.address || null,
-                          phone: businessData.phone || null,
-                          website: savedWebsiteUrl || businessData.website || null,
-                          businessTypesList: businessTypesList.map((t) => t.value),
-                          statesList,
-                        },
-                      },
-                    );
-
-                    if (!claudeError && generatedData) {
-                      claudeData = generatedData;
-                      console.log("Claude generated data:", claudeData);
-                    }
-                  } catch (error) {
-                    console.error("Error generating with Claude:", error);
-                  }
-
-                  setExtractionProgress(60);
-
-                  // Default business hours: M-F 9am-5pm
-                  const defaultHours = [
-                    { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-                    { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-                    { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-                    { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-                    { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-                  ];
-
-                  // Determine which hours to save - use Google hours if available, otherwise default
-                  let businessHoursToSave = defaultHours;
-
-                  // If Google Business Profile has hours, try to use them
-                  if (
-                    businessData.openingHours &&
-                    Array.isArray(businessData.openingHours) &&
-                    businessData.openingHours.length > 0
-                  ) {
-                    try {
-                      // Parse Google hours from weekday_text format (e.g., "Monday: 9:00 AM – 5:00 PM")
-                      businessHoursToSave = businessData.openingHours
-                        .map((hourText: string, index: number) => {
-                          // Extract day and hours from the text
-                          const match = hourText.match(/^(\w+):\s*(.+)$/);
-                          if (!match) return null;
-
-                          const day = match[1].toLowerCase();
-                          const hoursText = match[2];
-
-                          // Check if open 24 hours
-                          if (hoursText.includes("Open 24 hours")) {
-                            return {
-                              id: index + 1,
-                              day,
-                              isOpen: true,
-                              openTime: "00:00",
-                              closeTime: "23:59",
-                            };
-                          }
-
-                          // Check if closed
-                          if (hoursText.includes("Closed")) {
-                            return {
-                              id: index + 1,
-                              day,
-                              isOpen: false,
-                              openTime: "09:00",
-                              closeTime: "17:00",
-                            };
-                          }
-
-                          // Parse time range (e.g., "9:00 AM – 5:00 PM")
-                          const timeMatch = hoursText.match(
-                            /(\d{1,2}):(\d{2})\s*(AM|PM)\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/,
-                          );
-                          if (timeMatch) {
-                            let openHour = parseInt(timeMatch[1]);
-                            const openMin = timeMatch[2];
-                            const openPeriod = timeMatch[3];
-                            let closeHour = parseInt(timeMatch[4]);
-                            const closeMin = timeMatch[5];
-                            const closePeriod = timeMatch[6];
-
-                            // Convert to 24-hour format
-                            if (openPeriod === "PM" && openHour !== 12) openHour += 12;
-                            if (openPeriod === "AM" && openHour === 12) openHour = 0;
-                            if (closePeriod === "PM" && closeHour !== 12) closeHour += 12;
-                            if (closePeriod === "AM" && closeHour === 12) closeHour = 0;
-
-                            return {
-                              id: index + 1,
-                              day,
-                              isOpen: true,
-                              openTime: `${String(openHour).padStart(2, "0")}:${openMin}`,
-                              closeTime: `${String(closeHour).padStart(2, "0")}:${closeMin}`,
-                            };
-                          }
-
-                          // Default fallback
-                          return {
-                            id: index + 1,
-                            day,
-                            isOpen: true,
-                            openTime: "09:00",
-                            closeTime: "17:00",
-                          };
-                        })
-                        .filter(Boolean); // Remove any null entries
-                    } catch (error) {
-                      console.error("Error parsing Google hours, using defaults:", error);
-                      businessHoursToSave = defaultHours;
-                    }
-                  }
-
-                  // Save business settings with Claude-enhanced data
-                  const { data: businessSettingsResult, error: businessError } = await supabase
-                    .from("business_settings")
-                    .upsert(
-                      {
-                        user_id: data.session.user.id,
-                        business_name: businessData.name || businessSearch || "My Business",
-                        business_type: claudeData.businessType || businessData.types?.[0] || "other",
-                        business_phone: businessData.phone || null,
-                        business_address: businessData.address || null,
-                        business_address_state_full: claudeData.state || null,
-                        business_website: savedWebsiteUrl || businessData.website || null,
-                        business_hours: JSON.stringify(businessHoursToSave),
-                        business_description:
-                          claudeData.description || businessData.editorial_summary?.overview || null,
-                        business_type_full_name: businessData.types?.join(", ") || null,
-                        business_timezone: "America/New_York",
-                      },
-                      {
-                        onConflict: "user_id",
-                      },
-                    )
-                    .select("id")
-                    .single();
-
-                  setExtractionProgress(70);
-
-                  if (businessError) {
-                    console.error("Error saving business settings:", businessError);
-                  } else {
-                    console.log("Business data saved successfully");
-
-                    // Extract services using Claude API
-                    if (businessSettingsResult?.id) {
-                      try {
-                        setExtractionProgress(80);
-                        const { data: servicesData, error: servicesError } = await supabase.functions.invoke(
-                          "extract-services",
-                          {
-                            body: {
-                              businessName: businessData.name || businessSearch || "My Business",
-                              businessType: claudeData.businessType || businessData.types?.[0] || "other",
-                              website: savedWebsiteUrl || businessData.website,
-                              businessDescription: claudeData.description || businessData.editorial_summary?.overview,
-                            },
-                          },
-                        );
-
-                        setExtractionProgress(90);
-
-                        const businessId = businessSettingsResult.id;
-
-                        if (!servicesError && servicesData?.services) {
-                          // Save extracted services to database
-                          const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
-                            business_id: businessId,
-                            name: service.name,
-                            price: service.price,
-                            description: service.description,
-                            display_order: index,
-                            is_active: true,
-                          }));
-
-                          await supabase.from("services").insert(servicesToInsert);
-                          console.log("Services saved successfully");
-                        }
-
-                        // Purchase Twilio number for the business
-                        try {
-                          console.log("Attempting to purchase Twilio number...");
-
-                          // Extract area code from address or phone
-                          let areaCode = "800"; // Default fallback
-                          if (businessData.phone) {
-                            const phoneMatch = businessData.phone.match(/\(?(\d{3})\)?/);
-                            if (phoneMatch && phoneMatch[1]) {
-                              areaCode = phoneMatch[1];
-                            }
-                          } else if (businessData.address) {
-                            const zipMatch = businessData.address.match(/\b(\d{5})\b/);
-                            if (zipMatch && zipMatch[1]) {
-                              const zip = zipMatch[1];
-                              if (zip.startsWith("1")) areaCode = "212";
-                              else if (zip.startsWith("2")) areaCode = "202";
-                              else if (zip.startsWith("3")) areaCode = "404";
-                              else if (zip.startsWith("4")) areaCode = "502";
-                              else if (zip.startsWith("6")) areaCode = "312";
-                              else if (zip.startsWith("7")) areaCode = "214";
-                              else if (zip.startsWith("8")) areaCode = "303";
-                              else if (zip.startsWith("9")) areaCode = "206";
-                            }
-                          }
-
-                          const { data: twilioData, error: twilioError } = await supabase.functions.invoke(
-                            "purchase-twilio-number",
-                            {
-                              body: {
-                                areaCode: areaCode,
-                                businessId: businessId,
-                              },
-                            },
-                          );
-
-                          if (twilioError) {
-                            console.error("Error purchasing Twilio number:", twilioError);
-                          } else if (twilioData?.success) {
-                            console.log("Successfully purchased Twilio number:", twilioData.phoneNumber);
-                          }
-                        } catch (twilioError) {
-                          console.error("Error calling purchase-twilio-number:", twilioError);
-                        }
-                      } catch (servicesError) {
-                        console.error("Error extracting services:", servicesError);
-                      }
-                    }
-                  }
-
-                  // Clear the sessionStorage
-                  sessionStorage.removeItem("selectedBusiness");
-
-                  setExtractionProgress(100);
-
-                  // Show verification step
-                  setExtractingData(false);
-                  setShowVerification(true);
-                  setVerificationData({
-                    business_name: businessData.name || businessSearch || "My Business",
-                    business_phone: businessData.phone || null,
-                    business_address: businessData.address || null,
-                    business_type: claudeData.businessType || businessData.types?.[0] || "other",
-                    business_website: savedWebsiteUrl || businessData.website || null,
-                    business_timezone: "America/New_York",
-                  });
-                } catch (error) {
-                  console.error("Error processing business data:", error);
-                }
-              } else {
-                // No business data - just show basic verification
-                setExtractionProgress(100);
-                setExtractingData(false);
-                setShowVerification(true);
-                setVerificationData({
-                  business_name: businessSearch || "My Business",
-                  business_phone: null,
-                  business_address: null,
-                  business_type: "other",
-                  business_website: null,
-                  business_timezone: "America/New_York",
-                });
-              }
-            } else {
-              console.error("No session data received from popup");
-              toast({
-                title: "Session error",
-                description: "Please try again.",
-                variant: "destructive",
-              });
-              setLoading(false);
+              // Now extract and save business data
+              await saveBusinessData(data.session.user.id);
             }
           } else if (event.data?.type === "google-oauth-error") {
             window.removeEventListener("message", handleMessage);
             popup?.close();
-            setLoading(false);
             toast({
-              title: "Sign-in error",
-              description: event.data?.error || "Failed to sign in with Google.",
+              title: "Authentication failed",
+              description: event.data.error || "Failed to authenticate with Google",
               variant: "destructive",
             });
+            setLoading(false);
           }
         };
 
         window.addEventListener("message", handleMessage);
-
-        // Check if popup was closed manually
-        const checkClosed = setInterval(() => {
-          if (popup?.closed) {
-            clearInterval(checkClosed);
-            window.removeEventListener("message", handleMessage);
-            setLoading(false);
-          }
-        }, 1000);
       }
     } catch (error: any) {
-      console.error("Google sign-in failed:", error);
+      console.error("Error during Google signup:", error);
       toast({
-        title: "Sign-in error",
-        description: error.message || "Failed to sign in with Google. Please try again.",
+        title: "Error",
+        description: error.message || "Failed to sign up with Google",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  const saveBusinessData = async (userId: string) => {
+    try {
+      setExtractingData(true);
+      setExtractionProgress(10);
+
+      const savedBusiness = sessionStorage.getItem("selectedBusiness");
+      const savedWebsiteUrl = useWebsite ? websiteUrl : null;
+
+      if (savedBusiness || savedWebsiteUrl) {
+        setExtractionProgress(20);
+        let businessData: any = {};
+
+        if (savedWebsiteUrl) {
+          console.log("Extracting business data from website:", savedWebsiteUrl);
+          try {
+            const { data: extractedData, error: extractError } = await supabase.functions.invoke(
+              "extract-business-data",
+              { body: { url: savedWebsiteUrl } }
+            );
+
+            if (!extractError && extractedData?.success && extractedData?.data) {
+              businessData = {
+                name: extractedData.data.business_name,
+                phone: extractedData.data.business_phone,
+                address: extractedData.data.business_address,
+                website: savedWebsiteUrl,
+                description: extractedData.data.business_description,
+                types: extractedData.data.business_type ? [extractedData.data.business_type] : [],
+              };
+            } else {
+              businessData = {
+                name: verificationData.business_name || businessSearch || "My Business",
+                website: savedWebsiteUrl,
+              };
+            }
+          } catch (extractError) {
+            businessData = {
+              name: verificationData.business_name || businessSearch || "My Business",
+              website: savedWebsiteUrl,
+            };
+          }
+        } else if (savedBusiness) {
+          businessData = JSON.parse(savedBusiness);
+        }
+
+        // Use verification data if available
+        if (verificationData.business_name) {
+          businessData.name = verificationData.business_name;
+          businessData.phone = verificationData.business_phone;
+          businessData.address = verificationData.business_address;
+          businessData.website = verificationData.business_website;
+        }
+
+        setExtractionProgress(30);
+
+        await supabase.from("user_profiles").upsert({
+          id: userId,
+          company_name: businessData.name || "My Business",
+          subscription_plan: "free",
+          subscription_status: "active",
+        }, { onConflict: "id" });
+
+        setExtractionProgress(40);
+
+        let claudeData: any = {};
+        try {
+          const { data: generatedData } = await supabase.functions.invoke("generate-business-description", {
+            body: {
+              businessName: businessData.name,
+              businessType: verificationData.business_type || businessData.types?.[0] || "other",
+              services: [],
+              address: businessData.address,
+              phone: businessData.phone,
+              website: businessData.website,
+              businessTypesList: businessTypesList.map((t) => t.value),
+              statesList,
+            },
+          });
+          if (generatedData) claudeData = generatedData;
+        } catch (error) {
+          console.error("Error generating with Claude:", error);
+        }
+
+        setExtractionProgress(60);
+
+        const defaultHours = [
+          { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+          { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+          { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+          { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+          { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+        ];
+
+        const { data: businessSettingsResult } = await supabase.from("business_settings")
+          .upsert({
+            user_id: userId,
+            business_name: businessData.name,
+            business_type: verificationData.business_type || claudeData.businessType || "other",
+            business_phone: verificationData.business_phone || businessData.phone,
+            business_address: verificationData.business_address || businessData.address,
+            business_address_state_full: claudeData.state,
+            business_website: verificationData.business_website || businessData.website,
+            business_hours: JSON.stringify(defaultHours),
+            business_description: claudeData.description || businessData.editorial_summary?.overview,
+            business_type_full_name: businessData.types?.join(", "),
+            business_timezone: "America/New_York",
+            call_transfer_number: transferNumber.replace(/\D/g, ""),
+          }, { onConflict: "user_id" })
+          .select("id")
+          .single();
+
+        setExtractionProgress(80);
+
+        if (businessSettingsResult?.id) {
+          const { data: servicesData } = await supabase.functions.invoke("extract-services", {
+            body: {
+              businessName: businessData.name,
+              businessType: verificationData.business_type || claudeData.businessType,
+              website: businessData.website,
+              businessDescription: claudeData.description,
+            },
+          });
+
+          if (servicesData?.services) {
+            const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
+              business_id: businessSettingsResult.id,
+              name: service.name,
+              price: service.price,
+              description: service.description,
+              display_order: index,
+              is_active: true,
+            }));
+            await supabase.from("services").insert(servicesToInsert);
+          }
+
+          // Purchase Twilio number
+          try {
+            let areaCode = "800";
+            if (businessData.phone) {
+              const phoneMatch = businessData.phone.match(/\(?(\d{3})\)?/);
+              if (phoneMatch?.[1]) areaCode = phoneMatch[1];
+            }
+
+            await supabase.functions.invoke("purchase-twilio-number", {
+              body: { areaCode, businessId: businessSettingsResult.id },
+            });
+          } catch (twilioError) {
+            console.error("Error calling purchase-twilio-number:", twilioError);
+          }
+        }
+
+        sessionStorage.removeItem("selectedBusiness");
+        setExtractionProgress(100);
+        setExtractingData(false);
+
+        toast({
+          title: "Setup complete!",
+          description: "Welcome to Junie! Let's get started.",
+        });
+
+        setTimeout(() => {
+          navigate("/settings");
+        }, 500);
+      }
+    } catch (error: any) {
+      console.error("Error saving business data:", error);
+      setExtractingData(false);
+      toast({
+        title: "Setup failed",
+        description: error.message,
         variant: "destructive",
       });
       setLoading(false);
@@ -1128,17 +613,18 @@ const Onboarding = () => {
     }
 
     setLoading(true);
+    isOnboardingFlowRef.current = true;
+    
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
+          emailRedirectTo: `${window.location.origin}/settings`,
         },
       });
 
       if (error) {
-        // Check if account already exists with OAuth
         if (error.message.includes("User already registered") || error.message.includes("already registered")) {
           toast({
             title: "Account exists",
@@ -1152,291 +638,8 @@ const Onboarding = () => {
       }
 
       if (data.user) {
-        // Show extraction overlay
-        setExtractingData(true);
-        setExtractionProgress(10);
-
-        // Create user profile
-        const { error: profileError } = await supabase.from("user_profiles").upsert(
-          {
-            id: data.user.id,
-            company_name: businessSearch || "My Business",
-            subscription_plan: "free",
-            subscription_status: "active",
-          },
-          { onConflict: "id" },
-        );
-
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-        }
-
-        setExtractionProgress(20);
-
-        // Get saved business data
-        const savedBusiness = sessionStorage.getItem("selectedBusiness");
-        const savedWebsiteUrl = useWebsite ? websiteUrl : null;
-
-        let businessData: any = {};
-
-        if (savedBusiness) {
-          businessData = JSON.parse(savedBusiness);
-        }
-
-        setExtractionProgress(30);
-
-        // Use Claude to determine business type, state, and description
-        let claudeData: any = {};
-        try {
-          const { data: generatedData, error: claudeError } = await supabase.functions.invoke(
-            "generate-business-description",
-            {
-              body: {
-                businessName: businessData.name || businessSearch || "My Business",
-                businessType: businessData.types?.[0] || "other",
-                services: [],
-                address: businessData.address || null,
-                phone: businessData.phone || null,
-                website: savedWebsiteUrl || businessData.website || null,
-                businessTypesList: businessTypesList.map((t) => t.value),
-                statesList,
-              },
-            },
-          );
-
-          if (!claudeError && generatedData) {
-            claudeData = generatedData;
-            console.log("Claude generated data:", claudeData);
-          }
-        } catch (error) {
-          console.error("Error generating with Claude:", error);
-        }
-
-        setExtractionProgress(60);
-
-        // Default business hours: M-F 9am-5pm
-        const defaultHours = [
-          { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-        ];
-
-        // Determine which hours to save - use Google hours if available, otherwise default
-        let businessHoursToSave = defaultHours;
-
-        // If Google Business Profile has hours, try to use them
-        if (
-          businessData.openingHours &&
-          Array.isArray(businessData.openingHours) &&
-          businessData.openingHours.length > 0
-        ) {
-          try {
-            // Parse Google hours from weekday_text format (e.g., "Monday: 9:00 AM – 5:00 PM")
-            businessHoursToSave = businessData.openingHours
-              .map((hourText: string, index: number) => {
-                // Extract day and hours from the text
-                const match = hourText.match(/^(\w+):\s*(.+)$/);
-                if (!match) return null;
-
-                const day = match[1].toLowerCase();
-                const hoursText = match[2];
-
-                // Check if open 24 hours
-                if (hoursText.includes("Open 24 hours")) {
-                  return {
-                    id: index + 1,
-                    day,
-                    isOpen: true,
-                    openTime: "00:00",
-                    closeTime: "23:59",
-                  };
-                }
-
-                // Check if closed
-                if (hoursText.includes("Closed")) {
-                  return {
-                    id: index + 1,
-                    day,
-                    isOpen: false,
-                    openTime: "09:00",
-                    closeTime: "17:00",
-                  };
-                }
-
-                // Parse time range (e.g., "9:00 AM – 5:00 PM")
-                const timeMatch = hoursText.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/);
-                if (timeMatch) {
-                  let openHour = parseInt(timeMatch[1]);
-                  const openMin = timeMatch[2];
-                  const openPeriod = timeMatch[3];
-                  let closeHour = parseInt(timeMatch[4]);
-                  const closeMin = timeMatch[5];
-                  const closePeriod = timeMatch[6];
-
-                  // Convert to 24-hour format
-                  if (openPeriod === "PM" && openHour !== 12) openHour += 12;
-                  if (openPeriod === "AM" && openHour === 12) openHour = 0;
-                  if (closePeriod === "PM" && closeHour !== 12) closeHour += 12;
-                  if (closePeriod === "AM" && closeHour === 12) closeHour = 0;
-
-                  return {
-                    id: index + 1,
-                    day,
-                    isOpen: true,
-                    openTime: `${String(openHour).padStart(2, "0")}:${openMin}`,
-                    closeTime: `${String(closeHour).padStart(2, "0")}:${closeMin}`,
-                  };
-                }
-
-                // Default fallback
-                return {
-                  id: index + 1,
-                  day,
-                  isOpen: true,
-                  openTime: "09:00",
-                  closeTime: "17:00",
-                };
-              })
-              .filter(Boolean); // Remove any null entries
-          } catch (error) {
-            console.error("Error parsing Google hours, using defaults:", error);
-            businessHoursToSave = defaultHours;
-          }
-        }
-
-        // Save business settings with Claude-enhanced data and transfer number
-        const { data: businessSettingsResult, error: businessError } = await supabase
-          .from("business_settings")
-          .upsert(
-            {
-              user_id: data.user.id,
-              business_name: businessData.name || businessSearch || "My Business",
-              business_type: claudeData.businessType || businessData.types?.[0] || "other",
-              business_phone: businessData.phone || null,
-              business_address: businessData.address || null,
-              business_address_state_full: claudeData.state || null,
-              business_website: savedWebsiteUrl || businessData.website || null,
-              business_hours: JSON.stringify(businessHoursToSave),
-              business_description: claudeData.description || businessData.editorial_summary?.overview || null,
-              business_type_full_name: businessData.types?.join(", ") || null,
-              business_timezone: "America/New_York",
-              transfer_number: transferNumber,
-              sms_notifications: true,
-            },
-            {
-              onConflict: "user_id",
-            },
-          )
-          .select("id")
-          .single();
-
-        setExtractionProgress(70);
-
-        if (businessError) {
-          console.error("Error saving business settings:", businessError);
-        } else {
-          console.log("Business data saved successfully");
-
-          // Extract services using Claude API
-          if (businessSettingsResult?.id) {
-            try {
-              setExtractionProgress(80);
-              const { data: servicesData, error: servicesError } = await supabase.functions.invoke("extract-services", {
-                body: {
-                  businessName: businessData.name || businessSearch || "My Business",
-                  businessType: claudeData.businessType || businessData.types?.[0] || "other",
-                  website: savedWebsiteUrl || businessData.website,
-                  businessDescription: claudeData.description || businessData.editorial_summary?.overview,
-                },
-              });
-
-              setExtractionProgress(90);
-
-              const businessId = businessSettingsResult.id;
-
-              if (!servicesError && servicesData?.services) {
-                // Save extracted services to database
-                const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
-                  business_id: businessId,
-                  name: service.name,
-                  price: service.price,
-                  description: service.description,
-                  display_order: index,
-                  is_active: true,
-                }));
-
-                await supabase.from("services").insert(servicesToInsert);
-                console.log("Services saved successfully");
-              }
-
-              // Purchase Twilio number for the business
-              try {
-                console.log("Attempting to purchase Twilio number...");
-
-                // Extract area code from address or phone
-                let areaCode = "800"; // Default fallback
-                if (businessData.phone) {
-                  const phoneMatch = businessData.phone.match(/\(?(\d{3})\)?/);
-                  if (phoneMatch && phoneMatch[1]) {
-                    areaCode = phoneMatch[1];
-                  }
-                } else if (businessData.address) {
-                  const zipMatch = businessData.address.match(/\b(\d{5})\b/);
-                  if (zipMatch && zipMatch[1]) {
-                    const zip = zipMatch[1];
-                    if (zip.startsWith("1")) areaCode = "212";
-                    else if (zip.startsWith("2")) areaCode = "202";
-                    else if (zip.startsWith("3")) areaCode = "404";
-                    else if (zip.startsWith("4")) areaCode = "502";
-                    else if (zip.startsWith("6")) areaCode = "312";
-                    else if (zip.startsWith("7")) areaCode = "214";
-                    else if (zip.startsWith("8")) areaCode = "303";
-                    else if (zip.startsWith("9")) areaCode = "206";
-                  }
-                }
-
-                const { data: twilioData, error: twilioError } = await supabase.functions.invoke(
-                  "purchase-twilio-number",
-                  {
-                    body: {
-                      areaCode: areaCode,
-                      businessId: businessId,
-                    },
-                  },
-                );
-
-                if (twilioError) {
-                  console.error("Error purchasing Twilio number:", twilioError);
-                } else if (twilioData?.success) {
-                  console.log("Successfully purchased Twilio number:", twilioData.phoneNumber);
-                }
-              } catch (twilioError) {
-                console.error("Error calling purchase-twilio-number:", twilioError);
-              }
-            } catch (servicesError) {
-              console.error("Error extracting services:", servicesError);
-            }
-          }
-        }
-
-        // Clear the sessionStorage
-        sessionStorage.removeItem("selectedBusiness");
-
-        setExtractionProgress(100);
-
-        // Show verification step
-        setExtractingData(false);
-        setShowVerification(true);
-        setVerificationData({
-          business_name: businessData.name || businessSearch || "My Business",
-          business_phone: businessData.phone || null,
-          business_address: businessData.address || null,
-          business_type: claudeData.businessType || businessData.types?.[0] || "other",
-          business_website: savedWebsiteUrl || businessData.website || null,
-          business_timezone: "America/New_York",
-        });
+        // Now extract and save business data
+        await saveBusinessData(data.user.id);
       }
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -1446,12 +649,11 @@ const Onboarding = () => {
         description: error.message,
         variant: "destructive",
       });
-    } finally {
       setLoading(false);
     }
   };
 
-  const progressValue = (step / 3) * 100;
+  const progressValue = (step / 4) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
@@ -1482,155 +684,6 @@ const Onboarding = () => {
         </div>
       )}
 
-      {/* Verification Step Overlay */}
-      {showVerification && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle className="text-2xl">Verify Your Business Details</CardTitle>
-              <p className="text-muted-foreground">Please review and update your information as needed</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="verify-name">Business Name</Label>
-                <Input
-                  id="verify-name"
-                  value={verificationData.business_name || ""}
-                  onChange={(e) => setVerificationData({ ...verificationData, business_name: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="verify-phone">Phone Number</Label>
-                <Input
-                  id="verify-phone"
-                  value={verificationData.business_phone || ""}
-                  onChange={(e) => setVerificationData({ ...verificationData, business_phone: e.target.value })}
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="verify-address">Business Address</Label>
-                <Input
-                  id="verify-address"
-                  value={verificationData.business_address || ""}
-                  onChange={(e) => setVerificationData({ ...verificationData, business_address: e.target.value })}
-                  placeholder="123 Main St, City, State 12345"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="verify-type">Business Type</Label>
-                <select
-                  id="verify-type"
-                  value={verificationData.business_type || "other"}
-                  onChange={(e) => setVerificationData({ ...verificationData, business_type: e.target.value })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {businessTypesList.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="verify-website">Website</Label>
-                <Input
-                  id="verify-website"
-                  value={verificationData.business_website || ""}
-                  onChange={(e) => setVerificationData({ ...verificationData, business_website: e.target.value })}
-                  placeholder="https://yourbusiness.com"
-                />
-              </div>
-
-              <div className="flex gap-3 mt-6">
-                <Button
-                  onClick={async () => {
-                    try {
-                      // Get current user
-                      const {
-                        data: { session },
-                      } = await supabase.auth.getSession();
-                      if (session?.user?.id) {
-                        // Delete services and business settings for this user
-                        const { data: businessSettings } = await supabase
-                          .from("business_settings")
-                          .select("id")
-                          .eq("user_id", session.user.id)
-                          .maybeSingle();
-
-                        if (businessSettings?.id) {
-                          // Delete services first
-                          await supabase.from("services").delete().eq("business_id", businessSettings.id);
-
-                          // Delete business settings
-                          await supabase.from("business_settings").delete().eq("user_id", session.user.id);
-                        }
-                      }
-                    } catch (error) {
-                      console.error("Error clearing business data:", error);
-                    }
-
-                    // Clear all state
-                    setShowVerification(false);
-                    setVerificationData({});
-                    setStep(1);
-                    setSelectedBusiness(null);
-                    setBusinessSearch("");
-                    setWebsiteUrl("");
-                    setUseWebsite(false);
-                    sessionStorage.removeItem("selectedBusiness");
-                  }}
-                  variant="outline"
-                  className="flex-1"
-                  size="lg"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  Back
-                </Button>
-                <Button
-                  onClick={async () => {
-                    // Mark onboarding flow as complete
-                    isOnboardingFlowRef.current = false;
-                    
-                    // Update user profile to mark setup as completed
-                    const {
-                      data: { session },
-                    } = await supabase.auth.getSession();
-                    
-                    if (session?.user?.id) {
-                      await supabase
-                        .from("user_profiles")
-                        .update({ setup_completed: true })
-                        .eq("id", session.user.id);
-                    }
-                    
-                    setShowVerification(false);
-                    
-                    // Navigate to dashboard
-                    toast({
-                      title: "Setup complete!",
-                      description: "Welcome to Junie! Let's get started.",
-                    });
-                    
-                    setTimeout(() => {
-                      navigate("/dashboard");
-                    }, 500);
-                  }}
-                  className="flex-1"
-                  size="lg"
-                >
-                  Complete Setup
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Progress indicator */}
       <div className="container mx-auto px-4 py-2">
@@ -1815,7 +868,99 @@ const Onboarding = () => {
           ) : step === 2 ? (
             /* Step 2: Verify Business Details */
             <div className="space-y-6 animate-slide-up" key="step-2">
-              {/* This will be shown via the verification overlay */}
+              <div className="text-center space-y-3">
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground">Verify Your Business Details</h1>
+                <p className="text-muted-foreground text-lg">
+                  Please review and update your information as needed
+                </p>
+              </div>
+
+              <Card className="border-2 shadow-elegant">
+                <CardContent className="pt-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="verify-name">Business Name</Label>
+                    <Input
+                      id="verify-name"
+                      value={verificationData.business_name || ""}
+                      onChange={(e) => setVerificationData({ ...verificationData, business_name: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="verify-phone">Phone Number</Label>
+                    <Input
+                      id="verify-phone"
+                      value={verificationData.business_phone || ""}
+                      onChange={(e) => setVerificationData({ ...verificationData, business_phone: e.target.value })}
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="verify-address">Business Address</Label>
+                    <Input
+                      id="verify-address"
+                      value={verificationData.business_address || ""}
+                      onChange={(e) => setVerificationData({ ...verificationData, business_address: e.target.value })}
+                      placeholder="123 Main St, City, State 12345"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="verify-type">Business Type</Label>
+                    <select
+                      id="verify-type"
+                      value={verificationData.business_type || "other"}
+                      onChange={(e) => setVerificationData({ ...verificationData, business_type: e.target.value })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {businessTypesList.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="verify-website">Website</Label>
+                    <Input
+                      id="verify-website"
+                      value={verificationData.business_website || ""}
+                      onChange={(e) => setVerificationData({ ...verificationData, business_website: e.target.value })}
+                      placeholder="https://yourbusiness.com"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                    <Button
+                      onClick={() => {
+                        setStep(1);
+                        setSelectedBusiness(null);
+                        setBusinessSearch("");
+                        setWebsiteUrl("");
+                        setUseWebsite(false);
+                        setVerificationData({});
+                        sessionStorage.removeItem("selectedBusiness");
+                      }}
+                      variant="outline"
+                      className="flex-1"
+                      size="lg"
+                    >
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </Button>
+                    <Button
+                      onClick={() => setStep(3)}
+                      className="flex-1"
+                      size="lg"
+                    >
+                      Continue
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           ) : step === 3 ? (
             /* Step 3: Call Transfer Setup */
@@ -1882,9 +1027,12 @@ const Onboarding = () => {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
 
-                  <Button variant="outline" onClick={() => setStep(2)} className="w-full">
-                    ← Back
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
