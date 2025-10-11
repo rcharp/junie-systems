@@ -1445,7 +1445,7 @@ const Onboarding = () => {
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
       {/* Header */}
-      <Header />
+      <Header showAuthButtons={false} />
 
       {/* Data Extraction Loading Overlay */}
       {extractingData && (
