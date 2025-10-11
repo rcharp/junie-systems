@@ -156,6 +156,26 @@ const Onboarding = () => {
     checkUser();
   }, [navigate]);
 
+  // Helper function to find the best matching business type
+  const findBestBusinessType = (googleTypes: string[] = []): string => {
+    // Filter out generic types
+    const genericTypes = ['establishment', 'point_of_interest'];
+    const specificTypes = googleTypes.filter(t => !genericTypes.includes(t));
+    
+    // Try to match against our business types list
+    for (const type of specificTypes) {
+      const match = businessTypesList.find(bt => 
+        bt.value === type || 
+        type.includes(bt.value) || 
+        bt.value.includes(type)
+      );
+      if (match) return match.value;
+    }
+    
+    // If no match, return the first specific type or 'other'
+    return specificTypes[0] || 'other';
+  };
+
   // Show verification when step changes to 2
   useEffect(() => {
     if (step === 2 && !showVerification) {
@@ -173,7 +193,7 @@ const Onboarding = () => {
               business_name: businessData.name || businessSearch || "",
               business_phone: businessData.phone || "",
               business_address: businessData.address || "",
-              business_type: businessData.types?.[0] || "other",
+              business_type: findBestBusinessType(businessData.types),
               business_website: businessData.website || (useWebsite ? websiteUrl : ""),
               business_timezone: "America/New_York",
             });
@@ -208,7 +228,7 @@ const Onboarding = () => {
       loadVerificationData();
       setShowVerification(true);
     }
-  }, [step, showVerification, businessSearch, useWebsite, websiteUrl]);
+  }, [step, showVerification, businessSearch, useWebsite, websiteUrl, businessTypesList]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
