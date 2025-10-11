@@ -255,8 +255,6 @@ const Onboarding = () => {
 
     try {
       setLoading(true);
-      setExtractingData(true);
-      setExtractionProgress(10);
       
       // Fetch detailed business information
       const { data, error } = await supabase.functions.invoke("get-business-details", {
@@ -267,8 +265,6 @@ const Onboarding = () => {
 
       // Store business data
       sessionStorage.setItem("selectedBusiness", JSON.stringify(data));
-      
-      setExtractionProgress(40);
       
       let businessData = data;
       
@@ -292,8 +288,6 @@ const Onboarding = () => {
         console.error("Error generating with Claude:", error);
       }
       
-      setExtractionProgress(80);
-      
       // Set verification data with extracted information
       setVerificationData({
         business_name: businessData.name || businessSearch,
@@ -305,17 +299,11 @@ const Onboarding = () => {
         business_description: claudeData.description || "",
       });
       
-      setExtractionProgress(100);
-      setExtractingData(false);
-      
       // Move to verification step
-      setTimeout(() => {
-        setStep(2);
-        isSelectingBusinessRef.current = false;
-      }, 500);
+      setStep(2);
+      isSelectingBusinessRef.current = false;
     } catch (error: any) {
       console.error("Error getting business details:", error);
-      setExtractingData(false);
       toast({
         title: "Error",
         description: "Failed to fetch business details",
@@ -509,6 +497,8 @@ const Onboarding = () => {
       console.log("transferNumber:", transferNumber);
 
       setSettingUpAccount(true);
+      setExtractingData(true);
+      setExtractionProgress(10);
 
       const savedBusiness = sessionStorage.getItem("selectedBusiness");
       console.log("savedBusiness from sessionStorage:", savedBusiness);
@@ -517,6 +507,8 @@ const Onboarding = () => {
         console.error("No business data available to save");
         throw new Error("No business data available");
       }
+      
+      setExtractionProgress(30);
       
       let businessData: any = savedBusiness ? JSON.parse(savedBusiness) : {};
       console.log("businessData:", businessData);
@@ -622,7 +614,9 @@ const Onboarding = () => {
         }
       }
 
+      setExtractionProgress(100);
       sessionStorage.removeItem("selectedBusiness");
+      setExtractingData(false);
       setSettingUpAccount(false);
 
       toast({
@@ -635,6 +629,7 @@ const Onboarding = () => {
       }, 500);
     } catch (error: any) {
       console.error("Error saving business data:", error);
+      setExtractingData(false);
       setSettingUpAccount(false);
       toast({
         title: "Setup failed",
