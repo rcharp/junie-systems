@@ -1577,8 +1577,8 @@ const Onboarding = () => {
                   className="flex-1"
                   size="lg"
                 >
-                  Back
                   <ArrowLeft className="mr-2 w-5 h-5" />
+                  Back
                 </Button>
                 <Button
                   onClick={() => {
