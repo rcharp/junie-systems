@@ -302,6 +302,7 @@ const Onboarding = () => {
         business_type: claudeData.businessType || findBestBusinessType(businessData.types),
         business_website: businessData.website || "",
         business_timezone: "America/New_York",
+        business_description: claudeData.description || "",
       });
       
       setExtractionProgress(100);
@@ -398,6 +399,7 @@ const Onboarding = () => {
         business_type: claudeData.businessType || "other",
         business_website: websiteUrl,
         business_timezone: "America/New_York",
+        business_description: claudeData.description || "",
       });
       
       setStep(2);
@@ -550,6 +552,7 @@ const Onboarding = () => {
           business_phone: verificationData.business_phone,
           business_address: verificationData.business_address,
           business_website: verificationData.business_website,
+          business_description: verificationData.business_description,
           business_hours: JSON.stringify(defaultHours),
           business_timezone: verificationData.business_timezone || "America/New_York",
           transfer_number: transferNumber.replace(/\D/g, ""),
