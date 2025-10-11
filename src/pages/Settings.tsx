@@ -1453,34 +1453,34 @@ const Settings = () => {
 
   const handleDeleteAccount = async () => {
     setShowDeleteDialog(false);
+    setIsDeleting(true);
 
     try {
-      // Sign out first
+      // Initiate account deletion BEFORE signing out (while token is still valid)
+      const { error: deleteError } = await supabase.functions.invoke("delete-account", {
+        method: "POST",
+      });
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      // After deletion is initiated, sign out
       setSigningOut(true);
       await handleRobustSignOut(supabase, setSigningOut);
 
-      // After sign out completes, show the deleting overlay
-      setIsDeleting(true);
-      
-      // Initiate account deletion in background
-      supabase.functions.invoke("delete-account", {
-        method: "POST",
-      }).catch(error => {
-        console.error('Background deletion error:', error);
-      });
-
-      // Show toast only after logout is complete
+      // Show toast after logout completes
       setTimeout(() => {
         toast({
           title: "Account deleted",
-          description: "Your account is being deleted. You have been signed out.",
+          description: "Your account has been deleted and you have been signed out.",
         });
       }, 100);
     } catch (error: any) {
       console.error("Error during account deletion:", error);
       toast({
         title: "Error",
-        description: "Failed to sign out. Please try again.",
+        description: error.message || "Failed to delete account. Please try again.",
         variant: "destructive",
       });
       setIsDeleting(false);
