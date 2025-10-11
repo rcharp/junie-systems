@@ -1465,6 +1465,9 @@ const Settings = () => {
         throw deleteError;
       }
 
+      // Set flag for account deletion banner
+      sessionStorage.setItem("accountDeleted", "true");
+
       // After deletion is initiated, sign out
       setSigningOut(true);
       await handleRobustSignOut(supabase, setSigningOut);
