@@ -1452,19 +1452,22 @@ const Settings = () => {
   };
 
   const handleDeleteAccount = async () => {
-    setIsDeleting(true);
     setShowDeleteDialog(false);
 
     try {
-      // Initiate account deletion in background (don't await)
+      // Sign out first
+      setSigningOut(true);
+      await handleRobustSignOut(supabase, setSigningOut);
+
+      // After sign out, show the deleting overlay and start deletion
+      setIsDeleting(true);
+      
+      // Initiate account deletion in background
       supabase.functions.invoke("delete-account", {
         method: "POST",
       }).catch(error => {
         console.error('Background deletion error:', error);
       });
-
-      // Sign out immediately without waiting for deletion to complete
-      await handleRobustSignOut(supabase, setSigningOut);
 
       // Show toast after sign out
       toast({
@@ -1480,6 +1483,8 @@ const Settings = () => {
       });
       setIsDeleting(false);
       setShowDeleteDialog(false);
+    } finally {
+      setSigningOut(false);
     }
   };
 
