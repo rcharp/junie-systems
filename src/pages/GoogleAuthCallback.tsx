@@ -28,19 +28,20 @@ const GoogleAuthCallback = () => {
 
         console.log('Session established for user:', session.user.id);
 
-        // Check if user profile already exists
-        const { data: existingProfile } = await supabase
-          .from('user_profiles')
+        // Check if user has completed business setup
+        const { data: businessSettings } = await supabase
+          .from('business_settings')
           .select('id')
-          .eq('id', session.user.id)
+          .eq('user_id', session.user.id)
           .maybeSingle();
 
-        const isNewUser = !existingProfile;
+        // User is "new" if they don't have business settings (haven't completed onboarding)
+        const isNewUser = !businessSettings;
 
         if (isNewUser) {
-          console.log('New user detected - will redirect to onboarding');
+          console.log('New user detected (no business settings) - will redirect to onboarding');
         } else {
-          console.log('Existing user - will redirect to dashboard');
+          console.log('Existing user with completed setup - will redirect to dashboard');
         }
 
         setStatus('success');
