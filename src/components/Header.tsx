@@ -85,12 +85,12 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
                   <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </>
-            ) : !loading && (
+            ) : !loading && showAuthButtons && (
               <>
                 <Button 
                   variant="ghost" 
                   size="sm"
-                  onClick={() => window.location.href = "/login"}
+                  onClick={() => navigate("/login")}
                 >
                   Sign In
                 </Button>
@@ -98,7 +98,7 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
                   variant="hero" 
                   size="sm" 
                   className="sm:text-base"
-                  onClick={() => window.location.href = "/signup"}
+                  onClick={() => navigate("/signup")}
                 >
                   <span className="hidden sm:inline">Get Started Free</span>
                   <span className="sm:hidden">Sign Up</span>
