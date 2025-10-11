@@ -566,7 +566,7 @@ const Onboarding = () => {
           business_website: verificationData.business_website,
           business_hours: JSON.stringify(defaultHours),
           business_timezone: verificationData.business_timezone || "America/New_York",
-          call_transfer_number: transferNumber.replace(/\D/g, ""),
+          transfer_number: transferNumber.replace(/\D/g, ""),
         }, { onConflict: "user_id" })
         .select("id")
         .single();
