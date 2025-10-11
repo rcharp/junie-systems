@@ -1824,7 +1824,7 @@ const Onboarding = () => {
                     )}
                     <p className="text-sm text-muted-foreground">
                       Enter the phone number where calls will be transferred when a caller requests to speak with you
-                      immediately. You will also receive SMS notifications at this number.
+                      immediately.
                     </p>
                   </div>
 
