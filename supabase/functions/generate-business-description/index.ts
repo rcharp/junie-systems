@@ -84,20 +84,23 @@ Return ONLY a JSON object in this exact format (no markdown, no extra text):
     console.log('Generated text:', generatedText);
     
     // Parse JSON response
-    let result;
+    let parsedResult;
     try {
-      result = JSON.parse(generatedText);
+      parsedResult = JSON.parse(generatedText);
     } catch (parseError) {
       console.error('Failed to parse Claude response as JSON:', generatedText);
       // Fallback to simple description
-      result = {
+      parsedResult = {
         description: generatedText,
         businessType: businessType || 'other',
         state: null
       };
     }
 
-    return new Response(JSON.stringify(result), {
+    // Ensure we return the parsed object, not stringified again
+    console.log('Parsed result:', parsedResult);
+    
+    return new Response(JSON.stringify(parsedResult), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
