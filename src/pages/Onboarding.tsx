@@ -1592,14 +1592,38 @@ const Onboarding = () => {
                   Back
                 </Button>
                 <Button
-                  onClick={() => {
+                  onClick={async () => {
+                    // Mark onboarding flow as complete
+                    isOnboardingFlowRef.current = false;
+                    
+                    // Update user profile to mark setup as completed
+                    const {
+                      data: { session },
+                    } = await supabase.auth.getSession();
+                    
+                    if (session?.user?.id) {
+                      await supabase
+                        .from("user_profiles")
+                        .update({ setup_completed: true })
+                        .eq("id", session.user.id);
+                    }
+                    
                     setShowVerification(false);
-                    setStep(3);
+                    
+                    // Navigate to dashboard
+                    toast({
+                      title: "Setup complete!",
+                      description: "Welcome to Junie! Let's get started.",
+                    });
+                    
+                    setTimeout(() => {
+                      navigate("/dashboard");
+                    }, 500);
                   }}
                   className="flex-1"
                   size="lg"
                 >
-                  Looks good!
+                  Complete Setup
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </div>
