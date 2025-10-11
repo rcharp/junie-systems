@@ -1842,7 +1842,7 @@ const Onboarding = () => {
                     size="lg"
                     disabled={transferNumberError || !transferNumber}
                   >
-                    Continue to Create Account
+                    Create Account
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
 
