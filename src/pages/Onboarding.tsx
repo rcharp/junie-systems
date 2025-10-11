@@ -511,105 +511,144 @@ const Onboarding = () => {
 
   const saveBusinessData = async (userId: string) => {
     try {
+      console.log("saveBusinessData called with userId:", userId);
+      console.log("verificationData:", verificationData);
+      console.log("transferNumber:", transferNumber);
+      
       setExtractingData(true);
       setExtractionProgress(10);
 
       const savedBusiness = sessionStorage.getItem("selectedBusiness");
+      console.log("savedBusiness from sessionStorage:", savedBusiness);
 
-      if (savedBusiness || verificationData.business_name) {
-        setExtractionProgress(30);
-        
-        let businessData: any = savedBusiness ? JSON.parse(savedBusiness) : {};
-        
-        // Create user profile
-        await supabase.from("user_profiles").upsert({
-          id: userId,
-          company_name: verificationData.business_name || "My Business",
-          subscription_plan: "free",
-          subscription_status: "active",
-        }, { onConflict: "id" });
+      if (!verificationData.business_name && !savedBusiness) {
+        console.error("No business data available to save");
+        throw new Error("No business data available");
+      }
 
-        setExtractionProgress(50);
+      setExtractionProgress(30);
+      
+      let businessData: any = savedBusiness ? JSON.parse(savedBusiness) : {};
+      console.log("businessData:", businessData);
+      
+      // Create user profile
+      const { data: profileData, error: profileError } = await supabase.from("user_profiles").upsert({
+        id: userId,
+        company_name: verificationData.business_name || "My Business",
+        subscription_plan: "free",
+        subscription_status: "active",
+      }, { onConflict: "id" });
 
-        const defaultHours = [
-          { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-          { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
-        ];
+      if (profileError) {
+        console.error("Error creating profile:", profileError);
+        throw profileError;
+      }
+      console.log("Profile created:", profileData);
 
-        // Save business settings with verified data
-        const { data: businessSettingsResult } = await supabase.from("business_settings")
-          .upsert({
-            user_id: userId,
-            business_name: verificationData.business_name,
-            business_type: verificationData.business_type,
-            business_phone: verificationData.business_phone,
-            business_address: verificationData.business_address,
-            business_website: verificationData.business_website,
-            business_hours: JSON.stringify(defaultHours),
-            business_timezone: verificationData.business_timezone || "America/New_York",
-            call_transfer_number: transferNumber.replace(/\D/g, ""),
-          }, { onConflict: "user_id" })
-          .select("id")
-          .single();
+      setExtractionProgress(50);
 
-        setExtractionProgress(70);
+      const defaultHours = [
+        { id: 1, day: "monday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+        { id: 2, day: "tuesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+        { id: 3, day: "wednesday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+        { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+        { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
+      ];
 
-        // Extract and save services
-        if (businessSettingsResult?.id) {
-          const { data: servicesData } = await supabase.functions.invoke("extract-services", {
-            body: {
-              businessName: verificationData.business_name,
-              businessType: verificationData.business_type,
-              website: verificationData.business_website,
-            },
-          });
+      // Save business settings with verified data
+      const { data: businessSettingsResult, error: businessError } = await supabase.from("business_settings")
+        .upsert({
+          user_id: userId,
+          business_name: verificationData.business_name,
+          business_type: verificationData.business_type,
+          business_phone: verificationData.business_phone,
+          business_address: verificationData.business_address,
+          business_website: verificationData.business_website,
+          business_hours: JSON.stringify(defaultHours),
+          business_timezone: verificationData.business_timezone || "America/New_York",
+          call_transfer_number: transferNumber.replace(/\D/g, ""),
+        }, { onConflict: "user_id" })
+        .select("id")
+        .single();
 
-          setExtractionProgress(85);
+      if (businessError) {
+        console.error("Error saving business settings:", businessError);
+        throw businessError;
+      }
+      console.log("Business settings saved:", businessSettingsResult);
 
-          if (servicesData?.services) {
-            const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
-              business_id: businessSettingsResult.id,
-              name: service.name,
-              price: service.price,
-              description: service.description,
-              display_order: index,
-              is_active: true,
-            }));
-            await supabase.from("services").insert(servicesToInsert);
-          }
+      setExtractionProgress(70);
 
-          // Purchase Twilio number
-          try {
-            let areaCode = "800";
-            if (verificationData.business_phone) {
-              const phoneMatch = verificationData.business_phone.match(/\(?(\d{3})\)?/);
-              if (phoneMatch?.[1]) areaCode = phoneMatch[1];
-            }
+      // Extract and save services
+      if (businessSettingsResult?.id) {
+        const { data: servicesData, error: servicesError } = await supabase.functions.invoke("extract-services", {
+          body: {
+            businessName: verificationData.business_name,
+            businessType: verificationData.business_type,
+            website: verificationData.business_website,
+          },
+        });
 
-            await supabase.functions.invoke("purchase-twilio-number", {
-              body: { areaCode, businessId: businessSettingsResult.id },
-            });
-          } catch (twilioError) {
-            console.error("Error purchasing Twilio number:", twilioError);
+        if (servicesError) {
+          console.error("Error extracting services:", servicesError);
+        } else {
+          console.log("Services extracted:", servicesData);
+        }
+
+        setExtractionProgress(85);
+
+        if (servicesData?.services) {
+          const servicesToInsert = servicesData.services.map((service: any, index: number) => ({
+            business_id: businessSettingsResult.id,
+            name: service.name,
+            price: service.price,
+            description: service.description,
+            display_order: index,
+            is_active: true,
+          }));
+          
+          const { error: insertError } = await supabase.from("services").insert(servicesToInsert);
+          if (insertError) {
+            console.error("Error inserting services:", insertError);
+          } else {
+            console.log("Services inserted successfully");
           }
         }
 
-        sessionStorage.removeItem("selectedBusiness");
-        setExtractionProgress(100);
-        setExtractingData(false);
+        // Purchase Twilio number
+        try {
+          let areaCode = "800";
+          if (verificationData.business_phone) {
+            const phoneMatch = verificationData.business_phone.match(/\(?(\d{3})\)?/);
+            if (phoneMatch?.[1]) areaCode = phoneMatch[1];
+          }
 
-        toast({
-          title: "Setup complete!",
-          description: "Welcome to Junie! Let's get started.",
-        });
-
-        setTimeout(() => {
-          navigate("/settings");
-        }, 500);
+          const { data: twilioData, error: twilioError } = await supabase.functions.invoke("purchase-twilio-number", {
+            body: { areaCode, businessId: businessSettingsResult.id },
+          });
+          
+          if (twilioError) {
+            console.error("Error purchasing Twilio number:", twilioError);
+          } else {
+            console.log("Twilio number purchased:", twilioData);
+          }
+        } catch (twilioError) {
+          console.error("Error purchasing Twilio number:", twilioError);
+        }
       }
+
+      sessionStorage.removeItem("selectedBusiness");
+      setExtractionProgress(100);
+      setExtractingData(false);
+
+      toast({
+        title: "Setup complete!",
+        description: "Welcome to Junie! Let's get started.",
+      });
+
+      setTimeout(() => {
+        navigate("/settings");
+      }, 500);
     } catch (error: any) {
       console.error("Error saving business data:", error);
       setExtractingData(false);
