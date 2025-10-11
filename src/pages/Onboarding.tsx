@@ -159,6 +159,35 @@ const Onboarding = () => {
   // Show verification when step changes to 2
   useEffect(() => {
     if (step === 2 && !showVerification) {
+      const loadVerificationData = async () => {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) return;
+          
+          // Fetch the business settings from the database
+          const { data: businessSettings, error } = await supabase
+            .from("business_settings")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .maybeSingle();
+          
+          if (!error && businessSettings) {
+            // Pre-fill the verification data from the database
+            setVerificationData({
+              business_name: businessSettings.business_name || "",
+              business_phone: businessSettings.business_phone || "",
+              business_address: businessSettings.business_address || "",
+              business_type: businessSettings.business_type || "other",
+              business_website: businessSettings.business_website || "",
+              business_timezone: businessSettings.business_timezone || "America/New_York",
+            });
+          }
+        } catch (error) {
+          console.error("Error loading verification data:", error);
+        }
+      };
+      
+      loadVerificationData();
       setShowVerification(true);
     }
   }, [step, showVerification]);
