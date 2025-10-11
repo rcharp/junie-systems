@@ -37,138 +37,155 @@ serve(async (req) => {
 
     const userId = user.id;
 
-    // Get user profile to find Stripe customer IDs
-    const { data: profile } = await supabaseClient
-      .from('user_profiles')
-      .select('stripe_customer_id, stripe_subscription_id, stripe_test_customer_id')
-      .eq('id', userId)
-      .single();
-
-    // Get business settings to find Twilio phone number
-    const { data: businessSettings } = await supabaseClient
-      .from('business_settings')
-      .select('twilio_phone_number')
-      .eq('user_id', userId)
-      .single();
-
-    // Cancel Stripe subscriptions and delete customers (both live and test)
-    const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-      apiVersion: '2023-10-16',
-    });
-    const stripeTest = new Stripe(Deno.env.get('STRIPE_SANDBOX_SECRET_KEY') || '', {
-      apiVersion: '2023-10-16',
-    });
-
-    // Handle live mode Stripe customer
-    if (profile?.stripe_customer_id) {
+    // Define the background deletion task
+    const performDeletion = async () => {
       try {
-        // Cancel subscription if it exists (but keep the customer)
-        if (profile.stripe_subscription_id) {
-          await stripe.subscriptions.cancel(profile.stripe_subscription_id);
-          console.log('Live Stripe subscription cancelled:', profile.stripe_subscription_id);
-        }
+        console.log('Starting background account deletion for user:', userId);
 
-        // Note: We deliberately do NOT delete the Stripe customer
-        // This preserves payment history and allows for easier reactivation
-        console.log('Live Stripe customer preserved:', profile.stripe_customer_id);
-      } catch (stripeError) {
-        console.error('Live Stripe cancellation error:', stripeError);
-        // Continue with account deletion even if Stripe fails
-      }
-    }
+        // Get user profile to find Stripe customer IDs
+        const { data: profile } = await supabaseClient
+          .from('user_profiles')
+          .select('stripe_customer_id, stripe_subscription_id, stripe_test_customer_id')
+          .eq('id', userId)
+          .single();
 
-    // Handle test mode Stripe customer
-    if (profile?.stripe_test_customer_id) {
-      try {
-        // List and cancel all subscriptions for test customer (but keep the customer)
-        const subscriptions = await stripeTest.subscriptions.list({
-          customer: profile.stripe_test_customer_id,
+        // Get business settings to find Twilio phone number
+        const { data: businessSettings } = await supabaseClient
+          .from('business_settings')
+          .select('twilio_phone_number')
+          .eq('user_id', userId)
+          .single();
+
+        // Cancel Stripe subscriptions and delete customers (both live and test)
+        const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+          apiVersion: '2023-10-16',
         });
-        
-        for (const subscription of subscriptions.data) {
-          await stripeTest.subscriptions.cancel(subscription.id);
-          console.log('Test Stripe subscription cancelled:', subscription.id);
-        }
+        const stripeTest = new Stripe(Deno.env.get('STRIPE_SANDBOX_SECRET_KEY') || '', {
+          apiVersion: '2023-10-16',
+        });
 
-        // Note: We deliberately do NOT delete the Stripe customer
-        // This preserves payment history and allows for easier reactivation
-        console.log('Test Stripe customer preserved:', profile.stripe_test_customer_id);
-      } catch (stripeError) {
-        console.error('Test Stripe cancellation error:', stripeError);
-        // Continue with account deletion even if Stripe fails
-      }
-    }
-
-    // Release Twilio phone number if it exists
-    if (businessSettings?.twilio_phone_number) {
-      try {
-        const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
-        const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
-        
-        const twilioResponse = await fetch(
-          `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(businessSettings.twilio_phone_number)}`,
-          {
-            headers: {
-              'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-            },
-          }
-        );
-
-        const phoneNumbers = await twilioResponse.json();
-        
-        if (phoneNumbers.incoming_phone_numbers && phoneNumbers.incoming_phone_numbers.length > 0) {
-          const phoneNumberSid = phoneNumbers.incoming_phone_numbers[0].sid;
-          
-          await fetch(
-            `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers/${phoneNumberSid}.json`,
-            {
-              method: 'DELETE',
-              headers: {
-                'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
-              },
+        // Handle live mode Stripe customer
+        if (profile?.stripe_customer_id) {
+          try {
+            // Cancel subscription if it exists (but keep the customer)
+            if (profile.stripe_subscription_id) {
+              await stripe.subscriptions.cancel(profile.stripe_subscription_id);
+              console.log('Live Stripe subscription cancelled:', profile.stripe_subscription_id);
             }
-          );
-          
-          console.log('Twilio phone number released:', businessSettings.twilio_phone_number);
+
+            // Note: We deliberately do NOT delete the Stripe customer
+            // This preserves payment history and allows for easier reactivation
+            console.log('Live Stripe customer preserved:', profile.stripe_customer_id);
+          } catch (stripeError) {
+            console.error('Live Stripe cancellation error:', stripeError);
+            // Continue with account deletion even if Stripe fails
+          }
         }
-      } catch (twilioError) {
-        console.error('Twilio deletion error:', twilioError);
-        // Continue with account deletion even if Twilio fails
+
+        // Handle test mode Stripe customer
+        if (profile?.stripe_test_customer_id) {
+          try {
+            // List and cancel all subscriptions for test customer (but keep the customer)
+            const subscriptions = await stripeTest.subscriptions.list({
+              customer: profile.stripe_test_customer_id,
+            });
+            
+            for (const subscription of subscriptions.data) {
+              await stripeTest.subscriptions.cancel(subscription.id);
+              console.log('Test Stripe subscription cancelled:', subscription.id);
+            }
+
+            // Note: We deliberately do NOT delete the Stripe customer
+            // This preserves payment history and allows for easier reactivation
+            console.log('Test Stripe customer preserved:', profile.stripe_test_customer_id);
+          } catch (stripeError) {
+            console.error('Test Stripe cancellation error:', stripeError);
+            // Continue with account deletion even if Stripe fails
+          }
+        }
+
+        // Release Twilio phone number if it exists
+        if (businessSettings?.twilio_phone_number) {
+          try {
+            const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
+            const twilioAuthToken = Deno.env.get('TWILIO_AUTH_TOKEN');
+            
+            const twilioResponse = await fetch(
+              `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers.json?PhoneNumber=${encodeURIComponent(businessSettings.twilio_phone_number)}`,
+              {
+                headers: {
+                  'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
+                },
+              }
+            );
+
+            const phoneNumbers = await twilioResponse.json();
+            
+            if (phoneNumbers.incoming_phone_numbers && phoneNumbers.incoming_phone_numbers.length > 0) {
+              const phoneNumberSid = phoneNumbers.incoming_phone_numbers[0].sid;
+              
+              await fetch(
+                `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/IncomingPhoneNumbers/${phoneNumberSid}.json`,
+                {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': 'Basic ' + btoa(`${twilioAccountSid}:${twilioAuthToken}`),
+                  },
+                }
+              );
+              
+              console.log('Twilio phone number released:', businessSettings.twilio_phone_number);
+            }
+          } catch (twilioError) {
+            console.error('Twilio deletion error:', twilioError);
+            // Continue with account deletion even if Twilio fails
+          }
+        }
+
+        // Delete security audit logs first (not cascaded automatically)
+        const { error: auditDeleteError } = await supabaseClient
+          .from('security_audit_log')
+          .delete()
+          .eq('user_id', userId);
+
+        if (auditDeleteError) {
+          console.error('Error deleting audit logs:', auditDeleteError);
+          // Continue anyway - audit logs shouldn't block account deletion
+        }
+
+        // Delete user activity logs
+        const { error: activityDeleteError } = await supabaseClient
+          .from('user_activity')
+          .delete()
+          .eq('user_id', userId);
+
+        if (activityDeleteError) {
+          console.error('Error deleting activity logs:', activityDeleteError);
+          // Continue anyway
+        }
+
+        // Delete user data (cascading deletes will handle related tables)
+        // The auth.users deletion will cascade to user_profiles and other tables
+        const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(userId);
+
+        if (deleteError) {
+          console.error('Error deleting user:', deleteError);
+          throw deleteError;
+        }
+
+        console.log('Background account deletion completed for user:', userId);
+      } catch (error) {
+        console.error('Background deletion failed:', error);
       }
-    }
+    };
 
-    // Delete security audit logs first (not cascaded automatically)
-    const { error: auditDeleteError } = await supabaseClient
-      .from('security_audit_log')
-      .delete()
-      .eq('user_id', userId);
+    // Start the background deletion task
+    // @ts-ignore - EdgeRuntime is available in Deno Deploy
+    EdgeRuntime.waitUntil(performDeletion());
 
-    if (auditDeleteError) {
-      console.error('Error deleting audit logs:', auditDeleteError);
-      // Continue anyway - audit logs shouldn't block account deletion
-    }
-
-    // Delete user activity logs
-    const { error: activityDeleteError } = await supabaseClient
-      .from('user_activity')
-      .delete()
-      .eq('user_id', userId);
-
-    if (activityDeleteError) {
-      console.error('Error deleting activity logs:', activityDeleteError);
-      // Continue anyway
-    }
-
-    // Delete user data (cascading deletes will handle related tables)
-    // The auth.users deletion will cascade to user_profiles and other tables
-    const { error: deleteError } = await supabaseClient.auth.admin.deleteUser(userId);
-
-    if (deleteError) {
-      throw deleteError;
-    }
-
+    // Return immediate response so user can sign out
     return new Response(
-      JSON.stringify({ success: true, message: 'Account deleted successfully' }),
+      JSON.stringify({ success: true, message: 'Account deletion initiated' }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 

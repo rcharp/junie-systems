@@ -1453,31 +1453,29 @@ const Settings = () => {
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
+    setShowDeleteDialog(false);
 
     try {
-      const { data, error } = await supabase.functions.invoke("delete-account", {
+      // Initiate account deletion in background (don't await)
+      supabase.functions.invoke("delete-account", {
         method: "POST",
+      }).catch(error => {
+        console.error('Background deletion error:', error);
       });
 
-      if (error) throw error;
+      // Sign out immediately without waiting for deletion to complete
+      await handleRobustSignOut(supabase, setSigningOut);
 
+      // Show toast after sign out
       toast({
-        title: "Account deleted successfully",
-        description: "Your account and all data have been permanently deleted. Redirecting to login...",
+        title: "Account deleted",
+        description: "Your account is being deleted. You have been signed out.",
       });
-
-      // Clean up auth state locally
-      cleanupAuthState();
-
-      // Delay redirect to allow toast to be visible
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 2000);
     } catch (error: any) {
-      console.error("Error deleting account:", error);
+      console.error("Error during account deletion:", error);
       toast({
-        title: "Error deleting account",
-        description: error.message || "Failed to delete account. Please try again.",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
         variant: "destructive",
       });
       setIsDeleting(false);
