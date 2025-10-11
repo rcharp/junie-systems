@@ -155,9 +155,8 @@ const Login = () => {
             window.removeEventListener('message', handleMessage);
             popup?.close();
             
-            const isNewUser = event.data.isNewUser;
             const sessionData = event.data.session;
-            console.log('OAuth success received, isNewUser:', isNewUser);
+            console.log('OAuth success received from login page');
             console.log('Setting session in parent window...');
             
             try {
@@ -173,13 +172,13 @@ const Login = () => {
               }
 
               console.log('Session established successfully');
-              const redirectPath = isNewUser ? '/onboarding' : '/dashboard';
-              console.log(`Redirecting to ${redirectPath}`);
+              // Always redirect to dashboard from login page
+              console.log('Redirecting to dashboard');
               
               // Set flag and use navigate instead of window.location to prevent flicker
               isRedirectingRef.current = true;
               sessionStorage.setItem('oauth_completing', 'true');
-              navigate(redirectPath);
+              navigate('/dashboard');
             } catch (error) {
               console.error('Error establishing session:', error);
               toast({
