@@ -161,26 +161,44 @@ const Onboarding = () => {
     if (step === 2 && !showVerification) {
       const loadVerificationData = async () => {
         try {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (!session) return;
+          // First, check if we have business data from the selection in sessionStorage
+          const savedBusiness = sessionStorage.getItem("selectedBusiness");
           
-          // Fetch the business settings from the database
-          const { data: businessSettings, error } = await supabase
-            .from("business_settings")
-            .select("*")
-            .eq("user_id", session.user.id)
-            .maybeSingle();
-          
-          if (!error && businessSettings) {
-            // Pre-fill the verification data from the database
+          if (savedBusiness) {
+            // New user flow - use the data from business selection
+            const businessData = JSON.parse(savedBusiness);
+            console.log("Loading verification data from selected business:", businessData);
+            
             setVerificationData({
-              business_name: businessSettings.business_name || "",
-              business_phone: businessSettings.business_phone || "",
-              business_address: businessSettings.business_address || "",
-              business_type: businessSettings.business_type || "other",
-              business_website: businessSettings.business_website || "",
-              business_timezone: businessSettings.business_timezone || "America/New_York",
+              business_name: businessData.name || businessSearch || "",
+              business_phone: businessData.phone || "",
+              business_address: businessData.address || "",
+              business_type: businessData.types?.[0] || "other",
+              business_website: businessData.website || (useWebsite ? websiteUrl : ""),
+              business_timezone: "America/New_York",
             });
+          } else {
+            // Returning user - try to load from database
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+              const { data: businessSettings, error } = await supabase
+                .from("business_settings")
+                .select("*")
+                .eq("user_id", session.user.id)
+                .maybeSingle();
+              
+              if (!error && businessSettings) {
+                console.log("Loading verification data from database:", businessSettings);
+                setVerificationData({
+                  business_name: businessSettings.business_name || "",
+                  business_phone: businessSettings.business_phone || "",
+                  business_address: businessSettings.business_address || "",
+                  business_type: businessSettings.business_type || "other",
+                  business_website: businessSettings.business_website || "",
+                  business_timezone: businessSettings.business_timezone || "America/New_York",
+                });
+              }
+            }
           }
         } catch (error) {
           console.error("Error loading verification data:", error);
@@ -190,7 +208,7 @@ const Onboarding = () => {
       loadVerificationData();
       setShowVerification(true);
     }
-  }, [step, showVerification]);
+  }, [step, showVerification, businessSearch, useWebsite, websiteUrl]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
