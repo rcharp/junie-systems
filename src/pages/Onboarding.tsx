@@ -1578,6 +1578,7 @@ const Onboarding = () => {
                   size="lg"
                 >
                   Back
+                  <ArrowLeft className="mr-2 w-5 h-5" />
                 </Button>
                 <Button
                   onClick={() => {
