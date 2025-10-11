@@ -1535,24 +1535,6 @@ const Onboarding = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="verify-timezone">Timezone</Label>
-                <select
-                  id="verify-timezone"
-                  value={verificationData.business_timezone || "America/New_York"}
-                  onChange={(e) => setVerificationData({ ...verificationData, business_timezone: e.target.value })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="America/New_York">Eastern Time</option>
-                  <option value="America/Chicago">Central Time</option>
-                  <option value="America/Denver">Mountain Time</option>
-                  <option value="America/Los_Angeles">Pacific Time</option>
-                  <option value="America/Phoenix">Arizona Time</option>
-                  <option value="America/Anchorage">Alaska Time</option>
-                  <option value="Pacific/Honolulu">Hawaii Time</option>
-                </select>
-              </div>
-
               <div className="flex gap-3 mt-6">
                 <Button
                   onClick={async () => {
