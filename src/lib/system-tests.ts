@@ -716,20 +716,30 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
     console.log('💼 [Business Data Function Test] Step 2: Invoking business-data edge function...');
     
     // Test that the function properly validates required parameters
-    const { data, error } = await supabase.functions.invoke('business-data', {
-      body: {}
+    // Use a direct fetch call to get proper error details
+    const supabaseUrl = 'https://urkoxlolimjjadbdckco.supabase.co';
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    
+    const response = await fetch(`${supabaseUrl}/functions/v1/business-data`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({})
     });
 
     const duration = performance.now() - start;
 
     console.log('💼 [Business Data Function Test] Step 3: Analyzing response...');
-    console.log('Error object:', error);
-    console.log('Data object:', data);
+    console.log('Response status:', response.status);
     
-    // Should return an error about missing business_id
-    // Check both error.message and data.error
-    const errorMessage = error?.message || JSON.stringify(data);
-    if (errorMessage.includes('business_id')) {
+    const responseData = await response.json();
+    console.log('Response data:', responseData);
+    
+    // Should return 400 with error about missing business_id
+    if (response.status === 400 && responseData.error?.includes('business_id')) {
       console.log('✅ [Business Data Function Test] Step 4: Function validation working correctly');
       console.log('✅ [Business Data Function Test] Step 5: Test completed successfully');
 
@@ -746,7 +756,7 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
     
     // If no error or wrong error, something's wrong
     console.error('❌ [Business Data Function Test] Expected validation error not received');
-    throw new Error(`Function should validate business_id parameter. Got: ${errorMessage}`);
+    throw new Error(`Function should validate business_id parameter. Got status ${response.status}: ${JSON.stringify(responseData)}`);
   } catch (error: any) {
     console.error('❌ [Business Data Function Test] Test failed:', error);
     return {
