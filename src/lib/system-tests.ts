@@ -974,42 +974,49 @@ const testExtractBusinessDataFunction = async (): Promise<TestResult> => {
   const logs: string[] = [];
   
   try {
-    logs.push('📊 Invoking extract-business-data function...');
+    logs.push('📊 Step 1: Invoking extract-business-data function...');
+    logs.push('📊 Step 2: Sending test request to edge function...');
     
-    const { error } = await supabase.functions.invoke('extract-business-data', {
+    const { data, error } = await supabase.functions.invoke('extract-business-data', {
       body: { test: true }
     });
 
     const duration = performance.now() - start;
 
     if (error) {
-      logs.push(`Function responded with error: ${error.message}`);
-      logs.push('✅ Function is accessible and responding');
+      logs.push(`❌ Step 3: Function returned error - ${error.message}`);
+      logs.push(`❌ Error context: ${JSON.stringify(error.context || {})}`);
+      logs.push('❌ Test failed - edge function is not working correctly');
+      
       return {
         id: 'edge-extract-business-data',
         name: 'Extract Business Data',
         category: 'Edge Functions',
         description: 'Tests business data extraction from various sources.',
-        status: 'passed',
-        message: 'Function accessible',
+        status: 'failed',
+        error: error.message,
         duration,
         logs
       };
     }
 
-    logs.push('✅ Function executed successfully');
+    logs.push('✅ Step 3: Function invoked successfully');
+    logs.push(`✅ Step 4: Response received - ${JSON.stringify(data || {}).substring(0, 200)}`);
+    logs.push('✅ Test passed - edge function is working correctly');
+    
     return {
       id: 'edge-extract-business-data',
       name: 'Extract Business Data',
       category: 'Edge Functions',
       description: 'Tests business data extraction.',
       status: 'passed',
-      message: 'Function executed',
+      message: 'Function executed successfully',
       duration,
       logs
     };
   } catch (error: any) {
-    logs.push(`❌ Test failed: ${error.message}`);
+    logs.push(`❌ Exception thrown: ${error.message}`);
+    logs.push(`❌ Stack: ${error.stack}`);
     return {
       id: 'edge-extract-business-data',
       name: 'Extract Business Data',
@@ -1028,33 +1035,49 @@ const testExtractServicesFunction = async (): Promise<TestResult> => {
   const logs: string[] = [];
   
   try {
-    logs.push('🔧 Invoking extract-services function...');
+    logs.push('🔧 Step 1: Invoking extract-services function...');
+    logs.push('🔧 Step 2: Sending test request to edge function...');
     
-    const { error } = await supabase.functions.invoke('extract-services', {
+    const { data, error } = await supabase.functions.invoke('extract-services', {
       body: { test: true }
     });
 
     const duration = performance.now() - start;
 
     if (error) {
-      logs.push(`❌ Function error: ${error.message}`);
-    } else {
-      logs.push('✅ Function executed successfully');
+      logs.push(`❌ Step 3: Function returned error - ${error.message}`);
+      logs.push(`❌ Error context: ${JSON.stringify(error.context || {})}`);
+      logs.push('❌ Test failed - edge function is not working correctly');
+      
+      return {
+        id: 'edge-extract-services',
+        name: 'Extract Services',
+        category: 'Edge Functions',
+        description: 'Tests service extraction functionality.',
+        status: 'failed',
+        error: error.message,
+        duration,
+        logs
+      };
     }
+
+    logs.push('✅ Step 3: Function invoked successfully');
+    logs.push(`✅ Step 4: Response received - ${JSON.stringify(data || {}).substring(0, 200)}`);
+    logs.push('✅ Test passed - edge function is working correctly');
 
     return {
       id: 'edge-extract-services',
       name: 'Extract Services',
       category: 'Edge Functions',
       description: 'Tests service extraction functionality.',
-      status: error ? 'failed' : 'passed',
-      message: error ? undefined : 'Function accessible',
-      error: error?.message,
+      status: 'passed',
+      message: 'Function executed successfully',
       duration,
       logs
     };
   } catch (error: any) {
-    logs.push(`❌ Test failed: ${error.message}`);
+    logs.push(`❌ Exception thrown: ${error.message}`);
+    logs.push(`❌ Stack: ${error.stack}`);
     return {
       id: 'edge-extract-services',
       name: 'Extract Services',
@@ -1073,19 +1096,35 @@ const testGenerateBusinessDescriptionFunction = async (): Promise<TestResult> =>
   const logs: string[] = [];
   
   try {
-    logs.push('📝 Invoking generate-business-description function...');
+    logs.push('📝 Step 1: Invoking generate-business-description function...');
+    logs.push('📝 Step 2: Sending test request to edge function...');
     
-    const { error } = await supabase.functions.invoke('generate-business-description', {
+    const { data, error } = await supabase.functions.invoke('generate-business-description', {
       body: { test: true }
     });
 
     const duration = performance.now() - start;
 
     if (error) {
-      logs.push(`Function responded with error: ${error.message}`);
-    } else {
-      logs.push('✅ Function executed successfully');
+      logs.push(`❌ Step 3: Function returned error - ${error.message}`);
+      logs.push(`❌ Error context: ${JSON.stringify(error.context || {})}`);
+      logs.push('❌ Test failed - edge function is not working correctly');
+      
+      return {
+        id: 'edge-generate-business-description',
+        name: 'Generate Business Description',
+        category: 'Edge Functions',
+        description: 'Tests AI-powered business description generation.',
+        status: 'failed',
+        error: error.message,
+        duration,
+        logs
+      };
     }
+
+    logs.push('✅ Step 3: Function invoked successfully');
+    logs.push(`✅ Step 4: Response received - ${JSON.stringify(data || {}).substring(0, 200)}`);
+    logs.push('✅ Test passed - edge function is working correctly');
 
     return {
       id: 'edge-generate-business-description',
@@ -1093,12 +1132,13 @@ const testGenerateBusinessDescriptionFunction = async (): Promise<TestResult> =>
       category: 'Edge Functions',
       description: 'Tests AI-powered business description generation.',
       status: 'passed',
-      message: 'Function accessible',
+      message: 'Function executed successfully',
       duration,
       logs
     };
   } catch (error: any) {
-    logs.push(`❌ Test failed: ${error.message}`);
+    logs.push(`❌ Exception thrown: ${error.message}`);
+    logs.push(`❌ Stack: ${error.stack}`);
     return {
       id: 'edge-generate-business-description',
       name: 'Generate Business Description',
@@ -1117,20 +1157,36 @@ const testGetAvailableTimesFunction = async (userId: string): Promise<TestResult
   const logs: string[] = [];
   
   try {
-    logs.push('⏰ Checking user calendar settings...');
-    logs.push('⏰ Invoking get-available-times function...');
+    logs.push('⏰ Step 1: Checking user calendar settings...');
+    logs.push(`⏰ Step 2: Invoking get-available-times function for user ${userId}...`);
+    logs.push(`⏰ Step 3: Request date: ${new Date().toISOString().split('T')[0]}`);
     
-    const { error } = await supabase.functions.invoke('get-available-times', {
+    const { data, error } = await supabase.functions.invoke('get-available-times', {
       body: { user_id: userId, date: new Date().toISOString().split('T')[0] }
     });
 
     const duration = performance.now() - start;
 
     if (error) {
-      logs.push(`Function responded with error: ${error.message}`);
-    } else {
-      logs.push('✅ Function executed successfully');
+      logs.push(`❌ Step 4: Function returned error - ${error.message}`);
+      logs.push(`❌ Error context: ${JSON.stringify(error.context || {})}`);
+      logs.push('❌ Test failed - edge function is not working correctly');
+      
+      return {
+        id: 'edge-get-available-times',
+        name: 'Get Available Times',
+        category: 'Edge Functions',
+        description: 'Tests calendar availability time slot retrieval.',
+        status: 'failed',
+        error: error.message,
+        duration,
+        logs
+      };
     }
+
+    logs.push('✅ Step 4: Function invoked successfully');
+    logs.push(`✅ Step 5: Response received - ${JSON.stringify(data || {}).substring(0, 200)}`);
+    logs.push('✅ Test passed - edge function is working correctly');
 
     return {
       id: 'edge-get-available-times',
@@ -1143,7 +1199,8 @@ const testGetAvailableTimesFunction = async (userId: string): Promise<TestResult
       logs
     };
   } catch (error: any) {
-    logs.push(`❌ Test failed: ${error.message}`);
+    logs.push(`❌ Exception thrown: ${error.message}`);
+    logs.push(`❌ Stack: ${error.stack}`);
     return {
       id: 'edge-get-available-times',
       name: 'Get Available Times',
@@ -1159,25 +1216,52 @@ const testGetAvailableTimesFunction = async (userId: string): Promise<TestResult
 
 const testGetBusinessDataFunction = async (): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
-    console.log('💼 [Get Business Data Test] Step 1: Invoking function...');
+    logs.push('💼 Step 1: Invoking get-business-data function...');
+    logs.push('💼 Step 2: Sending test request to edge function...');
     
-    const { error } = await supabase.functions.invoke('get-business-data', {
+    const { data, error } = await supabase.functions.invoke('get-business-data', {
       body: { test: true }
     });
 
     const duration = performance.now() - start;
 
+    if (error) {
+      logs.push(`❌ Step 3: Function returned error - ${error.message}`);
+      logs.push(`❌ Error context: ${JSON.stringify(error.context || {})}`);
+      logs.push('❌ Test failed - edge function is not working correctly');
+      
+      return {
+        id: 'edge-get-business-data',
+        name: 'Get Business Data',
+        category: 'Edge Functions',
+        description: 'Tests business data retrieval functionality.',
+        status: 'failed',
+        error: error.message,
+        duration,
+        logs
+      };
+    }
+
+    logs.push('✅ Step 3: Function invoked successfully');
+    logs.push(`✅ Step 4: Response received - ${JSON.stringify(data || {}).substring(0, 200)}`);
+    logs.push('✅ Test passed - edge function is working correctly');
+    
     return {
       id: 'edge-get-business-data',
       name: 'Get Business Data',
       category: 'Edge Functions',
       description: 'Tests business data retrieval functionality.',
       status: 'passed',
-      message: 'Function accessible',
-      duration
+      message: 'Function executed successfully',
+      duration,
+      logs
     };
   } catch (error: any) {
+    logs.push(`❌ Exception thrown: ${error.message}`);
+    logs.push(`❌ Stack: ${error.stack}`);
     return {
       id: 'edge-get-business-data',
       name: 'Get Business Data',
@@ -1185,7 +1269,8 @@ const testGetBusinessDataFunction = async (): Promise<TestResult> => {
       description: 'Tests business data retrieval.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
