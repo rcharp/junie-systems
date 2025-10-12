@@ -944,35 +944,46 @@ const testSystemSettings = async (): Promise<TestResult> => {
 const testClearRateLimitsFunction = async (): Promise<TestResult> => {
   const start = performance.now();
   try {
-    console.log('🧹 [Clear Rate Limits Test] Step 1: Testing with a valid email...');
+    console.log('🧹 [Clear Rate Limits Test] Step 1: Testing parameter validation...');
     
-    // Test with a valid test email
-    const { data, error } = await supabase.functions.invoke('clear-rate-limits', {
-      body: { 
-        email: 'test@example.com',
-        action_type: 'password_reset'
-      }
+    // Test that the function validates required parameters (without affecting DB)
+    const supabaseUrl = 'https://urkoxlolimjjadbdckco.supabase.co';
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    
+    const response = await fetch(`${supabaseUrl}/functions/v1/clear-rate-limits`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({}) // Empty body to test validation
     });
     
     const duration = performance.now() - start;
+    const responseData = await response.json();
 
-    if (error) {
-      console.error('❌ [Clear Rate Limits Test] Error:', error);
-      throw error;
+    console.log('🧹 [Clear Rate Limits Test] Step 2: Analyzing response...');
+    console.log('Response status:', response.status);
+    console.log('Response data:', responseData);
+
+    // Should return 400 with error about missing email
+    if (response.status === 400 && responseData.error?.includes('Email is required')) {
+      console.log('✅ [Clear Rate Limits Test] Step 3: Function validation working correctly');
+      
+      return {
+        id: 'edge-clear-rate-limits',
+        name: 'Clear Rate Limits Edge Function',
+        category: 'Edge Functions',
+        description: 'Tests the clear-rate-limits edge function parameter validation (read-only test).',
+        status: 'passed',
+        message: 'Function validation working - requires email parameter',
+        duration
+      };
     }
-
-    console.log('✅ [Clear Rate Limits Test] Step 2: Function completed successfully');
-    console.log('Response data:', data);
     
-    return {
-      id: 'edge-clear-rate-limits',
-      name: 'Clear Rate Limits Edge Function',
-      category: 'Edge Functions',
-      description: 'Tests the clear-rate-limits edge function that cleans up old rate limiting logs.',
-      status: 'passed',
-      message: 'Rate limits cleared successfully',
-      duration
-    };
+    console.error('❌ [Clear Rate Limits Test] Expected validation error not received');
+    throw new Error(`Function should validate email parameter. Got status ${response.status}: ${JSON.stringify(responseData)}`);
   } catch (error: any) {
     return {
       id: 'edge-clear-rate-limits',
