@@ -119,21 +119,37 @@ export const SystemTestRunner = () => {
     }
   };
 
-  const getCategoryResults = (category: string) => {
-    return testResults.filter(r => r.category === category);
+  const getCategoryTests = (category: string) => {
+    // Get all test definitions for this category
+    const categoryTestDefs = allTests.filter(t => t.category === category);
+    
+    // Merge with results, showing all tests even if not run yet
+    return categoryTestDefs.map(testDef => {
+      const result = testResults.find(r => r.id === testDef.id);
+      return result || {
+        ...testDef,
+        status: 'not-run' as const,
+        message: undefined,
+        duration: undefined,
+        error: undefined,
+        logs: undefined
+      };
+    });
   };
 
   const getCategoryStats = (category: string) => {
-    const results = getCategoryResults(category);
-    const passed = results.filter(r => r.status === 'passed').length;
-    const failed = results.filter(r => r.status === 'failed').length;
-    return { passed, failed, total: results.length };
+    const tests = getCategoryTests(category);
+    const passed = tests.filter(r => r.status === 'passed').length;
+    const failed = tests.filter(r => r.status === 'failed').length;
+    const notRun = tests.filter(r => r.status === 'not-run').length;
+    return { passed, failed, notRun, total: tests.length };
   };
 
   const categories = ['Authentication', 'Database', 'Edge Functions', 'Integrations'];
 
   const totalPassed = testResults.filter(r => r.status === 'passed').length;
   const totalFailed = testResults.filter(r => r.status === 'failed').length;
+  const totalNotRun = allTests.length - testResults.length;
 
   const toggleTestExpanded = (testId: string) => {
     const newExpanded = new Set(expandedTests);
@@ -297,73 +313,65 @@ export const SystemTestRunner = () => {
             </div>
           )}
 
-          {testResults.length > 0 && (
-            <div className="grid grid-cols-3 gap-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <div>
-                  <div className="text-2xl font-bold text-green-500">{totalPassed}</div>
-                  <div className="text-sm text-muted-foreground">Passed</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <XCircle className="h-5 w-5 text-red-500" />
-                <div>
-                  <div className="text-2xl font-bold text-red-500">{totalFailed}</div>
-                  <div className="text-sm text-muted-foreground">Failed</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Play className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <div className="text-2xl font-bold">{testResults.length}</div>
-                  <div className="text-sm text-muted-foreground">of {allTests.length}</div>
-                </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <div>
+                <div className="text-2xl font-bold text-green-500">{totalPassed}</div>
+                <div className="text-sm text-muted-foreground">Passed</div>
               </div>
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-red-500" />
+              <div>
+                <div className="text-2xl font-bold text-red-500">{totalFailed}</div>
+                <div className="text-sm text-muted-foreground">Failed</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-muted-foreground" />
+              <div>
+                <div className="text-2xl font-bold text-muted-foreground">{totalNotRun}</div>
+                <div className="text-sm text-muted-foreground">Not Run</div>
+              </div>
+            </div>
+          </div>
 
-          {testResults.length === 0 && !isRunning && (
-            <div className="p-4 bg-muted/50 rounded-lg">
-              <div className="text-sm font-medium mb-1">Ready to test</div>
-              <div className="text-sm text-muted-foreground">{allTests.length} tests available</div>
-            </div>
-          )}
         </div>
 
         <ScrollArea className="h-[600px] pr-4">
-          {isRunning && (
-            <div className="text-center py-12">
-              <Loader2 className="h-12 w-12 mx-auto mb-4 animate-spin text-primary" />
-              <p className="text-muted-foreground">Running all tests...</p>
-            </div>
-          )}
-
           <div className="space-y-6">
             {categories.map(category => {
-              const categoryResults = getCategoryResults(category);
+              const categoryTests = getCategoryTests(category);
               const stats = getCategoryStats(category);
 
-              if (categoryResults.length === 0) return null;
+              if (categoryTests.length === 0) return null;
 
               return (
                 <div key={category} className="space-y-3">
                   <div className="flex items-center justify-between border-b pb-2">
                     <h3 className="font-semibold text-lg">{category}</h3>
                     <div className="flex gap-2 text-sm">
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        {stats.passed} passed
-                      </Badge>
+                      {stats.passed > 0 && (
+                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          {stats.passed} passed
+                        </Badge>
+                      )}
                       {stats.failed > 0 && (
                         <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
                           {stats.failed} failed
+                        </Badge>
+                      )}
+                      {stats.notRun > 0 && (
+                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                          {stats.notRun} not run
                         </Badge>
                       )}
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    {categoryResults.map(result => {
+                    {categoryTests.map(result => {
                       const isTestRunning = runningTestId === result.id;
                       
                       return (
@@ -376,7 +384,9 @@ export const SystemTestRunner = () => {
                             className={`rounded-lg border ${
                               result.status === 'passed'
                                 ? 'bg-green-50 border-green-200'
-                                : 'bg-red-50 border-red-200'
+                                : result.status === 'failed'
+                                ? 'bg-red-50 border-red-200'
+                                : 'bg-gray-50 border-gray-200'
                             }`}
                           >
                             <div className="p-3">
@@ -386,8 +396,10 @@ export const SystemTestRunner = () => {
                                     <Loader2 className="h-5 w-5 text-primary animate-spin flex-shrink-0 mt-0.5" />
                                   ) : result.status === 'passed' ? (
                                     <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
-                                  ) : (
+                                  ) : result.status === 'failed' ? (
                                     <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                  ) : (
+                                    <Clock className="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" />
                                   )}
                                   <div className="flex-1">
                                     <div className="font-medium text-sm">{result.name}</div>
