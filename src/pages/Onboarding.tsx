@@ -678,22 +678,34 @@ const Onboarding = () => {
           }
         }
 
-        // Purchase Twilio number
+        // Purchase Twilio number (only if auto-assign is enabled)
         try {
-          let areaCode = "800";
-          if (verificationData.business_phone) {
-            const phoneMatch = verificationData.business_phone.match(/\(?(\d{3})\)?/);
-            if (phoneMatch?.[1]) areaCode = phoneMatch[1];
-          }
+          const { data: autoAssignSetting } = await supabase
+            .from('system_settings')
+            .select('setting_value')
+            .eq('setting_key', 'twilio_auto_assign_enabled')
+            .maybeSingle();
 
-          const { data: twilioData, error: twilioError } = await supabase.functions.invoke("purchase-twilio-number", {
-            body: { areaCode, businessId: businessSettingsResult.id },
-          });
-          
-          if (twilioError) {
-            console.error("Error purchasing Twilio number:", twilioError);
+          const autoAssignEnabled = autoAssignSetting?.setting_value === true;
+
+          if (autoAssignEnabled) {
+            let areaCode = "800";
+            if (verificationData.business_phone) {
+              const phoneMatch = verificationData.business_phone.match(/\(?(\d{3})\)?/);
+              if (phoneMatch?.[1]) areaCode = phoneMatch[1];
+            }
+
+            const { data: twilioData, error: twilioError } = await supabase.functions.invoke("purchase-twilio-number", {
+              body: { areaCode, businessId: businessSettingsResult.id },
+            });
+            
+            if (twilioError) {
+              console.error("Error purchasing Twilio number:", twilioError);
+            } else {
+              console.log("Twilio number purchased:", twilioData);
+            }
           } else {
-            console.log("Twilio number purchased:", twilioData);
+            console.log("Twilio auto-assign is disabled, skipping number purchase");
           }
         } catch (twilioError) {
           console.error("Error purchasing Twilio number:", twilioError);
