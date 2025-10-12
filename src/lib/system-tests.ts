@@ -11,38 +11,89 @@ export interface TestResult {
   error?: string;
 }
 
+export interface TestDefinition {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+}
+
+const testFunctions: Record<string, (userId: string) => Promise<TestResult>> = {
+  'auth-session': () => testAuthSession(),
+  'user-profile': (userId) => testUserProfile(userId),
+  'account-deletion': () => testAccountDeletion(),
+  'business-settings': (userId) => testBusinessSettings(userId),
+  'business-settings-update': (userId) => testBusinessSettingsUpdate(userId),
+  'ai-caller-settings': (userId) => testAICallerSettings(userId),
+  'call-logs': (userId) => testCallLogs(userId),
+  'call-messages': (userId) => testCallMessages(userId),
+  'call-failures-monitoring': () => testCallFailuresMonitoring(),
+  'appointments': (userId) => testAppointments(userId),
+  'services': (userId) => testServices(userId),
+  'dashboard-data': (userId) => testDashboardData(userId),
+  'business-data-function': () => testBusinessDataFunction(),
+  'search-business-function': () => testSearchBusinessFunction(),
+  'twilio-number-assignment': (userId) => testTwilioNumberAssignment(userId),
+  'google-calendar-settings': (userId) => testGoogleCalendarSettings(userId),
+  'google-calendar-availability': (userId) => testGoogleCalendarAvailability(userId),
+  'system-settings': () => testSystemSettings(),
+};
+
+export const getAllTestDefinitions = (): TestDefinition[] => {
+  return Object.keys(testFunctions).map(id => {
+    // We'll need to get the metadata from running the test, but for now return basic info
+    const categories: Record<string, string> = {
+      'auth-session': 'Authentication',
+      'user-profile': 'Authentication',
+      'account-deletion': 'Authentication',
+      'business-settings': 'Database',
+      'business-settings-update': 'Database',
+      'ai-caller-settings': 'Database',
+      'call-logs': 'Database',
+      'call-messages': 'Database',
+      'call-failures-monitoring': 'Database',
+      'appointments': 'Database',
+      'services': 'Database',
+      'dashboard-data': 'Database',
+      'business-data-function': 'Edge Functions',
+      'search-business-function': 'Edge Functions',
+      'twilio-number-assignment': 'Integrations',
+      'google-calendar-settings': 'Integrations',
+      'google-calendar-availability': 'Integrations',
+      'system-settings': 'Integrations',
+    };
+
+    return {
+      id,
+      name: id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+      category: categories[id] || 'Other',
+      description: `Test for ${id}`,
+    };
+  });
+};
+
+export const runSingleTest = async (testId: string, userId: string): Promise<TestResult> => {
+  const testFunction = testFunctions[testId];
+  if (!testFunction) {
+    return {
+      id: testId,
+      name: 'Unknown Test',
+      category: 'Unknown',
+      description: 'Test not found',
+      status: 'failed',
+      error: `Test with id "${testId}" not found`,
+    };
+  }
+  
+  return await testFunction(userId);
+};
+
 export const runAllTests = async (userId: string): Promise<TestResult[]> => {
   const results: TestResult[] = [];
 
-  // Authentication Tests
-  results.push(await testAuthSession());
-  results.push(await testUserProfile(userId));
-  results.push(await testAccountDeletion());
-
-  // Database Tests - Business Settings
-  results.push(await testBusinessSettings(userId));
-  results.push(await testBusinessSettingsUpdate(userId));
-  results.push(await testAICallerSettings(userId));
-  
-  // Database Tests - Calls & Messages
-  results.push(await testCallLogs(userId));
-  results.push(await testCallMessages(userId));
-  results.push(await testCallFailuresMonitoring());
-  
-  // Database Tests - Other
-  results.push(await testAppointments(userId));
-  results.push(await testServices(userId));
-  results.push(await testDashboardData(userId));
-
-  // Edge Function Tests
-  results.push(await testBusinessDataFunction());
-  results.push(await testSearchBusinessFunction());
-
-  // Integration Tests
-  results.push(await testTwilioNumberAssignment(userId));
-  results.push(await testGoogleCalendarSettings(userId));
-  results.push(await testGoogleCalendarAvailability(userId));
-  results.push(await testSystemSettings());
+  for (const testId of Object.keys(testFunctions)) {
+    results.push(await runSingleTest(testId, userId));
+  }
 
   return results;
 };
