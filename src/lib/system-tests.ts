@@ -716,16 +716,20 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
     console.log('💼 [Business Data Function Test] Step 2: Invoking business-data edge function...');
     
     // Test that the function properly validates required parameters
-    const { error } = await supabase.functions.invoke('business-data', {
+    const { data, error } = await supabase.functions.invoke('business-data', {
       body: {}
     });
 
     const duration = performance.now() - start;
 
     console.log('💼 [Business Data Function Test] Step 3: Analyzing response...');
+    console.log('Error object:', error);
+    console.log('Data object:', data);
     
     // Should return an error about missing business_id
-    if (error && error.message.includes('business_id')) {
+    // Check both error.message and data.error
+    const errorMessage = error?.message || JSON.stringify(data);
+    if (errorMessage.includes('business_id')) {
       console.log('✅ [Business Data Function Test] Step 4: Function validation working correctly');
       console.log('✅ [Business Data Function Test] Step 5: Test completed successfully');
 
@@ -742,7 +746,7 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
     
     // If no error or wrong error, something's wrong
     console.error('❌ [Business Data Function Test] Expected validation error not received');
-    throw new Error('Function should validate business_id parameter');
+    throw new Error(`Function should validate business_id parameter. Got: ${errorMessage}`);
   } catch (error: any) {
     console.error('❌ [Business Data Function Test] Test failed:', error);
     return {

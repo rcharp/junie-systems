@@ -16,7 +16,18 @@ serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { email, action_type } = await req.json();
+    // Parse JSON body safely
+    let email: string | undefined;
+    let action_type: string | undefined;
+    
+    try {
+      const body = await req.json();
+      email = body.email;
+      action_type = body.action_type;
+    } catch (jsonError) {
+      // If no body or invalid JSON, continue without it
+      console.log("No valid JSON body provided");
+    }
 
     if (!email) {
       return new Response(
