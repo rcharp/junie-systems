@@ -944,9 +944,16 @@ const testSystemSettings = async (): Promise<TestResult> => {
 const testClearRateLimitsFunction = async (): Promise<TestResult> => {
   const start = performance.now();
   try {
-    console.log('🧹 [Clear Rate Limits Test] Step 1: Invoking clear-rate-limits function...');
+    console.log('🧹 [Clear Rate Limits Test] Step 1: Testing with a valid email...');
     
-    const { error } = await supabase.functions.invoke('clear-rate-limits');
+    // Test with a valid test email
+    const { data, error } = await supabase.functions.invoke('clear-rate-limits', {
+      body: { 
+        email: 'test@example.com',
+        action_type: 'password_reset'
+      }
+    });
+    
     const duration = performance.now() - start;
 
     if (error) {
@@ -955,6 +962,7 @@ const testClearRateLimitsFunction = async (): Promise<TestResult> => {
     }
 
     console.log('✅ [Clear Rate Limits Test] Step 2: Function completed successfully');
+    console.log('Response data:', data);
     
     return {
       id: 'edge-clear-rate-limits',
