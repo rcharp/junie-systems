@@ -666,9 +666,11 @@ const testTwilioNumberAssignment = async (userId: string): Promise<TestResult> =
 // Edge Function Tests
 const testBusinessDataFunction = async (): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
-    console.log('💼 [Business Data Function Test] Step 1: Testing function without business_id...');
-    console.log('💼 [Business Data Function Test] Step 2: Invoking business-data edge function...');
+    logs.push('💼 Testing business-data function without business_id...');
+    logs.push('💼 Invoking business-data edge function...');
     
     // Test that the function properly validates required parameters
     // Use a direct fetch call to get proper error details
@@ -687,16 +689,16 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
 
     const duration = performance.now() - start;
 
-    console.log('💼 [Business Data Function Test] Step 3: Analyzing response...');
-    console.log('Response status:', response.status);
+    logs.push('💼 Analyzing response...');
+    logs.push(`Response status: ${response.status}`);
     
     const responseData = await response.json();
-    console.log('Response data:', responseData);
+    logs.push(`Response data: ${JSON.stringify(responseData)}`);
     
     // Should return 400 with error about missing business_id
     if (response.status === 400 && responseData.error?.includes('business_id')) {
-      console.log('✅ [Business Data Function Test] Step 4: Function validation working correctly');
-      console.log('✅ [Business Data Function Test] Step 5: Test completed successfully');
+      logs.push('✅ Function validation working correctly');
+      logs.push('✅ Test completed successfully');
 
       return {
         id: 'business-data-function',
@@ -705,15 +707,16 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
         description: 'Tests the business-data edge function to ensure it validates required parameters correctly.',
         status: 'passed',
         message: 'Function validation working - requires business_id parameter',
-        duration
+        duration,
+        logs
       };
     }
     
     // If no error or wrong error, something's wrong
-    console.error('❌ [Business Data Function Test] Expected validation error not received');
+    logs.push('❌ Expected validation error not received');
     throw new Error(`Function should validate business_id parameter. Got status ${response.status}: ${JSON.stringify(responseData)}`);
   } catch (error: any) {
-    console.error('❌ [Business Data Function Test] Test failed:', error);
+    logs.push(`❌ Test failed: ${error.message}`);
     return {
       id: 'business-data-function',
       name: 'Business Data Function',
@@ -721,7 +724,8 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
       description: 'Tests the business-data edge function to ensure it validates required parameters correctly.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
@@ -775,10 +779,12 @@ const testGoogleCalendarAvailability = async (userId: string): Promise<TestResul
 
 const testSearchBusinessFunction = async (): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
-    console.log('🔍 [Search Business Test] Step 1: Preparing test query...');
+    logs.push('🔍 Preparing test query...');
     const testQuery = 'test';
-    console.log(`🔍 [Search Business Test] Step 2: Invoking search-business function with query: "${testQuery}"...`);
+    logs.push(`🔍 Invoking search-business function with query: "${testQuery}"...`);
     
     const { data, error } = await supabase.functions.invoke('search-business', {
       body: { query: testQuery }
@@ -787,13 +793,13 @@ const testSearchBusinessFunction = async (): Promise<TestResult> => {
     const duration = performance.now() - start;
 
     if (error) {
-      console.error('❌ [Search Business Test] Step 3: Function invocation failed:', error);
+      logs.push(`❌ Function invocation failed: ${error.message}`);
       throw error;
     }
 
-    console.log('✅ [Search Business Test] Step 3: Function invoked successfully');
-    console.log('🔍 [Search Business Test] Step 4: Validating response data...');
-    console.log('✅ [Search Business Test] Step 5: Test completed successfully');
+    logs.push('✅ Function invoked successfully');
+    logs.push('🔍 Validating response data...');
+    logs.push('✅ Test completed successfully');
 
     return {
       id: 'search-business-function',
@@ -802,9 +808,11 @@ const testSearchBusinessFunction = async (): Promise<TestResult> => {
       description: 'Validates the search-business edge function that integrates with Google Places API. This test confirms the function can process search queries and communicate with external APIs to find business information.',
       status: 'passed',
       message: 'Edge function executed successfully and returned results',
-      duration
+      duration,
+      logs
     };
   } catch (error: any) {
+    logs.push(`❌ Test failed: ${error.message}`);
     return {
       id: 'search-business-function',
       name: 'Search Business Function',
@@ -812,7 +820,8 @@ const testSearchBusinessFunction = async (): Promise<TestResult> => {
       description: 'Validates the search-business edge function that integrates with Google Places API. This test confirms the function can process search queries and communicate with external APIs to find business information.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
@@ -898,8 +907,10 @@ const testSystemSettings = async (): Promise<TestResult> => {
 
 const testClearRateLimitsFunction = async (): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
-    console.log('🧹 [Clear Rate Limits Test] Step 1: Testing parameter validation...');
+    logs.push('🧹 Testing parameter validation...');
     
     // Test that the function validates required parameters (without affecting DB)
     const supabaseUrl = 'https://urkoxlolimjjadbdckco.supabase.co';
@@ -918,13 +929,13 @@ const testClearRateLimitsFunction = async (): Promise<TestResult> => {
     const duration = performance.now() - start;
     const responseData = await response.json();
 
-    console.log('🧹 [Clear Rate Limits Test] Step 2: Analyzing response...');
-    console.log('Response status:', response.status);
-    console.log('Response data:', responseData);
+    logs.push('🧹 Analyzing response...');
+    logs.push(`Response status: ${response.status}`);
+    logs.push(`Response data: ${JSON.stringify(responseData)}`);
 
     // Should return 400 with error about missing email
     if (response.status === 400 && responseData.error?.includes('Email is required')) {
-      console.log('✅ [Clear Rate Limits Test] Step 3: Function validation working correctly');
+      logs.push('✅ Function validation working correctly');
       
       return {
         id: 'edge-clear-rate-limits',
@@ -933,13 +944,15 @@ const testClearRateLimitsFunction = async (): Promise<TestResult> => {
         description: 'Tests the clear-rate-limits edge function parameter validation (read-only test).',
         status: 'passed',
         message: 'Function validation working - requires email parameter',
-        duration
+        duration,
+        logs
       };
     }
     
-    console.error('❌ [Clear Rate Limits Test] Expected validation error not received');
+    logs.push('❌ Expected validation error not received');
     throw new Error(`Function should validate email parameter. Got status ${response.status}: ${JSON.stringify(responseData)}`);
   } catch (error: any) {
+    logs.push(`❌ Test failed: ${error.message}`);
     return {
       id: 'edge-clear-rate-limits',
       name: 'Clear Rate Limits Edge Function',
@@ -947,7 +960,8 @@ const testClearRateLimitsFunction = async (): Promise<TestResult> => {
       description: 'Tests the clear-rate-limits edge function.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
@@ -957,8 +971,10 @@ const testClearRateLimitsFunction = async (): Promise<TestResult> => {
 
 const testExtractBusinessDataFunction = async (): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
-    console.log('📊 [Extract Business Data Test] Step 1: Invoking function...');
+    logs.push('📊 Invoking extract-business-data function...');
     
     const { error } = await supabase.functions.invoke('extract-business-data', {
       body: { test: true }
@@ -967,7 +983,8 @@ const testExtractBusinessDataFunction = async (): Promise<TestResult> => {
     const duration = performance.now() - start;
 
     if (error) {
-      console.log('✅ [Extract Business Data Test] Function responds to requests');
+      logs.push(`Function responded with error: ${error.message}`);
+      logs.push('✅ Function is accessible and responding');
       return {
         id: 'edge-extract-business-data',
         name: 'Extract Business Data',
@@ -975,10 +992,12 @@ const testExtractBusinessDataFunction = async (): Promise<TestResult> => {
         description: 'Tests business data extraction from various sources.',
         status: 'passed',
         message: 'Function accessible',
-        duration
+        duration,
+        logs
       };
     }
 
+    logs.push('✅ Function executed successfully');
     return {
       id: 'edge-extract-business-data',
       name: 'Extract Business Data',
@@ -986,9 +1005,11 @@ const testExtractBusinessDataFunction = async (): Promise<TestResult> => {
       description: 'Tests business data extraction.',
       status: 'passed',
       message: 'Function executed',
-      duration
+      duration,
+      logs
     };
   } catch (error: any) {
+    logs.push(`❌ Test failed: ${error.message}`);
     return {
       id: 'edge-extract-business-data',
       name: 'Extract Business Data',
@@ -996,21 +1017,30 @@ const testExtractBusinessDataFunction = async (): Promise<TestResult> => {
       description: 'Tests business data extraction.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
 
 const testExtractServicesFunction = async (): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
-    console.log('🔧 [Extract Services Test] Step 1: Invoking function...');
+    logs.push('🔧 Invoking extract-services function...');
     
     const { error } = await supabase.functions.invoke('extract-services', {
       body: { test: true }
     });
 
     const duration = performance.now() - start;
+
+    if (error) {
+      logs.push(`❌ Function error: ${error.message}`);
+    } else {
+      logs.push('✅ Function executed successfully');
+    }
 
     return {
       id: 'edge-extract-services',
@@ -1020,9 +1050,11 @@ const testExtractServicesFunction = async (): Promise<TestResult> => {
       status: error ? 'failed' : 'passed',
       message: error ? undefined : 'Function accessible',
       error: error?.message,
-      duration
+      duration,
+      logs
     };
   } catch (error: any) {
+    logs.push(`❌ Test failed: ${error.message}`);
     return {
       id: 'edge-extract-services',
       name: 'Extract Services',
@@ -1030,21 +1062,30 @@ const testExtractServicesFunction = async (): Promise<TestResult> => {
       description: 'Tests service extraction.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
 
 const testGenerateBusinessDescriptionFunction = async (): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
-    console.log('📝 [Generate Description Test] Step 1: Invoking function...');
+    logs.push('📝 Invoking generate-business-description function...');
     
     const { error } = await supabase.functions.invoke('generate-business-description', {
       body: { test: true }
     });
 
     const duration = performance.now() - start;
+
+    if (error) {
+      logs.push(`Function responded with error: ${error.message}`);
+    } else {
+      logs.push('✅ Function executed successfully');
+    }
 
     return {
       id: 'edge-generate-business-description',
@@ -1053,9 +1094,11 @@ const testGenerateBusinessDescriptionFunction = async (): Promise<TestResult> =>
       description: 'Tests AI-powered business description generation.',
       status: 'passed',
       message: 'Function accessible',
-      duration
+      duration,
+      logs
     };
   } catch (error: any) {
+    logs.push(`❌ Test failed: ${error.message}`);
     return {
       id: 'edge-generate-business-description',
       name: 'Generate Business Description',
@@ -1063,16 +1106,19 @@ const testGenerateBusinessDescriptionFunction = async (): Promise<TestResult> =>
       description: 'Tests business description generation.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
 
 const testGetAvailableTimesFunction = async (userId: string): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
-    console.log('⏰ [Get Available Times Test] Step 1: Checking user calendar settings...');
-    console.log('⏰ [Get Available Times Test] Step 2: Invoking function...');
+    logs.push('⏰ Checking user calendar settings...');
+    logs.push('⏰ Invoking get-available-times function...');
     
     const { error } = await supabase.functions.invoke('get-available-times', {
       body: { user_id: userId, date: new Date().toISOString().split('T')[0] }
@@ -1080,7 +1126,11 @@ const testGetAvailableTimesFunction = async (userId: string): Promise<TestResult
 
     const duration = performance.now() - start;
 
-    console.log('✅ [Get Available Times Test] Step 3: Function responded');
+    if (error) {
+      logs.push(`Function responded with error: ${error.message}`);
+    } else {
+      logs.push('✅ Function executed successfully');
+    }
 
     return {
       id: 'edge-get-available-times',
@@ -1089,9 +1139,11 @@ const testGetAvailableTimesFunction = async (userId: string): Promise<TestResult
       description: 'Tests calendar availability time slot retrieval.',
       status: 'passed',
       message: 'Function executed successfully',
-      duration
+      duration,
+      logs
     };
   } catch (error: any) {
+    logs.push(`❌ Test failed: ${error.message}`);
     return {
       id: 'edge-get-available-times',
       name: 'Get Available Times',
@@ -1099,7 +1151,8 @@ const testGetAvailableTimesFunction = async (userId: string): Promise<TestResult
       description: 'Tests available times retrieval.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
