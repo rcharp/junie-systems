@@ -17,6 +17,7 @@ import { AdminSettings } from '@/components/AdminSettings';
 import { AdminUsersList } from '@/components/AdminUsersList';
 import { ClientToolMonitor } from '@/components/ClientToolMonitor';
 import { CallInitiationFailuresMonitor } from '@/components/CallInitiationFailuresMonitor';
+import { SystemTestRunner } from '@/components/SystemTestRunner';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -353,10 +354,11 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="w-full grid grid-cols-4 mb-4 sm:mb-6">
+          <TabsList className="w-full grid grid-cols-5 mb-4 sm:mb-6">
             <TabsTrigger value="users" className="text-xs sm:text-sm">User Stats</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
             <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
+            <TabsTrigger value="tests" className="text-xs sm:text-sm">Tests</TabsTrigger>
             <TabsTrigger value="todos" className="text-xs sm:text-sm">Todos</TabsTrigger>
           </TabsList>
           
@@ -618,6 +620,10 @@ const AdminDashboard = () => {
               </Card>
               </TabsContent>
             </Tabs>
+          </TabsContent>
+
+          <TabsContent value="tests" className="space-y-6">
+            <SystemTestRunner />
           </TabsContent>
 
           <TabsContent value="todos" className="space-y-6">
