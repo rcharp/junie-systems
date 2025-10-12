@@ -4,6 +4,7 @@ export interface TestResult {
   id: string;
   name: string;
   category: string;
+  description: string;
   status: 'passed' | 'failed' | 'running';
   message?: string;
   duration?: number;
@@ -48,8 +49,9 @@ const testAuthSession = async (): Promise<TestResult> => {
       id: 'auth-session',
       name: 'Authentication Session',
       category: 'Authentication',
+      description: 'Verifies that the user has an active authentication session with Supabase. This test ensures that the user is properly logged in and their session token is valid.',
       status: 'passed',
-      message: 'Session is active',
+      message: 'Session is active and valid',
       duration
     };
   } catch (error: any) {
@@ -57,6 +59,7 @@ const testAuthSession = async (): Promise<TestResult> => {
       id: 'auth-session',
       name: 'Authentication Session',
       category: 'Authentication',
+      description: 'Verifies that the user has an active authentication session with Supabase. This test ensures that the user is properly logged in and their session token is valid.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -82,8 +85,9 @@ const testUserProfile = async (userId: string): Promise<TestResult> => {
       id: 'user-profile',
       name: 'User Profile Access',
       category: 'Authentication',
+      description: 'Checks that the user profile exists in the database and is accessible. This test verifies Row Level Security (RLS) policies are working correctly and the user can read their own profile data.',
       status: 'passed',
-      message: 'User profile accessible',
+      message: 'User profile found and accessible',
       duration
     };
   } catch (error: any) {
@@ -91,6 +95,7 @@ const testUserProfile = async (userId: string): Promise<TestResult> => {
       id: 'user-profile',
       name: 'User Profile Access',
       category: 'Authentication',
+      description: 'Checks that the user profile exists in the database and is accessible. This test verifies Row Level Security (RLS) policies are working correctly and the user can read their own profile data.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -115,8 +120,9 @@ const testBusinessSettings = async (userId: string): Promise<TestResult> => {
       id: 'business-settings',
       name: 'Business Settings Query',
       category: 'Database',
+      description: 'Tests the ability to query business settings from the database. This verifies that the business_settings table is accessible and RLS policies allow users to read their own business configuration data.',
       status: 'passed',
-      message: `Found ${data?.length || 0} business settings`,
+      message: `Successfully retrieved ${data?.length || 0} business settings records`,
       duration
     };
   } catch (error: any) {
@@ -124,6 +130,7 @@ const testBusinessSettings = async (userId: string): Promise<TestResult> => {
       id: 'business-settings',
       name: 'Business Settings Query',
       category: 'Database',
+      description: 'Tests the ability to query business settings from the database. This verifies that the business_settings table is accessible and RLS policies allow users to read their own business configuration data.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -148,8 +155,9 @@ const testCallLogs = async (userId: string): Promise<TestResult> => {
       id: 'call-logs',
       name: 'Call Logs Query',
       category: 'Database',
+      description: 'Validates access to call logs in the database. This test ensures users can retrieve their call history and that the call logging system is functioning properly with correct RLS policies.',
       status: 'passed',
-      message: `Retrieved ${data?.length || 0} call logs`,
+      message: `Successfully retrieved ${data?.length || 0} call log records`,
       duration
     };
   } catch (error: any) {
@@ -157,6 +165,7 @@ const testCallLogs = async (userId: string): Promise<TestResult> => {
       id: 'call-logs',
       name: 'Call Logs Query',
       category: 'Database',
+      description: 'Validates access to call logs in the database. This test ensures users can retrieve their call history and that the call logging system is functioning properly with correct RLS policies.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -181,8 +190,9 @@ const testAppointments = async (userId: string): Promise<TestResult> => {
       id: 'appointments',
       name: 'Appointments Query',
       category: 'Database',
+      description: 'Tests the appointments table accessibility and query performance. This verifies that the appointment booking system can retrieve scheduled appointments and that database permissions are correctly configured.',
       status: 'passed',
-      message: `Retrieved ${data?.length || 0} appointments`,
+      message: `Successfully retrieved ${data?.length || 0} appointment records`,
       duration
     };
   } catch (error: any) {
@@ -190,6 +200,7 @@ const testAppointments = async (userId: string): Promise<TestResult> => {
       id: 'appointments',
       name: 'Appointments Query',
       category: 'Database',
+      description: 'Tests the appointments table accessibility and query performance. This verifies that the appointment booking system can retrieve scheduled appointments and that database permissions are correctly configured.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -213,6 +224,7 @@ const testServices = async (userId: string): Promise<TestResult> => {
         id: 'services',
         name: 'Services Query',
         category: 'Database',
+        description: 'Verifies that services associated with a business can be queried. This test checks the services table and the relationship between businesses and their offered services, ensuring proper data access.',
         status: 'passed',
         message: 'No business settings found (expected for new users)',
         duration: performance.now() - start
@@ -232,8 +244,9 @@ const testServices = async (userId: string): Promise<TestResult> => {
       id: 'services',
       name: 'Services Query',
       category: 'Database',
+      description: 'Verifies that services associated with a business can be queried. This test checks the services table and the relationship between businesses and their offered services, ensuring proper data access.',
       status: 'passed',
-      message: `Retrieved ${data?.length || 0} services`,
+      message: `Successfully retrieved ${data?.length || 0} service records`,
       duration
     };
   } catch (error: any) {
@@ -241,6 +254,7 @@ const testServices = async (userId: string): Promise<TestResult> => {
       id: 'services',
       name: 'Services Query',
       category: 'Database',
+      description: 'Verifies that services associated with a business can be queried. This test checks the services table and the relationship between businesses and their offered services, ensuring proper data access.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -267,8 +281,9 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
       id: 'business-data-function',
       name: 'Business Data Function',
       category: 'Edge Functions',
+      description: 'Tests the business-data edge function to ensure it is deployed and responding. This serverless function handles business data extraction and validation, and this test verifies it is accessible and running.',
       status: 'passed',
-      message: 'Function is accessible',
+      message: 'Edge function is deployed and responding to requests',
       duration
     };
   } catch (error: any) {
@@ -276,6 +291,7 @@ const testBusinessDataFunction = async (): Promise<TestResult> => {
       id: 'business-data-function',
       name: 'Business Data Function',
       category: 'Edge Functions',
+      description: 'Tests the business-data edge function to ensure it is deployed and responding. This serverless function handles business data extraction and validation, and this test verifies it is accessible and running.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -298,8 +314,9 @@ const testSearchBusinessFunction = async (): Promise<TestResult> => {
       id: 'search-business-function',
       name: 'Search Business Function',
       category: 'Edge Functions',
+      description: 'Validates the search-business edge function that integrates with Google Places API. This test confirms the function can process search queries and communicate with external APIs to find business information.',
       status: 'passed',
-      message: 'Function executed successfully',
+      message: 'Edge function executed successfully and returned results',
       duration
     };
   } catch (error: any) {
@@ -307,6 +324,7 @@ const testSearchBusinessFunction = async (): Promise<TestResult> => {
       id: 'search-business-function',
       name: 'Search Business Function',
       category: 'Edge Functions',
+      description: 'Validates the search-business edge function that integrates with Google Places API. This test confirms the function can process search queries and communicate with external APIs to find business information.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -329,13 +347,14 @@ const testGoogleCalendarSettings = async (userId: string): Promise<TestResult> =
     if (error) throw error;
 
     const message = data 
-      ? `Calendar ${data.is_connected ? 'connected' : 'not connected'}`
-      : 'No calendar settings';
+      ? `Calendar integration ${data.is_connected ? 'is active' : 'is configured but not connected'}`
+      : 'No calendar settings configured (optional feature)';
 
     return {
       id: 'google-calendar',
       name: 'Google Calendar Settings',
       category: 'Integrations',
+      description: 'Checks Google Calendar integration settings and connection status. This test verifies that calendar settings are accessible and properly configured if the user has connected their Google Calendar for appointment scheduling.',
       status: 'passed',
       message,
       duration
@@ -345,6 +364,7 @@ const testGoogleCalendarSettings = async (userId: string): Promise<TestResult> =
       id: 'google-calendar',
       name: 'Google Calendar Settings',
       category: 'Integrations',
+      description: 'Checks Google Calendar integration settings and connection status. This test verifies that calendar settings are accessible and properly configured if the user has connected their Google Calendar for appointment scheduling.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
@@ -368,8 +388,9 @@ const testSystemSettings = async (): Promise<TestResult> => {
       id: 'system-settings',
       name: 'System Settings Access',
       category: 'Integrations',
+      description: 'Tests access to system-wide settings that control application behavior. This verifies that global configuration settings like Twilio auto-assignment and Stripe modes are readable and the settings infrastructure is working.',
       status: 'passed',
-      message: `Retrieved ${data?.length || 0} system settings`,
+      message: `Successfully accessed ${data?.length || 0} system configuration settings`,
       duration
     };
   } catch (error: any) {
@@ -377,6 +398,7 @@ const testSystemSettings = async (): Promise<TestResult> => {
       id: 'system-settings',
       name: 'System Settings Access',
       category: 'Integrations',
+      description: 'Tests access to system-wide settings that control application behavior. This verifies that global configuration settings like Twilio auto-assignment and Stripe modes are readable and the settings infrastructure is working.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start

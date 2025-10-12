@@ -283,6 +283,15 @@ export const SystemTestRunner = () => {
                               <div className="space-y-2 text-sm">
                                 <div>
                                   <div className="font-medium text-xs uppercase text-muted-foreground mb-1">
+                                    Description
+                                  </div>
+                                  <div className="text-xs leading-relaxed text-foreground/80">
+                                    {result.description}
+                                  </div>
+                                </div>
+
+                                <div>
+                                  <div className="font-medium text-xs uppercase text-muted-foreground mb-1">
                                     Test ID
                                   </div>
                                   <div className="font-mono text-xs bg-background/50 p-2 rounded">
