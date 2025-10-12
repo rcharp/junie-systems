@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,11 +22,12 @@ interface BusinessPrediction {
 }
 
 const Onboarding = () => {
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [businessSearch, setBusinessSearch] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [useWebsite, setUseWebsite] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showEmailForm, setShowEmailForm] = useState(false);

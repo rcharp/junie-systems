@@ -4,48 +4,18 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, CheckCircle, Sparkles } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const EmailCapture = () => {
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('kit-subscribe', {
-        body: { email }
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.success) {
-        toast({
-          title: "Success! 🎉",
-          description: "You're on the waitlist! We'll notify you when Junie is ready.",
-        });
-        setEmail("");
-      } else {
-        throw new Error(data.error || 'Subscription failed');
-      }
-    } catch (error: any) {
-      console.error('Subscription error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to join waitlist. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // Redirect to onboarding with email
+    navigate(`/onboarding?email=${encodeURIComponent(email)}`);
   };
 
   return (
@@ -86,10 +56,9 @@ const EmailCapture = () => {
                   type="submit" 
                   variant="cta" 
                   size="lg"
-                  disabled={isLoading}
                   className="group"
                 >
-                  {isLoading ? "Joining..." : "Join Waitlist"}
+                  Get Started for Free
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </form>

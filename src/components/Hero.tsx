@@ -3,49 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, ArrowRight } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import RotatingText from "./RotatingText";
 
 
 const Hero = () => {
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-
-    setIsLoading(true);
-
-    try {
-      // Use the kit-subscribe edge function for secure API key handling
-      const response = await fetch('/api/kit-subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        toast({
-          title: "Success! 🎉",
-          description: "You're on the waitlist! We'll notify you when Junie is ready.",
-        });
-        setEmail("");
-      } else {
-        throw new Error('Subscription failed');
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to join waitlist. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    
+    // Redirect to onboarding with email
+    navigate(`/onboarding?email=${encodeURIComponent(email)}`);
   };
   return (
     <section className="relative min-h-screen bg-gradient-subtle pt-20 overflow-hidden">
@@ -83,10 +54,9 @@ const Hero = () => {
                 type="submit" 
                 variant="hero" 
                 size="lg"
-                disabled={isLoading}
                 className="group min-w-[140px] sm:min-w-[160px] h-12 sm:h-14 text-sm sm:text-base"
               >
-                {isLoading ? "Joining..." : "Join Waitlist"}
+                Get Started for Free
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </form>

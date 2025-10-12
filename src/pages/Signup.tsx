@@ -10,7 +10,8 @@ import { Session, User } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 
 const Signup = () => {
-  const [email, setEmail] = useState("");
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,7 +19,6 @@ const Signup = () => {
   const [session, setSession] = useState<Session | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const selectedPlan = searchParams.get("plan") || "professional";
   
   const planNames: Record<string, string> = {
