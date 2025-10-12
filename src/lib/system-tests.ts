@@ -168,35 +168,123 @@ const testAuthSession = async (): Promise<TestResult> => {
 
 const testAccountDeletion = async (): Promise<TestResult> => {
   const start = performance.now();
+  const testEmail = `test-delete-${Date.now()}@test.com`;
+  const testPassword = 'TestPassword123!';
+  let testUserId: string | null = null;
+  
   try {
-    // Test that the delete-account edge function exists and is accessible
-    // We won't actually delete the account, just verify the endpoint
-    const { error } = await supabase.functions.invoke('delete-account', {
-      body: { test: true }
+    console.log('🗑️ [Account Deletion Test] Step 1: Creating temporary test account...');
+    console.log(`Test account email: ${testEmail}`);
+    
+    // Step 1: Create a temporary test account
+    const { data: signupData, error: signupError } = await supabase.auth.signUp({
+      email: testEmail,
+      password: testPassword,
     });
 
-    const duration = performance.now() - start;
-
-    // A validation error is expected for test mode
-    if (error && !error.message.includes('FunctionsHttpError')) {
-      throw error;
+    if (signupError) {
+      console.error('Failed to create test account:', signupError);
+      throw new Error(`Failed to create test account: ${signupError.message}`);
     }
 
+    testUserId = signupData.user?.id || null;
+    if (!testUserId) {
+      throw new Error('No user ID returned from signup');
+    }
+    
+    console.log(`✅ Step 2: Test account created successfully with ID: ${testUserId}`);
+    
+    // Step 2: Create user profile for the test account
+    console.log('📝 Step 3: Creating user profile...');
+    const { error: profileError } = await supabase
+      .from('user_profiles')
+      .insert({
+        id: testUserId,
+        full_name: 'Test Account for Deletion',
+        subscription_plan: 'free'
+      });
+
+    if (profileError) {
+      console.warn('⚠️ Profile creation warning:', profileError);
+    } else {
+      console.log('✅ Step 4: User profile created successfully');
+    }
+
+    // Step 3: Get current session to restore later
+    console.log('💾 Step 5: Saving current session for restoration...');
+    const { data: { session: originalSession } } = await supabase.auth.getSession();
+
+    // Step 4: Sign in as the test user
+    console.log('🔐 Step 6: Signing in as test user...');
+    const { error: signinError } = await supabase.auth.signInWithPassword({
+      email: testEmail,
+      password: testPassword,
+    });
+
+    if (signinError) {
+      console.error('Failed to sign in as test user:', signinError);
+      throw new Error(`Failed to sign in as test user: ${signinError.message}`);
+    }
+    
+    console.log('✅ Step 7: Successfully signed in as test user');
+
+    // Step 5: Call the delete-account function
+    console.log('🗑️ Step 8: Calling delete-account function...');
+    const { error: deleteError } = await supabase.functions.invoke('delete-account');
+
+    if (deleteError) {
+      console.error('Delete account function failed:', deleteError);
+      throw new Error(`Delete account function failed: ${deleteError.message}`);
+    }
+
+    console.log('✅ Step 9: Delete account function completed successfully');
+    
+    // Step 6: Restore original session
+    if (originalSession) {
+      console.log('🔄 Step 10: Restoring original session...');
+      await supabase.auth.setSession({
+        access_token: originalSession.access_token,
+        refresh_token: originalSession.refresh_token
+      });
+      console.log('✅ Step 11: Original session restored');
+    } else {
+      console.log('ℹ️ Step 10: No original session to restore');
+    }
+    
+    console.log('✅ Account deletion test completed successfully');
+
     return {
       id: 'account-deletion',
       name: 'Account Deletion Function',
       category: 'Authentication',
-      description: 'Tests that the account deletion edge function is accessible and can process deletion requests. This verifies the critical security feature allowing users to permanently remove their data.',
+      description: 'Creates a temporary test account and deletes it to verify the account deletion flow works end-to-end.',
       status: 'passed',
-      message: 'Account deletion endpoint is accessible',
-      duration
+      message: `Successfully created and deleted test account (${testEmail})`,
+      duration: performance.now() - start
     };
   } catch (error: any) {
+    console.error('❌ Account deletion test failed:', error);
+    
+    // Try to clean up the test account if it still exists
+    if (testUserId) {
+      try {
+        console.log('🧹 Attempting cleanup of test account...');
+        await supabase.auth.signInWithPassword({
+          email: testEmail,
+          password: testPassword,
+        });
+        await supabase.functions.invoke('delete-account');
+        console.log('✅ Cleanup successful');
+      } catch (cleanupError) {
+        console.warn('⚠️ Cleanup failed (account may already be deleted):', cleanupError);
+      }
+    }
+    
     return {
       id: 'account-deletion',
       name: 'Account Deletion Function',
       category: 'Authentication',
-      description: 'Tests that the account deletion edge function is accessible and can process deletion requests. This verifies the critical security feature allowing users to permanently remove their data.',
+      description: 'Creates a temporary test account and deletes it to verify the account deletion flow works end-to-end.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start

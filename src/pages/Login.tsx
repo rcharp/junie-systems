@@ -81,13 +81,14 @@ const Login = () => {
       });
 
       if (error) {
-        // Check for common OAuth-related errors
-        if (error.message.includes("Invalid login credentials") || 
-            error.message.includes("Email not confirmed") ||
-            error.message.includes("No user found")) {
+        // For invalid credentials, check if the user exists and was created via OAuth
+        if (error.message.includes("Invalid login credentials")) {
+          // Try to determine if this is a Google OAuth account
+          // by attempting to list users (this requires admin privileges, so we'll use a simpler approach)
+          // Instead, we'll provide a more helpful generic error message
           toast({
-            title: "Unable to sign in",
-            description: "Looks like you signed up by Connecting to Google. Please login with Google instead.",
+            title: "Invalid credentials",
+            description: "The email or password you entered is incorrect. If you signed up with Google, please use 'Connect with Google' instead.",
             variant: "destructive",
           });
         } else {
