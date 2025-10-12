@@ -17,6 +17,8 @@ export const SystemTestRunner = () => {
   const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [runningTestId, setRunningTestId] = useState<string | null>(null);
+  const [currentTestIndex, setCurrentTestIndex] = useState<number>(0);
+  const [totalTests, setTotalTests] = useState<number>(0);
   const [lastRunTime, setLastRunTime] = useState<Date | null>(null);
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
   const [fixingTest, setFixingTest] = useState<string | null>(null);
@@ -49,17 +51,42 @@ export const SystemTestRunner = () => {
 
     setIsRunning(true);
     setTestResults([]);
+    setCurrentTestIndex(0);
+    setTotalTests(allTests.length);
 
     try {
-      const results = await runAllTests(user.id);
+      const results: TestResult[] = [];
+      
+      // Run tests one by one and update progress in real-time
+      for (let i = 0; i < allTests.length; i++) {
+        const test = allTests[i];
+        setRunningTestId(test.id);
+        setCurrentTestIndex(i + 1);
+        
+        console.log(`\n🏃 Running test ${i + 1}/${allTests.length}: ${test.name}`);
+        
+        const result = await runSingleTest(test.id, user.id);
+        results.push(result);
+        
+        // Update results in real-time
+        setTestResults([...results]);
+        
+        // Small delay to make progress visible
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       const timestamp = new Date();
-      setTestResults(results);
       setLastRunTime(timestamp);
       saveResults(results, timestamp);
+      
+      console.log('\n✅ All tests completed!');
     } catch (error) {
       console.error('Error running tests:', error);
     } finally {
       setIsRunning(false);
+      setRunningTestId(null);
+      setCurrentTestIndex(0);
+      setTotalTests(0);
     }
   };
 
@@ -209,27 +236,60 @@ export const SystemTestRunner = () => {
               {allTests.length} tests available • Run comprehensive tests to verify all system functions
             </CardDescription>
           </div>
-          <Button 
-            onClick={handleRunTests} 
-            disabled={isRunning || runningTestId !== null}
-            className="gap-2"
-          >
-            {isRunning ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Running All...
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                Run All Tests
-              </>
+          <div className="flex flex-col items-end gap-2">
+            <Button 
+              onClick={handleRunTests} 
+              disabled={isRunning || runningTestId !== null}
+              className="gap-2"
+            >
+              {isRunning ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Running {currentTestIndex}/{totalTests}
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  Run All Tests
+                </>
+              )}
+            </Button>
+            {isRunning && (
+              <div className="text-xs text-muted-foreground">
+                {runningTestId && (
+                  <span className="flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {allTests.find(t => t.id === runningTestId)?.name}
+                  </span>
+                )}
+              </div>
             )}
-          </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="mb-6 space-y-4">
+          {isRunning && totalTests > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Progress</span>
+                <span className="font-medium">{currentTestIndex}/{totalTests}</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-primary transition-all duration-300"
+                  style={{ width: `${(currentTestIndex / totalTests) * 100}%` }}
+                />
+              </div>
+              {runningTestId && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Running: {allTests.find(t => t.id === runningTestId)?.name}
+                </div>
+              )}
+            </div>
+          )}
+
           {lastRunTime && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
