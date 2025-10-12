@@ -36,6 +36,21 @@ serve(async (req) => {
     }
 
     const userId = user.id;
+    const userEmail = user.email;
+
+    // CRITICAL: Prevent deletion of the admin account
+    if (userEmail === 'admin@getjunie.com') {
+      return new Response(
+        JSON.stringify({ 
+          error: 'This account cannot be deleted. Admin accounts are protected.',
+          code: 'ADMIN_ACCOUNT_PROTECTED'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403 
+        }
+      );
+    }
 
     // Define the background deletion task
     const performDeletion = async () => {
