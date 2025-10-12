@@ -38,9 +38,7 @@ const testFunctions: Record<string, (userId: string) => Promise<TestResult>> = {
   'google-calendar-availability': (userId) => testGoogleCalendarAvailability(userId),
   'system-settings': () => testSystemSettings(),
   // Edge Function Tests
-  'edge-bland-call': () => testBlandCallFunction(),
   'edge-clear-rate-limits': () => testClearRateLimitsFunction(),
-  'edge-create-home-service-pathway': () => testCreateHomeServicePathwayFunction(),
   'edge-extract-business-data': () => testExtractBusinessDataFunction(),
   'edge-extract-services': () => testExtractServicesFunction(),
   'edge-generate-business-description': () => testGenerateBusinessDescriptionFunction(),
@@ -79,9 +77,7 @@ export const getAllTestDefinitions = (): TestDefinition[] => {
       'google-calendar-settings': 'Integrations',
       'google-calendar-availability': 'Integrations',
       'system-settings': 'Integrations',
-      'edge-bland-call': 'Edge Functions',
       'edge-clear-rate-limits': 'Edge Functions',
-      'edge-create-home-service-pathway': 'Edge Functions',
       'edge-extract-business-data': 'Edge Functions',
       'edge-extract-services': 'Edge Functions',
       'edge-generate-business-description': 'Edge Functions',
@@ -926,49 +922,8 @@ const testSystemSettings = async (): Promise<TestResult> => {
 
 // ============= Edge Function Tests =============
 
-const testBlandCallFunction = async (): Promise<TestResult> => {
-  const start = performance.now();
-  try {
-    console.log('📞 [Bland Call Test] Step 1: Preparing test parameters...');
-    console.log('📞 [Bland Call Test] Step 2: Invoking bland-call function (test mode)...');
-    
-    const { error } = await supabase.functions.invoke('bland-call', {
-      body: { test: true }
-    });
+// testBlandCallFunction removed - function deleted
 
-    const duration = performance.now() - start;
-
-    console.log('📞 [Bland Call Test] Step 3: Checking response...');
-    
-    // Expected to fail validation in test mode
-    if (error && error.message.includes('requires a valid')) {
-      console.log('✅ [Bland Call Test] Step 4: Function validation working correctly');
-      return {
-        id: 'edge-bland-call',
-        name: 'Bland Call Edge Function',
-        category: 'Edge Functions',
-        description: 'Tests the bland-call edge function that initiates AI voice calls. Validates function accessibility and parameter validation.',
-        status: 'passed',
-        message: 'Function validation working correctly',
-        duration
-      };
-    }
-
-    console.log('❌ [Bland Call Test] Unexpected response');
-    throw new Error('Function should validate required parameters');
-  } catch (error: any) {
-    console.error('❌ [Bland Call Test] Error:', error);
-    return {
-      id: 'edge-bland-call',
-      name: 'Bland Call Edge Function',
-      category: 'Edge Functions',
-      description: 'Tests the bland-call edge function that initiates AI voice calls.',
-      status: 'failed',
-      error: error.message,
-      duration: performance.now() - start
-    };
-  }
-};
 
 const testClearRateLimitsFunction = async (): Promise<TestResult> => {
   const start = performance.now();
@@ -1007,45 +962,8 @@ const testClearRateLimitsFunction = async (): Promise<TestResult> => {
   }
 };
 
-const testCreateHomeServicePathwayFunction = async (): Promise<TestResult> => {
-  const start = performance.now();
-  try {
-    console.log('🏠 [Create Pathway Test] Step 1: Preparing test data...');
-    console.log('🏠 [Create Pathway Test] Step 2: Invoking create-home-service-pathway...');
-    
-    const { error } = await supabase.functions.invoke('create-home-service-pathway', {
-      body: { test: true }
-    });
+// testCreateHomeServicePathwayFunction removed - function deleted
 
-    const duration = performance.now() - start;
-
-    if (error && error.message.includes('user_id')) {
-      console.log('✅ [Create Pathway Test] Step 3: Function validation working');
-      return {
-        id: 'edge-create-home-service-pathway',
-        name: 'Create Home Service Pathway',
-        category: 'Edge Functions',
-        description: 'Tests pathway creation for home service businesses.',
-        status: 'passed',
-        message: 'Function validation working correctly',
-        duration
-      };
-    }
-
-    throw new Error('Expected validation error');
-  } catch (error: any) {
-    console.error('❌ [Create Pathway Test] Error:', error);
-    return {
-      id: 'edge-create-home-service-pathway',
-      name: 'Create Home Service Pathway',
-      category: 'Edge Functions',
-      description: 'Tests pathway creation for home service businesses.',
-      status: 'failed',
-      error: error.message,
-      duration: performance.now() - start
-    };
-  }
-};
 
 const testExtractBusinessDataFunction = async (): Promise<TestResult> => {
   const start = performance.now();
