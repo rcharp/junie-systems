@@ -712,42 +712,44 @@ const testTwilioNumberAssignment = async (userId: string): Promise<TestResult> =
 const testBusinessDataFunction = async (): Promise<TestResult> => {
   const start = performance.now();
   try {
-    console.log('💼 [Business Data Function Test] Step 1: Preparing test request with test flag...');
+    console.log('💼 [Business Data Function Test] Step 1: Testing function without business_id...');
     console.log('💼 [Business Data Function Test] Step 2: Invoking business-data edge function...');
     
+    // Test that the function properly validates required parameters
     const { error } = await supabase.functions.invoke('business-data', {
-      body: { test: true }
+      body: {}
     });
 
     const duration = performance.now() - start;
 
     console.log('💼 [Business Data Function Test] Step 3: Analyzing response...');
     
-    // A 400 error with test:true is expected and means the function is running
-    if (error && !error.message.includes('FunctionsHttpError')) {
-      console.error('❌ [Business Data Function Test] Unexpected error:', error);
-      throw error;
+    // Should return an error about missing business_id
+    if (error && error.message.includes('business_id')) {
+      console.log('✅ [Business Data Function Test] Step 4: Function validation working correctly');
+      console.log('✅ [Business Data Function Test] Step 5: Test completed successfully');
+
+      return {
+        id: 'business-data-function',
+        name: 'Business Data Function',
+        category: 'Edge Functions',
+        description: 'Tests the business-data edge function to ensure it validates required parameters correctly.',
+        status: 'passed',
+        message: 'Function validation working - requires business_id parameter',
+        duration
+      };
     }
-
-    console.log('✅ [Business Data Function Test] Step 4: Function is deployed and responding');
-    console.log('✅ [Business Data Function Test] Step 5: Test completed successfully');
-
-    return {
-      id: 'business-data-function',
-      name: 'Business Data Function',
-      category: 'Edge Functions',
-      description: 'Tests the business-data edge function to ensure it is deployed and responding. This serverless function handles business data extraction and validation, and this test verifies it is accessible and running.',
-      status: 'passed',
-      message: 'Edge function is deployed and responding to requests',
-      duration
-    };
+    
+    // If no error or wrong error, something's wrong
+    console.error('❌ [Business Data Function Test] Expected validation error not received');
+    throw new Error('Function should validate business_id parameter');
   } catch (error: any) {
     console.error('❌ [Business Data Function Test] Test failed:', error);
     return {
       id: 'business-data-function',
       name: 'Business Data Function',
       category: 'Edge Functions',
-      description: 'Tests the business-data edge function to ensure it is deployed and responding. This serverless function handles business data extraction and validation, and this test verifies it is accessible and running.',
+      description: 'Tests the business-data edge function to ensure it validates required parameters correctly.',
       status: 'failed',
       error: error.message,
       duration: performance.now() - start
