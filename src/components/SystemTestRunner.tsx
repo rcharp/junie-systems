@@ -319,9 +319,9 @@ export const SystemTestRunner = () => {
                                 : 'bg-red-50 border-red-200'
                             }`}
                           >
-                            <CollapsibleTrigger className="w-full p-3">
+                            <div className="p-3">
                               <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-2 flex-1">
+                                <CollapsibleTrigger className="flex items-start gap-2 flex-1 text-left">
                                   {isTestRunning ? (
                                     <Loader2 className="h-5 w-5 text-primary animate-spin flex-shrink-0 mt-0.5" />
                                   ) : result.status === 'passed' ? (
@@ -329,7 +329,7 @@ export const SystemTestRunner = () => {
                                   ) : (
                                     <XCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
                                   )}
-                                  <div className="flex-1 text-left">
+                                  <div className="flex-1">
                                     <div className="font-medium text-sm">{result.name}</div>
                                     {result.message && !expandedTests.has(result.id) && (
                                       <div className="text-sm text-muted-foreground mt-1">
@@ -337,33 +337,33 @@ export const SystemTestRunner = () => {
                                       </div>
                                     )}
                                   </div>
-                                </div>
-                                <div className="flex items-center gap-2 ml-2">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="h-7 px-2"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleRunSingleTest(result.id);
-                                    }}
-                                    disabled={isRunning || runningTestId !== null}
-                                  >
-                                    <Play className="h-3 w-3" />
-                                  </Button>
-                                  {result.duration && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {result.duration.toFixed(0)}ms
-                                    </Badge>
-                                  )}
-                                  {expandedTests.has(result.id) ? (
-                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                                  ) : (
-                                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                                  )}
-                                </div>
+                                  <div className="flex items-center gap-2">
+                                    {result.duration && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {result.duration.toFixed(0)}ms
+                                      </Badge>
+                                    )}
+                                    {expandedTests.has(result.id) ? (
+                                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                    ) : (
+                                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                </CollapsibleTrigger>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2 ml-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRunSingleTest(result.id);
+                                  }}
+                                  disabled={isRunning || runningTestId !== null}
+                                >
+                                  <Play className="h-3 w-3" />
+                                </Button>
                               </div>
-                            </CollapsibleTrigger>
+                            </div>
                           
                           <CollapsibleContent>
                             <div className="px-3 pb-3 space-y-3 border-t border-current/10 mt-2 pt-3">
