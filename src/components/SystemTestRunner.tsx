@@ -446,6 +446,28 @@ export const SystemTestRunner = () => {
                                   </div>
                                 </div>
                                 
+                                {result.logs && result.logs.length > 0 && (
+                                  <div>
+                                    <Collapsible>
+                                      <CollapsibleTrigger className="flex items-center gap-2 w-full text-left hover:opacity-70 transition-opacity">
+                                        <div className="font-medium text-xs uppercase text-muted-foreground">
+                                          Output Logs ({result.logs.length} entries)
+                                        </div>
+                                        <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                                      </CollapsibleTrigger>
+                                      <CollapsibleContent className="mt-2">
+                                        <div className="font-mono text-xs bg-background/50 p-3 rounded space-y-1 max-h-48 overflow-y-auto">
+                                          {result.logs.map((log, idx) => (
+                                            <div key={idx} className="leading-relaxed">
+                                              {log}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </CollapsibleContent>
+                                    </Collapsible>
+                                  </div>
+                                )}
+
                                 <div>
                                   <div className="font-medium text-xs uppercase text-muted-foreground mb-1">
                                     Category

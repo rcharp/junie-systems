@@ -9,6 +9,7 @@ export interface TestResult {
   message?: string;
   duration?: number;
   error?: string;
+  logs?: string[]; // Detailed action logs
 }
 
 export interface TestDefinition {
@@ -133,12 +134,25 @@ export const runAllTests = async (userId: string): Promise<TestResult[]> => {
 // Authentication Tests
 const testAuthSession = async (): Promise<TestResult> => {
   const start = performance.now();
+  const logs: string[] = [];
+  
   try {
+    logs.push('🔐 Checking Supabase authentication session...');
     const { data: { session }, error } = await supabase.auth.getSession();
     const duration = performance.now() - start;
 
-    if (error) throw error;
-    if (!session) throw new Error('No active session');
+    if (error) {
+      logs.push(`❌ Error retrieving session: ${error.message}`);
+      throw error;
+    }
+    
+    if (!session) {
+      logs.push('❌ No active session found');
+      throw new Error('No active session');
+    }
+
+    logs.push(`✅ Session found for user: ${session.user.email}`);
+    logs.push(`✅ Session expires at: ${new Date(session.expires_at! * 1000).toLocaleString()}`);
 
     return {
       id: 'auth-session',
@@ -147,9 +161,11 @@ const testAuthSession = async (): Promise<TestResult> => {
       description: 'Verifies that the user has an active authentication session with Supabase. This test ensures that the user is properly logged in and their session token is valid.',
       status: 'passed',
       message: 'Session is active and valid',
-      duration
+      duration,
+      logs
     };
   } catch (error: any) {
+    logs.push(`❌ Test failed: ${error.message}`);
     return {
       id: 'auth-session',
       name: 'Authentication Session',
@@ -157,7 +173,8 @@ const testAuthSession = async (): Promise<TestResult> => {
       description: 'Verifies that the user has an active authentication session with Supabase. This test ensures that the user is properly logged in and their session token is valid.',
       status: 'failed',
       error: error.message,
-      duration: performance.now() - start
+      duration: performance.now() - start,
+      logs
     };
   }
 };
