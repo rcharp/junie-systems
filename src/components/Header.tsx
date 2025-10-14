@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { LogOut, LayoutDashboard, Settings, ShieldCheck } from "lucide-react";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,13 +27,13 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
     <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <a href="/" className="flex items-center">
+          <Link to="/" className="flex items-center">
             <img 
               src="/lovable-uploads/junie-logo.png" 
               alt="Junie Logo" 
               className="h-8 w-8 sm:h-10 sm:w-10"
             />
-          </a>
+          </Link>
           {showAuthButtons && user && isAdmin && (
             <button
               className="bg-blue-600 hover:bg-blue-700 text-white border-4 border-white rounded-full text-sm sm:text-base px-3 sm:px-4 py-1 sm:py-1.5 flex items-center gap-1.5 sm:gap-2 font-semibold shadow-md cursor-pointer transition-all"
@@ -46,15 +46,15 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
         </div>
         
         <nav className="hidden md:flex items-center space-x-8">
-          <a href="/#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+          <Link to="/#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
             Features
-          </a>
-          <a href="/#pricing" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+          </Link>
+          <Link to="/#pricing" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
             Pricing
-          </a>
-          <a href="/#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+          </Link>
+          <Link to="/#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
             How It Works
-          </a>
+          </Link>
         </nav>
         
         <div className="flex items-center space-x-2 sm:space-x-4">
