@@ -73,61 +73,63 @@ serve(async (req) => {
       else console.log('Successfully logged tool call to client_tool_events');
     });
 
-    // Call the google-calendar-availability function with limit=1 for fast response
-    const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
-      'google-calendar-availability',
-      {
-        body: { user_id: businessSettings.user_id, limit: 1 }
+    // Return immediate response and fetch availability in background
+    const immediateResponse = {
+      success: true,
+      business_name: businessSettings.business_name,
+      availability: {
+        available_times: [],
+        message: "Checking availability..."
       }
-    );
+    };
 
-    if (availabilityError) {
-      console.error('Error getting availability:', availabilityError);
-      return new Response(
-        JSON.stringify({ error: 'Error getting availability', details: availabilityError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    console.log('Successfully retrieved availability');
-
-    // Update the tool call event with the result (don't await to avoid blocking)
-    supabase.from('client_tool_events')
-      .update({ 
-        result: JSON.stringify({ 
-          success: true, 
-          availability_count: availabilityData?.available_times?.length || 0 
-        })
-      })
-      .eq('tool_call_id', toolCallId)
-      .then(({ error: updateError }) => {
-        if (updateError) console.error('Failed to update tool call result:', updateError);
-      });
-
-    // Background task: fetch more availability slots for future calls
+    // Background task: fetch availability and update tool event
     EdgeRuntime.waitUntil(
       (async () => {
         try {
-          console.log('Background: fetching additional availability slots...');
-          await supabase.functions.invoke(
+          console.log('Background: fetching availability...');
+          
+          const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
             'google-calendar-availability',
             {
-              body: { user_id: businessSettings.user_id, limit: 5, skip: 1 }
+              body: { user_id: businessSettings.user_id, limit: 3 }
             }
           );
-          console.log('Background: additional slots fetched successfully');
+
+          if (availabilityError) {
+            console.error('Background: Error getting availability:', availabilityError);
+            // Update tool call with error
+            await supabase.from('client_tool_events')
+              .update({ 
+                result: JSON.stringify({ 
+                  success: false, 
+                  error: availabilityError.message 
+                }),
+                is_error: true
+              })
+              .eq('tool_call_id', toolCallId);
+          } else {
+            console.log('Background: Successfully retrieved availability');
+            // Update tool call with success
+            await supabase.from('client_tool_events')
+              .update({ 
+                result: JSON.stringify({ 
+                  success: true, 
+                  availability_count: availabilityData?.available_times?.length || 0,
+                  availability: availabilityData
+                })
+              })
+              .eq('tool_call_id', toolCallId);
+          }
         } catch (bgError) {
           console.error('Background task error:', bgError);
         }
       })()
     );
 
+    // Return immediately without waiting for availability
     return new Response(
-      JSON.stringify({
-        success: true,
-        business_name: businessSettings.business_name,
-        availability: availabilityData
-      }),
+      JSON.stringify(immediateResponse),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
