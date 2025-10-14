@@ -16,6 +16,10 @@ export const BillingSettings = () => {
   const handleManageBilling = async () => {
     setLoadingPortal(true);
     try {
+      // First, try to sync customer ID if missing
+      await supabase.functions.invoke('sync-stripe-customer');
+      
+      // Then create portal session
       const { data, error } = await supabase.functions.invoke('stripe-create-portal');
 
       if (error) throw error;
