@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Benefits from "@/components/Benefits";
@@ -12,18 +13,27 @@ import Footer from "@/components/Footer";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
   const [showDeletedBanner, setShowDeletedBanner] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
+    // Redirect logged-in users to dashboard
+    if (user) {
+      navigate('/dashboard');
+      return;
+    }
+
     // Check if account was just deleted
     const accountDeleted = sessionStorage.getItem("accountDeleted");
     if (accountDeleted === "true") {
       setShowDeletedBanner(true);
       sessionStorage.removeItem("accountDeleted");
     }
-  }, []);
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-background">
