@@ -66,17 +66,34 @@ serve(async (req) => {
         }
 
         if (userId && plan) {
+          // Determine which customer ID field to update based on mode
+          const { data: stripeModeData } = await supabase
+            .from('system_settings')
+            .select('setting_value')
+            .eq('setting_key', 'stripe_sandbox_mode')
+            .maybeSingle();
+          
+          const useTestMode = stripeModeData?.setting_value === true;
+          
+          const updateData: any = {
+            subscription_plan: plan,
+            subscription_status: 'active',
+            stripe_subscription_id: session.subscription,
+          };
+          
+          // Set the correct customer ID field based on mode
+          if (useTestMode) {
+            updateData.stripe_test_customer_id = session.customer;
+          } else {
+            updateData.stripe_customer_id = session.customer;
+          }
+          
           await supabase
             .from('user_profiles')
-            .update({
-              subscription_plan: plan,
-              subscription_status: 'active',
-              stripe_subscription_id: session.subscription,
-              stripe_customer_id: session.customer,
-            })
+            .update(updateData)
             .eq('id', userId);
 
-          console.log(`Updated user ${userId} to ${plan} plan`);
+          console.log(`Updated user ${userId} to ${plan} plan (${useTestMode ? 'test' : 'live'} mode)`);
         } else {
           console.error('Could not determine userId or plan from checkout session', { 
             sessionId: session.id, 
