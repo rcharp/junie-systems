@@ -58,7 +58,19 @@ const Pricing = () => {
       return;
     }
 
-    // If logged in, create Stripe checkout session
+    // For Professional plan, use direct Stripe link
+    if (plan.toLowerCase() === 'professional') {
+      setLoading(plan);
+      try {
+        window.top!.location.href = 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000';
+      } catch (e) {
+        // Fallback if top is not accessible
+        window.location.href = 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000';
+      }
+      return;
+    }
+
+    // If logged in, create Stripe checkout session for other plans
     setLoading(plan);
     try {
       console.log('Creating checkout session for plan:', plan);
