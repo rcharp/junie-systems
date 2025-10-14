@@ -1,10 +1,40 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Input validation schemas
+const phoneNumberSchema = z.string().regex(/^\+?[1-9]\d{1,14}$/, "Invalid phone number format");
+const emailSchema = z.string().email("Invalid email format").max(255);
+const uuidSchema = z.string().uuid("Invalid UUID format");
+
+const elevenLabsInitSchema = z.object({
+  agent_id: z.string().optional(),
+  caller_id: z.string().optional(),
+  called_number: z.string().min(1),
+  call_sid: z.string().optional(),
+  from: z.string().optional(),
+  From: z.string().optional(),
+});
+
+const businessDataRequestSchema = z.object({
+  business_id: uuidSchema,
+});
+
+// Sanitize text input to prevent XSS
+const sanitizeText = (text: string, maxLength: number = 1000): string => {
+  if (!text) return "";
+  // Remove HTML tags and limit length
+  return text
+    .replace(/<[^>]*>/g, "")
+    .replace(/[<>]/g, "")
+    .slice(0, maxLength)
+    .trim();
 };
 
 // Helper function to add 1 country code to US phone numbers and convert to integer
@@ -69,15 +99,33 @@ serve(async (req) => {
     let parsedBody: any = {};
 
     if (req.method === "POST") {
-      parsedBody = await req.json();
-      console.log("Request body:", parsedBody);
-      console.log("Request body type:", typeof parsedBody);
+      try {
+        parsedBody = await req.json();
+      } catch (error) {
+        console.error("Invalid JSON in request body");
+        return new Response(JSON.stringify({ error: "Invalid request format" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      console.log("Request body received");
       console.log("Has business_id in body:", !!parsedBody?.business_id);
       console.log("Has agent_id in body:", !!parsedBody?.agent_id);
 
       // Check if this is an ElevenLabs conversation initiation request
       if (parsedBody?.caller_id || parsedBody?.agent_id || parsedBody?.called_number || parsedBody?.call_sid) {
         console.log("ElevenLabs conversation initiation request detected");
+
+        // Validate ElevenLabs request format
+        const validationResult = elevenLabsInitSchema.safeParse(parsedBody);
+        if (!validationResult.success) {
+          console.error("ElevenLabs request validation failed:", validationResult.error);
+          return new Response(JSON.stringify({ error: "Invalid request format" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
         // SECURITY: Validate ElevenLabs agent_id matches expected value
         const expectedAgentId = Deno.env.get("ELEVENLABS_AGENT_ID");
@@ -346,18 +394,53 @@ serve(async (req) => {
       // Check if this is an ElevenLabs post-call transcription with nested business_id
       if (parsedBody?.conversation_initiation_client_data?.dynamic_variables?.business_id) {
         console.log("ElevenLabs post-call transcription request detected");
-        businessId = parsedBody.conversation_initiation_client_data.dynamic_variables.business_id;
+        const nestedBusinessId = parsedBody.conversation_initiation_client_data.dynamic_variables.business_id;
+        
+        // Validate UUID format
+        const validationResult = uuidSchema.safeParse(nestedBusinessId);
+        if (!validationResult.success) {
+          console.error("Invalid business_id in transcription:", validationResult.error);
+          return new Response(JSON.stringify({ error: "Invalid business ID format" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
+        businessId = nestedBusinessId;
         requestSource = "elevenlabs_transcription";
         console.log("ElevenLabs transcription business_id:", businessId);
       } else if (parsedBody && parsedBody.business_id) {
-        // Manual request with business_id in body
+        // Manual request with business_id in body - validate format
+        const validationResult = businessDataRequestSchema.safeParse(parsedBody);
+        if (!validationResult.success) {
+          console.error("Business ID validation failed:", validationResult.error);
+          return new Response(JSON.stringify({ error: "Invalid business ID format" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        
         businessId = parsedBody.business_id;
         requestSource = "manual";
         console.log("MANUAL request detected - business_id from request body:", businessId);
       } else {
         console.log("Unknown request type - checking headers for business_id");
         requestSource = "elevenlabs";
-        businessId = req.headers.get("business_id") || req.headers.get("x-business-id") || undefined;
+        const headerBusinessId = req.headers.get("business_id") || req.headers.get("x-business-id");
+        
+        // Validate header business_id if present
+        if (headerBusinessId) {
+          const validationResult = uuidSchema.safeParse(headerBusinessId);
+          if (!validationResult.success) {
+            console.error("Invalid business_id in header:", validationResult.error);
+            return new Response(JSON.stringify({ error: "Invalid business ID format" }), {
+              status: 400,
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            });
+          }
+        }
+        
+        businessId = headerBusinessId || undefined;
         console.log("Fallback to headers - business_id:", businessId);
       }
     } else {
