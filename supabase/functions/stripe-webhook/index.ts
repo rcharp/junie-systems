@@ -27,8 +27,43 @@ serve(async (req) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const userId = session.metadata?.supabase_user_id;
-        const plan = session.metadata?.plan;
+        let userId = session.metadata?.supabase_user_id;
+        let plan = session.metadata?.plan;
+
+        // If metadata is not available (Payment Links), look up user by email and infer plan from price
+        if (!userId || !plan) {
+          const customerEmail = session.customer_email || session.customer_details?.email;
+          
+          if (customerEmail) {
+            // Get user by email
+            const { data: userData } = await supabase.auth.admin.listUsers();
+            const user = userData?.users.find(u => u.email === customerEmail);
+            
+            if (user) {
+              userId = user.id;
+              
+              // Infer plan from price amount or subscription details
+              const subscriptionId = session.subscription;
+              if (subscriptionId) {
+                // Fetch the subscription to get the price
+                const response = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+                  headers: {
+                    'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+                  },
+                });
+                const subscription = await response.json();
+                const amount = subscription.items?.data?.[0]?.price?.unit_amount;
+                
+                // Map amount to plan (49, 149, 299 dollars)
+                if (amount === 4900) plan = 'professional';
+                else if (amount === 14900) plan = 'scale';
+                else if (amount === 29900) plan = 'growth';
+                
+                console.log(`Inferred plan from amount ${amount}: ${plan}`);
+              }
+            }
+          }
+        }
 
         if (userId && plan) {
           await supabase
@@ -37,10 +72,16 @@ serve(async (req) => {
               subscription_plan: plan,
               subscription_status: 'active',
               stripe_subscription_id: session.subscription,
+              stripe_customer_id: session.customer,
             })
             .eq('id', userId);
 
           console.log(`Updated user ${userId} to ${plan} plan`);
+        } else {
+          console.error('Could not determine userId or plan from checkout session', { 
+            sessionId: session.id, 
+            customerEmail: session.customer_email 
+          });
         }
         break;
       }
