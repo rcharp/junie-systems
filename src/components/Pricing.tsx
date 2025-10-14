@@ -58,14 +58,23 @@ const Pricing = () => {
       return;
     }
 
-    // For Professional plan, use direct Stripe link
+    // For Professional and Scale plans, use direct Stripe links
     if (plan.toLowerCase() === 'professional') {
       setLoading(plan);
       try {
         window.top!.location.href = 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000';
       } catch (e) {
-        // Fallback if top is not accessible
         window.location.href = 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000';
+      }
+      return;
+    }
+
+    if (plan.toLowerCase() === 'scale') {
+      setLoading(plan);
+      try {
+        window.top!.location.href = 'https://buy.stripe.com/7sY9AScA32zw7ho8ft8g001';
+      } catch (e) {
+        window.location.href = 'https://buy.stripe.com/7sY9AScA32zw7ho8ft8g001';
       }
       return;
     }
