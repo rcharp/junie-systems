@@ -23,10 +23,6 @@ const Pricing = () => {
   };
 
   const getButtonConfig = (planName: string) => {
-    if (planName.toLowerCase() === 'growth') {
-      return { text: "Coming Soon!", disabled: true };
-    }
-
     // Explicit check: only show upgrade/downgrade if user exists
     const isUserLoggedIn = !!user;
     
@@ -58,7 +54,7 @@ const Pricing = () => {
       return;
     }
 
-    // For Professional and Scale plans, use direct Stripe links
+    // For all plans, use direct Stripe links
     if (plan.toLowerCase() === 'professional') {
       setLoading(plan);
       try {
@@ -79,7 +75,17 @@ const Pricing = () => {
       return;
     }
 
-    // If logged in, create Stripe checkout session for other plans
+    if (plan.toLowerCase() === 'growth') {
+      setLoading(plan);
+      try {
+        window.top!.location.href = 'https://buy.stripe.com/28E8wOfMf4HEgRYfHV8g002';
+      } catch (e) {
+        window.location.href = 'https://buy.stripe.com/28E8wOfMf4HEgRYfHV8g002';
+      }
+      return;
+    }
+
+    // Fallback for any other plans
     setLoading(plan);
     try {
       console.log('Creating checkout session for plan:', plan);
@@ -105,11 +111,9 @@ const Pricing = () => {
 
       console.log('Redirecting to Stripe checkout:', data.url);
       
-      // Try to open in same window - this works better in iframes
       try {
         window.top!.location.href = data.url;
       } catch (e) {
-        // Fallback if top is not accessible
         window.location.href = data.url;
       }
       
@@ -168,8 +172,7 @@ const Pricing = () => {
         "Dedicated success manager"
       ],
       popular: false,
-      ctaText: "Coming Soon!",
-      disabled: true
+      ctaText: "Get Started for Free"
     }
   ];
 
