@@ -242,17 +242,19 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                           <p className="text-sm font-mono font-medium">{formatPhoneNumber(user.twilio_phone_number)}</p>
                           <p className="text-xs text-muted-foreground">Junie Number</p>
                         </div>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setShowUnassignDialog(true);
-                          }}
-                          disabled={!!unassigningNumber}
-                        >
-                          {unassigningNumber === user.id ? "Unassigning..." : "Unassign"}
-                        </Button>
+                        {!user.is_admin && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowUnassignDialog(true);
+                            }}
+                            disabled={!!unassigningNumber}
+                          >
+                            {unassigningNumber === user.id ? "Unassigning..." : "Unassign"}
+                          </Button>
+                        )}
                       </>
                     ) : (
                       <Button
