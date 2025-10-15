@@ -13,29 +13,29 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
 // Test mode direct links (Stripe payment links)
 const TEST_PAYMENT_LINKS = {
-  professional: 'https://buy.stripe.com/test_eVqeVcdE78XU0T08ft8g000',
-  scale: 'https://buy.stripe.com/test_7sY9AScA32zw7ho8ft8g001',
-  growth: 'https://buy.stripe.com/test_28E8wOfMf4HEgRYfHV8g002',
+  starter: 'https://buy.stripe.com/test_eVqeVcdE78XU0T08ft8g000',
+  growth: 'https://buy.stripe.com/test_7sY9AScA32zw7ho8ft8g001',
+  enterprise: 'https://buy.stripe.com/test_28E8wOfMf4HEgRYfHV8g002',
 };
 
 // Live production direct links (Stripe payment links)
 const LIVE_PAYMENT_LINKS = {
-  professional: 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000',
-  scale: 'https://buy.stripe.com/7sY9AScA32zw7ho8ft8g001',
-  growth: 'https://buy.stripe.com/28E8wOfMf4HEgRYfHV8g002',
+  starter: 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000',
+  growth: 'https://buy.stripe.com/7sY9AScA32zw7ho8ft8g001',
+  enterprise: 'https://buy.stripe.com/28E8wOfMf4HEgRYfHV8g002',
 };
 
 // Legacy price IDs (kept for reference, not used anymore)
 const TEST_PRICE_IDS = {
-  professional: 'price_1SDr4LC6VxOVUbRGntrsE4Jq',
-  scale: 'price_1SDr4aC6VxOVUbRGnNLzJdcJ',
-  growth: 'price_1SDr4lC6VxOVUbRGPeikgxmV',
+  starter: 'price_1SDr4LC6VxOVUbRGntrsE4Jq',
+  growth: 'price_1SDr4aC6VxOVUbRGnNLzJdcJ',
+  enterprise: 'price_1SDr4lC6VxOVUbRGPeikgxmV',
 };
 
 const LIVE_PRICE_IDS = {
-  professional: 'price_1SDDa4C6VxOVUbRGmwMZQzSs',
-  scale: 'price_1SDDaMC6VxOVUbRGSicIm5JC',
-  growth: 'price_1SDDaZC6VxOVUbRGGskqR0Rc',
+  starter: 'price_1SDDa4C6VxOVUbRGmwMZQzSs',
+  growth: 'price_1SDDaMC6VxOVUbRGSicIm5JC',
+  enterprise: 'price_1SDDaZC6VxOVUbRGGskqR0Rc',
 };
 
 serve(async (req) => {

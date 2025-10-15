@@ -1,4 +1,4 @@
-export type SubscriptionPlan = 'free' | 'professional' | 'scale' | 'growth';
+export type SubscriptionPlan = 'free' | 'starter' | 'growth' | 'enterprise';
 
 export interface FeatureAccess {
   messageCapture: boolean;
@@ -21,33 +21,33 @@ export interface FeatureAccess {
 
 const PLAN_HIERARCHY: Record<SubscriptionPlan, number> = {
   free: 0,
-  professional: 1,
-  scale: 2,
-  growth: 3,
+  starter: 1,
+  growth: 2,
+  enterprise: 3,
 };
 
 const FEATURE_TIER_MAP: Record<keyof FeatureAccess, SubscriptionPlan> = {
-  // Professional tier features
-  messageCapture: 'professional',
-  callTranscription: 'professional',
-  spamDetection: 'professional',
-  realTimeNotifications: 'professional',
-  
-  // Scale tier features
-  appointmentScheduling: 'scale',
-  callTransfers: 'scale',
-  sendTexts: 'scale',
-  advancedAnalytics: 'scale',
-  prioritySupport: 'scale',
+  // Starter tier features
+  messageCapture: 'starter',
+  callTranscription: 'starter',
+  spamDetection: 'starter',
+  realTimeNotifications: 'starter',
   
   // Growth tier features
-  liveTransfers: 'growth',
-  trainingFiles: 'growth',
-  multiplePhoneNumbers: 'growth',
-  crmIntegrations: 'growth',
-  teamCollaboration: 'growth',
-  whiteLabel: 'growth',
-  dedicatedManager: 'growth',
+  appointmentScheduling: 'growth',
+  callTransfers: 'growth',
+  sendTexts: 'growth',
+  advancedAnalytics: 'growth',
+  prioritySupport: 'growth',
+  
+  // Enterprise tier features
+  liveTransfers: 'enterprise',
+  trainingFiles: 'enterprise',
+  multiplePhoneNumbers: 'enterprise',
+  crmIntegrations: 'enterprise',
+  teamCollaboration: 'enterprise',
+  whiteLabel: 'enterprise',
+  dedicatedManager: 'enterprise',
 };
 
 export const hasFeatureAccess = (
@@ -92,9 +92,9 @@ export const getFeatureAccess = (
 export const getPlanName = (plan: SubscriptionPlan): string => {
   const names: Record<SubscriptionPlan, string> = {
     free: 'Free Trial',
-    professional: 'Professional',
-    scale: 'Scale',
+    starter: 'Starter',
     growth: 'Growth',
+    enterprise: 'Enterprise',
   };
   return names[plan] || 'Unknown';
 };

@@ -17,14 +17,14 @@ const Pricing = () => {
 
   const planHierarchy: Record<string, number> = {
     'free': 0,
-    'professional': 1,
-    'scale': 2,
-    'growth': 3
+    'starter': 1,
+    'growth': 2,
+    'enterprise': 3
   };
 
   const getButtonConfig = (planName: string) => {
-    // Disable Growth plan temporarily
-    if (planName === 'Growth') {
+    // Disable Enterprise plan temporarily
+    if (planName === 'Enterprise') {
       return { text: "Coming Soon", disabled: true };
     }
 
@@ -60,7 +60,7 @@ const Pricing = () => {
     }
 
     // For all plans, use direct Stripe links
-    if (plan.toLowerCase() === 'professional') {
+    if (plan.toLowerCase() === 'starter') {
       setLoading(plan);
       try {
         window.top!.location.href = 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000';
@@ -70,7 +70,7 @@ const Pricing = () => {
       return;
     }
 
-    if (plan.toLowerCase() === 'scale') {
+    if (plan.toLowerCase() === 'growth') {
       setLoading(plan);
       try {
         window.top!.location.href = 'https://buy.stripe.com/7sY9AScA32zw7ho8ft8g001';
@@ -80,7 +80,7 @@ const Pricing = () => {
       return;
     }
 
-    if (plan.toLowerCase() === 'growth') {
+    if (plan.toLowerCase() === 'enterprise') {
       setLoading(plan);
       try {
         window.top!.location.href = 'https://buy.stripe.com/28E8wOfMf4HEgRYfHV8g002';
@@ -131,7 +131,7 @@ const Pricing = () => {
   
   const plans = [
     {
-      name: "Professional",
+      name: "Starter",
       price: "$49",
       period: "/month",
       description: "Ideal for entrepreneurs and small businesses who want professional call handling without the overhead.",
@@ -146,12 +146,12 @@ const Pricing = () => {
       ctaText: "Get Started for Free"
     },
     {
-      name: "Scale", 
+      name: "Growth", 
       price: "$149",
       period: "/month",
       description: "Designed for expanding businesses that need advanced features and seamless integrations.",
       features: [
-        "Everything in Professional",
+        "Everything in Starter",
         "Appointment scheduling",
         "Call transfers",
         "Send texts during call",
@@ -162,12 +162,12 @@ const Pricing = () => {
       ctaText: "Get Started for Free"
     },
     {
-      name: "Growth",
+      name: "Enterprise",
       price: "$299", 
       period: "/month",
       description: "Perfect for more complex businesses that require additional agent training to handle their calls.",
       features: [
-        "Everything in Scale",
+        "Everything in Growth",
         "Live transfers (Coming Soon)",
         "Training files & custom knowledge",
         "Multiple phone numbers",
