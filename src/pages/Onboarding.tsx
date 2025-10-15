@@ -632,10 +632,19 @@ const Onboarding = () => {
         const addressParts = verificationData.business_address.split(',').map(p => p.trim());
         if (addressParts.length >= 3) {
           streetAddress = addressParts[0];
-          city = addressParts[addressParts.length - 2];
-          const stateZip = addressParts[addressParts.length - 1].split(' ');
-          state = stateZip[0];
-          zipCode = stateZip.slice(1).join(' ');
+          city = addressParts[1];
+          // Last part should be "STATE ZIP" or "STATE ZIP-XXXX"
+          const stateZipPart = addressParts[2];
+          const stateZipMatch = stateZipPart.match(/^([A-Z]{2})\s+(\d{5}(?:-\d{4})?)$/);
+          if (stateZipMatch) {
+            state = stateZipMatch[1];
+            zipCode = stateZipMatch[2];
+          } else {
+            // Fallback: try to split by space
+            const parts = stateZipPart.split(' ');
+            state = parts[0] || '';
+            zipCode = parts.slice(1).join(' ') || '';
+          }
         }
       }
 
