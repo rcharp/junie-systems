@@ -57,8 +57,8 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
     try {
       const { data, error } = await supabase.functions.invoke("purchase-twilio-number", {
         body: {
-          user_id: userId,
-          business_id: businessId,
+          areaCode: "941", // Default area code, could make this dynamic
+          businessId: businessId,
         },
       });
 
@@ -66,7 +66,7 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
 
       toast({
         title: "Success",
-        description: `Phone number ${data.phone_number} assigned successfully`,
+        description: `Phone number ${data.phoneNumber} assigned successfully`,
       });
 
       onRefresh();
