@@ -6,6 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { Phone, AlertTriangle, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -32,10 +39,18 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
   const itemsPerPage = 10;
 
   const totalPages = Math.ceil(users.length / itemsPerPage);
+  
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return users.slice(startIndex, startIndex + itemsPerPage);
   }, [users, currentPage]);
+
+  // Reset to page 1 if current page exceeds total pages
+  useMemo(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
   const handleAssignNumber = async (userId: string, businessId: string) => {
     setAssigningNumber(userId);
@@ -217,17 +232,19 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                         {assigningNumber === user.id ? "Assigning..." : "Assign Number"}
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setShowDeleteDialog(true);
-                      }}
-                      disabled={!!deletingUser}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                    {!user.is_admin && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowDeleteDialog(true);
+                        }}
+                        disabled={!!deletingUser}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))
@@ -235,31 +252,27 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
           </div>
           
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t">
-              <p className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              </div>
-            </div>
+            <Pagination className="pt-4 border-t">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <span className="text-sm text-muted-foreground px-4">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
         </CardContent>
       </Card>

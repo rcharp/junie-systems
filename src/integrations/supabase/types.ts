@@ -936,6 +936,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          is_admin: boolean
           subscription_plan: string
           twilio_phone_number: string
         }[]
