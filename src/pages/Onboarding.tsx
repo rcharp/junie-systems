@@ -214,14 +214,14 @@ const Onboarding = () => {
         }
         
         // Check if user has already completed setup
-        const { data: businessSettings } = await supabase
-          .from("business_settings")
-          .select("id")
-          .eq("user_id", session.user.id)
+        const { data: userProfile } = await supabase
+          .from("user_profiles")
+          .select("setup_completed")
+          .eq("id", session.user.id)
           .maybeSingle();
 
-        // Only redirect to dashboard if they've completed business setup
-        if (businessSettings) {
+        // Redirect to dashboard if setup is already completed
+        if (userProfile?.setup_completed) {
           navigate("/dashboard");
         }
       }
@@ -558,12 +558,13 @@ const Onboarding = () => {
       let businessData: any = savedBusiness ? JSON.parse(savedBusiness) : {};
       console.log("businessData:", businessData);
       
-      // Create user profile
+      // Create user profile and mark setup as completed
       const { data: profileData, error: profileError } = await supabase.from("user_profiles").upsert({
         id: userId,
         company_name: verificationData.business_name || "My Business",
         subscription_plan: "free",
         subscription_status: "active",
+        setup_completed: true,
       }, { onConflict: "id" });
 
       if (profileError) {
