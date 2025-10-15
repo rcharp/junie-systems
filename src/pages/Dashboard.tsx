@@ -122,14 +122,14 @@ const Dashboard = () => {
         return;
       }
 
-      const { data: businessSettings } = await supabase
-        .from("business_settings")
-        .select("id")
-        .eq("user_id", user.id)
+      const { data: userProfile } = await supabase
+        .from("user_profiles")
+        .select("setup_completed")
+        .eq("id", user.id)
         .maybeSingle();
 
-      // Redirect to onboarding if no business settings exist
-      if (!businessSettings) {
+      // Redirect to onboarding if setup is not completed
+      if (!userProfile?.setup_completed) {
         navigate("/onboarding");
         return;
       }
