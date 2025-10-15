@@ -18,7 +18,7 @@ serve(async (req) => {
     
     const requestBody = await req.json();
     console.log('Request body:', JSON.stringify(requestBody));
-    const { business_id } = requestBody;
+    const { business_id, preferred_date, preferred_time } = requestBody;
     
     if (!business_id) {
       return new Response(
@@ -65,7 +65,7 @@ serve(async (req) => {
       call_sid: requestBody.call_sid || requestBody.conversation_id || 'direct_call',
       tool_name: 'get_available_times',
       tool_call_id: toolCallId,
-      parameters: { business_id, full_request: requestBody },
+      parameters: { business_id, preferred_date, preferred_time, full_request: requestBody },
       business_id: businessSettings.user_id,
       user_id: businessSettings.user_id
     }).then(({ error: logError }) => {
@@ -74,13 +74,15 @@ serve(async (req) => {
     });
 
     // Fetch availability synchronously for fast response
-    console.log('Fetching availability for user:', businessSettings.user_id);
+    console.log('Fetching availability for user:', businessSettings.user_id, 'preferred_date:', preferred_date, 'preferred_time:', preferred_time);
+    
+    const availabilityBody: any = { user_id: businessSettings.user_id, limit: 3 };
+    if (preferred_date) availabilityBody.preferred_date = preferred_date;
+    if (preferred_time) availabilityBody.preferred_time = preferred_time;
     
     const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
       'google-calendar-availability',
-      {
-        body: { user_id: businessSettings.user_id, limit: 3 }
-      }
+      { body: availabilityBody }
     );
 
     let response;
