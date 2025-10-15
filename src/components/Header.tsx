@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { LogOut, LayoutDashboard, Settings, ShieldCheck } from "lucide-react";
 import { handleRobustSignOut } from "@/lib/auth-utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,27 @@ interface HeaderProps {
 const Header = ({ showAuthButtons = true }: HeaderProps) => {
   const { user, loading, isAdmin, setSigningOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [isOnboarding, setIsOnboarding] = useState(false);
+
+  // Check if user is on onboarding page without business settings
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (location.pathname === '/onboarding' && user) {
+        const { data: businessSettings } = await supabase
+          .from("business_settings")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        
+        setIsOnboarding(!businessSettings);
+      } else {
+        setIsOnboarding(false);
+      }
+    };
+    
+    checkOnboardingStatus();
+  }, [location.pathname, user]);
 
   const handleSignOut = async () => {
     try {
@@ -45,20 +67,22 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
           )}
         </div>
         
-        <nav className="hidden md:flex items-center space-x-8">
-          <Link to="/#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
-            Features
-          </Link>
-          <Link to="/#pricing" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
-            Pricing
-          </Link>
-          <Link to="/#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
-            How It Works
-          </Link>
-        </nav>
+        {!isOnboarding && (
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link to="/#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+              Features
+            </Link>
+            <Link to="/#pricing" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+              Pricing
+            </Link>
+            <Link to="/#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+              How It Works
+            </Link>
+          </nav>
+        )}
         
         <div className="flex items-center space-x-2 sm:space-x-4">
-          {!loading && showAuthButtons && user ? (
+          {!loading && showAuthButtons && user && !isOnboarding ? (
               <>
                 <Button 
                   variant="ghost" 
@@ -85,7 +109,7 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
                   <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </>
-            ) : !loading && showAuthButtons && (
+            ) : !loading && showAuthButtons && !isOnboarding && (
               <>
                 <Button 
                   variant="ghost" 
