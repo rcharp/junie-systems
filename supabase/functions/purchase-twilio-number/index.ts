@@ -246,31 +246,46 @@ serve(async (req) => {
     if (elevenLabsApiKey && elevenLabsAgentId && twilioAccountSid) {
       try {
         console.log('Importing phone number to ElevenLabs...');
+        console.log('Phone number:', phoneNumber);
+        console.log('Business name:', businessName);
+        console.log('Agent ID:', elevenLabsAgentId);
+        console.log('Twilio Account SID:', twilioAccountSid);
         
         // Import phone number to ElevenLabs with business name
+        const importPayload = {
+          phone_number: phoneNumber,
+          telephony_provider: 'twilio',
+          telephony_account_sid: twilioAccountSid,
+          agent_id: elevenLabsAgentId,
+          name: businessName,
+        };
+        
+        console.log('Import payload:', JSON.stringify(importPayload));
+        
         const importNumberResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone_numbers/import', {
           method: 'POST',
           headers: {
             'xi-api-key': elevenLabsApiKey,
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            phone_number: phoneNumber,
-            telephony_provider: 'twilio',
-            telephony_account_sid: twilioAccountSid,
-            agent_id: elevenLabsAgentId,
-            name: businessName, // Use business name for the phone number
-          }),
+          body: JSON.stringify(importPayload),
         });
 
+        const responseText = await importNumberResponse.text();
+        console.log('ElevenLabs response status:', importNumberResponse.status);
+        console.log('ElevenLabs response:', responseText);
+
         if (!importNumberResponse.ok) {
-          const errorText = await importNumberResponse.text();
-          console.error('ElevenLabs import number error:', errorText);
+          console.error('ElevenLabs import number error:', responseText);
           // Don't throw error - continue even if ElevenLabs import fails
           console.warn('Failed to import number to ElevenLabs, but Twilio purchase was successful');
         } else {
-          const elevenLabsData = await importNumberResponse.json();
-          console.log('Successfully imported number to ElevenLabs and assigned to agent:', elevenLabsData);
+          try {
+            const elevenLabsData = JSON.parse(responseText);
+            console.log('Successfully imported number to ElevenLabs and assigned to agent:', elevenLabsData);
+          } catch (e) {
+            console.log('Successfully imported number to ElevenLabs');
+          }
         }
       } catch (elevenLabsError) {
         console.error('Error importing number to ElevenLabs:', elevenLabsError);
