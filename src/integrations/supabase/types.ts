@@ -126,6 +126,7 @@ export type Database = {
           common_questions: string | null
           created_at: string
           custom_greeting: string | null
+          elevenlabs_phone_number_id: string | null
           email_notifications: boolean | null
           id: string
           instant_alerts: boolean | null
@@ -160,6 +161,7 @@ export type Database = {
           common_questions?: string | null
           created_at?: string
           custom_greeting?: string | null
+          elevenlabs_phone_number_id?: string | null
           email_notifications?: boolean | null
           id?: string
           instant_alerts?: boolean | null
@@ -194,6 +196,7 @@ export type Database = {
           common_questions?: string | null
           created_at?: string
           custom_greeting?: string | null
+          elevenlabs_phone_number_id?: string | null
           email_notifications?: boolean | null
           id?: string
           instant_alerts?: boolean | null

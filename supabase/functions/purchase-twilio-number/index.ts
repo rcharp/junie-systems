@@ -284,6 +284,20 @@ serve(async (req) => {
             console.log('Successfully imported number to ElevenLabs:', elevenLabsData);
             const phoneNumberId = elevenLabsData.phone_number_id;
             
+            // Store the ElevenLabs phone number ID in the database
+            if (phoneNumberId) {
+              const { error: updateError } = await supabase
+                .from('business_settings')
+                .update({ elevenlabs_phone_number_id: phoneNumberId })
+                .eq('id', businessId);
+              
+              if (updateError) {
+                console.error('Failed to store ElevenLabs phone number ID:', updateError);
+              } else {
+                console.log('Stored ElevenLabs phone number ID:', phoneNumberId);
+              }
+            }
+            
             // Now assign the number to the agent
             if (phoneNumberId && elevenLabsAgentId) {
               console.log('Assigning phone number to agent...');

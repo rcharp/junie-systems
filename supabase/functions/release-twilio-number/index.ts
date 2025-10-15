@@ -82,10 +82,10 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get the current phone number for this business
+    // Get the current phone number and ElevenLabs ID for this business
     const { data: businessSettings, error: fetchError } = await supabase
       .from('business_settings')
-      .select('twilio_phone_number')
+      .select('twilio_phone_number, elevenlabs_phone_number_id')
       .eq('id', business_id)
       .single();
 
@@ -94,6 +94,7 @@ serve(async (req) => {
     }
 
     const phoneNumber = businessSettings.twilio_phone_number;
+    const elevenLabsPhoneId = businessSettings.elevenlabs_phone_number_id;
 
     // Get Twilio credentials
     const twilioAccountSid = Deno.env.get('TWILIO_ACCOUNT_SID');
@@ -155,7 +156,10 @@ serve(async (req) => {
     // Remove the phone number from the database
     const { error: updateError } = await supabase
       .from('business_settings')
-      .update({ twilio_phone_number: null })
+      .update({ 
+        twilio_phone_number: null,
+        elevenlabs_phone_number_id: null
+      })
       .eq('id', business_id);
 
     if (updateError) {
@@ -165,60 +169,41 @@ serve(async (req) => {
 
     console.log('Phone number removed from database successfully');
 
-    // Remove number from ElevenLabs
+    // Remove number from ElevenLabs using stored phone number ID
     const elevenLabsApiKey = Deno.env.get('ELEVENLABS_API_KEY');
     
-    if (elevenLabsApiKey) {
+    if (elevenLabsApiKey && elevenLabsPhoneId) {
       try {
-        console.log('Removing phone number from ElevenLabs...');
+        console.log('Removing phone number from ElevenLabs using ID:', elevenLabsPhoneId);
         
-        // First, get the phone number ID from ElevenLabs
-        const listNumbersResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone-numbers', {
-          method: 'GET',
-          headers: {
-            'xi-api-key': elevenLabsApiKey,
-          },
-        });
-
-        if (listNumbersResponse.ok) {
-          const phoneNumbersList = await listNumbersResponse.json();
-          const matchingNumber = phoneNumbersList.phone_numbers?.find(
-            (num: any) => num.phone_number === phoneNumber
-          );
-
-          if (matchingNumber) {
-            // Delete the phone number from ElevenLabs
-            const deleteResponse = await fetch(
-              `https://api.elevenlabs.io/v1/convai/phone-numbers/${matchingNumber.phone_number_id}`,
-              {
-                method: 'DELETE',
-                headers: {
-                  'xi-api-key': elevenLabsApiKey,
-                },
-              }
-            );
-
-            if (!deleteResponse.ok) {
-              const errorText = await deleteResponse.text();
-              console.error('ElevenLabs delete error:', errorText);
-              console.warn('Failed to remove number from ElevenLabs, but Twilio release was successful');
-            } else {
-              console.log('Successfully removed number from ElevenLabs');
-            }
-          } else {
-            console.log('Phone number not found in ElevenLabs, skipping removal');
+        const deleteResponse = await fetch(
+          `https://api.elevenlabs.io/v1/convai/phone-numbers/${elevenLabsPhoneId}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'xi-api-key': elevenLabsApiKey,
+            },
           }
+        );
+
+        if (!deleteResponse.ok) {
+          const errorText = await deleteResponse.text();
+          console.error('ElevenLabs delete error:', errorText);
+          console.warn('Failed to remove number from ElevenLabs, but Twilio release was successful');
         } else {
-          const errorText = await listNumbersResponse.text();
-          console.error('ElevenLabs list error:', errorText);
-          console.warn('Failed to list ElevenLabs numbers, but Twilio release was successful');
+          console.log('Successfully removed number from ElevenLabs');
         }
       } catch (elevenLabsError) {
         console.error('Error removing number from ElevenLabs:', elevenLabsError);
         // Don't throw - continue even if ElevenLabs fails
       }
     } else {
-      console.warn('ElevenLabs credentials not configured - skipping ElevenLabs removal');
+      if (!elevenLabsApiKey) {
+        console.warn('ElevenLabs API key not configured - skipping ElevenLabs removal');
+      }
+      if (!elevenLabsPhoneId) {
+        console.warn('No ElevenLabs phone number ID stored - skipping ElevenLabs removal');
+      }
     }
 
     return new Response(
