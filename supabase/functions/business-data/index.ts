@@ -214,7 +214,6 @@ serve(async (req) => {
             common_questions,
             pricing_structure,
             appointment_booking,
-            services_offered,
             transfer_number,
             urgent_keywords,
             auto_forward
@@ -222,6 +221,34 @@ serve(async (req) => {
           )
           .eq("id", conversationBusinessId)
           .maybeSingle();
+
+        // Fetch services from the services table
+        const { data: servicesData } = await supabase
+          .from("services")
+          .select("name, description, price")
+          .eq("business_id", conversationBusinessId)
+          .eq("is_active", true)
+          .order("display_order", { ascending: true });
+
+        // Format services as a comma-separated list
+        const servicesString = servicesData && servicesData.length > 0
+          ? servicesData.map(s => s.name).join(", ")
+          : businessDataForInit?.business_description || "General services";
+
+        // Fetch business type full name from business_types table
+        let businessTypeFullName = businessDataForInit?.business_type_full_name;
+        if (businessDataForInit?.business_type) {
+          const { data: businessTypeData } = await supabase
+            .from("business_types")
+            .select("label")
+            .eq("value", businessDataForInit.business_type)
+            .eq("is_active", true)
+            .maybeSingle();
+          
+          if (businessTypeData) {
+            businessTypeFullName = businessTypeData.label;
+          }
+        }
 
         // Fetch calendar settings and available times if appointment booking is enabled
         let dynamicAvailableTimes = businessDataForInit?.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
@@ -336,7 +363,7 @@ serve(async (req) => {
             business_id: conversationBusinessId,
             business_name: businessDataForInit?.business_name || "Charpentier Air Conditioning",
             business_type: businessDataForInit?.business_type || "hvac",
-            business_type_full_name: businessDataForInit?.business_type_full_name || "HVAC & Air Conditioning",
+            business_type_full_name: businessTypeFullName || "HVAC & Air Conditioning",
             business_phone: businessDataForInit?.business_phone || "7278714862",
             business_address: businessDataForInit?.business_address || "5605 Trevesta Place, Palmetto, Florida, 34221",
             business_address_state_full: businessDataForInit?.business_address_state_full || "Florida",
@@ -347,8 +374,7 @@ serve(async (req) => {
             pricing_structure: businessDataForInit?.pricing_structure || "",
             appointment_booking: String(businessDataForInit?.appointment_booking || false),
             // available_times: dynamicAvailableTimes, // Moved to /get-available-times endpoint
-            services:
-              businessDataForInit?.services_offered || "HVAC service, A/C repair, thermostat fix, refrigerant refill",
+            services: servicesString,
             transfer_number: addUSCountryCode(businessDataForInit?.transfer_number || ""),
             urgent_keywords: businessDataForInit?.urgent_keywords || "emergency, urgent, asap, immediately",
             auto_forward_urgent: String(businessDataForInit?.auto_forward || false),
