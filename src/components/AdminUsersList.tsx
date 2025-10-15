@@ -308,16 +308,17 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
               <br />
               <br />
               This will permanently delete:
-              <ul className="list-disc list-inside mt-2 space-y-1">
-                <li>User profile and account data</li>
-                <li>All business settings and services</li>
-                <li>Call logs and messages</li>
-                <li>Appointments and calendar settings</li>
-                <li>Any assigned Twilio phone number</li>
-              </ul>
-              <br />
-              <strong className="text-destructive">This action cannot be undone.</strong>
             </AlertDialogDescription>
+            <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-muted-foreground">
+              <li>User profile and account data</li>
+              <li>All business settings and services</li>
+              <li>Call logs and messages</li>
+              <li>Appointments and calendar settings</li>
+              <li>Any assigned Twilio phone number</li>
+            </ul>
+            <p className="text-sm text-destructive font-semibold mt-4">
+              This action cannot be undone.
+            </p>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>

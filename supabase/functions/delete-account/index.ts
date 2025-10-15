@@ -29,20 +29,51 @@ serve(async (req) => {
     }
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user: callingUser }, error: userError } = await supabaseClient.auth.getUser(token);
 
-    if (userError || !user) {
+    if (userError || !callingUser) {
       throw new Error('Unauthorized');
     }
 
-    const userId = user.id;
-    const userEmail = user.email;
+    // Check if calling user is an admin
+    const { data: roles } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', callingUser.id);
 
-    // CRITICAL: Prevent deletion of the admin account
-    if (userEmail === 'admin@getjunie.com') {
+    const isAdmin = roles?.some(r => r.role === 'admin');
+
+    // Parse request body to get the target userId
+    const { userId: targetUserId } = await req.json();
+
+    if (!targetUserId) {
+      throw new Error('userId is required in request body');
+    }
+
+    // Only admins can delete other users
+    if (!isAdmin && callingUser.id !== targetUserId) {
+      throw new Error('Unauthorized: Only admins can delete other users');
+    }
+
+    // Get target user's email to check if they're an admin
+    const { data: { user: targetUser } } = await supabaseClient.auth.admin.getUserById(targetUserId);
+    
+    if (!targetUser) {
+      throw new Error('User not found');
+    }
+
+    // CRITICAL: Prevent deletion of admin accounts
+    const { data: targetRoles } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', targetUserId);
+
+    const isTargetAdmin = targetRoles?.some(r => r.role === 'admin');
+
+    if (isTargetAdmin) {
       return new Response(
         JSON.stringify({ 
-          error: 'This account cannot be deleted. Admin accounts are protected.',
+          error: 'Admin accounts cannot be deleted.',
           code: 'ADMIN_ACCOUNT_PROTECTED'
         }),
         { 
@@ -51,6 +82,8 @@ serve(async (req) => {
         }
       );
     }
+
+    const userId = targetUserId;
 
     // Define the background deletion task
     const performDeletion = async () => {
