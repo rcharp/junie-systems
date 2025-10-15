@@ -173,7 +173,7 @@ serve(async (req) => {
         console.log('Removing phone number from ElevenLabs...');
         
         // First, get the phone number ID from ElevenLabs
-        const listNumbersResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone_numbers', {
+        const listNumbersResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone-numbers', {
           method: 'GET',
           headers: {
             'xi-api-key': elevenLabsApiKey,
@@ -189,7 +189,7 @@ serve(async (req) => {
           if (matchingNumber) {
             // Delete the phone number from ElevenLabs
             const deleteResponse = await fetch(
-              `https://api.elevenlabs.io/v1/convai/phone_numbers/${matchingNumber.phone_number_id}`,
+              `https://api.elevenlabs.io/v1/convai/phone-numbers/${matchingNumber.phone_number_id}`,
               {
                 method: 'DELETE',
                 headers: {
