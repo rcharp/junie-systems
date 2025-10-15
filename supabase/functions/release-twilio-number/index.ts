@@ -165,6 +165,62 @@ serve(async (req) => {
 
     console.log('Phone number removed from database successfully');
 
+    // Remove number from ElevenLabs
+    const elevenLabsApiKey = Deno.env.get('ELEVENLABS_API_KEY');
+    
+    if (elevenLabsApiKey) {
+      try {
+        console.log('Removing phone number from ElevenLabs...');
+        
+        // First, get the phone number ID from ElevenLabs
+        const listNumbersResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone_numbers', {
+          method: 'GET',
+          headers: {
+            'xi-api-key': elevenLabsApiKey,
+          },
+        });
+
+        if (listNumbersResponse.ok) {
+          const phoneNumbersList = await listNumbersResponse.json();
+          const matchingNumber = phoneNumbersList.phone_numbers?.find(
+            (num: any) => num.phone_number === phoneNumber
+          );
+
+          if (matchingNumber) {
+            // Delete the phone number from ElevenLabs
+            const deleteResponse = await fetch(
+              `https://api.elevenlabs.io/v1/convai/phone_numbers/${matchingNumber.phone_number_id}`,
+              {
+                method: 'DELETE',
+                headers: {
+                  'xi-api-key': elevenLabsApiKey,
+                },
+              }
+            );
+
+            if (!deleteResponse.ok) {
+              const errorText = await deleteResponse.text();
+              console.error('ElevenLabs delete error:', errorText);
+              console.warn('Failed to remove number from ElevenLabs, but Twilio release was successful');
+            } else {
+              console.log('Successfully removed number from ElevenLabs');
+            }
+          } else {
+            console.log('Phone number not found in ElevenLabs, skipping removal');
+          }
+        } else {
+          const errorText = await listNumbersResponse.text();
+          console.error('ElevenLabs list error:', errorText);
+          console.warn('Failed to list ElevenLabs numbers, but Twilio release was successful');
+        }
+      } catch (elevenLabsError) {
+        console.error('Error removing number from ElevenLabs:', elevenLabsError);
+        // Don't throw - continue even if ElevenLabs fails
+      }
+    } else {
+      console.warn('ElevenLabs credentials not configured - skipping ElevenLabs removal');
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true,
