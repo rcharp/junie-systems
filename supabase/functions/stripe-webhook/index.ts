@@ -55,9 +55,9 @@ serve(async (req) => {
                 const amount = subscription.items?.data?.[0]?.price?.unit_amount;
                 
                 // Map amount to plan (49, 149, 299 dollars)
-                if (amount === 4900) plan = 'professional';
-                else if (amount === 14900) plan = 'scale';
-                else if (amount === 29900) plan = 'growth';
+                if (amount === 4900) plan = 'starter';
+                else if (amount === 14900) plan = 'growth';
+                else if (amount === 29900) plan = 'enterprise';
                 
                 console.log(`Inferred plan from amount ${amount}: ${plan}`);
               }
