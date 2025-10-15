@@ -554,21 +554,27 @@ export function TodoChecklist() {
           >
             <SortableContext items={todos} strategy={verticalListSortingStrategy}>
               <div className="space-y-2">
-                {todos.map((todo) => (
-                  <SortableItem 
-                    key={todo.id} 
-                    item={todo} 
-                    onToggle={toggleTodo} 
-                    onDelete={deleteTodo} 
-                    onPriorityChange={updateTodoPriority}
-                    onEdit={editTodo}
-                    isEditing={editingId === todo.id}
-                    onStartEdit={startEditTodo}
-                    onCancelEdit={cancelEditTodo}
-                    editingText={editingText}
-                    onEditingTextChange={setEditingText}
-                  />
-                ))}
+                {todos.length === 0 ? (
+                  <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">No todos yet. Add your first todo above!</p>
+                  </div>
+                ) : (
+                  todos.map((todo) => (
+                    <SortableItem 
+                      key={todo.id} 
+                      item={todo} 
+                      onToggle={toggleTodo} 
+                      onDelete={deleteTodo} 
+                      onPriorityChange={updateTodoPriority}
+                      onEdit={editTodo}
+                      isEditing={editingId === todo.id}
+                      onStartEdit={startEditTodo}
+                      onCancelEdit={cancelEditTodo}
+                      editingText={editingText}
+                      onEditingTextChange={setEditingText}
+                    />
+                  ))
+                )}
               </div>
             </SortableContext>
           </DndContext>
