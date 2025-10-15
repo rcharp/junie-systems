@@ -250,7 +250,6 @@ const Pricing = () => {
             <span>✓ Full access during trial</span>
             <span>✓ 3-day grace period after trial</span>
             <span>✓ Cancel anytime</span>
-            <span>✓ 30-day money-back guarantee</span>
           </div>
           <p className="text-xs text-muted-foreground/60 mt-2">
             Test with unlimited calls for 7 days. Need more time? Enjoy a 3-day grace period before billing starts.

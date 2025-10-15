@@ -29,10 +29,6 @@ const FAQ = () => {
       answer: "Junie works for any service-based business including plumbing, HVAC, construction, accounting, real estate, law firms, property management, electricians, and more. Our AI adapts to your specific industry and services."
     },
     {
-      question: "Is there a money-back guarantee?",
-      answer: "Yes! All paid plans come with a 30-day money-back guarantee. Combined with your 7-day trial and 3-day grace period, you have nearly 40 days to test Junie risk-free."
-    },
-    {
       question: "How does billing work?",
       answer: "Choose a monthly or annual plan during signup. After your 7-day trial and 3-day grace period, billing begins automatically. You can upgrade, downgrade, or cancel anytime from your account settings."
     },
