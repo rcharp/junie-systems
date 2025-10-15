@@ -149,16 +149,36 @@ serve(async (req) => {
           });
         }
 
-        // Normalize phone number (remove + and any non-digits)
-        const normalizedCalledNumber = calledNumber.replace(/\D/g, "");
-        console.log("Normalized called_number:", normalizedCalledNumber);
+        // Extract last 10 digits from the called number
+        const digitsOnly = calledNumber.replace(/\D/g, "");
+        const last10Digits = digitsOnly.slice(-10);
+        console.log("Last 10 digits to match:", last10Digits);
 
-        // Look up business by twilio_phone_number
-        const { data: businessSettings, error: businessLookupError } = await supabase
+        // Look up business by matching last 10 digits of twilio_phone_number
+        // First, get all businesses and filter in-memory to match last 10 digits
+        const { data: allBusinessSettings, error: businessLookupError } = await supabase
           .from("business_settings")
           .select("id, user_id, twilio_phone_number")
-          .eq("twilio_phone_number", normalizedCalledNumber)
-          .maybeSingle();
+          .not("twilio_phone_number", "is", null);
+
+        if (businessLookupError) {
+          console.error("Error querying business_settings:", businessLookupError);
+          return new Response(JSON.stringify({ 
+            error: "Database error",
+            details: businessLookupError.message 
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        // Find business where the stored number's last 10 digits match
+        const businessSettings = allBusinessSettings?.find(business => {
+          if (!business.twilio_phone_number) return false;
+          const storedDigitsOnly = business.twilio_phone_number.replace(/\D/g, "");
+          const storedLast10 = storedDigitsOnly.slice(-10);
+          return storedLast10 === last10Digits;
+        });
 
         if (businessLookupError || !businessSettings) {
           console.error("Error finding business by called_number:", businessLookupError);
