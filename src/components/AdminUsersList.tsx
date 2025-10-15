@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Phone, AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Phone, AlertTriangle, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +25,8 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
   const [assigningNumber, setAssigningNumber] = useState<string | null>(null);
   const [unassigningNumber, setUnassigningNumber] = useState<string | null>(null);
   const [showUnassignDialog, setShowUnassignDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -100,6 +102,39 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
     }
   };
 
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+
+    setDeletingUser(selectedUser.id);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account", {
+        body: {
+          userId: selectedUser.id,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "User account deleted successfully",
+      });
+
+      onRefresh();
+    } catch (error: any) {
+      console.error("Error deleting user:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user account",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingUser(null);
+      setShowDeleteDialog(false);
+      setSelectedUser(null);
+    }
+  };
+
   const formatPhoneNumber = (phoneNumber: string) => {
     if (!phoneNumber) return "";
     const cleaned = phoneNumber.replace(/\D/g, "");
@@ -138,20 +173,22 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium truncate">{user.full_name || user.company_name || user.email}</p>
+                      <p className="font-medium">{user.email}</p>
                       {user.subscription_plan && (
                         <Badge variant="outline" className="text-xs">
                           {user.subscription_plan}
                         </Badge>
                       )}
                     </div>
-                    {user.full_name && user.company_name && (
-                      <p className="text-xs text-muted-foreground mt-1">Company: {user.company_name}</p>
+                    {user.company_name && (
+                      <p className="text-sm text-muted-foreground">Company: {user.company_name}</p>
                     )}
-                    {!user.full_name && <p className="text-sm text-muted-foreground truncate">{user.email}</p>}
+                    {user.full_name && (
+                      <p className="text-sm text-muted-foreground">Name: {user.full_name}</p>
+                    )}
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     {user.twilio_phone_number ? (
                       <>
                         <div className="text-right">
@@ -180,6 +217,17 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                         {assigningNumber === user.id ? "Assigning..." : "Assign Number"}
                       </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setShowDeleteDialog(true);
+                      }}
+                      disabled={!!deletingUser}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </div>
                 </div>
               ))
@@ -241,6 +289,43 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Unassign Number
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Delete User Account
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete the account for{" "}
+              <strong>{selectedUser?.email}</strong>
+              {selectedUser?.company_name && <> ({selectedUser.company_name})</>}?
+              <br />
+              <br />
+              This will permanently delete:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>User profile and account data</li>
+                <li>All business settings and services</li>
+                <li>Call logs and messages</li>
+                <li>Appointments and calendar settings</li>
+                <li>Any assigned Twilio phone number</li>
+              </ul>
+              <br />
+              <strong className="text-destructive">This action cannot be undone.</strong>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Account
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
