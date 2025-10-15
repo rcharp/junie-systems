@@ -23,6 +23,11 @@ const Pricing = () => {
   };
 
   const getButtonConfig = (planName: string) => {
+    // Disable Growth plan temporarily
+    if (planName === 'Growth') {
+      return { text: "Coming Soon", disabled: true };
+    }
+
     // Explicit check: only show upgrade/downgrade if user exists
     const isUserLoggedIn = !!user;
     
