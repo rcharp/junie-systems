@@ -31,12 +31,26 @@ const Index = () => {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        // Only redirect to dashboard if they have business settings (completed onboarding)
         if (businessSettings) {
+          // User has completed onboarding, redirect to dashboard
           navigate('/dashboard');
           return;
+        } else {
+          // User is logged in but hasn't completed onboarding
+          // Delete their incomplete account and log them out
+          console.log("Cleaning up incomplete onboarding for user:", user.id);
+          
+          // Delete user profile (will cascade delete other related records)
+          await supabase
+            .from("user_profiles")
+            .delete()
+            .eq("id", user.id);
+          
+          // Sign out the user
+          await supabase.auth.signOut();
+          
+          // Don't navigate, just let the page render normally
         }
-        // If no business settings, let them stay on landing page
       }
 
       // Check if account was just deleted
