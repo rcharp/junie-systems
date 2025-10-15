@@ -44,6 +44,7 @@ const Onboarding = () => {
   const [showVerification, setShowVerification] = useState(false);
   const [verificationData, setVerificationData] = useState<any>({});
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const isCheckingAuthRef = useRef(false);
   const isOnboardingFlowRef = useRef(false);
   const navigate = useNavigate();
@@ -206,6 +207,7 @@ const Onboarding = () => {
       } = await supabase.auth.getSession();
       if (session) {
         setIsAuthenticated(true);
+        setCurrentUserId(session.user.id);
         
         // Don't redirect if user is in the middle of onboarding flow
         if (isOnboardingFlowRef.current) {
@@ -797,7 +799,7 @@ const Onboarding = () => {
     }
   };
 
-  const progressValue = (step / 4) * 100;
+  const progressValue = isAuthenticated ? ((step / 3) * 100) : ((step / 4) * 100);
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
@@ -833,7 +835,7 @@ const Onboarding = () => {
       {/* Progress indicator */}
       <div className="container mx-auto px-4 py-2">
         <div className="max-w-2xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
-          <span>Step {Math.min(step, 4)} of 4</span>
+          <span>Step {Math.min(step, isAuthenticated ? 3 : 4)} of {isAuthenticated ? 3 : 4}</span>
         </div>
       </div>
 
@@ -1155,20 +1157,26 @@ const Onboarding = () => {
                   </div>
 
                   <Button
-                    onClick={() => {
+                    onClick={async () => {
                       const digits = transferNumber.replace(/\D/g, "");
                       if (digits.length !== 10) {
                         setTransferNumberError(true);
                         return;
                       }
-                      // Just move to next step, don't save yet
-                      setStep(4);
+                      
+                      // If user is already authenticated (came via Google OAuth), save business data directly
+                      if (isAuthenticated && currentUserId) {
+                        await saveBusinessData(currentUserId);
+                      } else {
+                        // Otherwise, move to account creation step
+                        setStep(4);
+                      }
                     }}
                     className="w-full h-12 text-base"
                     size="lg"
                     disabled={transferNumberError || !transferNumber}
                   >
-                    Create Account
+                    {isAuthenticated ? "Complete Setup" : "Create Account"}
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
 
