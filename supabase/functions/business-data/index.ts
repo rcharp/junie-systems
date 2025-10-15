@@ -149,11 +149,15 @@ serve(async (req) => {
           });
         }
 
+        // Normalize phone number (remove + and any non-digits)
+        const normalizedCalledNumber = calledNumber.replace(/\D/g, "");
+        console.log("Normalized called_number:", normalizedCalledNumber);
+
         // Look up business by twilio_phone_number
         const { data: businessSettings, error: businessLookupError } = await supabase
           .from("business_settings")
           .select("id, user_id, twilio_phone_number")
-          .eq("twilio_phone_number", calledNumber)
+          .eq("twilio_phone_number", normalizedCalledNumber)
           .maybeSingle();
 
         if (businessLookupError || !businessSettings) {
