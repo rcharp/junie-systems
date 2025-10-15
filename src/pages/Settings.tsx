@@ -1638,6 +1638,13 @@ const Settings = () => {
         </div>
       </header>
 
+      {/* Trial Banner - Show at the top */}
+      {user && (
+        <div className="container mx-auto px-4 pt-4">
+          <TrialBanner />
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
         <div className="max-w-4xl mx-auto">
@@ -2910,13 +2917,6 @@ const Settings = () => {
           </Tabs>
         </div>
       </main>
-      
-      {/* Trial Banner - Show above main content */}
-      {user && (
-        <div className="container mx-auto px-4 pt-24 pb-4">
-          <TrialBanner />
-        </div>
-      )}
 
       {/* Delete Account Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

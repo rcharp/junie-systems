@@ -660,6 +660,13 @@ const Dashboard = () => {
         </div>
       </header>
 
+      {/* Trial Banner - Show at the top */}
+      {user && (
+        <div className="container mx-auto px-4 pt-4">
+          <TrialBanner />
+        </div>
+      )}
+
       {/* Main Content */}
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
         {/* Dashboard Header */}
@@ -932,13 +939,6 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
-      
-      {/* Trial Banner - Show above main content */}
-      {user && (
-        <div className="container mx-auto px-4 pt-24 pb-4">
-          <TrialBanner />
-        </div>
-      )}
 
       {/* Upgrade Dialog */}
       <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
