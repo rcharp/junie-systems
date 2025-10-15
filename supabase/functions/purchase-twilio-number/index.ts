@@ -286,15 +286,16 @@ serve(async (req) => {
             
             // Store the ElevenLabs phone number ID in the database
             if (phoneNumberId) {
-              const { error: updateError } = await supabase
+              console.log('Storing ElevenLabs phone number ID in database:', phoneNumberId);
+              const { error: idUpdateError } = await serviceClient
                 .from('business_settings')
                 .update({ elevenlabs_phone_number_id: phoneNumberId })
                 .eq('id', businessId);
               
-              if (updateError) {
-                console.error('Failed to store ElevenLabs phone number ID:', updateError);
+              if (idUpdateError) {
+                console.error('Failed to store ElevenLabs phone number ID:', idUpdateError);
               } else {
-                console.log('Stored ElevenLabs phone number ID:', phoneNumberId);
+                console.log('Successfully stored ElevenLabs phone number ID');
               }
             }
             
