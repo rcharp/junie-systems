@@ -25,18 +25,18 @@ const Index = () => {
     const checkUserStatus = async () => {
       // Only redirect logged-in users who have completed onboarding
       if (user) {
-        const { data: userProfile } = await supabase
-          .from("user_profiles")
-          .select("setup_completed")
-          .eq("id", user.id)
+        const { data: businessSettings } = await supabase
+          .from("business_settings")
+          .select("id")
+          .eq("user_id", user.id)
           .maybeSingle();
 
-        // Only redirect to dashboard if they've completed setup
-        if (userProfile?.setup_completed) {
+        // Only redirect to dashboard if they have business settings (completed onboarding)
+        if (businessSettings) {
           navigate('/dashboard');
           return;
         }
-        // If not completed, let them stay on landing page
+        // If no business settings, let them stay on landing page
       }
 
       // Check if account was just deleted
