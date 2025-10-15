@@ -123,6 +123,7 @@ export type Database = {
           business_type: string | null
           business_type_full_name: string | null
           business_website: string | null
+          city: string | null
           common_questions: string | null
           created_at: string
           custom_greeting: string | null
@@ -137,11 +138,14 @@ export type Database = {
           record_calls: boolean | null
           services_offered: string | null
           sms_notifications: boolean | null
+          state: string | null
+          street_address: string | null
           transfer_number: string | null
           twilio_phone_number: string | null
           updated_at: string
           urgent_keywords: string | null
           user_id: string
+          zip_code: string | null
         }
         Insert: {
           ai_personality?: string | null
@@ -158,6 +162,7 @@ export type Database = {
           business_type?: string | null
           business_type_full_name?: string | null
           business_website?: string | null
+          city?: string | null
           common_questions?: string | null
           created_at?: string
           custom_greeting?: string | null
@@ -172,11 +177,14 @@ export type Database = {
           record_calls?: boolean | null
           services_offered?: string | null
           sms_notifications?: boolean | null
+          state?: string | null
+          street_address?: string | null
           transfer_number?: string | null
           twilio_phone_number?: string | null
           updated_at?: string
           urgent_keywords?: string | null
           user_id: string
+          zip_code?: string | null
         }
         Update: {
           ai_personality?: string | null
@@ -193,6 +201,7 @@ export type Database = {
           business_type?: string | null
           business_type_full_name?: string | null
           business_website?: string | null
+          city?: string | null
           common_questions?: string | null
           created_at?: string
           custom_greeting?: string | null
@@ -207,11 +216,14 @@ export type Database = {
           record_calls?: boolean | null
           services_offered?: string | null
           sms_notifications?: boolean | null
+          state?: string | null
+          street_address?: string | null
           transfer_number?: string | null
           twilio_phone_number?: string | null
           updated_at?: string
           urgent_keywords?: string | null
           user_id?: string
+          zip_code?: string | null
         }
         Relationships: []
       }

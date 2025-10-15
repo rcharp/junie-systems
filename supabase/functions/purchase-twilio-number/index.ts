@@ -72,7 +72,7 @@ serve(async (req) => {
     // Verify user owns this business OR is admin
     const { data: businessData, error: businessError } = await serviceClient
       .from('business_settings')
-      .select('user_id, business_name, business_address')
+      .select('user_id, business_name, city, state')
       .eq('id', businessId)
       .single();
 
@@ -248,23 +248,16 @@ serve(async (req) => {
         console.log('Importing phone number to ElevenLabs...');
         console.log('Phone number:', phoneNumber);
         console.log('Business name:', businessName);
-        console.log('Business address:', businessData.business_address);
+        console.log('City:', businessData.city);
+        console.log('State:', businessData.state);
         console.log('Agent ID:', elevenLabsAgentId);
         console.log('Twilio Account SID:', twilioAccountSid);
         console.log('Twilio Auth Token available:', !!twilioAuthToken);
         
-        // Extract city and state from business address
+        // Create phone label with city and state
         let phoneLabel = businessName;
-        if (businessData.business_address) {
-          // Parse address to get city and state
-          const addressParts = businessData.business_address.split(',').map(p => p.trim());
-          if (addressParts.length >= 2) {
-            // Typically format is: Street, City, State Zip
-            const city = addressParts[addressParts.length - 2];
-            const stateZip = addressParts[addressParts.length - 1];
-            const state = stateZip.split(' ')[0]; // Get state before zip code
-            phoneLabel = `${businessName} - ${city}, ${state}`;
-          }
+        if (businessData.city && businessData.state) {
+          phoneLabel = `${businessName} - ${businessData.city}, ${businessData.state}`;
         }
         
         console.log('Phone label for ElevenLabs:', phoneLabel);
