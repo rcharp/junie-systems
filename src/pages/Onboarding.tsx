@@ -622,6 +622,23 @@ const Onboarding = () => {
 
       setExtractionProgress(50);
 
+      // Parse address components from business_address
+      let streetAddress = '';
+      let city = '';
+      let state = '';
+      let zipCode = '';
+      
+      if (verificationData.business_address) {
+        const addressParts = verificationData.business_address.split(',').map(p => p.trim());
+        if (addressParts.length >= 3) {
+          streetAddress = addressParts[0];
+          city = addressParts[addressParts.length - 2];
+          const stateZip = addressParts[addressParts.length - 1].split(' ');
+          state = stateZip[0];
+          zipCode = stateZip.slice(1).join(' ');
+        }
+      }
+
       // Save business settings with AI-enhanced data
       const { data: businessSettingsResult, error: businessError } = await supabase.from("business_settings")
         .upsert({
@@ -635,6 +652,10 @@ const Onboarding = () => {
           business_hours: JSON.stringify(businessHours),
           business_timezone: verificationData.business_timezone || "America/New_York",
           transfer_number: transferNumber.replace(/\D/g, ""),
+          street_address: streetAddress,
+          city: city,
+          state: state,
+          zip_code: zipCode
         }, { onConflict: "user_id" })
         .select("id")
         .single();

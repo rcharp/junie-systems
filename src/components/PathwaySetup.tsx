@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Phone, Loader2, Settings, CheckCircle } from 'lucide-react';
 import { WebsiteImporter } from '@/components/WebsiteImporter';
 import { AddressInput } from '@/components/AddressAutocomplete';
+import { formatPhoneNumber, normalizePhoneNumber } from '@/lib/phone-utils';
 
 export const PathwaySetup = () => {
   const { toast } = useToast();
@@ -202,9 +203,10 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
             <Label htmlFor="business_phone">Business Phone</Label>
             <Input
               id="business_phone"
-              placeholder="Main business line"
-              value={formData.business_phone}
-              onChange={(e) => handleInputChange('business_phone', e.target.value)}
+              type="tel"
+              placeholder="(555) 123-4567"
+              value={formatPhoneNumber(formData.business_phone)}
+              onChange={(e) => handleInputChange('business_phone', normalizePhoneNumber(e.target.value))}
             />
           </div>
         </div>
@@ -248,9 +250,10 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
           <Label htmlFor="transfer_number">Transfer Number (Optional)</Label>
           <Input
             id="transfer_number"
-            placeholder="+1234567890"
-            value={formData.transfer_number}
-            onChange={(e) => handleInputChange('transfer_number', e.target.value)}
+            type="tel"
+            placeholder="(555) 123-4567"
+            value={formatPhoneNumber(formData.transfer_number)}
+            onChange={(e) => handleInputChange('transfer_number', normalizePhoneNumber(e.target.value))}
           />
           <p className="text-sm text-muted-foreground">
             Number to transfer calls to when human assistance is needed

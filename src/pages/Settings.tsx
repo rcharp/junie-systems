@@ -63,6 +63,7 @@ import { FeatureGate } from "@/components/FeatureGate";
 import { useSubscription } from "@/hooks/useSubscription";
 import { BillingSettings } from "@/components/BillingSettings";
 import { CreditCard } from "lucide-react";
+import { formatPhoneNumber, normalizePhoneNumber } from "@/lib/phone-utils";
 
 // Types
 interface BusinessType {
@@ -1085,8 +1086,12 @@ const Settings = () => {
       updateData = {
         business_name: businessName,
         business_type: businessType,
-        business_phone: businessPhone,
+        business_phone: normalizePhoneNumber(businessPhone),
         business_address: fullAddress,
+        street_address: addressData.street,
+        city: addressData.city,
+        state: addressData.state,
+        zip_code: addressData.zip,
         business_hours: JSON.stringify(businessHours),
         business_description: businessDescription,
         business_website: businessWebsite,
@@ -1120,7 +1125,7 @@ const Settings = () => {
       }
 
       updateData = {
-        transfer_number: transferNumber.trim(),
+        transfer_number: normalizePhoneNumber(transferNumber),
         urgent_keywords: urgentKeywords,
         auto_forward: autoForward,
         common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),
@@ -2706,22 +2711,19 @@ const Settings = () => {
                       <Input
                         id="transferNumber"
                         type="tel"
-                        value={transferNumber}
-                        maxLength={10}
+                        value={formatPhoneNumber(transferNumber)}
+                        placeholder="(555) 123-4567"
                         onChange={(e) => {
-                          // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
-                          const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
-                          setTransferNumber(phoneValue);
+                          const normalized = normalizePhoneNumber(e.target.value);
+                          setTransferNumber(normalized);
 
-                          // Only validate if user has entered something
-                          const digitsOnly = phoneValue.replace(/\D/g, "");
-                          if (phoneValue.length > 0 && digitsOnly.length !== 10) {
+                          // Validate if user has entered something
+                          if (normalized.length > 0 && normalized.length !== 10) {
                             setValidationErrors((prev) => ({ ...prev, transferNumber: true }));
                           } else {
                             setValidationErrors((prev) => ({ ...prev, transferNumber: false }));
                           }
                         }}
-                        placeholder="Enter 10-digit phone number"
                         required
                         className={
                           validationErrors.transferNumber

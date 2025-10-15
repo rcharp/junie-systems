@@ -980,6 +980,10 @@ export type Database = {
         Args: { event_data?: Json; event_type: string }
         Returns: undefined
       }
+      normalize_phone: {
+        Args: { phone: string }
+        Returns: string
+      }
       store_tiktok_tokens: {
         Args: {
           access_token: string

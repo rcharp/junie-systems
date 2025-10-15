@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Phone, Loader2 } from 'lucide-react';
+import { formatPhoneNumber, normalizePhoneNumber } from '@/lib/phone-utils';
 
 export const BlandCallInterface = () => {
   const { toast } = useToast();
@@ -37,8 +38,12 @@ export const BlandCallInterface = () => {
 
     setIsLoading(true);
     try {
+      // Send normalized phone number to API
       const { data, error } = await supabase.functions.invoke('bland-call', {
-        body: formData
+        body: {
+          ...formData,
+          phone_number: normalizePhoneNumber(formData.phone_number)
+        }
       });
 
       if (error) throw error;
@@ -84,9 +89,9 @@ export const BlandCallInterface = () => {
             <Input
               id="phone_number"
               type="tel"
-              placeholder="+1234567890"
-              value={formData.phone_number}
-              onChange={(e) => handleInputChange('phone_number', e.target.value)}
+              placeholder="(555) 123-4567"
+              value={formatPhoneNumber(formData.phone_number)}
+              onChange={(e) => handleInputChange('phone_number', normalizePhoneNumber(e.target.value))}
             />
           </div>
           <div className="space-y-2">
