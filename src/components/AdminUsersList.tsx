@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
-import { Phone, AlertTriangle, ChevronLeft, ChevronRight, Trash2 } from "lucide-react";
+import { Phone, AlertTriangle, ChevronLeft, ChevronRight, Trash2, Calendar, Clock } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
 import {
   Pagination,
   PaginationContent,
@@ -160,6 +161,30 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
     return phoneNumber;
   };
 
+  const getTrialBadge = (trialStatus: string, trialEndsAt: string | null) => {
+    if (trialStatus === 'subscribed') {
+      return null; // No trial badge for paying customers
+    }
+    
+    if (trialStatus === 'active' && trialEndsAt) {
+      return (
+        <Badge variant="default" className="text-xs bg-green-500">
+          Trial Active
+        </Badge>
+      );
+    }
+    
+    if (trialStatus === 'expired') {
+      return (
+        <Badge variant="destructive" className="text-xs">
+          Trial Expired
+        </Badge>
+      );
+    }
+    
+    return null;
+  };
+
   return (
     <>
       <Card>
@@ -187,19 +212,26 @@ export const AdminUsersList = ({ users, onRefresh }: AdminUsersListProps) => {
                   className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="font-medium">{user.email}</p>
                       {user.subscription_plan && (
                         <Badge variant="outline" className="text-xs">
                           {user.subscription_plan}
                         </Badge>
                       )}
+                      {getTrialBadge(user.trial_status, user.trial_ends_at)}
                     </div>
                     {user.company_name && (
                       <p className="text-sm text-muted-foreground">Company: {user.company_name}</p>
                     )}
                     {user.full_name && (
                       <p className="text-sm text-muted-foreground">Name: {user.full_name}</p>
+                    )}
+                    {user.created_at && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                        <Calendar className="h-3 w-3" />
+                        Created {formatDistanceToNow(new Date(user.created_at), { addSuffix: true })}
+                      </p>
                     )}
                   </div>
 

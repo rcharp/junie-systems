@@ -938,6 +938,8 @@ export type Database = {
           id: string
           is_admin: boolean
           subscription_plan: string
+          trial_ends_at: string
+          trial_status: string
           twilio_phone_number: string
         }[]
       }
