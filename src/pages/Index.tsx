@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [showDeletedBanner, setShowDeletedBanner] = useState(false);
@@ -21,18 +22,32 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Redirect logged-in users to dashboard
-    if (user) {
-      navigate('/dashboard');
-      return;
-    }
+    const checkUserStatus = async () => {
+      // Only redirect logged-in users who have completed onboarding
+      if (user) {
+        const { data: userProfile } = await supabase
+          .from("user_profiles")
+          .select("setup_completed")
+          .eq("id", user.id)
+          .maybeSingle();
 
-    // Check if account was just deleted
-    const accountDeleted = sessionStorage.getItem("accountDeleted");
-    if (accountDeleted === "true") {
-      setShowDeletedBanner(true);
-      sessionStorage.removeItem("accountDeleted");
-    }
+        // Only redirect to dashboard if they've completed setup
+        if (userProfile?.setup_completed) {
+          navigate('/dashboard');
+          return;
+        }
+        // If not completed, let them stay on landing page
+      }
+
+      // Check if account was just deleted
+      const accountDeleted = sessionStorage.getItem("accountDeleted");
+      if (accountDeleted === "true") {
+        setShowDeletedBanner(true);
+        sessionStorage.removeItem("accountDeleted");
+      }
+    };
+
+    checkUserStatus();
   }, [user, navigate]);
 
   return (
