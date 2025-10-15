@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -999,14 +999,14 @@ const Onboarding = () => {
               </Card>
 
               <div className="flex justify-between items-center">
-                <Button variant="ghost" onClick={() => (window.location.href = "/")} className="text-muted-foreground">
+                <Button variant="ghost" onClick={() => navigate("/")} className="text-muted-foreground">
                   ← Back
                 </Button>
                 <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{" "}
-                  <a href="/login" className="text-primary hover:underline font-medium">
+                  <Link to="/login" className="text-primary hover:underline font-medium">
                     Sign in
-                  </a>
+                  </Link>
                 </p>
               </div>
             </div>
@@ -1287,13 +1287,13 @@ const Onboarding = () => {
 
                   <p className="text-xs text-center text-muted-foreground">
                     By creating an account, you agree to our{" "}
-                    <a href="/terms" className="underline hover:text-foreground">
+                    <Link to="/terms" className="underline hover:text-foreground">
                       Terms of Service
-                    </a>{" "}
+                    </Link>{" "}
                     and{" "}
-                    <a href="/privacy" className="underline hover:text-foreground">
+                    <Link to="/privacy" className="underline hover:text-foreground">
                       Privacy Policy
-                    </a>
+                    </Link>
                   </p>
                 </CardContent>
               </Card>
@@ -1304,9 +1304,9 @@ const Onboarding = () => {
                 </Button>
                 <p className="text-sm text-muted-foreground">
                   Already have an account?{" "}
-                  <a href="/login" className="text-primary hover:underline font-medium">
+                  <Link to="/login" className="text-primary hover:underline font-medium">
                     Sign in
-                  </a>
+                  </Link>
                 </p>
               </div>
             </div>
