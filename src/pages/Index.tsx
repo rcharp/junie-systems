@@ -6,6 +6,7 @@ import Benefits from "@/components/Benefits";
 import Features from "@/components/Features";
 import WhyJunie from "@/components/WhyJunie";
 import HowItWorks from "@/components/HowItWorks";
+import FAQ from "@/components/FAQ";
 
 import Pricing from "@/components/Pricing";
 import EmailCapture from "@/components/EmailCapture";
@@ -93,8 +94,8 @@ const Index = () => {
         <WhyJunie />
         <HowItWorks />
         <Features />
-        
         <Pricing />
+        <FAQ />
         <EmailCapture />
       </main>
       <Footer />
