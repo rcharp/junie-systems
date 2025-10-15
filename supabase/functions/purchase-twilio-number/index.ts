@@ -239,16 +239,16 @@ serve(async (req) => {
 
     console.log('Successfully updated business settings with new number');
 
-    // Add number to ElevenLabs and assign to Junie agent
+    // Import number to ElevenLabs and assign to Junie agent
     const elevenLabsApiKey = Deno.env.get('ELEVENLABS_API_KEY');
     const elevenLabsAgentId = Deno.env.get('ELEVENLABS_AGENT_ID');
     
-    if (elevenLabsApiKey && elevenLabsAgentId) {
+    if (elevenLabsApiKey && elevenLabsAgentId && twilioAccountSid) {
       try {
-        console.log('Adding phone number to ElevenLabs...');
+        console.log('Importing phone number to ElevenLabs...');
         
-        // Add phone number to ElevenLabs
-        const addNumberResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone_numbers/add', {
+        // Import phone number to ElevenLabs with business name
+        const importNumberResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone_numbers/import', {
           method: 'POST',
           headers: {
             'xi-api-key': elevenLabsApiKey,
@@ -256,25 +256,28 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             phone_number: phoneNumber,
+            telephony_provider: 'twilio',
+            telephony_account_sid: twilioAccountSid,
             agent_id: elevenLabsAgentId,
+            name: businessName, // Use business name for the phone number
           }),
         });
 
-        if (!addNumberResponse.ok) {
-          const errorText = await addNumberResponse.text();
-          console.error('ElevenLabs add number error:', errorText);
-          // Don't throw error - continue even if ElevenLabs registration fails
-          console.warn('Failed to add number to ElevenLabs, but Twilio purchase was successful');
+        if (!importNumberResponse.ok) {
+          const errorText = await importNumberResponse.text();
+          console.error('ElevenLabs import number error:', errorText);
+          // Don't throw error - continue even if ElevenLabs import fails
+          console.warn('Failed to import number to ElevenLabs, but Twilio purchase was successful');
         } else {
-          const elevenLabsData = await addNumberResponse.json();
-          console.log('Successfully added number to ElevenLabs:', elevenLabsData);
+          const elevenLabsData = await importNumberResponse.json();
+          console.log('Successfully imported number to ElevenLabs and assigned to agent:', elevenLabsData);
         }
       } catch (elevenLabsError) {
-        console.error('Error adding number to ElevenLabs:', elevenLabsError);
+        console.error('Error importing number to ElevenLabs:', elevenLabsError);
         // Don't throw - continue even if ElevenLabs fails
       }
     } else {
-      console.warn('ElevenLabs credentials not configured - skipping ElevenLabs registration');
+      console.warn('ElevenLabs credentials or Twilio SID not configured - skipping ElevenLabs import');
     }
 
     return new Response(
