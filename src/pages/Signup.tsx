@@ -103,13 +103,17 @@ const Signup = () => {
           });
         }
       } else if (data.user) {
-        // Create user profile with selected plan
+        // Create user profile with 7-day trial
+        const trialEndsAt = new Date();
+        trialEndsAt.setDate(trialEndsAt.getDate() + 7); // 7-day trial
+        
         const { error: profileError } = await supabase
           .from('user_profiles')
           .insert({
             id: data.user.id,
-            subscription_plan: selectedPlan,
-            subscription_status: 'active'
+            subscription_plan: 'free',
+            subscription_status: 'active',
+            trial_ends_at: trialEndsAt.toISOString()
           });
 
         if (profileError) {
@@ -190,13 +194,17 @@ const Signup = () => {
                 console.log('Session synced successfully:', session.user.id);
                 sessionReady = true;
                 
-                // Create user profile with selected plan if it doesn't exist
+                // Create user profile with 7-day trial if it doesn't exist
+                const trialEndsAt = new Date();
+                trialEndsAt.setDate(trialEndsAt.getDate() + 7); // 7-day trial
+                
                 const { error: profileError } = await supabase
                   .from('user_profiles')
                   .upsert({
                     id: session.user.id,
-                    subscription_plan: selectedPlan,
-                    subscription_status: 'active'
+                    subscription_plan: 'free',
+                    subscription_status: 'active',
+                    trial_ends_at: trialEndsAt.toISOString()
                   }, { onConflict: 'id' });
 
                 if (profileError) {

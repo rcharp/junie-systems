@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import TrialBanner from "@/components/TrialBanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -2909,6 +2910,13 @@ const Settings = () => {
           </Tabs>
         </div>
       </main>
+      
+      {/* Trial Banner - Show above main content */}
+      {user && (
+        <div className="container mx-auto px-4 pt-24 pb-4">
+          <TrialBanner />
+        </div>
+      )}
 
       {/* Delete Account Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

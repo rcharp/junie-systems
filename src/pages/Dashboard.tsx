@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import TrialBanner from "@/components/TrialBanner";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -931,6 +932,13 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+      
+      {/* Trial Banner - Show above main content */}
+      {user && (
+        <div className="container mx-auto px-4 pt-24 pb-4">
+          <TrialBanner />
+        </div>
+      )}
 
       {/* Upgrade Dialog */}
       <AlertDialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>

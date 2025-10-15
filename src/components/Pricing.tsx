@@ -244,14 +244,17 @@ const Pricing = () => {
 
         <div className="text-center mt-12 space-y-4">
           <p className="text-muted-foreground">
-            All plans include 30 free minutes to get started. No setup fees or hidden costs.
+            Start your 7-day free trial today • No credit card required
           </p>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-            <span>✓ 24/7 AI answering service</span>
-            <span>✓ Instant setup in minutes</span>
+            <span>✓ Full access during trial</span>
+            <span>✓ 3-day grace period after trial</span>
             <span>✓ Cancel anytime</span>
-            <span>✓ Money-back guarantee</span>
+            <span>✓ 30-day money-back guarantee</span>
           </div>
+          <p className="text-xs text-muted-foreground/60 mt-2">
+            Test with unlimited calls for 7 days. Need more time? Enjoy a 3-day grace period before billing starts.
+          </p>
         </div>
       </div>
     </section>
