@@ -250,19 +250,19 @@ serve(async (req) => {
         console.log('Business name:', businessName);
         console.log('Agent ID:', elevenLabsAgentId);
         console.log('Twilio Account SID:', twilioAccountSid);
+        console.log('Twilio Auth Token available:', !!twilioAuthToken);
         
-        // Import phone number to ElevenLabs with business name
+        // Import phone number to ElevenLabs - using correct endpoint
         const importPayload = {
           phone_number: phoneNumber,
-          telephony_provider: 'twilio',
-          telephony_account_sid: twilioAccountSid,
-          agent_id: elevenLabsAgentId,
-          name: businessName,
+          label: businessName,
+          sid: twilioAccountSid,
+          token: twilioAuthToken,
         };
         
-        console.log('Import payload:', JSON.stringify(importPayload));
+        console.log('Import payload:', JSON.stringify({...importPayload, token: '[REDACTED]'}));
         
-        const importNumberResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone_numbers/import', {
+        const importNumberResponse = await fetch('https://api.elevenlabs.io/v1/convai/phone-numbers', {
           method: 'POST',
           headers: {
             'xi-api-key': elevenLabsApiKey,
@@ -277,12 +277,34 @@ serve(async (req) => {
 
         if (!importNumberResponse.ok) {
           console.error('ElevenLabs import number error:', responseText);
-          // Don't throw error - continue even if ElevenLabs import fails
           console.warn('Failed to import number to ElevenLabs, but Twilio purchase was successful');
         } else {
           try {
             const elevenLabsData = JSON.parse(responseText);
-            console.log('Successfully imported number to ElevenLabs and assigned to agent:', elevenLabsData);
+            console.log('Successfully imported number to ElevenLabs:', elevenLabsData);
+            const phoneNumberId = elevenLabsData.phone_number_id;
+            
+            // Now assign the number to the agent
+            if (phoneNumberId && elevenLabsAgentId) {
+              console.log('Assigning phone number to agent...');
+              const assignResponse = await fetch(`https://api.elevenlabs.io/v1/convai/phone-numbers/${phoneNumberId}`, {
+                method: 'PATCH',
+                headers: {
+                  'xi-api-key': elevenLabsApiKey,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  agent_id: elevenLabsAgentId,
+                }),
+              });
+              
+              if (assignResponse.ok) {
+                console.log('Successfully assigned phone number to agent');
+              } else {
+                const assignError = await assignResponse.text();
+                console.error('Failed to assign number to agent:', assignError);
+              }
+            }
           } catch (e) {
             console.log('Successfully imported number to ElevenLabs');
           }
