@@ -400,91 +400,61 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Use Claude to convert timezone and format properly (only if we have slots)
+    // Format slots with basic timezone conversion (no Claude API)
     if (availableSlots.length > 0) {
-      try {
-        const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
+      availableSlots = availableSlots.map(slot => {
+        const startDate = new Date(slot.startTime);
+        const endDate = new Date(slot.endTime);
         
-        if (anthropicApiKey) {
-      const claudePrompt = `You are helping format time slots for a business calendar.
-
-Business timezone: ${userTimezone}
-
-I have UTC time slots that represent business hours in ${userTimezone}. I need you to format them for display while keeping the UTC times unchanged.
-
-Input slots (UTC times that are correctly converted for the business timezone):
-${JSON.stringify(availableSlots)}
-
-RULES:
-1. Keep startTime and endTime exactly as provided (do NOT convert the UTC times)
-2. The UTC times are already correct - they represent the business hours converted to UTC
-3. For humanReadable, convert the UTC times to ${userTimezone} local time for display only
-4. Set timeOfDay based on LOCAL time: "morning" (6am-12pm), "afternoon" (12pm-6pm), "evening" (6pm+)
-5. Format humanReadable: "Weekday, Month Date, Year H:MM am/pm-H:MM am/pm" showing the LOCAL time
-6. Return ONLY valid JSON array, no markdown or explanation
-
-Example: If input is "2025-09-30T13:30:00.000Z" for America/New_York:
-- Keep startTime: "2025-09-30T13:30:00.000Z" (do not change)
-- Set humanReadable: "Tuesday, September 30, 2025 9:30 am-3:15 pm" (showing local time)
-- Set timeOfDay: "morning" (based on 9:30 am local time)`;
-
-          console.log('Calling Claude with prompt for timezone conversion...')
-          
-          const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${anthropicApiKey}`,
-              'Content-Type': 'application/json',
-              'x-api-key': anthropicApiKey,
-              'anthropic-version': '2023-06-01'
-            },
-            body: JSON.stringify({
-              model: 'claude-sonnet-4-20250514',
-              max_tokens: 3000,
-              messages: [
-                {
-                  role: 'user',
-                  content: claudePrompt
-                }
-              ]
-            })
-          });
-
-          console.log('Claude response status:', claudeResponse.status)
-          
-          if (claudeResponse.ok) {
-            const claudeData = await claudeResponse.json();
-            const convertedSlotsText = claudeData.content[0].text;
-            console.log('Claude response text:', convertedSlotsText);
-            
-            try {
-              // Clean up the response in case Claude adds markdown formatting
-              const cleanText = convertedSlotsText.replace(/```json\n?|\n?```/g, '').trim();
-              const convertedSlots = JSON.parse(cleanText);
-              
-              if (Array.isArray(convertedSlots) && convertedSlots.length > 0) {
-                availableSlots = convertedSlots;
-                console.log('Successfully converted slots using Claude:', convertedSlots);
-              } else {
-                console.log('Claude returned invalid format:', convertedSlots);
-              }
-            } catch (parseError) {
-              console.error('Failed to parse Claude response:', parseError);
-              console.log('Raw Claude response text:', convertedSlotsText);
-            }
-          } else {
-            const errorText = await claudeResponse.text();
-            console.error('Claude API error status:', claudeResponse.status);
-            console.error('Claude API error:', errorText);
-          }
-        } else {
-          console.log('No Anthropic API key found - skipping Claude conversion');
+        // Format in user's timezone
+        const formatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: userTimezone,
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        
+        const timeFormatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: userTimezone,
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+        
+        const startFormatted = formatter.format(startDate);
+        const endTimeFormatted = timeFormatter.format(endDate);
+        
+        // Get hour for timeOfDay
+        const localHour = parseInt(new Intl.DateTimeFormat('en-US', {
+          timeZone: userTimezone,
+          hour: 'numeric',
+          hour12: false
+        }).format(startDate));
+        
+        let timeOfDay = 'morning';
+        if (localHour >= 18) {
+          timeOfDay = 'evening';
+        } else if (localHour >= 12) {
+          timeOfDay = 'afternoon';
         }
-      } catch (claudeError) {
-        console.error('Error using Claude for timezone conversion:', claudeError);
-      }
-    } else {
-      console.log('No available slots to convert');
+        
+        // Combine date and time range
+        const datePart = startFormatted.split(' at ')[0];
+        const startTimePart = timeFormatter.format(startDate);
+        const humanReadable = `${datePart} ${startTimePart}-${endTimeFormatted}`;
+        
+        return {
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          timeOfDay,
+          humanReadable,
+          formatted: humanReadable
+        };
+      });
     }
 
     return new Response(JSON.stringify({
