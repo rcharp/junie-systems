@@ -2238,7 +2238,7 @@ const Settings = () => {
                   </div>
 
                   <div className="flex justify-center my-8">
-                    <Separator className="w-3/4" />
+                    <Separator className="w-[85%]" />
                   </div>
 
                   <div className="space-y-4">
@@ -2481,7 +2481,7 @@ const Settings = () => {
                   </div>
 
                   <div className="flex justify-center my-8">
-                    <Separator className="w-3/4" />
+                    <Separator className="w-[85%]" />
                   </div>
 
                   <div className="space-y-4" ref={servicesRef}>
