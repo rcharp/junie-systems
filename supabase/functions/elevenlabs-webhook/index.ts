@@ -634,7 +634,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       call_type: finalCallType,
       call_duration: callDuration,
       recording_url: '',
-      transcript: fullTranscript,
+      transcript: fullTranscript ? `${fullTranscript}\n\n[Call ended]` : '',
       call_status: 'completed',
       call_id: `call_${Date.now()}`,
       business_name: analysisData.business_name?.value || 'Unknown Business',
