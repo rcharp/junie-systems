@@ -278,12 +278,18 @@ serve(async (req) => {
 
         // Fetch calendar settings and available times if appointment booking is enabled
         let dynamicAvailableTimes = businessDataForInit?.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
+        let appointmentDuration = 60; // Default duration
         if (businessDataForInit?.appointment_booking) {
           const { data: calendarSettings } = await supabase
             .from("google_calendar_settings")
             .select("*")
             .eq("user_id", businessDataForInit.user_id)
             .single();
+          
+          // Get appointment duration from calendar settings
+          if (calendarSettings?.appointment_duration) {
+            appointmentDuration = calendarSettings.appointment_duration;
+          }
 
           if (calendarSettings && calendarSettings.is_connected) {
             try {
@@ -412,6 +418,7 @@ serve(async (req) => {
             common_questions: businessDataForInit?.common_questions || "",
             pricing_structure: businessDataForInit?.pricing_structure || "",
             appointment_booking: String(businessDataForInit?.appointment_booking || false),
+            appointment_duration: String(appointmentDuration),
             // available_times: dynamicAvailableTimes, // Moved to /get-available-times endpoint
             services: servicesFormatted,
             transfer_number: addUSCountryCode(businessDataForInit?.transfer_number || ""),
@@ -589,6 +596,9 @@ serve(async (req) => {
       .eq("user_id", businessData.user_id)
       .single();
 
+    // Get appointment duration from calendar settings
+    const appointmentDuration = calendarSettings?.appointment_duration || 60;
+
     // Generate available times based on business hours or calendar availability
     let availableTimes = businessData.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM"; // Default fallback
 
@@ -667,6 +677,7 @@ serve(async (req) => {
         services_offered: businessData.services_offered || "N/A",
         pricing_structure: businessData.pricing_structure || "N/A",
         appointment_booking: businessData.appointment_booking || false,
+        appointment_duration: appointmentDuration,
         business_description: businessData.business_description || "N/A",
         transfer_number: addUSCountryCode(businessData.transfer_number || "N/A"),
         urgent_keywords: businessData.urgent_keywords || "emergency, urgent, urgent_keywords",
