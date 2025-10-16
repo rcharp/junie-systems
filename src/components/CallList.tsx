@@ -180,16 +180,16 @@ const CallList = () => {
               {paginatedCallLogs.map((call) => (
                 <div
                   key={call.id}
-                  className="flex items-center py-3 px-2 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 py-3 px-2 cursor-pointer transition-colors"
                   onClick={() => navigate(`/call/${call.id}`)}
                 >
-                  <span className="text-sm text-muted-foreground whitespace-nowrap w-36 flex-shrink-0">
+                  <span className="text-sm text-muted-foreground whitespace-nowrap w-32 flex-shrink-0">
                     {format(new Date(call.created_at), 'MMM d, h:mm a')}
                   </span>
-                  <span className="text-sm text-muted-foreground whitespace-nowrap w-40 flex-shrink-0">
+                  <span className="text-sm text-muted-foreground whitespace-nowrap w-36 flex-shrink-0">
                     {formatPhoneNumber(call.phone_number)}
                   </span>
-                  <div className="flex-1 min-w-0 mr-4">
+                  <div className="flex-1 min-w-0 mr-2">
                     <p className="text-sm text-foreground truncate">
                       {call.message || 'No summary available'}
                     </p>
