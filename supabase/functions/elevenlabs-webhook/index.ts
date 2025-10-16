@@ -80,6 +80,8 @@ serve(async (req) => {
           business_id: null,
           caller_name: 'Call Initiation Failed',
           phone_number: phoneNumber,
+          message: summary, // Required field - use summary as message
+          urgency_level: 'high', // Required field - failures are high urgency
           call_status: 'failed',
           call_type: 'initiation_failure',
           call_summary: summary,
