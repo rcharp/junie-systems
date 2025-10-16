@@ -148,7 +148,93 @@ serve(async (req) => {
               });
             }
 
-            if (message.client_tool_call?.tool_name === "transfer_call" && callSid) {
+            // Handle get_availability tool
+            if (message.client_tool_call?.tool_name === "get_availability" && callSid) {
+              console.log(`[II] Processing get_availability for call ${callSid}`);
+
+              const callContext = activeCalls.get(callSid);
+              if (!callContext?.businessId) {
+                console.error("[II] No business ID found in call context");
+                
+                elevenLabsWs.send(JSON.stringify({
+                  type: "client_tool_result",
+                  tool_call_id: message.client_tool_call.tool_call_id,
+                  result: "No business ID available",
+                  is_error: true
+                }));
+                break;
+              }
+
+              console.log(`[II] Calling get-available-times function`);
+
+              try {
+                const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+                const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
+                
+                const response = await fetch(
+                  `${SUPABASE_URL}/functions/v1/get-available-times`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    },
+                    body: JSON.stringify({
+                      business_id: callContext.businessId,
+                      preferred_date: message.client_tool_call.parameters?.preferred_date,
+                      preferred_time: message.client_tool_call.parameters?.preferred_time,
+                      call_sid: callSid
+                    })
+                  }
+                );
+
+                const result = await response.json();
+                console.log("[II] get-available-times function result:", result);
+
+                const resultMessage = result.available_slots 
+                  ? JSON.stringify({ available_slots: result.available_slots })
+                  : "No availability found";
+
+                // Update the event with the result
+                await supabase
+                  .from('client_tool_events')
+                  .update({
+                    result: resultMessage,
+                    is_error: !result.available_slots
+                  })
+                  .eq('tool_call_id', message.client_tool_call.tool_call_id);
+
+                elevenLabsWs.send(JSON.stringify({
+                  type: "client_tool_result",
+                  tool_call_id: message.client_tool_call.tool_call_id,
+                  result: resultMessage,
+                  is_error: !result.available_slots
+                }));
+
+              } catch (error) {
+                console.error("[II] Error calling get-available-times function:", error);
+                
+                const errorMessage = `Failed to get availability: ${error.message}`;
+
+                // Update the event with the error
+                await supabase
+                  .from('client_tool_events')
+                  .update({
+                    result: errorMessage,
+                    is_error: true
+                  })
+                  .eq('tool_call_id', message.client_tool_call.tool_call_id);
+                
+                elevenLabsWs.send(JSON.stringify({
+                  type: "client_tool_result",
+                  tool_call_id: message.client_tool_call.tool_call_id,
+                  result: errorMessage,
+                  is_error: true
+                }));
+              }
+            }
+            // Handle transfer_call tool
+            else if (message.client_tool_call?.tool_name === "transfer_call" && callSid) {
               console.log(`[II] Processing transfer_call for call ${callSid}`);
 
               const callContext = activeCalls.get(callSid);
