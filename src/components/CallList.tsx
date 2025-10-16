@@ -179,7 +179,7 @@ const CallList = () => {
               {paginatedCallLogs.map((call) => (
                 <div
                   key={call.id}
-                  className="flex items-center justify-between py-3 px-2 hover:bg-accent/50 cursor-pointer transition-colors"
+                  className="flex items-center justify-between py-3 px-2 cursor-pointer transition-colors"
                   onClick={() => navigate(`/call/${call.id}`)}
                 >
                   <div className="flex-1 min-w-0 flex items-center gap-4">
