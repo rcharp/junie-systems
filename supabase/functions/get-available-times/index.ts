@@ -27,6 +27,13 @@ serve(async (req) => {
       );
     }
 
+    // Validate preferred_date is ISO timestamp if provided
+    if (preferred_date && !isNaN(Date.parse(preferred_date))) {
+      console.log('Valid ISO timestamp received for preferred_date:', preferred_date);
+    } else if (preferred_date) {
+      console.log('Warning: preferred_date is not a valid ISO timestamp:', preferred_date);
+    }
+
     console.log('Looking up business by business_id:', business_id);
 
     // Create Supabase client with service role
