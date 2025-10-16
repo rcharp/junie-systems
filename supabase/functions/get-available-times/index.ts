@@ -44,7 +44,7 @@ serve(async (req) => {
     // Find business by business_id and get timezone
     const { data: businessSettings, error: businessError } = await supabase
       .from('business_settings')
-      .select('user_id, business_name, business_timezone')
+      .select('user_id, business_name, business_timezone, business_timezone_offset')
       .eq('id', business_id)
       .maybeSingle();
 
@@ -131,9 +131,38 @@ serve(async (req) => {
     }
 
     console.log('Successfully retrieved availability:', availabilityData?.slots?.length || 0, 'slots');
+    console.log('Availability data timezone:', availabilityData?.timezone);
     
-    // Extract slot start times from the google-calendar-availability response
-    const slots = (availabilityData?.slots || []).map((slot: any) => slot.startTime);
+    // Extract slot start times and convert from UTC to local timezone
+    const businessTimezone = availabilityData?.timezone || businessSettings.business_timezone || 'America/New_York';
+    const slots = (availabilityData?.slots || []).map((slot: any) => {
+      const utcDate = new Date(slot.startTime);
+      
+      // Format in local timezone with offset
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: businessTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+      
+      const parts = formatter.formatToParts(utcDate);
+      const year = parts.find(p => p.type === 'year')?.value;
+      const month = parts.find(p => p.type === 'month')?.value;
+      const day = parts.find(p => p.type === 'day')?.value;
+      const hour = parts.find(p => p.type === 'hour')?.value;
+      const minute = parts.find(p => p.type === 'minute')?.value;
+      const second = parts.find(p => p.type === 'second')?.value;
+      
+      // Get timezone offset
+      const offset = businessSettings.business_timezone_offset || '-04:00';
+      
+      return `${year}-${month}-${day}T${hour}:${minute}:${second}.000${offset}`;
+    });
     
     const response = {
       success: true,
