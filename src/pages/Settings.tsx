@@ -2210,9 +2210,10 @@ const Settings = () => {
                       id="businessPhone"
                       type="tel"
                       ref={businessPhoneRef}
-                      value={formatPhoneNumber(businessPhone)}
+                      value={businessPhone}
+                      maxLength={10}
                       onChange={(e) => {
-                        // Normalize to digits only for storage
+                        // Only allow digits
                         const digitsOnly = e.target.value.replace(/\D/g, "");
                         setBusinessPhone(digitsOnly);
 
