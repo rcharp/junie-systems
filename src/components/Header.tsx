@@ -69,15 +69,15 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
         
         {!isOnboarding && (
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+            <a href="#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
               Features
-            </Link>
-            <Link to="/#pricing" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+            </a>
+            <a href="#pricing" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
               Pricing
-            </Link>
-            <Link to="/#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+            </a>
+            <a href="#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
               How It Works
-            </Link>
+            </a>
           </nav>
         )}
         

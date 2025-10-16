@@ -92,9 +92,15 @@ const Index = () => {
         <Hero />
         <Benefits />
         <WhyJunie />
-        <HowItWorks />
-        <Features />
-        <Pricing />
+        <section id="how-it-works">
+          <HowItWorks />
+        </section>
+        <section id="features">
+          <Features />
+        </section>
+        <section id="pricing">
+          <Pricing />
+        </section>
         <FAQ />
         <EmailCapture />
       </main>
