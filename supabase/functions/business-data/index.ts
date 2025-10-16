@@ -419,6 +419,7 @@ serve(async (req) => {
             pricing_structure: businessDataForInit?.pricing_structure || "",
             appointment_booking: String(businessDataForInit?.appointment_booking || false),
             appointment_duration: String(appointmentDuration),
+            business_timezone: businessTimezone,
             // available_times: dynamicAvailableTimes, // Moved to /get-available-times endpoint
             services: servicesFormatted,
             transfer_number: addUSCountryCode(businessDataForInit?.transfer_number || ""),
@@ -678,6 +679,7 @@ serve(async (req) => {
         pricing_structure: businessData.pricing_structure || "N/A",
         appointment_booking: businessData.appointment_booking || false,
         appointment_duration: appointmentDuration,
+        business_timezone: businessData.business_timezone || "America/New_York",
         business_description: businessData.business_description || "N/A",
         transfer_number: addUSCountryCode(businessData.transfer_number || "N/A"),
         urgent_keywords: businessData.urgent_keywords || "emergency, urgent, urgent_keywords",
