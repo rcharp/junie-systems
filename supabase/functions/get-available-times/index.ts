@@ -153,19 +153,23 @@ serve(async (req) => {
     
     const slots = availabilityData?.available_slots || [];
     
+    const response = {
+      success: true,
+      availability_count: slots.length,
+      availability: {
+        available_slots: slots
+      }
+    };
+    
     // Log success to client_tool_events
     await supabase.from('client_tool_events')
       .update({ 
-        result: JSON.stringify({ 
-          success: true, 
-          availability_count: slots.length,
-          availability: availabilityData
-        })
+        result: JSON.stringify(response)
       })
       .eq('tool_call_id', toolCallId);
     
     return new Response(
-      JSON.stringify({ available_slots: slots }),
+      JSON.stringify(response),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
