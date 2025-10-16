@@ -71,25 +71,16 @@ Deno.serve(async (req) => {
       throw new Error('User ID is required')
     }
 
-    console.log('Fetching calendar availability for user:', userId)
-    console.log('Using get_google_calendar_encrypted_tokens RPC function')
-
-    // Get user's encrypted calendar tokens
-    const { data: calendarTokens, error: tokensError } = await supabase.rpc('get_google_calendar_encrypted_tokens', {
-      p_user_id: userId
-    })
+    // Fetch calendar tokens and user profile in parallel for better performance
+    const [calendarTokensResult, userProfileResult] = await Promise.all([
+      supabase.rpc('get_google_calendar_encrypted_tokens', { p_user_id: userId }),
+      supabase.from('user_profiles').select('timezone').eq('id', userId).maybeSingle()
+    ])
     
-    console.log('RPC call result:', { hasData: !!calendarTokens, error: tokensError })
-
-    // Also get user profile timezone as backup
-    const { data: userProfile } = await supabase
-      .from('user_profiles')
-      .select('timezone')
-      .eq('id', userId)
-      .maybeSingle()
+    const { data: calendarTokens, error: tokensError } = calendarTokensResult
+    const { data: userProfile } = userProfileResult
 
     if (tokensError || !calendarTokens || calendarTokens.length === 0) {
-      console.log('No calendar settings found for user:', userId, tokensError)
       return new Response(JSON.stringify({ 
         available: false, 
         message: 'Google Calendar not connected' 
@@ -100,24 +91,7 @@ Deno.serve(async (req) => {
 
     const calendarSettings = calendarTokens[0]
     
-    // Tokens are encrypted in the database, we need to decrypt them
-    const encryptedAccessToken = calendarSettings.encrypted_access_token
-    const encryptedRefreshToken = calendarSettings.encrypted_refresh_token
-
-    console.log('Calendar settings:', {
-      calendar_id: calendarSettings.calendar_id,
-      timezone: calendarSettings.timezone,
-      expires_at: calendarSettings.expires_at,
-      has_access_token: !!encryptedAccessToken,
-      has_refresh_token: !!encryptedRefreshToken,
-      is_connected: calendarSettings.is_connected
-    })
-
-    console.log('User profile timezone:', userProfile?.timezone)
-    console.log('Will use timezone:', calendarSettings.timezone || userProfile?.timezone || 'America/New_York')
-
-    if (!calendarSettings.is_connected) {
-      console.log('Calendar not connected for user:', userId)
+    if (!calendarSettings.is_connected || !calendarSettings.encrypted_access_token) {
       return new Response(JSON.stringify({ 
         available: false, 
         message: 'Google Calendar not connected' 
@@ -126,137 +100,104 @@ Deno.serve(async (req) => {
       })
     }
 
-    if (!encryptedAccessToken) {
-      console.log('No access token found for user:', userId)
-      return new Response(JSON.stringify({ 
-        available: false, 
-        message: 'Google Calendar access token not available' 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // Decrypt the tokens using shared encryption utility
-    console.log('Decrypting access token...')
-    
-    const accessToken = await decryptToken(encryptedAccessToken)
-    const refreshToken = encryptedRefreshToken ? await decryptToken(encryptedRefreshToken) : null
-
-    console.log('Tokens decrypted successfully')
-
-    // Check if token needs refresh
-    const expiresAt = new Date(calendarSettings.expires_at)
-    const now = new Date()
-
-    let currentAccessToken = accessToken
-
-    if (now >= expiresAt && refreshToken) {
-      console.log('Access token expired, refreshing...')
-      
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: googleClientId,
-          client_secret: googleClientSecret,
-          refresh_token: refreshToken,
-          grant_type: 'refresh_token',
-        }),
-      })
-
-      const tokenData = await tokenResponse.json()
-      
-      if (tokenResponse.ok) {
-        currentAccessToken = tokenData.access_token
-        const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
-        
-        // Encrypt and update the stored token
-        console.log('Encrypting new access token...')
-        const encryptedNewToken = await encryptToken(currentAccessToken)
-        
-        await supabase
-          .from('google_calendar_settings')
-          .update({
-            encrypted_access_token: encryptedNewToken,
-            expires_at: newExpiresAt
-          })
-          .eq('user_id', userId)
-        console.log('Updated stored access token')
-      } else {
-        console.error('Token refresh failed:', tokenData)
-        throw new Error('Failed to refresh access token')
-      }
-    }
+    // Decrypt tokens
+    const accessToken = await decryptToken(calendarSettings.encrypted_access_token)
+    const refreshToken = calendarSettings.encrypted_refresh_token ? await decryptToken(calendarSettings.encrypted_refresh_token) : null
 
     // Query only 2 days for faster response (3 slots max)
     const startDate = new Date()
-    const endDate = new Date(Date.now() + (2 * 24 * 60 * 60 * 1000)) // 2 days from now
-
-    const timeMin = startDate.toISOString()
-    const timeMax = endDate.toISOString()
-
-    // Use primary calendar if no specific calendar_id is set
+    const endDate = new Date(Date.now() + (2 * 24 * 60 * 60 * 1000))
     const calendarId = calendarSettings.calendar_id || 'primary'
     
-    // Fetch calendar timezone and busy times in parallel for better performance
-    console.log('Fetching calendar data in parallel...')
-    const [calendarInfoResponse, freeBusyResponse] = await Promise.all([
-      fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}`, {
-        headers: {
-          'Authorization': `Bearer ${currentAccessToken}`,
-          'Content-Type': 'application/json',
-        },
+    // Fetch freeBusy data only (skip calendar info call - we already have timezone)
+    const freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        items: [{ id: calendarId }],
       }),
-      fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${currentAccessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          timeMin,
-          timeMax,
-          items: [{ id: calendarId }],
-        }),
-      })
-    ])
-
-    let googleCalendarTimezone = null
-    if (calendarInfoResponse.ok) {
-      const calendarInfo = await calendarInfoResponse.json()
-      googleCalendarTimezone = calendarInfo.timeZone
-      console.log('Google Calendar timezone:', googleCalendarTimezone)
-    } else {
-      console.log('Failed to get calendar info, using stored timezone')
-    }
-
-    console.log('FreeBusy request sent to calendar ID:', calendarId)
+    })
 
     const freeBusyData = await freeBusyResponse.json()
-    console.log('FreeBusy response:', freeBusyData)
 
     if (!freeBusyResponse.ok) {
+      // Try to refresh token if unauthorized
+      if (freeBusyResponse.status === 401 && refreshToken) {
+        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: googleClientId,
+            client_secret: googleClientSecret,
+            refresh_token: refreshToken,
+            grant_type: 'refresh_token',
+          }),
+        })
+
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json()
+          const newAccessToken = tokenData.access_token
+          const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
+          
+          // Update stored token
+          const encryptedNewToken = await encryptToken(newAccessToken)
+          await supabase
+            .from('google_calendar_settings')
+            .update({ encrypted_access_token: encryptedNewToken, expires_at: newExpiresAt })
+            .eq('user_id', userId)
+          
+          // Retry freeBusy request with new token
+          const retryResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${newAccessToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              timeMin: startDate.toISOString(),
+              timeMax: endDate.toISOString(),
+              items: [{ id: calendarId }],
+            }),
+          })
+          
+          if (!retryResponse.ok) {
+            throw new Error(`Failed to fetch calendar data after token refresh`)
+          }
+          
+          const retryData = await retryResponse.json()
+          return processAvailability(retryData, calendarId, calendarSettings, userProfile, startDate, limit, skip)
+        }
+      }
       throw new Error(`Failed to fetch calendar data: ${freeBusyData.error?.message}`)
     }
 
+    return processAvailability(freeBusyData, calendarId, calendarSettings, userProfile, startDate, limit, skip)
+  } catch (error) {
+    console.error('Error in google-calendar-availability function:', error)
+    return new Response(JSON.stringify({ 
+      available: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    })
+  }
+})
+
+function processAvailability(freeBusyData: any, calendarId: string, calendarSettings: any, userProfile: any, startDate: Date, limit: number, skip: number) {
     const busyTimes = freeBusyData.calendars[calendarId]?.busy || []
     const availabilityHours = calendarSettings.availability_hours || {}
-    const appointmentDuration = calendarSettings.appointment_duration || 60 // minutes
-    const MAX_SLOTS = Math.min(limit, 3) // Max 3 slots for faster response
+    const appointmentDuration = calendarSettings.appointment_duration || 60
+    const MAX_SLOTS = Math.min(limit, 3)
+    const now = new Date()
 
-    // Generate available time slots
     let availableSlots = []
-    // Use Google Calendar timezone first, then stored calendar timezone, then user profile timezone, then default
-    const userTimezone = googleCalendarTimezone || calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
-
-    console.log('=== STARTING SLOT GENERATION (MAX 3 SLOTS) ===')
-    console.log('Final timezone resolution:')
-    console.log('  - Final chosen timezone:', userTimezone)
-    console.log('Appointment duration:', appointmentDuration, 'minutes')
-    
-    // Generate slots for the next 2 days (only need 3 slots max)
+    const userTimezone = calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
     let slotsFound = 0;
     
     for (let dayOffset = 0; dayOffset < 2 && slotsFound < MAX_SLOTS; dayOffset++) {
@@ -296,19 +237,16 @@ Deno.serve(async (req) => {
       // Find continuous available time blocks (using 30-min increments for speed)
       const availableBlocks = []
       let currentStart = new Date(utcStartTime)
-      const slotIncrement = 30 // Check every 30 minutes (faster than 15)
+      const slotIncrement = 30
       
       while (currentStart.getTime() < utcEndTime.getTime() && slotsFound < MAX_SLOTS) {
-        // Check if current slot is available
         const slotEnd = new Date(currentStart.getTime() + (slotIncrement * 60 * 1000))
         
-        // Skip if in the past
         if (currentStart <= now) {
           currentStart.setTime(currentStart.getTime() + (slotIncrement * 60 * 1000))
           continue
         }
         
-        // Check for conflicts with busy times
         const hasConflict = busyTimes.some((busy: any) => {
           const busyStart = new Date(busy.start)
           const busyEnd = new Date(busy.end)
@@ -316,87 +254,64 @@ Deno.serve(async (req) => {
         })
         
         if (!hasConflict) {
-          // Start a new available block
           let blockStart = new Date(currentStart)
           let blockEnd = new Date(slotEnd)
           
-          // Extend the block as far as possible
           let nextSlot = new Date(slotEnd)
           while (nextSlot.getTime() < utcEndTime.getTime()) {
             const nextSlotEnd = new Date(nextSlot.getTime() + (slotIncrement * 60 * 1000))
             
-            // Check if next slot is also available
             const nextHasConflict = busyTimes.some((busy: any) => {
               const busyStart = new Date(busy.start)
               const busyEnd = new Date(busy.end)
               return (nextSlot < busyEnd && nextSlotEnd > busyStart)
             })
             
-            if (nextHasConflict) {
-              break // Stop extending the block
-            }
+            if (nextHasConflict) break
             
             blockEnd = new Date(nextSlotEnd)
             nextSlot.setTime(nextSlot.getTime() + (slotIncrement * 60 * 1000))
           }
           
-          // Only add blocks that are at least as long as the appointment duration
           const blockDuration = blockEnd.getTime() - blockStart.getTime()
           if (blockDuration >= (appointmentDuration * 60 * 1000)) {
-            availableBlocks.push({
-              start: blockStart,
-              end: blockEnd
-            })
+            availableBlocks.push({ start: blockStart, end: blockEnd })
           }
           
-          // Move to the end of this block
           currentStart = new Date(blockEnd)
         } else {
-          // Move to next 15-minute slot
           currentStart.setTime(currentStart.getTime() + (slotIncrement * 60 * 1000))
         }
       }
       
-      // Store blocks for Claude to convert properly, split into appointment-duration chunks
-      let slotNumber = 0
       for (const block of availableBlocks) {
-        if (slotsFound >= MAX_SLOTS) {
-          break;
-        }
+        if (slotsFound >= MAX_SLOTS) break
         
-        slotNumber++
-        
-        // Split the block into appointment-duration chunks
         let chunkStart = new Date(block.start)
         const blockEnd = new Date(block.end)
         
-        let skippedInBlock = 0;
+        let skippedInBlock = 0
         while (chunkStart.getTime() + (appointmentDuration * 60 * 1000) <= blockEnd.getTime() && slotsFound < MAX_SLOTS) {
           const chunkEnd = new Date(chunkStart.getTime() + (appointmentDuration * 60 * 1000))
           
-          // Skip slots if requested
           if (skippedInBlock < skip) {
-            skippedInBlock++;
-            chunkStart = new Date(chunkEnd);
-            continue;
+            skippedInBlock++
+            chunkStart = new Date(chunkEnd)
+            continue
           }
           
-          // Store the raw times - Claude will convert them properly
           availableSlots.push({
             startTime: chunkStart.toISOString(),
             endTime: chunkEnd.toISOString(),
-            timeOfDay: "pending", // Will be determined after timezone conversion
-            humanReadable: "pending" // Will be formatted by Claude
+            timeOfDay: "pending",
+            humanReadable: "pending"
           })
           
-          slotsFound++;
-          
-          // Move to next chunk
+          slotsFound++
           chunkStart = new Date(chunkEnd)
         }
         
-        // Update skip count for next block
-        skip = Math.max(0, skip - skippedInBlock);
+        skip = Math.max(0, skip - skippedInBlock)
       }
     }
 
