@@ -200,6 +200,14 @@ serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
+    // Fetch services for the business
+    const { data: servicesData } = await supabase
+      .from('services')
+      .select('name, price, description')
+      .eq('business_id', businessData?.id || '')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
     // Fetch webhook_id from user_profiles
     const { data: profileData, error: profileError } = await supabase
       .from('user_profiles')
@@ -347,6 +355,15 @@ serve(async (req) => {
       }
     }
 
+    // Format services as stringified JSON array
+    const servicesFormatted = servicesData && servicesData.length > 0 
+      ? JSON.stringify(servicesData.map(s => ({
+          name: s.name,
+          price: s.price,
+          description: s.description
+        })))
+      : '[]';
+
     // Format response according to the required structure
     const responseData = {
       type: "conversation_initiation_client_data",
@@ -356,7 +373,8 @@ serve(async (req) => {
         business_phone: businessData.business_phone || '',
         business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : '',
         available_hours: availableHours,
-        available_slots: availableSlots.length > 0 ? availableSlots.join(', ') : ''
+        available_slots: availableSlots.length > 0 ? availableSlots.join(', ') : '',
+        services: servicesFormatted
       }
     };
 
