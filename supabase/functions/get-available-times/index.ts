@@ -130,9 +130,10 @@ serve(async (req) => {
       );
     }
 
-    console.log('Successfully retrieved availability:', availabilityData?.available_slots?.length || 0, 'slots');
+    console.log('Successfully retrieved availability:', availabilityData?.slots?.length || 0, 'slots');
     
-    const slots = availabilityData?.available_slots || [];
+    // Extract slot start times from the google-calendar-availability response
+    const slots = (availabilityData?.slots || []).map((slot: any) => slot.startTime);
     
     const response = {
       success: true,
