@@ -921,6 +921,37 @@ const Settings = () => {
     let updateData: any = {};
 
     if (section === "Business") {
+      // Always validate business name and phone number
+      const phoneRegex = /^[\d\s\-\(\)\+]+$/;
+      const businessPhoneTrimmed = businessPhone?.trim();
+      const isValidPhone = !businessPhoneTrimmed || phoneRegex.test(businessPhoneTrimmed);
+      
+      if (!businessName?.trim()) {
+        toast({
+          title: "Validation Error",
+          description: "Business name is required",
+          variant: "destructive",
+        });
+        if (businessNameRef.current) {
+          businessNameRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          businessNameRef.current.focus();
+        }
+        throw new Error("Business name is required");
+      }
+      
+      if (!businessPhoneTrimmed || !isValidPhone) {
+        toast({
+          title: "Validation Error",
+          description: businessPhoneTrimmed ? "Phone number format is invalid" : "Business phone is required",
+          variant: "destructive",
+        });
+        if (businessPhoneRef.current) {
+          businessPhoneRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          businessPhoneRef.current.focus();
+        }
+        throw new Error("Business phone is required");
+      }
+
       // Skip validation for auto-save, only validate on manual save
       if (!skipValidation) {
         // Validate ALL fields at once and collect errors
@@ -938,10 +969,6 @@ const Settings = () => {
         };
 
         console.log("Required fields after processing:", requiredFields);
-
-        // Validate phone number format
-        const phoneRegex = /^[\d\s\-\(\)\+]+$/;
-        const isValidPhone = !requiredFields.businessPhone || phoneRegex.test(requiredFields.businessPhone);
 
         // Validate services
         const validServices = services.filter((s) => s.name.trim() !== "");
