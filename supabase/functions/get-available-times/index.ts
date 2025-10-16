@@ -80,10 +80,27 @@ serve(async (req) => {
     if (preferred_date) availabilityBody.preferred_date = preferred_date;
     if (preferred_time) availabilityBody.preferred_time = preferred_time;
     
-    const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
-      'google-calendar-availability',
-      { body: availabilityBody }
+    // Call the calendar availability function directly via HTTP to get synchronous response
+    const availabilityResponse = await fetch(
+      `${supabaseUrl}/functions/v1/google-calendar-availability`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(availabilityBody)
+      }
     );
+    
+    let availabilityData;
+    let availabilityError;
+    
+    if (!availabilityResponse.ok) {
+      availabilityError = new Error(`HTTP error! status: ${availabilityResponse.status}`);
+    } else {
+      availabilityData = await availabilityResponse.json();
+    }
 
     if (availabilityError) {
       console.error('Error getting availability:', availabilityError);
