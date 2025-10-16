@@ -33,7 +33,7 @@ const Hero = () => {
               </h1>
 
               <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0 px-2 sm:px-0">
-                Transform missed calls into business opportunities. Junie is an intelligent AI receptionist answers
+                Transform missed calls into business opportunities. Junie is an intelligent AI receptionist that answers
                 every call professionally, captures leads, and ensures you never lose a potential customer again.
               </p>
             </div>
