@@ -799,7 +799,7 @@ const Dashboard = () => {
                         .map((activity) => (
                           <div
                             key={activity.id}
-                            className="flex items-center space-x-3 p-2 rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
+                            className="flex items-center space-x-3 p-2 rounded-lg cursor-pointer"
                             onClick={() => activity.source === "call" && navigate(`/call/${activity.id}`)}
                           >
                             <div
