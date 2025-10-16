@@ -2237,8 +2237,8 @@ const Settings = () => {
                     </Button>
                   </div>
 
-                  <div className="flex justify-center my-12">
-                    <Separator className="w-[85%]" />
+                  <div className="flex justify-center">
+                    <Separator className="w-[85%] my-12" />
                   </div>
 
                   <div className="space-y-4">
@@ -2480,8 +2480,8 @@ const Settings = () => {
                     )}
                   </div>
 
-                  <div className="flex justify-center my-12">
-                    <Separator className="w-[85%]" />
+                  <div className="flex justify-center">
+                    <Separator className="w-[85%] my-12" />
                   </div>
 
                   <div className="space-y-4" ref={servicesRef}>
