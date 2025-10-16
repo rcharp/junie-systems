@@ -1,7 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
-import { formatInTimeZone } from 'https://esm.sh/date-fns-tz@3.2.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -67,24 +66,6 @@ serve(async (req) => {
 
     console.log('Found business for user_id:', businessSettings.user_id);
 
-    // Convert preferred_date to business timezone if provided
-    let convertedPreferredDate = preferred_date;
-    if (preferred_date && businessSettings.business_timezone) {
-      try {
-        // Parse the ISO date and convert to business timezone
-        const date = new Date(preferred_date);
-        // Format as ISO string with business timezone offset
-        convertedPreferredDate = formatInTimeZone(
-          date,
-          businessSettings.business_timezone,
-          "yyyy-MM-dd'T'HH:mm:ssXXX"
-        );
-        console.log('Converted preferred_date from UTC to business timezone:', convertedPreferredDate);
-      } catch (error) {
-        console.error('Error converting timezone:', error);
-        // Keep original date if conversion fails
-      }
-    }
 
     // Log the tool call to client_tool_events (don't await to avoid blocking)
     const toolCallId = `get_available_times_${Date.now()}`;
@@ -92,7 +73,7 @@ serve(async (req) => {
       call_sid: requestBody.call_sid || requestBody.conversation_id || 'direct_call',
       tool_name: 'get_available_times',
       tool_call_id: toolCallId,
-      parameters: { business_id, preferred_date, preferred_time, converted_date: convertedPreferredDate, full_request: requestBody },
+      parameters: { business_id, preferred_date, preferred_time, full_request: requestBody },
       business_id: businessSettings.user_id,
       user_id: businessSettings.user_id
     }).then(({ error: logError }) => {
@@ -101,10 +82,10 @@ serve(async (req) => {
     });
 
     // Fetch availability synchronously for fast response
-    console.log('Fetching availability for user:', businessSettings.user_id, 'preferred_date:', convertedPreferredDate, 'preferred_time:', preferred_time);
+    console.log('Fetching availability for user:', businessSettings.user_id, 'preferred_date:', preferred_date, 'preferred_time:', preferred_time);
     
     const availabilityBody: any = { user_id: businessSettings.user_id, limit: 3 };
-    if (convertedPreferredDate) availabilityBody.preferred_date = convertedPreferredDate;
+    if (preferred_date) availabilityBody.preferred_date = preferred_date;
     if (preferred_time) availabilityBody.preferred_time = preferred_time;
     
     // Call the calendar availability function directly via HTTP to get synchronous response
