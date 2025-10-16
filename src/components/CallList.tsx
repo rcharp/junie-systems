@@ -183,24 +183,22 @@ const CallList = () => {
                   onClick={() => navigate(`/call/${call.id}`)}
                 >
                   <div className="flex-1 min-w-0 flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(call.call_type)}`}>
-                        {call.call_type}
-                      </Badge>
-                    </div>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {format(new Date(call.created_at), 'MMM d, h:mm a')}
+                    </span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {call.phone_number}
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate">
                         {call.message || 'No summary available'}
                       </p>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4 ml-4 flex-shrink-0">
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {call.phone_number}
-                    </span>
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {format(new Date(call.created_at), 'MMM d, h:mm a')}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(call.call_type)}`}>
+                        {call.call_type}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               ))}
