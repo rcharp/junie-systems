@@ -373,10 +373,7 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
     }
 
     return new Response(JSON.stringify({
-      available: availableSlots.length > 0,
-      slots: availableSlots, // Already limited to MAX_SLOTS during generation
-      timezone: calendarSettings.timezone,
-      duration: appointmentDuration,
+      available_slots: availableSlots.map(slot => slot.startTime)
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

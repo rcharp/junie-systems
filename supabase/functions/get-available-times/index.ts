@@ -102,12 +102,7 @@ serve(async (req) => {
         .eq('tool_call_id', toolCallId);
       
       response = {
-        success: false,
-        business_name: businessSettings.business_name,
-        error: 'Failed to fetch availability',
-        availability: {
-          available_times: []
-        }
+        available_slots: []
       };
     } else {
       console.log('Successfully retrieved availability:', availabilityData?.available_times?.length || 0, 'slots');
@@ -124,9 +119,7 @@ serve(async (req) => {
         .eq('tool_call_id', toolCallId);
       
       response = {
-        success: true,
-        business_name: businessSettings.business_name,
-        availability: availabilityData || { available_times: [] }
+        available_slots: availabilityData?.available_slots || []
       };
     }
 
