@@ -132,7 +132,7 @@ const CallList = () => {
       case 'quote':
         return 'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100';
       default:
-        return 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
+        return 'bg-slate-50 text-gray-500 border-slate-200 hover:bg-slate-100';
     }
   };
 
