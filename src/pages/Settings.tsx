@@ -2210,15 +2210,14 @@ const Settings = () => {
                       id="businessPhone"
                       type="tel"
                       ref={businessPhoneRef}
-                      value={businessPhone}
+                      value={formatPhoneNumber(businessPhone)}
                       onChange={(e) => {
-                        // Allow only numbers, spaces, dashes, parentheses, and plus sign for phone formatting
-                        const phoneValue = e.target.value.replace(/[^\d\s\-\(\)\+]/g, "");
-                        setBusinessPhone(phoneValue);
+                        // Normalize to digits only for storage
+                        const digitsOnly = e.target.value.replace(/\D/g, "");
+                        setBusinessPhone(digitsOnly);
 
-                        // Only validate if user has entered something
-                        const digitsOnly = phoneValue.replace(/\D/g, "");
-                        if (phoneValue.length > 0 && digitsOnly.length !== 10) {
+                        // Validate
+                        if (digitsOnly.length > 0 && digitsOnly.length !== 10) {
                           setValidationErrors((prev) => ({ ...prev, businessPhone: true }));
                         } else {
                           setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
