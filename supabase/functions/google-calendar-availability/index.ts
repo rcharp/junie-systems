@@ -55,14 +55,14 @@ Deno.serve(async (req) => {
     try {
       const body = await req.json();
       userId = body.user_id;
-      limit = body.limit || 5; // Default to 5 slots
+      limit = body.limit || 3; // Default to 3 slots for faster response
       skip = body.skip || 0; // Default to 0 (no skip)
       console.log('Extracted from request body:', { userId, limit, skip });
     } catch (error) {
       // If no body or JSON parsing fails, try URL path
       const url = new URL(req.url);
       userId = url.pathname.split('/').pop();
-      limit = 5;
+      limit = 3;
       skip = 0;
       console.log('Extracted user_id from URL path:', userId);
     }
@@ -190,9 +190,9 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Query 4 days instead of 7 since we only need 5 slots (performance optimization)
+    // Query only 2 days for faster response (3 slots max)
     const startDate = new Date()
-    const endDate = new Date(Date.now() + (4 * 24 * 60 * 60 * 1000)) // 4 days from now
+    const endDate = new Date(Date.now() + (2 * 24 * 60 * 60 * 1000)) // 2 days from now
 
     const timeMin = startDate.toISOString()
     const timeMax = endDate.toISOString()
@@ -244,45 +244,34 @@ Deno.serve(async (req) => {
     const busyTimes = freeBusyData.calendars[calendarId]?.busy || []
     const availabilityHours = calendarSettings.availability_hours || {}
     const appointmentDuration = calendarSettings.appointment_duration || 60 // minutes
-    const MAX_SLOTS = 5 // Only generate 5 slots for performance
+    const MAX_SLOTS = Math.min(limit, 3) // Max 3 slots for faster response
 
     // Generate available time slots
     let availableSlots = []
     // Use Google Calendar timezone first, then stored calendar timezone, then user profile timezone, then default
     const userTimezone = googleCalendarTimezone || calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
 
-    console.log('=== STARTING SLOT GENERATION (MAX 5 SLOTS) ===')
+    console.log('=== STARTING SLOT GENERATION (MAX 3 SLOTS) ===')
     console.log('Final timezone resolution:')
-    console.log('  - Google Calendar timezone:', googleCalendarTimezone)
-    console.log('  - Stored calendar timezone:', calendarSettings.timezone)
-    console.log('  - User profile timezone:', userProfile?.timezone)
     console.log('  - Final chosen timezone:', userTimezone)
     console.log('Appointment duration:', appointmentDuration, 'minutes')
-    console.log('Availability hours:', JSON.stringify(availabilityHours))
-    console.log('Current time (now):', now.toISOString())
     
-    
-    // Generate slots for the next 4 days (reduced from 7 since we only need 5 slots)
+    // Generate slots for the next 2 days (only need 3 slots max)
     let slotsFound = 0;
     
-    for (let dayOffset = 0; dayOffset < 4 && slotsFound < MAX_SLOTS; dayOffset++) {
+    for (let dayOffset = 0; dayOffset < 2 && slotsFound < MAX_SLOTS; dayOffset++) {
       const currentDate = new Date(startDate)
       currentDate.setDate(startDate.getDate() + dayOffset)
       
       const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
       const daySettings = availabilityHours[dayName]
       
-      console.log(`--- Day ${dayOffset + 1}: ${dayName} (${currentDate.toDateString()}) ---`)
-      
       if (!daySettings?.enabled) {
-        console.log(`Skipping ${dayName} - not enabled`)
         continue
       }
       
       const [startHour, startMinute] = daySettings.start.split(':').map(Number)
       const [endHour, endMinute] = daySettings.end.split(':').map(Number)
-      
-      console.log(`Processing ${dayName}: ${startHour}:${startMinute} to ${endHour}:${endMinute} in ${userTimezone}`)
       
       // Create business hours for Google Calendar query (will be converted by Claude later)
       const year = currentDate.getFullYear()
@@ -299,22 +288,18 @@ Deno.serve(async (req) => {
       const utcStartTime = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00.000Z`)
       const utcEndTime = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00.000Z`)
       
-      // Convert from local timezone to UTC
-      // For EDT (UTC-4), add 4 hours to convert local time to UTC
-      const offsetHours = 4 // EDT offset
+      // Convert from local timezone to UTC (EDT offset)
+      const offsetHours = 4
       utcStartTime.setUTCHours(utcStartTime.getUTCHours() + offsetHours)
       utcEndTime.setUTCHours(utcEndTime.getUTCHours() + offsetHours)
       
-      console.log(`Local business hours: ${dateStr} ${startHour}:${startMinute} to ${endHour}:${endMinute} (${userTimezone})`)
-      console.log(`UTC business hours: ${utcStartTime.toISOString()} to ${utcEndTime.toISOString()}`)
-      
-      // Find continuous available time blocks
+      // Find continuous available time blocks (using 30-min increments for speed)
       const availableBlocks = []
       let currentStart = new Date(utcStartTime)
-      const slotIncrement = 15 // Check every 15 minutes for availability
+      const slotIncrement = 30 // Check every 30 minutes (faster than 15)
       
       while (currentStart.getTime() < utcEndTime.getTime() && slotsFound < MAX_SLOTS) {
-        // Check if current 15-minute slot is available
+        // Check if current slot is available
         const slotEnd = new Date(currentStart.getTime() + (slotIncrement * 60 * 1000))
         
         // Skip if in the past
@@ -381,9 +366,6 @@ Deno.serve(async (req) => {
         
         slotNumber++
         
-        console.log(`Processing block ${slotNumber}: start=${block.start}, end=${block.end}`)
-        console.log(`Start ISO: ${block.start.toISOString()}, End ISO: ${block.end.toISOString()}`)
-        
         // Split the block into appointment-duration chunks
         let chunkStart = new Date(block.start)
         const blockEnd = new Date(block.end)
@@ -396,7 +378,6 @@ Deno.serve(async (req) => {
           if (skippedInBlock < skip) {
             skippedInBlock++;
             chunkStart = new Date(chunkEnd);
-            console.log(`  Skipping slot (skip=${skip}, skipped=${skippedInBlock})`);
             continue;
           }
           
@@ -409,7 +390,6 @@ Deno.serve(async (req) => {
           })
           
           slotsFound++;
-          console.log(`  Chunk ${slotsFound}: ${chunkStart.toISOString()} to ${chunkEnd.toISOString()}`)
           
           // Move to next chunk
           chunkStart = new Date(chunkEnd)
@@ -418,20 +398,12 @@ Deno.serve(async (req) => {
         // Update skip count for next block
         skip = Math.max(0, skip - skippedInBlock);
       }
-      
-      console.log(`Generated ${slotsFound} total slots so far`)
     }
 
-    console.log(`Generated ${availableSlots.length} available slots`)
-
-    // Use Claude to convert timezone and format properly
+    // Use Claude to convert timezone and format properly (only if we have slots)
     if (availableSlots.length > 0) {
-      console.log(`Converting ${availableSlots.length} slots using Claude for timezone ${userTimezone}`)
-      console.log('Raw slots before Claude:', JSON.stringify(availableSlots))
-      
       try {
         const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
-        console.log('Anthropic API key available:', !!anthropicApiKey)
         
         if (anthropicApiKey) {
       const claudePrompt = `You are helping format time slots for a business calendar.
