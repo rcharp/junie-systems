@@ -278,9 +278,14 @@ const CallList = () => {
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Previous
                   </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Page {callLogsPage + 1} of {totalCallPages}
-                  </span>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs text-muted-foreground">
+                      Showing {callLogsPage * itemsPerPage + 1}-{Math.min((callLogsPage + 1) * itemsPerPage, callLogs.length)} of {callLogs.length}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Page {callLogsPage + 1} of {totalCallPages}
+                    </span>
+                  </div>
                   <Button
                     size="sm"
                     variant="outline"
@@ -362,9 +367,14 @@ const CallList = () => {
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Previous
                   </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Page {messagesPage + 1} of {totalMessagePages}
-                  </span>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs text-muted-foreground">
+                      Showing {messagesPage * itemsPerPage + 1}-{Math.min((messagesPage + 1) * itemsPerPage, callMessages.length)} of {callMessages.length}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Page {messagesPage + 1} of {totalMessagePages}
+                    </span>
+                  </div>
                   <Button
                     size="sm"
                     variant="outline"
