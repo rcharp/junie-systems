@@ -2237,7 +2237,7 @@ const Settings = () => {
                     </Button>
                   </div>
 
-                  <Separator className="my-6" />
+                  <Separator className="my-8" />
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -2478,7 +2478,7 @@ const Settings = () => {
                     )}
                   </div>
 
-                  <Separator className="my-6" />
+                  <Separator className="my-8" />
 
                   <div className="space-y-4" ref={servicesRef}>
                     <div className="flex items-center justify-between">
