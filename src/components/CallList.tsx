@@ -231,7 +231,7 @@ const CallList = () => {
                 >
                   <div className="flex-1 min-w-0 flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs whitespace-nowrap">
+                      <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(call.call_type)}`}>
                         {call.call_type}
                       </Badge>
                     </div>
@@ -285,7 +285,7 @@ const CallList = () => {
                 >
                   <div className="flex-1 min-w-0 flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs whitespace-nowrap">
+                      <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(message.call_type)}`}>
                         {message.call_type}
                       </Badge>
                       {message.status === 'new' && (
