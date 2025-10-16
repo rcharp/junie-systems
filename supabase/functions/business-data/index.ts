@@ -2,6 +2,7 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
 import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
+import { formatInTimeZone } from "https://esm.sh/date-fns-tz@3.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -240,7 +241,8 @@ serve(async (req) => {
             appointment_booking,
             transfer_number,
             urgent_keywords,
-            auto_forward
+            auto_forward,
+            business_timezone
           `,
           )
           .eq("id", conversationBusinessId)
@@ -380,8 +382,9 @@ serve(async (req) => {
 
         const parsedCommonQuestions = parseCommonQuestions(businessDataForInit?.common_questions || "");
 
-        // Get current date/time with timezone
-        const now = new Date().toISOString();
+        // Get current date/time in the business's timezone
+        const businessTimezone = businessDataForInit?.business_timezone || 'America/New_York';
+        const now = formatInTimeZone(new Date(), businessTimezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
 
         // Format services with details for the agent
         const servicesFormatted = servicesData && servicesData.length > 0
