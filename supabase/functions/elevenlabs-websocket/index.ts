@@ -159,7 +159,7 @@ serve(async (req) => {
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
                   tool_call_id: message.client_tool_call.tool_call_id,
-                  result: "No business ID available",
+                  result: "Unable to check availability - no business information found",
                   is_error: true
                 }));
                 break;
@@ -191,16 +191,25 @@ serve(async (req) => {
                 const result = await response.json();
                 console.log("[II] get-available-times function result:", result);
 
-                const resultMessage = result.available_slots 
-                  ? JSON.stringify({ available_slots: result.available_slots })
-                  : "No availability found";
+                // Format the result as a readable string for ElevenLabs
+                let resultMessage: string;
+                if (result.available_slots && result.available_slots.length > 0) {
+                  const slots = result.available_slots.map((slot: any, index: number) => 
+                    `${index + 1}. ${slot.start_time}`
+                  ).join(', ');
+                  resultMessage = `Available times: ${slots}`;
+                } else {
+                  resultMessage = "No availability found for the requested date";
+                }
+
+                console.log("[II] Formatted result:", resultMessage);
 
                 // Update the event with the result
                 await supabase
                   .from('client_tool_events')
                   .update({
                     result: resultMessage,
-                    is_error: !result.available_slots
+                    is_error: false
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
 
@@ -208,13 +217,13 @@ serve(async (req) => {
                   type: "client_tool_result",
                   tool_call_id: message.client_tool_call.tool_call_id,
                   result: resultMessage,
-                  is_error: !result.available_slots
+                  is_error: false
                 }));
 
               } catch (error) {
                 console.error("[II] Error calling get-available-times function:", error);
                 
-                const errorMessage = `Failed to get availability: ${error.message}`;
+                const errorMessage = `Unable to check availability at this time`;
 
                 // Update the event with the error
                 await supabase
