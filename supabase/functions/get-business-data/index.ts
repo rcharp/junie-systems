@@ -239,14 +239,19 @@ serve(async (req) => {
       .maybeSingle();
 
     let calendarAvailability = null;
+    let availableSlots: string[] = [];
     if (calendarSettings?.is_connected) {
       try {
         const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke('google-calendar-availability', {
-          body: { user_id: userId }
+          body: { user_id: userId, limit: 5 }
         });
         
         if (!availabilityError && availabilityData) {
           calendarAvailability = availabilityData;
+          // Extract first 5 slots as formatted strings
+          if (availabilityData.slots && Array.isArray(availabilityData.slots)) {
+            availableSlots = availabilityData.slots.slice(0, 5).map((slot: any) => slot.formatted);
+          }
         }
       } catch (error) {
         console.error('Error fetching calendar availability:', error);
@@ -350,7 +355,8 @@ serve(async (req) => {
         business_name: businessData.business_name || '',
         business_phone: businessData.business_phone || '',
         business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : '',
-        available_hours: availableHours
+        available_hours: availableHours,
+        available_slots: availableSlots.length > 0 ? availableSlots.join(', ') : ''
       }
     };
 
