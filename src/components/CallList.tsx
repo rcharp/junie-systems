@@ -237,6 +237,9 @@ const CallList = () => {
             </div>
           ) : (
             <>
+              <div className="text-sm text-muted-foreground mb-2 px-2">
+                Showing {callLogsPage * itemsPerPage + 1}-{Math.min((callLogsPage + 1) * itemsPerPage, callLogs.length)} of {callLogs.length}
+              </div>
               <div className="divide-y divide-border flex-1 overflow-auto max-h-[500px]">
                 {paginatedCallLogs.map((call) => (
                   <div
@@ -278,14 +281,9 @@ const CallList = () => {
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Previous
                   </Button>
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs text-muted-foreground">
-                      Showing {callLogsPage * itemsPerPage + 1}-{Math.min((callLogsPage + 1) * itemsPerPage, callLogs.length)} of {callLogs.length}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Page {callLogsPage + 1} of {totalCallPages}
-                    </span>
-                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Page {callLogsPage + 1} of {totalCallPages}
+                  </span>
                   <Button
                     size="sm"
                     variant="outline"
@@ -321,6 +319,9 @@ const CallList = () => {
             </div>
           ) : (
             <>
+              <div className="text-sm text-muted-foreground mb-2 px-2">
+                Showing {messagesPage * itemsPerPage + 1}-{Math.min((messagesPage + 1) * itemsPerPage, callMessages.length)} of {callMessages.length}
+              </div>
               <div className="divide-y divide-border flex-1 overflow-auto max-h-[500px]">
                 {paginatedMessages.map((message) => (
                   <div
@@ -367,14 +368,9 @@ const CallList = () => {
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Previous
                   </Button>
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs text-muted-foreground">
-                      Showing {messagesPage * itemsPerPage + 1}-{Math.min((messagesPage + 1) * itemsPerPage, callMessages.length)} of {callMessages.length}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Page {messagesPage + 1} of {totalMessagePages}
-                    </span>
-                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    Page {messagesPage + 1} of {totalMessagePages}
+                  </span>
                   <Button
                     size="sm"
                     variant="outline"
