@@ -717,7 +717,7 @@ const Dashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="messages" className="flex items-center gap-2 py-3.5">
               <MessageSquare className="w-4 h-4" />
-              <span className="hidden sm:inline">Messages & Calls</span>
+              <span className="hidden sm:inline">Call Logs</span>
             </TabsTrigger>
             <TabsTrigger
               value="analytics"

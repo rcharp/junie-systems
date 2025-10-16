@@ -47,10 +47,8 @@ const CallList = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [callLogs, setCallLogs] = useState<CallLog[]>([]);
-  const [callMessages, setCallMessages] = useState<CallMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [callLogsPage, setCallLogsPage] = useState(0);
-  const [messagesPage, setMessagesPage] = useState(0);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -88,19 +86,7 @@ const CallList = () => {
         logs = callLogs || [];
       }
 
-      // Fetch call messages with user_id
-      const { data: directMessages, error: messagesError } = await supabase
-        .from('call_messages')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (messagesError) throw messagesError;
-      messages = directMessages || [];
-
       setCallLogs(logs);
-      setCallMessages(messages);
     } catch (error: any) {
       console.error('Error fetching call data:', error);
       toast({
@@ -110,50 +96,6 @@ const CallList = () => {
       });
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleMessageClick = async (message: CallMessage) => {
-    // Try to find the associated call_log by call_id
-    if (message.call_id) {
-      const associatedCall = callLogs.find(call => call.call_id === message.call_id);
-      if (associatedCall) {
-        navigate(`/call/${associatedCall.id}`);
-        return;
-      }
-    }
-    
-    // Fallback to message id if no associated call found
-    navigate(`/call/${message.id}`);
-  };
-
-  const markMessageAsRead = async (messageId: string) => {
-    try {
-      const { error } = await supabase
-        .from('call_messages')
-        .update({ status: 'read' })
-        .eq('id', messageId)
-        .eq('user_id', user?.id);
-
-      if (error) throw error;
-
-      setCallMessages(prev => 
-        prev.map(msg => 
-          msg.id === messageId ? { ...msg, status: 'read' } : msg
-        )
-      );
-
-      toast({
-        title: "Message marked as read",
-        description: "The message has been marked as read",
-      });
-    } catch (error: any) {
-      console.error('Error updating message:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update message status",
-        variant: "destructive",
-      });
     }
   };
 
@@ -206,187 +148,92 @@ const CallList = () => {
   }
 
   const totalCallPages = Math.ceil(callLogs.length / itemsPerPage);
-  const totalMessagePages = Math.ceil(callMessages.length / itemsPerPage);
   const paginatedCallLogs = callLogs.slice(
     callLogsPage * itemsPerPage,
     (callLogsPage + 1) * itemsPerPage
   );
-  const paginatedMessages = callMessages.slice(
-    messagesPage * itemsPerPage,
-    (messagesPage + 1) * itemsPerPage
-  );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Call Logs Section */}
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="w-5 h-5" />
-            Call Logs ({callLogs.length})
+    <Card className="flex flex-col">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Phone className="w-5 h-5" />
+          Call Logs ({callLogs.length})
           </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          {callLogs.length === 0 ? (
-            <div className="text-center py-8">
-              <Phone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No call logs yet</h3>
-              <p className="text-muted-foreground">
-                Your AI assistant&apos;s call history will appear here.
-              </p>
+      </CardHeader>
+      <CardContent className="flex-1 flex flex-col">
+        {callLogs.length === 0 ? (
+          <div className="text-center py-8">
+            <Phone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No call logs yet</h3>
+            <p className="text-muted-foreground">
+              Your AI assistant&apos;s call history will appear here.
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="text-sm text-muted-foreground mb-2 px-2">
+              Showing {callLogsPage * itemsPerPage + 1}-{Math.min((callLogsPage + 1) * itemsPerPage, callLogs.length)} of {callLogs.length}
             </div>
-          ) : (
-            <>
-              <div className="text-sm text-muted-foreground mb-2 px-2">
-                Showing {callLogsPage * itemsPerPage + 1}-{Math.min((callLogsPage + 1) * itemsPerPage, callLogs.length)} of {callLogs.length}
-              </div>
-              <div className="divide-y divide-border flex-1 overflow-auto max-h-[500px]">
-                {paginatedCallLogs.map((call) => (
-                  <div
-                    key={call.id}
-                    className="flex items-center justify-between py-3 px-2 hover:bg-accent/50 cursor-pointer transition-colors"
-                    onClick={() => navigate(`/call/${call.id}`)}
-                  >
-                    <div className="flex-1 min-w-0 flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(call.call_type)}`}>
-                          {call.call_type}
-                        </Badge>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground truncate">
-                          {call.message || 'No summary available'}
-                        </p>
-                      </div>
+            <div className="divide-y divide-border flex-1 overflow-auto max-h-[500px]">
+              {paginatedCallLogs.map((call) => (
+                <div
+                  key={call.id}
+                  className="flex items-center justify-between py-3 px-2 hover:bg-accent/50 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/call/${call.id}`)}
+                >
+                  <div className="flex-1 min-w-0 flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(call.call_type)}`}>
+                        {call.call_type}
+                      </Badge>
                     </div>
-                    <div className="flex items-center gap-4 ml-4 flex-shrink-0">
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {call.phone_number}
-                      </span>
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {format(new Date(call.created_at), 'MMM d, h:mm a')}
-                      </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground truncate">
+                        {call.message || 'No summary available'}
+                      </p>
                     </div>
                   </div>
-                ))}
-              </div>
-              {totalCallPages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t mt-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setCallLogsPage(Math.max(0, callLogsPage - 1))}
-                    disabled={callLogsPage === 0}
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Previous
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Page {callLogsPage + 1} of {totalCallPages}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setCallLogsPage(Math.min(totalCallPages - 1, callLogsPage + 1))}
-                    disabled={callLogsPage === totalCallPages - 1}
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Messages Section */}
-      <Card className="flex flex-col">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="w-5 h-5" />
-            Messages ({callMessages.filter(m => m.status === 'new').length} new)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          {callMessages.length === 0 ? (
-            <div className="text-center py-8">
-              <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2 text-muted-foreground">No messages yet</h3>
-              <p className="text-muted-foreground">
-                When someone calls your AI assistant, their messages will appear here.
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="text-sm text-muted-foreground mb-2 px-2">
-                Showing {messagesPage * itemsPerPage + 1}-{Math.min((messagesPage + 1) * itemsPerPage, callMessages.length)} of {callMessages.length}
-              </div>
-              <div className="divide-y divide-border flex-1 overflow-auto max-h-[500px]">
-                {paginatedMessages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex items-center justify-between py-3 px-2 hover:bg-accent/50 cursor-pointer transition-colors ${
-                      message.status === 'new' ? 'bg-primary/5' : ''
-                    }`}
-                    onClick={() => handleMessageClick(message)}
-                  >
-                    <div className="flex-1 min-w-0 flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(message.call_type)}`}>
-                          {message.call_type}
-                        </Badge>
-                        {message.status === 'new' && (
-                          <Badge variant="secondary" className="text-xs">New</Badge>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground truncate">
-                          {message.message}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4 ml-4 flex-shrink-0">
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {message.phone_number}
-                      </span>
-                      <span className="text-sm text-muted-foreground whitespace-nowrap">
-                        {format(new Date(message.created_at), 'MMM d, h:mm a')}
-                      </span>
-                    </div>
+                  <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {call.phone_number}
+                    </span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {format(new Date(call.created_at), 'MMM d, h:mm a')}
+                    </span>
                   </div>
-                ))}
-              </div>
-              {totalMessagePages > 1 && (
-                <div className="flex items-center justify-between pt-4 border-t mt-4">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setMessagesPage(Math.max(0, messagesPage - 1))}
-                    disabled={messagesPage === 0}
-                  >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Previous
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    Page {messagesPage + 1} of {totalMessagePages}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setMessagesPage(Math.min(totalMessagePages - 1, messagesPage + 1))}
-                    disabled={messagesPage === totalMessagePages - 1}
-                  >
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
                 </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+              ))}
+            </div>
+            {totalCallPages > 1 && (
+              <div className="flex items-center justify-between pt-4 border-t mt-4">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCallLogsPage(Math.max(0, callLogsPage - 1))}
+                  disabled={callLogsPage === 0}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Previous
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  Page {callLogsPage + 1} of {totalCallPages}
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setCallLogsPage(Math.min(totalCallPages - 1, callLogsPage + 1))}
+                  disabled={callLogsPage === totalCallPages - 1}
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
