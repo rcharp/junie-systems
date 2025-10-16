@@ -380,6 +380,18 @@ serve(async (req) => {
 
         const parsedCommonQuestions = parseCommonQuestions(businessDataForInit?.common_questions || "");
 
+        // Get current date/time with timezone
+        const now = new Date().toISOString();
+
+        // Format services with details for the agent
+        const servicesFormatted = servicesData && servicesData.length > 0
+          ? JSON.stringify(servicesData.map(s => ({
+              name: s.name,
+              description: s.description || '',
+              price: s.price || ''
+            })))
+          : '[]';
+
         // Return the conversation initiation format that ElevenLabs expects
         const conversationInitData = {
           type: "conversation_initiation_client_data",
@@ -398,10 +410,11 @@ serve(async (req) => {
             pricing_structure: businessDataForInit?.pricing_structure || "",
             appointment_booking: String(businessDataForInit?.appointment_booking || false),
             // available_times: dynamicAvailableTimes, // Moved to /get-available-times endpoint
-            services: servicesString,
+            services: servicesFormatted,
             transfer_number: addUSCountryCode(businessDataForInit?.transfer_number || ""),
             urgent_keywords: businessDataForInit?.urgent_keywords || "emergency, urgent, asap, immediately",
             auto_forward_urgent: String(businessDataForInit?.auto_forward || false),
+            now: now,
             callback_timeframe: "within 24 hours",
             pronunciations: "HVAC: H vac, hvac: H vac",
           },
