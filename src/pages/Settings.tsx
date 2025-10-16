@@ -2127,28 +2127,6 @@ const Settings = () => {
                         onChange={(e) => {
                           const newName = e.target.value;
                           setBusinessName(newName);
-                          debouncedAutoSave("Business");
-                          // Auto-update description when business name changes (with debounce)
-                          if (newName && businessType && businessSettingsId) {
-                            if (descriptionUpdateTimeout) {
-                              clearTimeout(descriptionUpdateTimeout);
-                            }
-                            const timeout = setTimeout(() => {
-                              autoUpdateDescription(newName);
-                            }, 2000);
-                            setDescriptionUpdateTimeout(timeout);
-                          }
-                        }}
-                        onBlur={() => {
-                          if (businessName && businessType && businessSettingsId) {
-                            // Clear any pending timeout
-                            if (descriptionUpdateTimeout) {
-                              clearTimeout(descriptionUpdateTimeout);
-                              setDescriptionUpdateTimeout(null);
-                            }
-                            // Immediately update description on blur
-                            autoUpdateDescription(businessName);
-                          }
                         }}
                         placeholder="Your Business Name"
                         className={
@@ -2166,7 +2144,6 @@ const Settings = () => {
                           onValueChange={(value) => {
                             console.log("Business type changed to:", value);
                             setBusinessType(value);
-                            debouncedAutoSave("Business");
                           }}
                         >
                           <SelectTrigger
@@ -2223,14 +2200,6 @@ const Settings = () => {
                         } else {
                           setValidationErrors((prev) => ({ ...prev, businessPhone: false }));
                         }
-
-                        debouncedAutoSave("Business");
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          saveSettings("Business");
-                        }
                       }}
                       placeholder="10-digit phone number"
                       className={
@@ -2247,7 +2216,6 @@ const Settings = () => {
                       value={addressData}
                       onChange={(newAddressData) => {
                         setAddressData(newAddressData);
-                        debouncedAutoSave("Business");
                       }}
                       onAddressComplete={handleAddressSelect}
                       label="Business Address *"
@@ -2255,6 +2223,18 @@ const Settings = () => {
                       required={true}
                       showValidation={!!validationErrors.businessAddress}
                     />
+                  </div>
+
+                  {/* Save Button for Basic Info */}
+                  <div className="flex justify-end pt-2 border-t">
+                    <Button
+                      onClick={() => saveSettings("Business")}
+                      disabled={saving}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      {saving ? "Saving..." : "Save Basic Info"}
+                    </Button>
                   </div>
 
                   <div className="space-y-4">
