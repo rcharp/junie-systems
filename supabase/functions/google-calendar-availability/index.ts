@@ -51,19 +51,21 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
     // Try to get user_id from request body first, then fall back to URL path
-    let userId, limit, skip;
+    let userId, limit, skip, preferredDate;
     try {
       const body = await req.json();
       userId = body.user_id;
       limit = body.limit || 3; // Default to 3 slots for faster response
       skip = body.skip || 0; // Default to 0 (no skip)
-      console.log('Extracted from request body:', { userId, limit, skip });
+      preferredDate = body.preferred_date; // Optional preferred date
+      console.log('Extracted from request body:', { userId, limit, skip, preferredDate });
     } catch (error) {
       // If no body or JSON parsing fails, try URL path
       const url = new URL(req.url);
       userId = url.pathname.split('/').pop();
       limit = 3;
       skip = 0;
+      preferredDate = null;
       console.log('Extracted user_id from URL path:', userId);
     }
 
@@ -104,10 +106,11 @@ Deno.serve(async (req) => {
     const accessToken = await decryptToken(calendarSettings.encrypted_access_token)
     const refreshToken = calendarSettings.encrypted_refresh_token ? await decryptToken(calendarSettings.encrypted_refresh_token) : null
 
-    // Query only 2 days for faster response (3 slots max)
-    const startDate = new Date()
-    const endDate = new Date(Date.now() + (2 * 24 * 60 * 60 * 1000))
+    // Use preferred date if provided, otherwise query 2 days starting from now
+    const startDate = preferredDate ? new Date(preferredDate) : new Date()
+    const endDate = new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000))
     const calendarId = calendarSettings.calendar_id || 'primary'
+    console.log('Searching availability from', startDate.toISOString(), 'to', endDate.toISOString())
     
     // Fetch freeBusy data only (skip calendar info call - we already have timezone)
     const freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
@@ -170,13 +173,13 @@ Deno.serve(async (req) => {
           }
           
           const retryData = await retryResponse.json()
-          return processAvailability(retryData, calendarId, calendarSettings, userProfile, startDate, limit, skip)
+          return processAvailability(retryData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate)
         }
       }
       throw new Error(`Failed to fetch calendar data: ${freeBusyData.error?.message}`)
     }
 
-    return processAvailability(freeBusyData, calendarId, calendarSettings, userProfile, startDate, limit, skip)
+    return processAvailability(freeBusyData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate)
   } catch (error) {
     console.error('Error in google-calendar-availability function:', error)
     return new Response(JSON.stringify({ 
@@ -189,7 +192,7 @@ Deno.serve(async (req) => {
   }
 })
 
-function processAvailability(freeBusyData: any, calendarId: string, calendarSettings: any, userProfile: any, startDate: Date, limit: number, skip: number) {
+function processAvailability(freeBusyData: any, calendarId: string, calendarSettings: any, userProfile: any, startDate: Date, limit: number, skip: number, preferredDate?: string) {
   try {
     const busyTimes = freeBusyData.calendars[calendarId]?.busy || []
     const availabilityHours = calendarSettings.availability_hours || {}
