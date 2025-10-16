@@ -2237,7 +2237,7 @@ const Settings = () => {
                     </Button>
                   </div>
 
-                  <div className="flex justify-center my-8">
+                  <div className="flex justify-center my-12">
                     <Separator className="w-[85%]" />
                   </div>
 
@@ -2480,7 +2480,7 @@ const Settings = () => {
                     )}
                   </div>
 
-                  <div className="flex justify-center my-8">
+                  <div className="flex justify-center my-12">
                     <Separator className="w-[85%]" />
                   </div>
 
