@@ -117,7 +117,7 @@ serve(async (req) => {
         .eq('tool_call_id', toolCallId);
       
       return new Response(
-        JSON.stringify([]),
+        JSON.stringify({ available_slots: [] }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -138,7 +138,7 @@ serve(async (req) => {
       .eq('tool_call_id', toolCallId);
     
     return new Response(
-      JSON.stringify(slots),
+      JSON.stringify({ available_slots: slots }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
