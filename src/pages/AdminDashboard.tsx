@@ -485,9 +485,9 @@ const AdminDashboard = () => {
               <TabsList className="w-full grid grid-cols-5 mb-4">
                 <TabsTrigger value="post-call-data" className="text-xs sm:text-sm">Post Call Data</TabsTrigger>
                 <TabsTrigger value="business-data" className="text-xs sm:text-sm">Business Data</TabsTrigger>
-                <TabsTrigger value="call-failures" className="text-xs sm:text-sm">Call Failures</TabsTrigger>
                 <TabsTrigger value="client-tools" className="text-xs sm:text-sm">Client Tools</TabsTrigger>
                 <TabsTrigger value="calendar-test" className="text-xs sm:text-sm">Calendar Test</TabsTrigger>
+                <TabsTrigger value="call-failures" className="text-xs sm:text-sm">Call Failures</TabsTrigger>
               </TabsList>
 
               <TabsContent value="post-call-data">
