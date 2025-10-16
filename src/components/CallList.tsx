@@ -212,7 +212,7 @@ const CallList = () => {
             Call Logs ({callLogs.length})
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 overflow-auto max-h-[600px] space-y-4">
+        <CardContent className="flex-1 overflow-auto max-h-[600px]">
           {callLogs.length === 0 ? (
             <div className="text-center py-8">
               <Phone className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -222,94 +222,36 @@ const CallList = () => {
               </p>
             </div>
           ) : (
-            callLogs.map((call) => (
-              <Card 
-                key={call.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => navigate(`/call/${call.id}`)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-muted-foreground">{cleanCallerName(call.caller_name)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={call.call_status === 'completed' ? 'default' : 'secondary'}>
-                          {call.call_status}
-                        </Badge>
-                        <Badge className={getUrgencyColor(call.urgency_level)}>
-                          {call.urgency_level}
-                        </Badge>
-                      </div>
+            <div className="divide-y divide-border">
+              {callLogs.map((call) => (
+                <div
+                  key={call.id}
+                  className="flex items-center justify-between py-3 px-2 hover:bg-accent/50 cursor-pointer transition-colors"
+                  onClick={() => navigate(`/call/${call.id}`)}
+                >
+                  <div className="flex-1 min-w-0 flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs whitespace-nowrap">
+                        {call.call_type}
+                      </Badge>
                     </div>
-                    <span className="text-sm text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground truncate">
+                        {call.message || 'No summary available'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {call.phone_number}
+                    </span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
                       {format(new Date(call.created_at), 'MMM d, h:mm a')}
                     </span>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>{call.phone_number}</span>
-                    </div>
-                    {call.call_duration && (
-                      <div className="flex items-center space-x-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span>{Math.floor(call.call_duration / 60)}m {call.call_duration % 60}s</span>
-                      </div>
-                    )}
-                    <Badge className={getCallTypeColor(call.call_type)}>
-                      {call.call_type}
-                    </Badge>
-                  </div>
-                  
-                  {call.message && (
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">Summary:</label>
-                      <p className="mt-1 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                        {call.message}
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {call.email && (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-muted-foreground font-medium">Email:</span>
-                        <span>{call.email}</span>
-                      </div>
-                    )}
-                    {call.best_time_to_call && (
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-muted-foreground font-medium">Best time:</span>
-                        <span>{call.best_time_to_call}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {(call.recording_url || call.transcript) && (
-                    <div className="flex space-x-2">
-                      {call.recording_url && (
-                        <Button size="sm" variant="outline" className="flex items-center space-x-2">
-                          <Play className="w-4 h-4" />
-                          <span>Play Recording</span>
-                        </Button>
-                      )}
-                      {call.transcript && (
-                        <Button size="sm" variant="outline" className="flex items-center space-x-2">
-                          <Download className="w-4 h-4" />
-                          <span>View Transcript</span>
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -322,7 +264,7 @@ const CallList = () => {
             Messages ({callMessages.filter(m => m.status === 'new').length} new)
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 overflow-auto max-h-[600px] space-y-4">
+        <CardContent className="flex-1 overflow-auto max-h-[600px]">
           {callMessages.length === 0 ? (
             <div className="text-center py-8">
               <MessageSquare className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
@@ -332,81 +274,41 @@ const CallList = () => {
               </p>
             </div>
           ) : (
-            callMessages.map((message) => (
-              <Card 
-                key={message.id} 
-                className={`cursor-pointer hover:shadow-md transition-shadow ${message.status === 'new' ? 'border-primary bg-primary/5' : ''}`}
-                onClick={() => handleMessageClick(message)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex items-center space-x-2">
-                        <User className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-semibold text-muted-foreground">{cleanCallerName(message.caller_name)}</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge className={getUrgencyColor(message.urgency_level)}>
-                          {message.urgency_level}
-                        </Badge>
-                        <Badge className={getCallTypeColor(message.call_type)}>
-                          {message.call_type}
-                        </Badge>
-                        {message.status === 'new' && (
-                          <Badge variant="secondary">New</Badge>
-                        )}
-                      </div>
+            <div className="divide-y divide-border">
+              {callMessages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex items-center justify-between py-3 px-2 hover:bg-accent/50 cursor-pointer transition-colors ${
+                    message.status === 'new' ? 'bg-primary/5' : ''
+                  }`}
+                  onClick={() => handleMessageClick(message)}
+                >
+                  <div className="flex-1 min-w-0 flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs whitespace-nowrap">
+                        {message.call_type}
+                      </Badge>
+                      {message.status === 'new' && (
+                        <Badge variant="secondary" className="text-xs">New</Badge>
+                      )}
                     </div>
-                    <span className="text-sm text-muted-foreground">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-foreground truncate">
+                        {message.message}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      {message.phone_number}
+                    </span>
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
                       {format(new Date(message.created_at), 'MMM d, h:mm a')}
                     </span>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      <span>{message.phone_number}</span>
-                    </div>
-                    {message.email && (
-                      <div className="flex items-center space-x-2">
-                        <span className="text-muted-foreground">Email:</span>
-                        <span>{message.email}</span>
-                      </div>
-                    )}
-                    {message.best_time_to_call && (
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span>Best time: {message.best_time_to_call}</span>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Summary:</label>
-                    <p className="mt-1 text-sm bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
-                      {message.message}
-                    </p>
-                  </div>
-
-                  {message.status === 'new' && (
-                    <div className="flex justify-end">
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markMessageAsRead(message.id);
-                        }}
-                        className="flex items-center space-x-2"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Mark as Read</span>
-                      </Button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
