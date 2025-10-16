@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Phone, Clock, User, Calendar, Play, Download, MessageSquare, CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { cleanCallerName } from "@/lib/caller-utils";
+import { formatPhoneNumber } from "@/lib/phone-utils";
 
 interface CallLog {
   id: string;
@@ -187,7 +188,7 @@ const CallList = () => {
                       {format(new Date(call.created_at), 'MMM d, h:mm a')}
                     </span>
                     <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {call.phone_number}
+                      {formatPhoneNumber(call.phone_number)}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate">
