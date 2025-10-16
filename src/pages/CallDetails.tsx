@@ -529,7 +529,10 @@ const CallDetails = () => {
               </CardHeader>
               <CardContent>
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg max-h-96 overflow-y-auto">
-                  <p className="whitespace-pre-wrap text-sm">{cleanTranscript(callData.transcript)}</p>
+                  <p className="whitespace-pre-wrap text-sm">
+                    {cleanTranscript(callData.transcript)}
+                    {'\n\n[Call ended]'}
+                  </p>
                 </div>
               </CardContent>
             </Card>
