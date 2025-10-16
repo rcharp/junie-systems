@@ -388,4 +388,4 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
-})
+}
