@@ -85,8 +85,6 @@ serve(async (req) => {
       { body: availabilityBody }
     );
 
-    let response: string;
-    
     if (availabilityError) {
       console.error('Error getting availability:', availabilityError);
       
@@ -101,48 +99,30 @@ serve(async (req) => {
         })
         .eq('tool_call_id', toolCallId);
       
-      response = "I'm sorry, but I wasn't able to check the calendar availability at this time. Please try again or contact us directly.";
-    } else {
-      console.log('Successfully retrieved availability:', availabilityData?.available_slots?.length || 0, 'slots');
-      
-      const slots = availabilityData?.available_slots || [];
-      
-      // Log success to client_tool_events
-      await supabase.from('client_tool_events')
-        .update({ 
-          result: JSON.stringify({ 
-            success: true, 
-            availability_count: slots.length,
-            availability: availabilityData
-          })
-        })
-        .eq('tool_call_id', toolCallId);
-      
-      // Format timestamps into human-readable format
-      if (slots.length === 0) {
-        response = "I don't see any available time slots in the next few days. Would you like me to check a different date or time?";
-      } else {
-        const formattedSlots = slots.map((isoTime: string) => {
-          const date = new Date(isoTime);
-          const formatter = new Intl.DateTimeFormat('en-US', {
-            weekday: 'long',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true,
-            timeZone: 'America/New_York'
-          });
-          return formatter.format(date);
-        });
-        
-        response = `I found ${slots.length} available time slot${slots.length > 1 ? 's' : ''}: ${formattedSlots.join(', ')}. Which time works best for you?`;
-      }
+      return new Response(
+        JSON.stringify({ available_slots: [] }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
+    console.log('Successfully retrieved availability:', availabilityData?.available_slots?.length || 0, 'slots');
+    
+    const slots = availabilityData?.available_slots || [];
+    
+    // Log success to client_tool_events
+    await supabase.from('client_tool_events')
+      .update({ 
+        result: JSON.stringify({ 
+          success: true, 
+          availability_count: slots.length,
+          availability: availabilityData
+        })
+      })
+      .eq('tool_call_id', toolCallId);
+    
     return new Response(
-      response,
-      { headers: { ...corsHeaders, 'Content-Type': 'text/plain' } }
+      JSON.stringify({ available_slots: slots }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
