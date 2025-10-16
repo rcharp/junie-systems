@@ -844,7 +844,8 @@ const Settings = () => {
 
         setIsAutoSaving(true);
         try {
-          await saveSettingsInternal(section);
+          // Pass skipValidation=true for auto-save to prevent validation errors
+          await saveSettingsInternal(section, true);
           toast({
             title: "Settings saved",
             description: "Your changes have been automatically saved.",
@@ -891,7 +892,7 @@ const Settings = () => {
     }
   };
 
-  const saveSettingsInternal = async (section: string) => {
+  const saveSettingsInternal = async (section: string, skipValidation = false) => {
     if (!user) return;
 
     // Handle Profile section separately as it updates user_profiles table
@@ -920,132 +921,135 @@ const Settings = () => {
     let updateData: any = {};
 
     if (section === "Business") {
-      // Validate ALL fields at once and collect errors
-      console.log("=== VALIDATION DEBUG ===");
-      console.log("Raw businessType value:", JSON.stringify(businessType));
-      console.log("businessType type:", typeof businessType);
-      console.log("businessType length:", businessType?.length);
-      console.log("Validating business fields:", { businessName, businessType, businessPhone, businessDescription });
+      // Skip validation for auto-save, only validate on manual save
+      if (!skipValidation) {
+        // Validate ALL fields at once and collect errors
+        console.log("=== VALIDATION DEBUG ===");
+        console.log("Raw businessType value:", JSON.stringify(businessType));
+        console.log("businessType type:", typeof businessType);
+        console.log("businessType length:", businessType?.length);
+        console.log("Validating business fields:", { businessName, businessType, businessPhone, businessDescription });
 
-      const requiredFields = {
-        businessName: businessName?.trim(),
-        businessType: businessType?.trim() || (!businessType ? "" : businessType),
-        businessPhone: businessPhone?.trim(),
-        businessDescription: businessDescription?.trim(),
-      };
+        const requiredFields = {
+          businessName: businessName?.trim(),
+          businessType: businessType?.trim() || (!businessType ? "" : businessType),
+          businessPhone: businessPhone?.trim(),
+          businessDescription: businessDescription?.trim(),
+        };
 
-      console.log("Required fields after processing:", requiredFields);
+        console.log("Required fields after processing:", requiredFields);
 
-      // Validate phone number format
-      const phoneRegex = /^[\d\s\-\(\)\+]+$/;
-      const isValidPhone = !requiredFields.businessPhone || phoneRegex.test(requiredFields.businessPhone);
+        // Validate phone number format
+        const phoneRegex = /^[\d\s\-\(\)\+]+$/;
+        const isValidPhone = !requiredFields.businessPhone || phoneRegex.test(requiredFields.businessPhone);
 
-      // Validate services
-      const validServices = services.filter((s) => s.name.trim() !== "");
-      const invalidServices = validServices.filter((s) => {
-        const priceValue = s.price.trim();
-        return !priceValue || isNaN(parseFloat(priceValue)) || parseFloat(priceValue) <= 0;
-      });
-
-      // Validate address fields
-      console.log("=== ADDRESS VALIDATION DEBUG ===");
-      console.log("addressData:", JSON.stringify(addressData));
-
-      const missingAddressFields = [];
-      if (!addressData.street?.trim()) missingAddressFields.push("street address");
-      if (!addressData.city?.trim()) missingAddressFields.push("city");
-      if (!addressData.state?.trim()) missingAddressFields.push("state");
-      if (!addressData.zip?.trim()) missingAddressFields.push("ZIP code");
-
-      console.log("Missing address fields:", missingAddressFields);
-
-      // Validate ZIP code format (must be exactly 5 digits)
-      const zipRegex = /^\d{5}$/;
-      const isValidZip = addressData.zip?.trim() && zipRegex.test(addressData.zip.trim());
-
-      console.log("ZIP validation:", { zip: addressData.zip, isValidZip });
-
-      // Collect ALL validation errors
-      const newValidationErrors = {
-        businessName: !requiredFields.businessName || requiredFields.businessName === "",
-        businessType: !requiredFields.businessType || requiredFields.businessType === "",
-        businessPhone: !requiredFields.businessPhone || requiredFields.businessPhone === "" || !isValidPhone,
-        businessDescription: !requiredFields.businessDescription || requiredFields.businessDescription === "",
-        businessAddress: missingAddressFields.length > 0 || !isValidZip,
-        services: invalidServices.length > 0 || validServices.length === 0,
-      };
-
-      // Build error messages for all issues
-      const errorMessages: string[] = [];
-
-      if (
-        newValidationErrors.businessName ||
-        newValidationErrors.businessType ||
-        newValidationErrors.businessPhone ||
-        newValidationErrors.businessDescription
-      ) {
-        const missingFields = [];
-        if (newValidationErrors.businessName) missingFields.push("Business Name");
-        if (newValidationErrors.businessType) missingFields.push("Business Type");
-        if (newValidationErrors.businessPhone) {
-          missingFields.push(
-            requiredFields.businessPhone && !isValidPhone ? "Phone Number (invalid format)" : "Phone Number",
-          );
-        }
-        if (newValidationErrors.businessDescription) missingFields.push("Business Description");
-        errorMessages.push(`Missing/Invalid: ${missingFields.join(", ")}`);
-      }
-
-      if (newValidationErrors.businessAddress) {
-        if (missingAddressFields.length > 0) {
-          errorMessages.push(`Address: ${missingAddressFields.join(", ")}`);
-        }
-        if (!isValidZip && addressData.zip?.trim()) {
-          errorMessages.push("ZIP code must be exactly 5 digits");
-        }
-      }
-
-      if (newValidationErrors.services) {
-        if (validServices.length === 0) {
-          errorMessages.push("At least one service required");
-        } else if (invalidServices.length > 0) {
-          errorMessages.push(`${invalidServices.length} service(s) have invalid prices`);
-        }
-      }
-
-      // If there are ANY errors, show them all and stop
-      if (errorMessages.length > 0) {
-        setValidationErrors(newValidationErrors);
-
-        toast({
-          title: "Validation Errors",
-          description: errorMessages.join(" • "),
-          variant: "destructive",
-          duration: 5000,
+        // Validate services
+        const validServices = services.filter((s) => s.name.trim() !== "");
+        const invalidServices = validServices.filter((s) => {
+          const priceValue = s.price.trim();
+          return !priceValue || isNaN(parseFloat(priceValue)) || parseFloat(priceValue) <= 0;
         });
 
-        // Scroll to first error field
-        if (newValidationErrors.businessName && businessNameRef.current) {
-          businessNameRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-          businessNameRef.current.focus();
-        } else if (newValidationErrors.businessType && businessTypeRef.current) {
-          businessTypeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-        } else if (newValidationErrors.businessPhone && businessPhoneRef.current) {
-          businessPhoneRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-          businessPhoneRef.current.focus();
-        } else if (newValidationErrors.businessDescription && businessDescriptionRef.current) {
-          businessDescriptionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-          businessDescriptionRef.current.focus();
-        } else if (newValidationErrors.businessAddress && businessAddressRef.current) {
-          businessAddressRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-        } else if (newValidationErrors.services && servicesRef.current) {
-          servicesRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        // Validate address fields
+        console.log("=== ADDRESS VALIDATION DEBUG ===");
+        console.log("addressData:", JSON.stringify(addressData));
+
+        const missingAddressFields = [];
+        if (!addressData.street?.trim()) missingAddressFields.push("street address");
+        if (!addressData.city?.trim()) missingAddressFields.push("city");
+        if (!addressData.state?.trim()) missingAddressFields.push("state");
+        if (!addressData.zip?.trim()) missingAddressFields.push("ZIP code");
+
+        console.log("Missing address fields:", missingAddressFields);
+
+        // Validate ZIP code format (must be exactly 5 digits)
+        const zipRegex = /^\d{5}$/;
+        const isValidZip = addressData.zip?.trim() && zipRegex.test(addressData.zip.trim());
+
+        console.log("ZIP validation:", { zip: addressData.zip, isValidZip });
+
+        // Collect ALL validation errors
+        const newValidationErrors = {
+          businessName: !requiredFields.businessName || requiredFields.businessName === "",
+          businessType: !requiredFields.businessType || requiredFields.businessType === "",
+          businessPhone: !requiredFields.businessPhone || requiredFields.businessPhone === "" || !isValidPhone,
+          businessDescription: !requiredFields.businessDescription || requiredFields.businessDescription === "",
+          businessAddress: missingAddressFields.length > 0 || !isValidZip,
+          services: invalidServices.length > 0 || validServices.length === 0,
+        };
+
+        // Build error messages for all issues
+        const errorMessages: string[] = [];
+
+        if (
+          newValidationErrors.businessName ||
+          newValidationErrors.businessType ||
+          newValidationErrors.businessPhone ||
+          newValidationErrors.businessDescription
+        ) {
+          const missingFields = [];
+          if (newValidationErrors.businessName) missingFields.push("Business Name");
+          if (newValidationErrors.businessType) missingFields.push("Business Type");
+          if (newValidationErrors.businessPhone) {
+            missingFields.push(
+              requiredFields.businessPhone && !isValidPhone ? "Phone Number (invalid format)" : "Phone Number",
+            );
+          }
+          if (newValidationErrors.businessDescription) missingFields.push("Business Description");
+          errorMessages.push(`Missing/Invalid: ${missingFields.join(", ")}`);
         }
 
-        throw new Error("Validation failed: Multiple fields require attention");
-      }
+        if (newValidationErrors.businessAddress) {
+          if (missingAddressFields.length > 0) {
+            errorMessages.push(`Address: ${missingAddressFields.join(", ")}`);
+          }
+          if (!isValidZip && addressData.zip?.trim()) {
+            errorMessages.push("ZIP code must be exactly 5 digits");
+          }
+        }
 
-      console.log("VALIDATION PASSED");
+        if (newValidationErrors.services) {
+          if (validServices.length === 0) {
+            errorMessages.push("At least one service required");
+          } else if (invalidServices.length > 0) {
+            errorMessages.push(`${invalidServices.length} service(s) have invalid prices`);
+          }
+        }
+
+        // If there are ANY errors, show them all and stop
+        if (errorMessages.length > 0) {
+          setValidationErrors(newValidationErrors);
+
+          toast({
+            title: "Validation Errors",
+            description: errorMessages.join(" • "),
+            variant: "destructive",
+            duration: 5000,
+          });
+
+          // Scroll to first error field
+          if (newValidationErrors.businessName && businessNameRef.current) {
+            businessNameRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+            businessNameRef.current.focus();
+          } else if (newValidationErrors.businessType && businessTypeRef.current) {
+            businessTypeRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          } else if (newValidationErrors.businessPhone && businessPhoneRef.current) {
+            businessPhoneRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+            businessPhoneRef.current.focus();
+          } else if (newValidationErrors.businessDescription && businessDescriptionRef.current) {
+            businessDescriptionRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+            businessDescriptionRef.current.focus();
+          } else if (newValidationErrors.businessAddress && businessAddressRef.current) {
+            businessAddressRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          } else if (newValidationErrors.services && servicesRef.current) {
+            servicesRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+
+          throw new Error("Validation failed: Multiple fields require attention");
+        }
+
+        console.log("VALIDATION PASSED");
+      }
 
       // After validation passes, we can safely use validServices
       const finalValidServices = services.filter((s) => s.name.trim() !== "");
