@@ -2226,16 +2226,18 @@ const Settings = () => {
                   </div>
 
                   {/* Save Button for Basic Info */}
-                  <div className="flex justify-end pt-2 border-t">
+                  <div className="flex justify-end pt-2">
                     <Button
                       onClick={() => saveSettings("Business")}
                       disabled={saving}
                       className="flex items-center gap-2"
                     >
                       <Save className="w-4 h-4" />
-                      {saving ? "Saving..." : "Save Basic Info"}
+                      {saving ? "Saving..." : "Save"}
                     </Button>
                   </div>
+
+                  <Separator className="my-6" />
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -2475,6 +2477,8 @@ const Settings = () => {
                       </p>
                     )}
                   </div>
+
+                  <Separator className="my-6" />
 
                   <div className="space-y-4" ref={servicesRef}>
                     <div className="flex items-center justify-between">
