@@ -200,14 +200,6 @@ serve(async (req) => {
       .eq('user_id', userId)
       .maybeSingle();
 
-    // Fetch services for the business
-    const { data: servicesData } = await supabase
-      .from('services')
-      .select('name, price, description')
-      .eq('business_id', businessData?.id || '')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true });
-
     // Fetch webhook_id from user_profiles
     const { data: profileData, error: profileError } = await supabase
       .from('user_profiles')
@@ -238,6 +230,16 @@ serve(async (req) => {
         }
       );
     }
+
+    // Fetch services for the business - after we have businessData.id
+    const { data: servicesData } = await supabase
+      .from('services')
+      .select('name, price, description')
+      .eq('business_id', businessData.id)
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+    
+    console.log('Services data:', servicesData);
 
     // Check if Google Calendar is connected for availability
     const { data: calendarSettings } = await supabase
