@@ -366,6 +366,9 @@ serve(async (req) => {
         })))
       : '[]';
 
+    // Get current date/time with timezone
+    const now = new Date().toISOString();
+
     // Format response according to the required structure
     const responseData = {
       type: "conversation_initiation_client_data",
@@ -376,7 +379,8 @@ serve(async (req) => {
         business_address: businessData.business_address ? normalizeAddress(businessData.business_address) : '',
         available_hours: availableHours,
         available_slots: availableSlots.length > 0 ? availableSlots.join(', ') : '',
-        services: servicesFormatted
+        services: servicesFormatted,
+        now: now
       }
     };
 
