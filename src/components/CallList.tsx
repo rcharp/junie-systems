@@ -180,26 +180,24 @@ const CallList = () => {
               {paginatedCallLogs.map((call) => (
                 <div
                   key={call.id}
-                  className="flex items-center justify-between py-3 px-2 cursor-pointer transition-colors"
+                  className="flex items-center py-3 px-2 cursor-pointer transition-colors"
                   onClick={() => navigate(`/call/${call.id}`)}
                 >
-                  <div className="flex-1 min-w-0 flex items-center gap-4">
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {format(new Date(call.created_at), 'MMM d, h:mm a')}
-                    </span>
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      {formatPhoneNumber(call.phone_number)}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-foreground truncate">
-                        {call.message || 'No summary available'}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(call.call_type)}`}>
-                        {call.call_type}
-                      </Badge>
-                    </div>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap w-36 flex-shrink-0">
+                    {format(new Date(call.created_at), 'MMM d, h:mm a')}
+                  </span>
+                  <span className="text-sm text-muted-foreground whitespace-nowrap w-40 flex-shrink-0">
+                    {formatPhoneNumber(call.phone_number)}
+                  </span>
+                  <div className="flex-1 min-w-0 mr-4">
+                    <p className="text-sm text-foreground truncate">
+                      {call.message || 'No summary available'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(call.call_type)}`}>
+                      {call.call_type}
+                    </Badge>
                   </div>
                 </div>
               ))}
