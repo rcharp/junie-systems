@@ -218,25 +218,23 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
       const [startHour, startMinute] = daySettings.start.split(':').map(Number)
       const [endHour, endMinute] = daySettings.end.split(':').map(Number)
       
-      // Create business hours for Google Calendar query (will be converted by Claude later)
+      // Create date in local timezone, then convert to UTC for API query
       const year = currentDate.getFullYear()
       const month = currentDate.getMonth()
       const date = currentDate.getDate()
       
-      // Create business hours in the user's timezone using a simpler, more reliable approach
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`
+      // Create a date object in the user's timezone
+      const localDateStart = new Date(year, month, date, startHour, startMinute, 0)
+      const localDateEnd = new Date(year, month, date, endHour, endMinute, 0)
       
-      // For America/New_York timezone, we need to convert local business hours to UTC
-      // September 30th is still in Daylight Saving Time (EDT = UTC-4)
-      // So 9:30 AM EDT becomes 1:30 PM UTC (9:30 + 4 = 13:30)
+      // Get the timezone offset for this specific date (handles DST)
+      const offsetMs = getTimezoneOffsetMs(userTimezone, localDateStart)
       
-      const utcStartTime = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}:00.000Z`)
-      const utcEndTime = new Date(`${dateStr}T${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}:00.000Z`)
+      // Convert to UTC by subtracting the offset
+      const utcStartTime = new Date(localDateStart.getTime() - offsetMs)
+      const utcEndTime = new Date(localDateEnd.getTime() - offsetMs)
       
-      // Convert from local timezone to UTC (EDT offset)
-      const offsetHours = 4
-      utcStartTime.setUTCHours(utcStartTime.getUTCHours() + offsetHours)
-      utcEndTime.setUTCHours(utcEndTime.getUTCHours() + offsetHours)
+      console.log(`Day ${dayOffset} (${dayName}): Local ${localDateStart.toISOString()} -> UTC ${utcStartTime.toISOString()}`)
       
       // Find continuous available time blocks (using 30-min increments for speed)
       const availableBlocks = []
