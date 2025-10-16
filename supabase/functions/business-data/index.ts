@@ -567,7 +567,8 @@ serve(async (req) => {
         appointment_booking,
         lead_capture,
         transfer_number,
-        urgent_keywords
+        urgent_keywords,
+        business_timezone
       `,
       )
       .eq("id", businessId)
