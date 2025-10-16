@@ -190,6 +190,7 @@ Deno.serve(async (req) => {
 })
 
 function processAvailability(freeBusyData: any, calendarId: string, calendarSettings: any, userProfile: any, startDate: Date, limit: number, skip: number) {
+  try {
     const busyTimes = freeBusyData.calendars[calendarId]?.busy || []
     const availabilityHours = calendarSettings.availability_hours || {}
     const appointmentDuration = calendarSettings.appointment_duration || 60
@@ -377,7 +378,6 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
-
   } catch (error) {
     console.error('Error in google-calendar-availability function:', error)
     return new Response(JSON.stringify({ 
