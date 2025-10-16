@@ -44,7 +44,6 @@ const testFunctions: Record<string, (userId: string) => Promise<TestResult>> = {
   'edge-extract-services': () => testExtractServicesFunction(),
   'edge-generate-business-description': () => testGenerateBusinessDescriptionFunction(),
   'edge-get-available-times': (userId) => testGetAvailableTimesFunction(userId),
-  'edge-get-business-data': () => testGetBusinessDataFunction(),
   'edge-get-business-details': () => testGetBusinessDetailsFunction(),
   'edge-google-calendar-availability': (userId) => testGoogleCalendarAvailabilityFunction(userId),
   'edge-google-calendar-oauth': () => testGoogleCalendarOauthFunction(),
@@ -83,7 +82,6 @@ export const getAllTestDefinitions = (): TestDefinition[] => {
       'edge-extract-services': 'Edge Functions',
       'edge-generate-business-description': 'Edge Functions',
       'edge-get-available-times': 'Edge Functions',
-      'edge-get-business-data': 'Edge Functions',
       'edge-get-business-details': 'Edge Functions',
       'edge-google-calendar-availability': 'Edge Functions',
       'edge-google-calendar-oauth': 'Edge Functions',
@@ -1214,66 +1212,6 @@ const testGetAvailableTimesFunction = async (userId: string): Promise<TestResult
   }
 };
 
-const testGetBusinessDataFunction = async (): Promise<TestResult> => {
-  const start = performance.now();
-  const logs: string[] = [];
-  
-  try {
-    logs.push('💼 Step 1: Invoking get-business-data function...');
-    logs.push('💼 Step 2: Sending test request to edge function...');
-    
-    const { data, error } = await supabase.functions.invoke('get-business-data', {
-      body: { test: true }
-    });
-
-    const duration = performance.now() - start;
-
-    if (error) {
-      logs.push(`❌ Step 3: Function returned error - ${error.message}`);
-      logs.push(`❌ Error context: ${JSON.stringify(error.context || {})}`);
-      logs.push('❌ Test failed - edge function is not working correctly');
-      
-      return {
-        id: 'edge-get-business-data',
-        name: 'Get Business Data',
-        category: 'Edge Functions',
-        description: 'Tests business data retrieval functionality.',
-        status: 'failed',
-        error: error.message,
-        duration,
-        logs
-      };
-    }
-
-    logs.push('✅ Step 3: Function invoked successfully');
-    logs.push(`✅ Step 4: Response received - ${JSON.stringify(data || {}).substring(0, 200)}`);
-    logs.push('✅ Test passed - edge function is working correctly');
-    
-    return {
-      id: 'edge-get-business-data',
-      name: 'Get Business Data',
-      category: 'Edge Functions',
-      description: 'Tests business data retrieval functionality.',
-      status: 'passed',
-      message: 'Function executed successfully',
-      duration,
-      logs
-    };
-  } catch (error: any) {
-    logs.push(`❌ Exception thrown: ${error.message}`);
-    logs.push(`❌ Stack: ${error.stack}`);
-    return {
-      id: 'edge-get-business-data',
-      name: 'Get Business Data',
-      category: 'Edge Functions',
-      description: 'Tests business data retrieval.',
-      status: 'failed',
-      error: error.message,
-      duration: performance.now() - start,
-      logs
-    };
-  }
-};
 
 const testGetBusinessDetailsFunction = async (): Promise<TestResult> => {
   const start = performance.now();
