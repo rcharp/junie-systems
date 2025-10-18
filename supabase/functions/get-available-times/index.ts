@@ -135,7 +135,7 @@ serve(async (req) => {
     
     // Extract slot start times and convert from UTC to local timezone
     const businessTimezone = availabilityData?.timezone || businessSettings.business_timezone || 'America/New_York';
-    const slots = (availabilityData?.slots || []).map((slot: any) => {
+    let slots = (availabilityData?.slots || []).map((slot: any) => {
       const utcDate = new Date(slot.startTime);
       
       // Format in local timezone with offset
@@ -163,6 +163,19 @@ serve(async (req) => {
       
       return `${year}-${month}-${day}T${hour}:${minute}:${second}.000${offset}`;
     });
+
+    // Filter slots based on input parameters
+    if (date && time) {
+      // Both date and time provided: return only that specific slot if available
+      const requestedDateTime = `${date}T${time}`;
+      slots = slots.filter(slot => slot.startsWith(requestedDateTime));
+      console.log(`Filtering for specific date+time: ${requestedDateTime}, found ${slots.length} match(es)`);
+    } else if (date && !time) {
+      // Only date provided: return all slots for that date
+      slots = slots.filter(slot => slot.startsWith(date));
+      console.log(`Filtering for date only: ${date}, found ${slots.length} slot(s)`);
+    }
+    // If no date provided, return all next available slots (no filtering needed)
     
     const response = {
       success: true,
