@@ -18,7 +18,7 @@ serve(async (req) => {
     
     const requestBody = await req.json();
     console.log('Request body:', JSON.stringify(requestBody));
-    const { business_id, preferred_date, preferred_time } = requestBody;
+    const { business_id, date, time } = requestBody;
     
     if (!business_id) {
       return new Response(
@@ -27,11 +27,11 @@ serve(async (req) => {
       );
     }
 
-    // Validate preferred_date is ISO timestamp if provided
-    if (preferred_date && !isNaN(Date.parse(preferred_date))) {
-      console.log('Valid ISO timestamp received for preferred_date:', preferred_date);
-    } else if (preferred_date) {
-      console.log('Warning: preferred_date is not a valid ISO timestamp:', preferred_date);
+    // Validate date is ISO timestamp if provided
+    if (date && !isNaN(Date.parse(date))) {
+      console.log('Valid ISO timestamp received for date:', date);
+    } else if (date) {
+      console.log('Warning: date is not a valid ISO timestamp:', date);
     }
 
     console.log('Looking up business by business_id:', business_id);
@@ -73,7 +73,7 @@ serve(async (req) => {
       call_sid: requestBody.call_sid || requestBody.conversation_id || 'direct_call',
       tool_name: 'get_available_times',
       tool_call_id: toolCallId,
-      parameters: { business_id, preferred_date, preferred_time, full_request: requestBody },
+      parameters: { business_id, date, time, full_request: requestBody },
       business_id: businessSettings.user_id,
       user_id: businessSettings.user_id
     }).then(({ error: logError }) => {
@@ -82,11 +82,11 @@ serve(async (req) => {
     });
 
     // Fetch availability synchronously for fast response
-    console.log('Fetching availability for user:', businessSettings.user_id, 'preferred_date:', preferred_date, 'preferred_time:', preferred_time);
+    console.log('Fetching availability for user:', businessSettings.user_id, 'date:', date, 'time:', time);
     
     const availabilityBody: any = { user_id: businessSettings.user_id, limit: 3 };
-    if (preferred_date) availabilityBody.preferred_date = preferred_date;
-    if (preferred_time) availabilityBody.preferred_time = preferred_time;
+    if (date) availabilityBody.preferred_date = date;
+    if (time) availabilityBody.preferred_time = time;
     
     // Call the calendar availability function directly via HTTP to get synchronous response
     const availabilityResponse = await fetch(
