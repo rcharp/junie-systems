@@ -160,7 +160,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
           <div className="flex-1">
             <CardTitle className="text-lg">Client Tool Events</CardTitle>
             <CardDescription className="mt-1.5">
-              Real-time monitoring of ElevenLabs client tool calls
+              Real-time monitoring of ElevenLabs client tool calls and availability testing
             </CardDescription>
           </div>
           <Button
@@ -172,161 +172,176 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
             {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
           </Button>
         </div>
-        {!isMinimized && (
-          <div className="pt-3 border-t mt-3 space-y-4">
-            <p className="text-xs text-muted-foreground">
-              Showing {events.length} recent events
-            </p>
-            
-            {/* Test Specific Date/Time Availability */}
-            <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
-              <div>
-                <p className="text-xs font-semibold">Test Specific Date/Time Query</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Uses get-specific-availability endpoint</p>
-              </div>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-start gap-2">
-                  <div className="flex-1">
-                    <Label htmlFor="specific-date" className="text-xs mb-1 block">Date</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          id="specific-date"
-                          variant="outline"
-                          size="sm"
-                          className={cn(
-                            "w-full justify-start text-left font-normal h-9",
-                            !testDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={testDate}
-                          onSelect={setTestDate}
-                          initialFocus
-                          className={cn("p-3 pointer-events-auto")}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-                  
-                  <div className="flex-1">
-                    <Label htmlFor="specific-time" className="text-xs mb-1 block">Time (optional)</Label>
-                    <Input
-                      id="specific-time"
-                      type="time"
-                      value={testTime}
-                      onChange={(e) => setTestTime(e.target.value)}
-                      placeholder="HH:MM"
-                      className="h-9 text-xs"
-                    />
-                  </div>
-                </div>
-                
-                <Button 
-                  onClick={testSpecificAvailability} 
-                  disabled={!testDate || isTesting}
-                  size="sm"
-                  className="w-full"
-                >
-                  {isTesting ? "Testing..." : "Test Specific Query"}
-                </Button>
-              </div>
-            </div>
-
-            {/* Test Natural Language Query */}
-            <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
-              <div>
-                <p className="text-xs font-semibold">Test Natural Language Query</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Uses get-general-availability endpoint</p>
-              </div>
-              <div className="flex flex-col gap-3">
-                <div>
-                  <Label htmlFor="natural-language" className="text-xs mb-1 block">Natural Language Input</Label>
-                  <Input
-                    id="natural-language"
-                    type="text"
-                    value={naturalLanguage}
-                    onChange={(e) => setNaturalLanguage(e.target.value)}
-                    placeholder='e.g., "tomorrow", "next Friday", "Monday morning"'
-                    className="h-9 text-xs"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Try: "tomorrow", "next week", "Friday afternoon"
-                  </p>
-                </div>
-                
-                <Button 
-                  onClick={testGeneralAvailability} 
-                  disabled={!naturalLanguage.trim() || isTestingNL}
-                  size="sm"
-                  className="w-full"
-                >
-                  {isTestingNL ? "Testing..." : "Test Natural Language Query"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </CardHeader>
       {!isMinimized && (
         <CardContent>
-          <ScrollArea className="h-[400px] pr-4">
-            <div className="space-y-3">
-              {events.length === 0 ? (
-                <div className="flex items-center justify-center py-12">
-                  <p className="text-sm text-muted-foreground text-center">No events yet. Events will appear here in real-time.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left Side - Testing Controls */}
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-sm font-semibold mb-1">API Testing</h3>
+                <p className="text-xs text-muted-foreground">Test availability endpoints</p>
+              </div>
+
+              {/* Test Specific Date/Time Availability */}
+              <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+                <div>
+                  <p className="text-xs font-semibold">Specific Date/Time Query</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Uses get-specific-availability endpoint</p>
                 </div>
-              ) : (
-                events.map((event) => (
-                  <div key={event.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant={event.is_error ? "destructive" : event.result ? "default" : "secondary"} className="text-xs">
-                          {event.tool_name}
-                        </Badge>
-                        {event.is_error && <Badge variant="destructive" className="text-xs">Error</Badge>}
-                        {event.result && !event.is_error && <Badge variant="outline" className="text-xs">Completed</Badge>}
-                      </div>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
-                      </span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start gap-2">
+                    <div className="flex-1">
+                      <Label htmlFor="specific-date" className="text-xs mb-1 block">Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            id="specific-date"
+                            variant="outline"
+                            size="sm"
+                            className={cn(
+                              "w-full justify-start text-left font-normal h-9",
+                              !testDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={testDate}
+                            onSelect={setTestDate}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     
-                    <div className="space-y-1.5">
-                      <div className="text-sm">
-                        <span className="font-medium text-xs">Call SID:</span> 
-                        <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">{event.call_sid}</code>
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium text-xs">Tool Call ID:</span> 
-                        <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">{event.tool_call_id}</code>
-                      </div>
-                      {event.parameters && Object.keys(event.parameters).length > 0 && (
-                        <div className="text-sm">
-                          <span className="font-medium text-xs">Parameters:</span> 
-                          <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
-                            {JSON.stringify(event.parameters, null, 2)}
-                          </pre>
-                        </div>
-                      )}
-                      {event.result && (
-                        <div className="text-sm">
-                          <span className="font-medium text-xs">Result:</span> 
-                          <p className="mt-1 text-xs bg-muted p-2 rounded">{event.result}</p>
-                        </div>
-                      )}
+                    <div className="flex-1">
+                      <Label htmlFor="specific-time" className="text-xs mb-1 block">Time (optional)</Label>
+                      <Input
+                        id="specific-time"
+                        type="time"
+                        value={testTime}
+                        onChange={(e) => setTestTime(e.target.value)}
+                        placeholder="HH:MM"
+                        className="h-9 text-xs"
+                      />
                     </div>
                   </div>
-                ))
-              )}
+                  
+                  <Button 
+                    onClick={testSpecificAvailability} 
+                    disabled={!testDate || isTesting}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {isTesting ? "Testing..." : "Test Specific Query"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Test Natural Language Query */}
+              <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+                <div>
+                  <p className="text-xs font-semibold">Natural Language Query</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Uses get-general-availability endpoint</p>
+                </div>
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <Label htmlFor="natural-language" className="text-xs mb-1 block">Natural Language Input</Label>
+                    <Input
+                      id="natural-language"
+                      type="text"
+                      value={naturalLanguage}
+                      onChange={(e) => setNaturalLanguage(e.target.value)}
+                      placeholder='e.g., "tomorrow", "next Friday", "Monday morning"'
+                      className="h-9 text-xs"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Try: "tomorrow", "next week", "Friday afternoon"
+                    </p>
+                  </div>
+                  
+                  <Button 
+                    onClick={testGeneralAvailability} 
+                    disabled={!naturalLanguage.trim() || isTestingNL}
+                    size="sm"
+                    className="w-full"
+                  >
+                    {isTestingNL ? "Testing..." : "Test Natural Language Query"}
+                  </Button>
+                </div>
+              </div>
             </div>
-          </ScrollArea>
+
+            {/* Right Side - Events List */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold mb-1">Live Events</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Showing {events.length} recent events
+                  </p>
+                </div>
+              </div>
+
+              <ScrollArea className="h-[600px] pr-4">
+                <div className="space-y-3">
+                  {events.length === 0 ? (
+                    <div className="flex items-center justify-center py-12">
+                      <p className="text-sm text-muted-foreground text-center">No events yet. Events will appear here in real-time.</p>
+                    </div>
+                  ) : (
+                    events.map((event) => (
+                      <div key={event.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant={event.is_error ? "destructive" : event.result ? "default" : "secondary"} className="text-xs">
+                              {event.tool_name}
+                            </Badge>
+                            {event.is_error && <Badge variant="destructive" className="text-xs">Error</Badge>}
+                            {event.result && !event.is_error && <Badge variant="outline" className="text-xs">Completed</Badge>}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
+                          </span>
+                        </div>
+                        
+                        <div className="space-y-1.5">
+                          <div className="text-sm">
+                            <span className="font-medium text-xs">Call SID:</span> 
+                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">{event.call_sid}</code>
+                          </div>
+                          <div className="text-sm">
+                            <span className="font-medium text-xs">Tool Call ID:</span> 
+                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">{event.tool_call_id}</code>
+                          </div>
+                          {event.parameters && Object.keys(event.parameters).length > 0 && (
+                            <div className="text-sm">
+                              <span className="font-medium text-xs">Parameters:</span> 
+                              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
+                                {JSON.stringify(event.parameters, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                          {event.result && (
+                            <div className="text-sm">
+                              <span className="font-medium text-xs">Result:</span> 
+                              <p className="mt-1 text-xs bg-muted p-2 rounded">{event.result}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
         </CardContent>
       )}
     </Card>
