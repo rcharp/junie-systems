@@ -51,14 +51,15 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
     // Try to get user_id from request body first, then fall back to URL path
-    let userId, limit, skip, preferredDate;
+    let userId, limit, skip, preferredDate, preferredTime;
     try {
       const body = await req.json();
       userId = body.user_id;
       limit = body.limit || 3; // Default to 3 slots for faster response
       skip = body.skip || 0; // Default to 0 (no skip)
       preferredDate = body.preferred_date; // Optional preferred date
-      console.log('Extracted from request body:', { userId, limit, skip, preferredDate });
+      preferredTime = body.preferred_time; // Optional preferred time
+      console.log('Extracted from request body:', { userId, limit, skip, preferredDate, preferredTime });
     } catch (error) {
       // If no body or JSON parsing fails, try URL path
       const url = new URL(req.url);
@@ -106,8 +107,20 @@ Deno.serve(async (req) => {
     const accessToken = await decryptToken(calendarSettings.encrypted_access_token)
     const refreshToken = calendarSettings.encrypted_refresh_token ? await decryptToken(calendarSettings.encrypted_refresh_token) : null
 
-    // Use preferred date if provided, otherwise query 2 days starting from now
-    const startDate = preferredDate ? new Date(preferredDate) : new Date()
+    // Use preferred date/time if provided, otherwise query 2 days starting from now
+    let startDate: Date;
+    if (preferredDate && preferredTime) {
+      // Combine date and time to get a specific start point
+      startDate = new Date(`${preferredDate}T${preferredTime}`);
+      console.log(`Using preferred date+time: ${preferredDate}T${preferredTime}`);
+    } else if (preferredDate) {
+      startDate = new Date(preferredDate);
+      console.log(`Using preferred date only: ${preferredDate}`);
+    } else {
+      startDate = new Date();
+      console.log('Using current date/time as start');
+    }
+    
     const endDate = new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000))
     const calendarId = calendarSettings.calendar_id || 'primary'
     console.log('Searching availability from', startDate.toISOString(), 'to', endDate.toISOString())
