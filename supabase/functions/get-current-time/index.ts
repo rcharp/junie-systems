@@ -14,15 +14,22 @@ serve(async (req) => {
   }
 
   try {
-    console.log('=== GET CURRENT TIME ENDPOINT CALLED ===');
+    console.log('=== CONVERT TIMEZONE ENDPOINT CALLED ===');
     
     const requestBody = await req.json();
     console.log('Request body:', JSON.stringify(requestBody));
-    const { business_id, browser_timezone } = requestBody;
+    const { business_id, datetime } = requestBody;
     
     if (!business_id) {
       return new Response(
         JSON.stringify({ error: 'business_id is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!datetime) {
+      return new Response(
+        JSON.stringify({ error: 'datetime is required (ISO 8601 UTC format expected)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -60,12 +67,12 @@ serve(async (req) => {
     console.log('Found business for user_id:', businessSettings.user_id);
 
     // Log the tool call to client_tool_events
-    const toolCallId = `get_current_time_${Date.now()}`;
+    const toolCallId = `convert_timezone_${Date.now()}`;
     supabase.from('client_tool_events').insert({
       call_sid: requestBody.call_sid || requestBody.conversation_id || 'direct_call',
-      tool_name: 'get_current_time',
+      tool_name: 'convert_timezone',
       tool_call_id: toolCallId,
-      parameters: { business_id, full_request: requestBody },
+      parameters: { business_id, datetime, full_request: requestBody },
       business_id: businessSettings.user_id,
       user_id: businessSettings.user_id
     }).then(({ error: logError }) => {
@@ -73,14 +80,27 @@ serve(async (req) => {
       else console.log('Successfully logged tool call to client_tool_events');
     });
 
-    // Get current time in UTC
-    const now = new Date();
+    // Parse the input datetime (assuming UTC)
+    let inputDate: Date;
+    try {
+      inputDate = new Date(datetime);
+      if (isNaN(inputDate.getTime())) {
+        throw new Error('Invalid date');
+      }
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid datetime format. Please provide ISO 8601 format (e.g., 2025-01-15T14:30:00Z)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('Input UTC datetime:', inputDate.toISOString());
     
     // Get business timezone
     const businessTimezone = businessSettings.business_timezone || 'America/New_York';
     const businessOffset = businessSettings.business_timezone_offset || '-05:00';
     
-    // Format current time in business timezone
+    // Format input datetime in business timezone
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: businessTimezone,
       year: 'numeric',
@@ -92,7 +112,7 @@ serve(async (req) => {
       hour12: false
     });
     
-    const parts = formatter.formatToParts(now);
+    const parts = formatter.formatToParts(inputDate);
     const year = parts.find(p => p.type === 'year')?.value;
     const month = parts.find(p => p.type === 'month')?.value;
     const day = parts.find(p => p.type === 'day')?.value;
@@ -101,72 +121,24 @@ serve(async (req) => {
     const second = parts.find(p => p.type === 'second')?.value;
     
     // Construct ISO-like string with timezone offset
-    const currentDateTime = `${year}-${month}-${day}T${hour}:${minute}:${second}.000${businessOffset}`;
+    const convertedDateTime = `${year}-${month}-${day}T${hour}:${minute}:${second}.000${businessOffset}`;
     
     // Also provide separate date and time for convenience
-    const currentDate = `${year}-${month}-${day}`;
-    const currentTime = `${hour}:${minute}`;
+    const convertedDate = `${year}-${month}-${day}`;
+    const convertedTime = `${hour}:${minute}`;
     
-    console.log('Current time in business timezone:', currentDateTime);
+    console.log('Converted time in business timezone:', convertedDateTime);
     
     // Build response object
-    const response: any = {
+    const response = {
       success: true,
-      business: {
-        current_datetime: currentDateTime,
-        current_date: currentDate,
-        current_time: currentTime,
-        timezone: businessTimezone,
-        timezone_offset: businessOffset
-      }
+      input_utc_datetime: datetime,
+      converted_datetime: convertedDateTime,
+      converted_date: convertedDate,
+      converted_time: convertedTime,
+      timezone: businessTimezone,
+      timezone_offset: businessOffset
     };
-    
-    // If browser timezone is provided, format current time in browser timezone
-    if (browser_timezone) {
-      try {
-        const browserFormatter = new Intl.DateTimeFormat('en-US', {
-          timeZone: browser_timezone,
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false
-        });
-        
-        const browserParts = browserFormatter.formatToParts(now);
-        const browserYear = browserParts.find(p => p.type === 'year')?.value;
-        const browserMonth = browserParts.find(p => p.type === 'month')?.value;
-        const browserDay = browserParts.find(p => p.type === 'day')?.value;
-        const browserHour = browserParts.find(p => p.type === 'hour')?.value;
-        const browserMinute = browserParts.find(p => p.type === 'minute')?.value;
-        const browserSecond = browserParts.find(p => p.type === 'second')?.value;
-        
-        // Get browser timezone offset
-        const browserDate = new Date(now.toLocaleString('en-US', { timeZone: browser_timezone }));
-        const offsetMinutes = -browserDate.getTimezoneOffset();
-        const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
-        const offsetMins = Math.abs(offsetMinutes) % 60;
-        const browserOffset = `${offsetMinutes >= 0 ? '+' : '-'}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`;
-        
-        const browserDateTime = `${browserYear}-${browserMonth}-${browserDay}T${browserHour}:${browserMinute}:${browserSecond}.000${browserOffset}`;
-        const browserDate_only = `${browserYear}-${browserMonth}-${browserDay}`;
-        const browserTime_only = `${browserHour}:${browserMinute}`;
-        
-        response.browser = {
-          current_datetime: browserDateTime,
-          current_date: browserDate_only,
-          current_time: browserTime_only,
-          timezone: browser_timezone,
-          timezone_offset: browserOffset
-        };
-        
-        console.log('Current time in browser timezone:', browserDateTime);
-      } catch (error) {
-        console.error('Error formatting browser timezone:', error);
-      }
-    }
     
     // Log success to client_tool_events
     await supabase.from('client_tool_events')
@@ -190,8 +162,8 @@ serve(async (req) => {
     
     errorSupabase.from('client_tool_events').insert({
       call_sid: 'error_' + Date.now(),
-      tool_name: 'get_current_time',
-      tool_call_id: `get_current_time_error_${Date.now()}`,
+      tool_name: 'convert_timezone',
+      tool_call_id: `convert_timezone_error_${Date.now()}`,
       parameters: { error_context: 'Failed to parse request or process' },
       result: error.message,
       is_error: true
