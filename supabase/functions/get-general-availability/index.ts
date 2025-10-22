@@ -143,7 +143,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { business_id, natural_language } = await req.json();
+    // Try to get parameters from JSON body first, then fall back to query parameters
+    let business_id: string | null = null;
+    let natural_language: string | null = null;
+
+    // Try JSON body
+    try {
+      const body = await req.json();
+      business_id = body.business_id;
+      natural_language = body.natural_language;
+    } catch {
+      // If JSON parsing fails, try query parameters
+      const url = new URL(req.url);
+      business_id = url.searchParams.get('business_id');
+      natural_language = url.searchParams.get('natural_language');
+    }
 
     if (!business_id) {
       return new Response(
