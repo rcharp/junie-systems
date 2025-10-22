@@ -197,16 +197,14 @@ serve(async (req) => {
       console.log(`No time provided, using current time: ${preferredTime}`);
     }
     
-    // Combine date and time into ISO datetime with timezone
-    const timezoneOffset = businessSettings.business_timezone_offset || '-04:00';
-    const isoDateTime = `${preferredDate}T${preferredTime}:00.000${timezoneOffset}`;
-    console.log(`Using ISO datetime for availability: ${isoDateTime}`);
-    
     const availabilityBody: any = { 
       user_id: businessSettings.user_id, 
       limit: 3,
-      preferred_datetime: isoDateTime
+      preferred_date: preferredDate,
+      preferred_time: preferredTime
     };
+    
+    console.log(`Requesting availability with date: ${preferredDate}, time: ${preferredTime}`);
     
     // Call the calendar availability function directly via HTTP to get synchronous response
     const availabilityResponse = await fetch(
