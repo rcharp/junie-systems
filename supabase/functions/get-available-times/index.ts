@@ -85,7 +85,7 @@ serve(async (req) => {
     console.log('Fetching availability for user:', businessSettings.user_id, 'date:', date, 'time:', time);
     
     // Get current date/time in business timezone if not provided
-    const businessTimezone = businessSettings.business_timezone || 'America/New_York';
+    let businessTimezone = businessSettings.business_timezone || 'America/New_York';
     let preferredDate = date;
     let preferredTime = time;
     
@@ -165,7 +165,7 @@ serve(async (req) => {
     console.log('Availability data timezone:', availabilityData?.timezone);
     
     // Extract slot start times and convert from UTC to local timezone
-    const businessTimezone = availabilityData?.timezone || businessSettings.business_timezone || 'America/New_York';
+    businessTimezone = availabilityData?.timezone || businessSettings.business_timezone || 'America/New_York';
     let slots = (availabilityData?.slots || []).map((slot: any) => {
       const utcDate = new Date(slot.startTime);
       
