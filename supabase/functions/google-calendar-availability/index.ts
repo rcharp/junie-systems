@@ -308,6 +308,11 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
     }
     
     for (let dayOffset = 0; dayOffset < 2 && slotsFound < MAX_SLOTS; dayOffset++) {
+      // If a specific date was requested, only check that one date
+      if (preferredDate && dayOffset > 0) {
+        break;
+      }
+      
       const currentDate = new Date(startDate)
       currentDate.setDate(startDate.getDate() + dayOffset)
       
