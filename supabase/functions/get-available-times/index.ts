@@ -88,39 +88,105 @@ serve(async (req) => {
     // Fetch availability synchronously for fast response
     console.log('Fetching availability for user:', businessSettings.user_id, 'date:', date, 'time:', time);
     
-    // Get current date/time in business timezone if not provided or invalid
+    // Get current date/time in business timezone
     let businessTimezone = businessSettings.business_timezone || 'America/New_York';
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: businessTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      weekday: 'long'
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const currentYear = parts.find(p => p.type === 'year')?.value;
+    const currentMonth = parts.find(p => p.type === 'month')?.value;
+    const currentDay = parts.find(p => p.type === 'day')?.value;
+    const currentHour = parts.find(p => p.type === 'hour')?.value;
+    const currentMinute = parts.find(p => p.type === 'minute')?.value;
+    const currentWeekday = parts.find(p => p.type === 'weekday')?.value;
+    
     let preferredDate = isValidDate ? date : null;
     let preferredTime = isValidTime ? time : null;
     
-    if (!preferredDate || !preferredTime) {
-      // Get current date/time in business timezone
-      const now = new Date();
-      const formatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: businessTimezone,
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
+    // Parse natural language date if needed
+    if (!preferredDate && date) {
+      const dateLower = date.toLowerCase().trim();
+      const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const currentDate = new Date(`${currentYear}-${currentMonth}-${currentDay}`);
+      const currentDayIndex = weekdays.indexOf(currentWeekday.toLowerCase());
       
-      const parts = formatter.formatToParts(now);
-      const year = parts.find(p => p.type === 'year')?.value;
-      const month = parts.find(p => p.type === 'month')?.value;
-      const day = parts.find(p => p.type === 'day')?.value;
-      const hour = parts.find(p => p.type === 'hour')?.value;
-      const minute = parts.find(p => p.type === 'minute')?.value;
+      // Check for day of week (e.g., "friday", "next monday")
+      const isNextWeek = dateLower.includes('next');
+      const matchedDay = weekdays.find(day => dateLower.includes(day));
       
-      if (!preferredDate) {
+      if (matchedDay) {
+        const targetDayIndex = weekdays.indexOf(matchedDay);
+        let daysToAdd = targetDayIndex - currentDayIndex;
+        
+        // If the day has already passed this week, or if "next" is specified, go to next week
+        if (daysToAdd <= 0 || isNextWeek) {
+          daysToAdd += 7;
+        }
+        
+        // If "next" is specified, ensure we're in the following week
+        if (isNextWeek && daysToAdd < 7) {
+          daysToAdd += 7;
+        }
+        
+        const targetDate = new Date(currentDate);
+        targetDate.setDate(targetDate.getDate() + daysToAdd);
+        
+        const year = targetDate.getFullYear();
+        const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const day = String(targetDate.getDate()).padStart(2, '0');
         preferredDate = `${year}-${month}-${day}`;
+        
+        console.log(`Parsed natural language date "${date}" to ${preferredDate}`);
       }
-      if (!preferredTime) {
-        preferredTime = `${hour}:${minute}`;
-      }
+    }
+    
+    // Parse natural language time if needed
+    if (!preferredTime && time) {
+      const timeLower = time.toLowerCase().trim();
       
-      console.log(`Using current date/time in ${businessTimezone}: ${preferredDate} ${preferredTime}`);
+      // Handle common time formats
+      if (timeLower === 'noon' || timeLower === '12pm' || timeLower === '12:00pm') {
+        preferredTime = '12:00';
+      } else if (timeLower === 'midnight' || timeLower === '12am' || timeLower === '12:00am') {
+        preferredTime = '00:00';
+      } else {
+        // Parse time like "3:00 PM", "3pm", "3:30 PM"
+        const timeMatch = timeLower.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/);
+        if (timeMatch) {
+          let hour = parseInt(timeMatch[1]);
+          const minute = timeMatch[2] || '00';
+          const ampm = timeMatch[3];
+          
+          if (ampm === 'pm' && hour !== 12) {
+            hour += 12;
+          } else if (ampm === 'am' && hour === 12) {
+            hour = 0;
+          }
+          
+          preferredTime = `${String(hour).padStart(2, '0')}:${minute}`;
+          console.log(`Parsed natural language time "${time}" to ${preferredTime}`);
+        }
+      }
+    }
+    
+    // If still no date/time, use current
+    if (!preferredDate) {
+      preferredDate = `${currentYear}-${currentMonth}-${currentDay}`;
+      console.log(`No date provided, using current date: ${preferredDate}`);
+    }
+    if (!preferredTime) {
+      preferredTime = `${currentHour}:${currentMinute}`;
+      console.log(`No time provided, using current time: ${preferredTime}`);
     }
     
     const availabilityBody: any = { user_id: businessSettings.user_id, limit: 3 };
