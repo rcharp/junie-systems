@@ -8,6 +8,8 @@ import { Minimize2, Maximize2, CalendarIcon } from "lucide-react";
 import { formatDistanceToNow, format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -26,6 +28,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
   const [events, setEvents] = useState<ClientToolEvent[]>([]);
   const [isMinimized, setIsMinimized] = useState(!defaultExpanded);
   const [testDate, setTestDate] = useState<Date>();
+  const [testTime, setTestTime] = useState<string>("");
   const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
@@ -93,18 +96,25 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         return;
       }
 
+      const requestBody: any = {
+        business_id: businessSettings.id,
+        date: dateStr
+      };
+
+      // Only include time if provided
+      if (testTime) {
+        requestBody.time = testTime;
+      }
+
       const { data, error } = await supabase.functions.invoke('get-available-times', {
-        body: {
-          business_id: businessSettings.id,
-          date: dateStr,
-          time: '09:00'
-        }
+        body: requestBody
       });
 
       if (error) {
         toast.error(`Error: ${error.message}`);
       } else {
-        toast.success(`Found ${data.availability_count} available slots`);
+        const timeInfo = testTime ? ` at ${testTime}` : ' (all day)';
+        toast.success(`Found ${data.availability_count} available slots for ${dateStr}${timeInfo}`);
         console.log('Availability response:', data);
       }
     } catch (error: any) {
@@ -140,37 +150,58 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
             </p>
             
             {/* Test Availability Section */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               <p className="text-xs font-medium">Test Get Available Times</p>
-              <div className="flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "justify-start text-left font-normal",
-                        !testDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={testDate}
-                      onSelect={setTestDate}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn(
+                          "justify-start text-left font-normal",
+                          !testDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={testDate}
+                        onSelect={setTestDate}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Label htmlFor="test-time" className="text-xs">Time (optional)</Label>
+                    <Input
+                      id="test-time"
+                      type="time"
+                      value={testTime}
+                      onChange={(e) => setTestTime(e.target.value)}
+                      placeholder="HH:MM"
+                      className="h-8 text-xs"
                     />
-                  </PopoverContent>
-                </Popover>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Leave empty to get all availability for the day
+                    </p>
+                  </div>
+                </div>
+                
                 <Button 
                   onClick={testAvailability} 
                   disabled={!testDate || isTesting}
                   size="sm"
+                  className="w-full"
                 >
                   {isTesting ? "Testing..." : "Test Endpoint"}
                 </Button>
