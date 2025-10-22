@@ -22,20 +22,11 @@ interface ClientToolEvent {
   result: string | null;
   is_error: boolean;
   created_at: string;
-}
-
-interface TestResult {
-  id: string;
-  endpoint: string;
-  parameters: any;
-  response: any;
-  error: boolean;
-  timestamp: string;
+  is_test?: boolean;
 }
 
 export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded?: boolean }) {
   const [events, setEvents] = useState<ClientToolEvent[]>([]);
-  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isMinimized, setIsMinimized] = useState(!defaultExpanded);
   const [testDate, setTestDate] = useState<Date>();
   const [testTime, setTestTime] = useState<string>("");
@@ -112,16 +103,19 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         body: requestBody
       });
 
-      const testResult: TestResult = {
-        id: Date.now().toString(),
-        endpoint: 'get-specific-availability',
+      const testEvent: ClientToolEvent = {
+        id: `test-${Date.now()}`,
+        call_sid: 'TEST',
+        tool_name: 'get-specific-availability',
+        tool_call_id: `test-call-${Date.now()}`,
         parameters: requestBody,
-        response: error ? { error: error.message } : data,
-        error: !!error,
-        timestamp: new Date().toISOString()
+        result: error ? `Error: ${error.message}` : JSON.stringify(data, null, 2),
+        is_error: !!error,
+        created_at: new Date().toISOString(),
+        is_test: true
       };
 
-      setTestResults(prev => [testResult, ...prev].slice(0, 20));
+      setEvents(prev => [testEvent, ...prev].slice(0, 50));
 
       if (error) {
         toast.error(`Error: ${error.message}`);
@@ -159,16 +153,19 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         body: requestBody
       });
 
-      const testResult: TestResult = {
-        id: Date.now().toString(),
-        endpoint: 'get-general-availability',
+      const testEvent: ClientToolEvent = {
+        id: `test-${Date.now()}`,
+        call_sid: 'TEST',
+        tool_name: 'get-general-availability',
+        tool_call_id: `test-call-${Date.now()}`,
         parameters: requestBody,
-        response: error ? { error: error.message } : data,
-        error: !!error,
-        timestamp: new Date().toISOString()
+        result: error ? `Error: ${error.message}` : JSON.stringify(data, null, 2),
+        is_error: !!error,
+        created_at: new Date().toISOString(),
+        is_test: true
       };
 
-      setTestResults(prev => [testResult, ...prev].slice(0, 20));
+      setEvents(prev => [testEvent, ...prev].slice(0, 50));
 
       if (error) {
         toast.error(`Error: ${error.message}`);
@@ -317,48 +314,6 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
 
             {/* Right Side - Events List */}
             <div className="space-y-4">
-              {/* Test Results Section */}
-              {testResults.length > 0 && (
-                <div className="space-y-2">
-                  <div>
-                    <h3 className="text-sm font-semibold mb-1">Test Results</h3>
-                    <p className="text-xs text-muted-foreground">
-                      API test responses ({testResults.length})
-                    </p>
-                  </div>
-                  <ScrollArea className="h-[280px] pr-4">
-                    <div className="space-y-2">
-                      {testResults.map((result) => (
-                        <div key={result.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
-                          <div className="flex items-center justify-between">
-                            <Badge variant={result.error ? "destructive" : "default"} className="text-xs">
-                              {result.endpoint}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(result.timestamp), { addSuffix: true })}
-                            </span>
-                          </div>
-                          <div className="space-y-1.5">
-                            <div className="text-sm">
-                              <span className="font-medium text-xs">Parameters:</span>
-                              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
-                                {JSON.stringify(result.parameters, null, 2)}
-                              </pre>
-                            </div>
-                            <div className="text-sm">
-                              <span className="font-medium text-xs">Response:</span>
-                              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto max-h-32">
-                                {JSON.stringify(result.response, null, 2)}
-                              </pre>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </div>
-              )}
-
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold mb-1">Live Events</h3>
@@ -368,7 +323,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                 </div>
               </div>
 
-              <ScrollArea className={cn("pr-4", testResults.length > 0 ? "h-[280px]" : "h-[600px]")}>
+              <ScrollArea className="h-[600px] pr-4">
                 <div className="space-y-3">
                   {events.length === 0 ? (
                     <div className="flex items-center justify-center py-12">
@@ -379,6 +334,11 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                       <div key={event.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-wrap">
+                            {event.is_test ? (
+                              <Badge variant="secondary" className="text-xs">TEST</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">LIVE</Badge>
+                            )}
                             <Badge variant={event.is_error ? "destructive" : event.result ? "default" : "secondary"} className="text-xs">
                               {event.tool_name}
                             </Badge>
