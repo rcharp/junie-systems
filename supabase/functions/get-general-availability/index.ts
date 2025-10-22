@@ -24,6 +24,41 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
     targetDate.setDate(targetDate.getDate() + 1);
   } else if (lowerInput.includes('next week')) {
     targetDate.setDate(targetDate.getDate() + 7);
+  } else if (lowerInput.match(/(\d+)\s+(weeks?)\s+(from\s+(now|today))?/)) {
+    // Handle "2 weeks from now", "3 weeks", etc.
+    const match = lowerInput.match(/(\d+)\s+(weeks?)\s+(from\s+(now|today))?/);
+    if (match) {
+      const numWeeks = parseInt(match[1]);
+      targetDate.setDate(targetDate.getDate() + (numWeeks * 7));
+    }
+  } else if (lowerInput.match(/(\d+)\s+(days?)\s+(from\s+(now|today))?/)) {
+    // Handle "2 days from now", "3 days", etc.
+    const match = lowerInput.match(/(\d+)\s+(days?)\s+(from\s+(now|today))?/);
+    if (match) {
+      const numDays = parseInt(match[1]);
+      targetDate.setDate(targetDate.getDate() + numDays);
+    }
+  } else if (lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s+(from\s+(now|today))?/)) {
+    // Handle "two fridays from now", "3 mondays from today", etc.
+    const match = lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s+(from\s+(now|today))?/);
+    if (match) {
+      const numberWords: { [key: string]: number } = { 'two': 2, 'three': 3, 'four': 4 };
+      const occurrences = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
+      const dayName = match[2].replace(/s$/, ''); // Remove plural 's'
+      
+      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+      const targetDay = days.indexOf(dayName);
+      const currentDay = targetDate.getDay();
+      
+      // Find the first occurrence
+      let daysToAdd = targetDay - currentDay;
+      if (daysToAdd <= 0) daysToAdd += 7;
+      
+      // Add additional weeks for the nth occurrence
+      daysToAdd += (occurrences - 1) * 7;
+      
+      targetDate.setDate(targetDate.getDate() + daysToAdd);
+    }
   } else if (lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const match = lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
