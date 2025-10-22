@@ -663,6 +663,13 @@ serve(async (req) => {
       console.log("Calendar not connected or settings not found");
     }
 
+    // Get current date/time in the business's timezone
+    const businessTimezone = businessData.business_timezone || 'America/New_York';
+    const now = new Date();
+    const currentDateTime = formatInTimeZone(now, businessTimezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
+    const currentDate = formatInTimeZone(now, businessTimezone, "yyyy-MM-dd");
+    const currentTime = formatInTimeZone(now, businessTimezone, "HH:mm");
+
     // Format the response
     const responseData = {
       businessData: {
@@ -680,11 +687,14 @@ serve(async (req) => {
         pricing_structure: businessData.pricing_structure || "N/A",
         appointment_booking: businessData.appointment_booking || false,
         appointment_duration: appointmentDuration,
-        business_timezone: businessData.business_timezone || "America/New_York",
+        business_timezone: businessTimezone,
         business_description: businessData.business_description || "N/A",
         transfer_number: addUSCountryCode(businessData.transfer_number || "N/A"),
         urgent_keywords: businessData.urgent_keywords || "emergency, urgent, urgent_keywords",
         callback_timeframe: "within 24 hours",
+        current_datetime: currentDateTime,
+        current_date: currentDate,
+        current_time: currentTime,
         // available_times: availableTimes, // Moved to /get-available-times endpoint
       },
       error: null,
