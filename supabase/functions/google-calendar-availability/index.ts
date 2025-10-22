@@ -111,14 +111,16 @@ Deno.serve(async (req) => {
     let startDate: Date;
     if (preferredDate && preferredTime) {
       // Combine date and time to get a specific start point
-      startDate = new Date(`${preferredDate}T${preferredTime}`);
-      console.log(`Using preferred date+time: ${preferredDate}T${preferredTime}`);
+      // Need to parse carefully to preserve the time
+      const dateTimeString = `${preferredDate}T${preferredTime}:00`;
+      startDate = new Date(dateTimeString);
+      console.log(`Using preferred date+time: ${dateTimeString}, parsed to: ${startDate.toISOString()}`);
     } else if (preferredDate) {
       startDate = new Date(preferredDate);
-      console.log(`Using preferred date only: ${preferredDate}`);
+      console.log(`Using preferred date only: ${preferredDate}, parsed to: ${startDate.toISOString()}`);
     } else {
       startDate = new Date();
-      console.log('Using current date/time as start');
+      console.log('Using current date/time as start:', startDate.toISOString());
     }
     
     const endDate = new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000))

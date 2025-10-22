@@ -204,7 +204,7 @@ serve(async (req) => {
       preferred_time: preferredTime
     };
     
-    console.log(`Requesting availability with date: ${preferredDate}, time: ${preferredTime}`);
+    console.log(`Requesting availability with:`, JSON.stringify(availabilityBody));
     
     // Call the calendar availability function directly via HTTP to get synchronous response
     const availabilityResponse = await fetch(
