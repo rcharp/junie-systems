@@ -27,11 +27,15 @@ serve(async (req) => {
       );
     }
 
-    // Validate date is ISO timestamp if provided
-    if (date && !isNaN(Date.parse(date))) {
-      console.log('Valid ISO timestamp received for date:', date);
-    } else if (date) {
-      console.log('Warning: date is not a valid ISO timestamp:', date);
+    // Validate date is ISO format (YYYY-MM-DD or full ISO timestamp)
+    const isValidDate = date && /^\d{4}-\d{2}-\d{2}/.test(date) && !isNaN(Date.parse(date));
+    const isValidTime = time && /^\d{1,2}:\d{2}/.test(time);
+    
+    if (date && !isValidDate) {
+      console.log('Warning: date is not a valid ISO format (received natural language):', date);
+    }
+    if (time && !isValidTime) {
+      console.log('Warning: time is not a valid format (received natural language):', time);
     }
 
     console.log('Looking up business by business_id:', business_id);
@@ -84,12 +88,12 @@ serve(async (req) => {
     // Fetch availability synchronously for fast response
     console.log('Fetching availability for user:', businessSettings.user_id, 'date:', date, 'time:', time);
     
-    // Get current date/time in business timezone if not provided
+    // Get current date/time in business timezone if not provided or invalid
     let businessTimezone = businessSettings.business_timezone || 'America/New_York';
-    let preferredDate = date;
-    let preferredTime = time;
+    let preferredDate = isValidDate ? date : null;
+    let preferredTime = isValidTime ? time : null;
     
-    if (!preferredDate) {
+    if (!preferredDate || !preferredTime) {
       // Get current date/time in business timezone
       const now = new Date();
       const formatter = new Intl.DateTimeFormat('en-US', {
@@ -109,8 +113,12 @@ serve(async (req) => {
       const hour = parts.find(p => p.type === 'hour')?.value;
       const minute = parts.find(p => p.type === 'minute')?.value;
       
-      preferredDate = `${year}-${month}-${day}`;
-      preferredTime = `${hour}:${minute}`;
+      if (!preferredDate) {
+        preferredDate = `${year}-${month}-${day}`;
+      }
+      if (!preferredTime) {
+        preferredTime = `${hour}:${minute}`;
+      }
       
       console.log(`Using current date/time in ${businessTimezone}: ${preferredDate} ${preferredTime}`);
     }
