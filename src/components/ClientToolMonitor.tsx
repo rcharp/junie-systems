@@ -29,7 +29,9 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
   const [isMinimized, setIsMinimized] = useState(!defaultExpanded);
   const [testDate, setTestDate] = useState<Date>();
   const [testTime, setTestTime] = useState<string>("");
+  const [naturalLanguage, setNaturalLanguage] = useState<string>("");
   const [isTesting, setIsTesting] = useState(false);
+  const [isTestingNL, setIsTestingNL] = useState(false);
 
   useEffect(() => {
     // Fetch initial events
@@ -74,7 +76,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
     };
   }, []);
 
-  const testAvailability = async () => {
+  const testSpecificAvailability = async () => {
     if (!testDate) {
       toast.error("Please select a date first");
       return;
@@ -82,10 +84,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
 
     setIsTesting(true);
     try {
-      // Format date to YYYY-MM-DD
       const dateStr = format(testDate, 'yyyy-MM-dd');
-      
-      // Use hardcoded test business ID
       const testBusinessId = '16739d7f-5a78-499f-ba6d-7a8b72ccba58';
 
       const requestBody: any = {
@@ -93,14 +92,13 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         date: dateStr
       };
 
-      // Only include time if provided
       if (testTime) {
         requestBody.time = testTime;
       }
 
-      console.log('Testing get-available-times with:', requestBody);
+      console.log('Testing get-specific-availability with:', requestBody);
 
-      const { data, error } = await supabase.functions.invoke('get-available-times', {
+      const { data, error } = await supabase.functions.invoke('get-specific-availability', {
         body: requestBody
       });
 
@@ -108,15 +106,50 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         toast.error(`Error: ${error.message}`);
         console.error('Error response:', error);
       } else {
-        const timeInfo = testTime ? ` at ${testTime}` : ' (all day)';
-        toast.success(`Found ${data.availability_count} available slots for ${dateStr}${timeInfo}`);
-        console.log('Availability response:', data);
+        toast.success(`Found ${data.available_slots?.length || 0} available slots`);
+        console.log('Specific availability response:', data);
       }
     } catch (error: any) {
       toast.error(`Error: ${error.message}`);
       console.error('Exception:', error);
     } finally {
       setIsTesting(false);
+    }
+  };
+
+  const testGeneralAvailability = async () => {
+    if (!naturalLanguage.trim()) {
+      toast.error("Please enter a natural language query");
+      return;
+    }
+
+    setIsTestingNL(true);
+    try {
+      const testBusinessId = '16739d7f-5a78-499f-ba6d-7a8b72ccba58';
+
+      const requestBody = {
+        business_id: testBusinessId,
+        natural_language: naturalLanguage
+      };
+
+      console.log('Testing get-general-availability with:', requestBody);
+
+      const { data, error } = await supabase.functions.invoke('get-general-availability', {
+        body: requestBody
+      });
+
+      if (error) {
+        toast.error(`Error: ${error.message}`);
+        console.error('Error response:', error);
+      } else {
+        toast.success(`Found ${data.available_slots?.length || 0} available slots for "${naturalLanguage}"`);
+        console.log('General availability response:', data);
+      }
+    } catch (error: any) {
+      toast.error(`Error: ${error.message}`);
+      console.error('Exception:', error);
+    } finally {
+      setIsTestingNL(false);
     }
   };
 
@@ -145,61 +178,96 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
               Showing {events.length} recent events
             </p>
             
-            {/* Test Availability Section */}
-            <div className="space-y-3">
-              <p className="text-xs font-medium">Test Get Available Times</p>
+            {/* Test Specific Date/Time Availability */}
+            <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+              <div>
+                <p className="text-xs font-semibold">Test Specific Date/Time Query</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Uses get-specific-availability endpoint</p>
+              </div>
               <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={cn(
-                          "justify-start text-left font-normal",
-                          !testDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={testDate}
-                        onSelect={setTestDate}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                   <div className="flex-1">
-                    <Label htmlFor="test-time" className="text-xs">Time (optional)</Label>
+                    <Label htmlFor="specific-date" className="text-xs mb-1 block">Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="specific-date"
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal h-9",
+                            !testDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={testDate}
+                          onSelect={setTestDate}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <Label htmlFor="specific-time" className="text-xs mb-1 block">Time (optional)</Label>
                     <Input
-                      id="test-time"
+                      id="specific-time"
                       type="time"
                       value={testTime}
                       onChange={(e) => setTestTime(e.target.value)}
                       placeholder="HH:MM"
-                      className="h-8 text-xs"
+                      className="h-9 text-xs"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Leave empty to get all availability for the day
-                    </p>
                   </div>
                 </div>
                 
                 <Button 
-                  onClick={testAvailability} 
+                  onClick={testSpecificAvailability} 
                   disabled={!testDate || isTesting}
                   size="sm"
                   className="w-full"
                 >
-                  {isTesting ? "Testing..." : "Test Endpoint"}
+                  {isTesting ? "Testing..." : "Test Specific Query"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Test Natural Language Query */}
+            <div className="space-y-3 p-3 border rounded-lg bg-muted/30">
+              <div>
+                <p className="text-xs font-semibold">Test Natural Language Query</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Uses get-general-availability endpoint</p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <div>
+                  <Label htmlFor="natural-language" className="text-xs mb-1 block">Natural Language Input</Label>
+                  <Input
+                    id="natural-language"
+                    type="text"
+                    value={naturalLanguage}
+                    onChange={(e) => setNaturalLanguage(e.target.value)}
+                    placeholder='e.g., "tomorrow", "next Friday", "Monday morning"'
+                    className="h-9 text-xs"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Try: "tomorrow", "next week", "Friday afternoon"
+                  </p>
+                </div>
+                
+                <Button 
+                  onClick={testGeneralAvailability} 
+                  disabled={!naturalLanguage.trim() || isTestingNL}
+                  size="sm"
+                  className="w-full"
+                >
+                  {isTestingNL ? "Testing..." : "Test Natural Language Query"}
                 </Button>
               </div>
             </div>
