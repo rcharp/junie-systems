@@ -84,9 +84,40 @@ serve(async (req) => {
     // Fetch availability synchronously for fast response
     console.log('Fetching availability for user:', businessSettings.user_id, 'date:', date, 'time:', time);
     
+    // Get current date/time in business timezone if not provided
+    const businessTimezone = businessSettings.business_timezone || 'America/New_York';
+    let preferredDate = date;
+    let preferredTime = time;
+    
+    if (!preferredDate) {
+      // Get current date/time in business timezone
+      const now = new Date();
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: businessTimezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+      
+      const parts = formatter.formatToParts(now);
+      const year = parts.find(p => p.type === 'year')?.value;
+      const month = parts.find(p => p.type === 'month')?.value;
+      const day = parts.find(p => p.type === 'day')?.value;
+      const hour = parts.find(p => p.type === 'hour')?.value;
+      const minute = parts.find(p => p.type === 'minute')?.value;
+      
+      preferredDate = `${year}-${month}-${day}`;
+      preferredTime = `${hour}:${minute}`;
+      
+      console.log(`Using current date/time in ${businessTimezone}: ${preferredDate} ${preferredTime}`);
+    }
+    
     const availabilityBody: any = { user_id: businessSettings.user_id, limit: 3 };
-    if (date) availabilityBody.preferred_date = date;
-    if (time) availabilityBody.preferred_time = time;
+    if (preferredDate) availabilityBody.preferred_date = preferredDate;
+    if (preferredTime) availabilityBody.preferred_time = preferredTime;
     
     // Call the calendar availability function directly via HTTP to get synchronous response
     const availabilityResponse = await fetch(
