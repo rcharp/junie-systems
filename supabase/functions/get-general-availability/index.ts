@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
+import { toZonedTime, format } from 'https://esm.sh/date-fns-tz@3.2.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,31 +11,8 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
   const now = new Date();
   const lowerInput = input.toLowerCase().trim();
 
-  // Get timezone offset for the business
-  const tzOffsetMatch = timezone.match(/GMT([+-]\d{1,2})/i);
-  let businessHourOffset = 0;
-  if (tzOffsetMatch) {
-    businessHourOffset = parseInt(tzOffsetMatch[1]);
-  } else {
-    // Try to determine offset from timezone name
-    const timezoneOffsets: { [key: string]: number } = {
-      'america/new_york': -5,
-      'america/chicago': -6,
-      'america/denver': -7,
-      'america/los_angeles': -8,
-      'america/phoenix': -7,
-      'america/anchorage': -9,
-      'pacific/honolulu': -10,
-      'est': -5,
-      'cst': -6,
-      'mst': -7,
-      'pst': -8,
-    };
-    businessHourOffset = timezoneOffsets[timezone.toLowerCase()] || 0;
-  }
-
-  // Adjust current time to business timezone
-  const businessNow = new Date(now.getTime() + (businessHourOffset * 60 * 60 * 1000));
+  // Convert current time to business timezone
+  const businessNow = toZonedTime(now, timezone);
 
   let targetDate = new Date(businessNow);
   let timeString: string | undefined;
@@ -105,7 +83,8 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
     }
   }
 
-  const dateString = targetDate.toISOString().split('T')[0];
+  // Format date in YYYY-MM-DD format using the business timezone
+  const dateString = format(targetDate, 'yyyy-MM-dd', { timeZone: timezone });
 
   return {
     date: dateString,
