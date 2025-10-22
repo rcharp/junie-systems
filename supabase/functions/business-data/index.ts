@@ -697,7 +697,7 @@ serve(async (req) => {
         current_datetime: currentDateTime,
         current_date: currentDate,
         current_time: currentTime,
-        available_slots: availableSlots,
+        available_slots: JSON.stringify(availableSlots),
       },
       error: null,
     };
