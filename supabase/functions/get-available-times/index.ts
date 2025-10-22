@@ -177,6 +177,10 @@ serve(async (req) => {
     }
     // If no date provided, return all next available slots (no filtering needed)
     
+    // Limit to 3 slots maximum
+    slots = slots.slice(0, 3);
+    console.log(`Returning ${slots.length} slot(s) (max 3)`);
+    
     const response = {
       success: true,
       availability_count: slots.length,
