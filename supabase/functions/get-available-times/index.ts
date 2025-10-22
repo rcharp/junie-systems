@@ -89,8 +89,12 @@ serve(async (req) => {
     console.log('Fetching availability for user:', businessSettings.user_id, 'date:', date, 'time:', time);
     
     // Get current date/time in business timezone
-    let businessTimezone = businessSettings.business_timezone || 'America/New_York';
-    const now = new Date();
+    const businessTimezone = businessSettings.business_timezone || 'America/New_York';
+    
+    // Get the actual current time in the business timezone
+    const nowUtc = new Date();
+    console.log('Current UTC time:', nowUtc.toISOString());
+    
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: businessTimezone,
       year: 'numeric',
@@ -102,13 +106,15 @@ serve(async (req) => {
       weekday: 'long'
     });
     
-    const parts = formatter.formatToParts(now);
-    const currentYear = parts.find(p => p.type === 'year')?.value;
-    const currentMonth = parts.find(p => p.type === 'month')?.value;
-    const currentDay = parts.find(p => p.type === 'day')?.value;
+    const parts = formatter.formatToParts(nowUtc);
+    const currentYear = parseInt(parts.find(p => p.type === 'year')?.value || '2025');
+    const currentMonth = parseInt(parts.find(p => p.type === 'month')?.value || '1');
+    const currentDay = parseInt(parts.find(p => p.type === 'day')?.value || '1');
     const currentHour = parts.find(p => p.type === 'hour')?.value;
     const currentMinute = parts.find(p => p.type === 'minute')?.value;
-    const currentWeekday = parts.find(p => p.type === 'weekday')?.value;
+    const currentWeekday = parts.find(p => p.type === 'weekday')?.value || 'Monday';
+    
+    console.log(`Current time in ${businessTimezone}: ${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')} ${currentHour}:${currentMinute} (${currentWeekday})`);
     
     let preferredDate = isValidDate ? date : null;
     let preferredTime = isValidTime ? time : null;
@@ -117,7 +123,9 @@ serve(async (req) => {
     if (!preferredDate && date) {
       const dateLower = date.toLowerCase().trim();
       const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const currentDate = new Date(`${currentYear}-${currentMonth}-${currentDay}`);
+      
+      // Create a Date object for the current date in the business timezone
+      const currentDateInTz = new Date(currentYear, currentMonth - 1, currentDay);
       const currentDayIndex = weekdays.indexOf(currentWeekday.toLowerCase());
       
       // Check for day of week (e.g., "friday", "next monday")
@@ -138,7 +146,7 @@ serve(async (req) => {
           daysToAdd += 7;
         }
         
-        const targetDate = new Date(currentDate);
+        const targetDate = new Date(currentDateInTz);
         targetDate.setDate(targetDate.getDate() + daysToAdd);
         
         const year = targetDate.getFullYear();
@@ -146,7 +154,7 @@ serve(async (req) => {
         const day = String(targetDate.getDate()).padStart(2, '0');
         preferredDate = `${year}-${month}-${day}`;
         
-        console.log(`Parsed natural language date "${date}" to ${preferredDate}`);
+        console.log(`Parsed natural language date "${date}" to ${preferredDate} (from ${currentWeekday} ${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')})`);
       }
     }
     
@@ -181,7 +189,7 @@ serve(async (req) => {
     
     // If still no date/time, use current
     if (!preferredDate) {
-      preferredDate = `${currentYear}-${currentMonth}-${currentDay}`;
+      preferredDate = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(currentDay).padStart(2, '0')}`;
       console.log(`No date provided, using current date: ${preferredDate}`);
     }
     if (!preferredTime) {
