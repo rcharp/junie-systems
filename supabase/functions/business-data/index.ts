@@ -603,12 +603,13 @@ serve(async (req) => {
 
     // Generate available times based on business hours or calendar availability
     let availableTimes = businessData.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM"; // Default fallback
+    let availableSlots: any[] = []; // Next 3 available slots
 
     if (calendarSettings && calendarSettings.is_connected) {
       try {
         console.log("Fetching calendar availability for user_id:", businessData.user_id);
         const availabilityResponse = await supabase.functions.invoke("google-calendar-availability", {
-          body: { user_id: businessData.user_id },
+          body: { user_id: businessData.user_id, limit: 3 },
         });
 
         console.log("Full availability response:", JSON.stringify(availabilityResponse, null, 2));
@@ -646,6 +647,7 @@ serve(async (req) => {
 
             console.log("Formatted slots:", formattedSlots);
             availableTimes = JSON.stringify(formattedSlots);
+            availableSlots = formattedSlots.slice(0, 3); // Get next 3 available slots
           } else {
             console.log("No slots returned from calendar");
           }
@@ -695,7 +697,7 @@ serve(async (req) => {
         current_datetime: currentDateTime,
         current_date: currentDate,
         current_time: currentTime,
-        // available_times: availableTimes, // Moved to /get-available-times endpoint
+        available_slots: availableSlots,
       },
       error: null,
     };
