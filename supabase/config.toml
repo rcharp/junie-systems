@@ -134,7 +134,10 @@ verify_jwt = false
 [functions.release-twilio-number]
 verify_jwt = true
 
-[functions.get-available-times]
+[functions.get-specific-availability]
+verify_jwt = false
+
+[functions.get-general-availability]
 verify_jwt = false
 
 [functions.get-current-time]
