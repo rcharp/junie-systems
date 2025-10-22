@@ -171,9 +171,9 @@ Deno.serve(async (req) => {
       'google-calendar-availability',
       {
         body: {
-          userId: user_id,
-          preferredDate: parsed.date,
-          preferredTime: parsed.time,
+          user_id: user_id,
+          preferred_date: parsed.date,
+          preferred_time: parsed.time,
           limit: 100, // Get all slots for the date
         },
       }
