@@ -89,7 +89,7 @@ serve(async (req) => {
     console.log('Fetching availability for user:', businessSettings.user_id, 'date:', date, 'time:', time);
     
     // Get current date/time in business timezone
-    const businessTimezone = businessSettings.business_timezone || 'America/New_York';
+    let businessTimezone = businessSettings.business_timezone || 'America/New_York';
     
     // Get the actual current time in the business timezone
     const nowUtc = new Date();
