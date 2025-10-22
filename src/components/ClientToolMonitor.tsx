@@ -85,19 +85,11 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
       // Format date to YYYY-MM-DD
       const dateStr = format(testDate, 'yyyy-MM-dd');
       
-      // Get business_id from business_settings
-      const { data: businessSettings } = await supabase
-        .from('business_settings')
-        .select('id')
-        .single();
-
-      if (!businessSettings) {
-        toast.error("No business settings found");
-        return;
-      }
+      // Use hardcoded test business ID
+      const testBusinessId = '16739d7f-5a78-499f-ba6d-7a8b72ccba58';
 
       const requestBody: any = {
-        business_id: businessSettings.id,
+        business_id: testBusinessId,
         date: dateStr
       };
 
@@ -106,12 +98,15 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         requestBody.time = testTime;
       }
 
+      console.log('Testing get-available-times with:', requestBody);
+
       const { data, error } = await supabase.functions.invoke('get-available-times', {
         body: requestBody
       });
 
       if (error) {
         toast.error(`Error: ${error.message}`);
+        console.error('Error response:', error);
       } else {
         const timeInfo = testTime ? ` at ${testTime}` : ' (all day)';
         toast.success(`Found ${data.availability_count} available slots for ${dateStr}${timeInfo}`);
@@ -119,6 +114,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
       }
     } catch (error: any) {
       toast.error(`Error: ${error.message}`);
+      console.error('Exception:', error);
     } finally {
       setIsTesting(false);
     }
