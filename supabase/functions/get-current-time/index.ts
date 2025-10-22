@@ -18,7 +18,7 @@ serve(async (req) => {
     
     const requestBody = await req.json();
     console.log('Request body:', JSON.stringify(requestBody));
-    const { business_id } = requestBody;
+    const { business_id, browser_timezone } = requestBody;
     
     if (!business_id) {
       return new Response(
@@ -109,14 +109,64 @@ serve(async (req) => {
     
     console.log('Current time in business timezone:', currentDateTime);
     
-    const response = {
+    // Build response object
+    const response: any = {
       success: true,
-      current_datetime: currentDateTime,
-      current_date: currentDate,
-      current_time: currentTime,
-      timezone: businessTimezone,
-      timezone_offset: businessOffset
+      business: {
+        current_datetime: currentDateTime,
+        current_date: currentDate,
+        current_time: currentTime,
+        timezone: businessTimezone,
+        timezone_offset: businessOffset
+      }
     };
+    
+    // If browser timezone is provided, format current time in browser timezone
+    if (browser_timezone) {
+      try {
+        const browserFormatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: browser_timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+        
+        const browserParts = browserFormatter.formatToParts(now);
+        const browserYear = browserParts.find(p => p.type === 'year')?.value;
+        const browserMonth = browserParts.find(p => p.type === 'month')?.value;
+        const browserDay = browserParts.find(p => p.type === 'day')?.value;
+        const browserHour = browserParts.find(p => p.type === 'hour')?.value;
+        const browserMinute = browserParts.find(p => p.type === 'minute')?.value;
+        const browserSecond = browserParts.find(p => p.type === 'second')?.value;
+        
+        // Get browser timezone offset
+        const browserDate = new Date(now.toLocaleString('en-US', { timeZone: browser_timezone }));
+        const offsetMinutes = -browserDate.getTimezoneOffset();
+        const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+        const offsetMins = Math.abs(offsetMinutes) % 60;
+        const browserOffset = `${offsetMinutes >= 0 ? '+' : '-'}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`;
+        
+        const browserDateTime = `${browserYear}-${browserMonth}-${browserDay}T${browserHour}:${browserMinute}:${browserSecond}.000${browserOffset}`;
+        const browserDate_only = `${browserYear}-${browserMonth}-${browserDay}`;
+        const browserTime_only = `${browserHour}:${browserMinute}`;
+        
+        response.browser = {
+          current_datetime: browserDateTime,
+          current_date: browserDate_only,
+          current_time: browserTime_only,
+          timezone: browser_timezone,
+          timezone_offset: browserOffset
+        };
+        
+        console.log('Current time in browser timezone:', browserDateTime);
+      } catch (error) {
+        console.error('Error formatting browser timezone:', error);
+      }
+    }
     
     // Log success to client_tool_events
     await supabase.from('client_tool_events')
