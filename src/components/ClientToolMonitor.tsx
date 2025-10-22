@@ -4,8 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Minimize2, Maximize2 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { Minimize2, Maximize2, CalendarIcon } from "lucide-react";
+import { formatDistanceToNow, format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface ClientToolEvent {
   id: string;
@@ -21,6 +25,8 @@ interface ClientToolEvent {
 export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded?: boolean }) {
   const [events, setEvents] = useState<ClientToolEvent[]>([]);
   const [isMinimized, setIsMinimized] = useState(!defaultExpanded);
+  const [testDate, setTestDate] = useState<Date>();
+  const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     // Fetch initial events
@@ -65,6 +71,49 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
     };
   }, []);
 
+  const testAvailability = async () => {
+    if (!testDate) {
+      toast.error("Please select a date first");
+      return;
+    }
+
+    setIsTesting(true);
+    try {
+      // Format date to YYYY-MM-DD
+      const dateStr = format(testDate, 'yyyy-MM-dd');
+      
+      // Get business_id from business_settings
+      const { data: businessSettings } = await supabase
+        .from('business_settings')
+        .select('id')
+        .single();
+
+      if (!businessSettings) {
+        toast.error("No business settings found");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('get-available-times', {
+        body: {
+          business_id: businessSettings.id,
+          date: dateStr,
+          time: '09:00'
+        }
+      });
+
+      if (error) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.success(`Found ${data.availability_count} available slots`);
+        console.log('Availability response:', data);
+      }
+    } catch (error: any) {
+      toast.error(`Error: ${error.message}`);
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-4">
@@ -85,10 +134,48 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
           </Button>
         </div>
         {!isMinimized && (
-          <div className="pt-3 border-t mt-3">
+          <div className="pt-3 border-t mt-3 space-y-4">
             <p className="text-xs text-muted-foreground">
               Showing {events.length} recent events
             </p>
+            
+            {/* Test Availability Section */}
+            <div className="space-y-2">
+              <p className="text-xs font-medium">Test Get Available Times</p>
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className={cn(
+                        "justify-start text-left font-normal",
+                        !testDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={testDate}
+                      onSelect={setTestDate}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Button 
+                  onClick={testAvailability} 
+                  disabled={!testDate || isTesting}
+                  size="sm"
+                >
+                  {isTesting ? "Testing..." : "Test Endpoint"}
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </CardHeader>
