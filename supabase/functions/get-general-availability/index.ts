@@ -17,7 +17,7 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
   let targetDate = new Date(businessNow);
   let timeString: string | undefined;
 
-  // Parse date-related keywords
+  // Parse date-related keywords - ORDER MATTERS: most specific patterns first!
   if (lowerInput.includes('today')) {
     // Keep current date
   } else if (lowerInput.includes('tomorrow')) {
@@ -43,7 +43,7 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       targetDate.setDate(targetDate.getDate() + numDays);
     }
   } else if (lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s*(from\s+(now|today))?/)) {
-    // Handle "two fridays from now", "3 mondays from today", etc.
+    // Handle "two fridays from now", "3 mondays from today", etc. - CHECK THIS BEFORE simple day names!
     const match = lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s*(from\s+(now|today))?/);
     if (match) {
       console.log('Matched day count pattern:', match);
@@ -78,6 +78,7 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
   } else if (lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
+    // Simple day name - check this LAST since it's least specific
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const match = lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
     if (match) {
