@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
 import { decryptToken, encryptToken } from '../_shared/encryption.ts'
+import { toZonedTime, fromZonedTime } from 'https://esm.sh/date-fns-tz@3.2.0'
 
 // Helper function to get timezone offset in milliseconds
 function getTimezoneOffsetMs(timezone: string, date: Date): number {
@@ -107,17 +108,24 @@ Deno.serve(async (req) => {
     const accessToken = await decryptToken(calendarSettings.encrypted_access_token)
     const refreshToken = calendarSettings.encrypted_refresh_token ? await decryptToken(calendarSettings.encrypted_refresh_token) : null
 
+    // Get user's timezone
+    const userTimezone = calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
+
     // Use preferred date/time if provided, otherwise query 2 days starting from now
     let startDate: Date;
     if (preferredDate && preferredTime) {
-      // Combine date and time to get a specific start point
-      // Need to parse carefully to preserve the time
+      // Combine date and time in the user's timezone
       const dateTimeString = `${preferredDate}T${preferredTime}:00`;
-      startDate = new Date(dateTimeString);
-      console.log(`Using preferred date+time: ${dateTimeString}, parsed to: ${startDate.toISOString()}`);
+      // Parse the date/time as if it's in the user's timezone, then convert to UTC
+      const zonedDate = fromZonedTime(dateTimeString, userTimezone);
+      startDate = zonedDate;
+      console.log(`Using preferred date+time: ${dateTimeString} in ${userTimezone}, parsed to: ${startDate.toISOString()}`);
     } else if (preferredDate) {
-      startDate = new Date(preferredDate);
-      console.log(`Using preferred date only: ${preferredDate}, parsed to: ${startDate.toISOString()}`);
+      // Parse the date as 9am in the user's timezone (start of business day)
+      const dateTimeString = `${preferredDate}T09:00:00`;
+      const zonedDate = fromZonedTime(dateTimeString, userTimezone);
+      startDate = zonedDate;
+      console.log(`Using preferred date: ${preferredDate} at 9am ${userTimezone}, parsed to: ${startDate.toISOString()}`);
     } else {
       startDate = new Date();
       console.log('Using current date/time as start:', startDate.toISOString());
