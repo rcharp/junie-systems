@@ -14,22 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    console.log('=== CONVERT TIMEZONE ENDPOINT CALLED ===');
+    console.log('=== GET CURRENT TIME ENDPOINT CALLED ===');
     
     const requestBody = await req.json();
     console.log('Request body:', JSON.stringify(requestBody));
-    const { business_id, datetime } = requestBody;
+    const { business_id } = requestBody;
     
     if (!business_id) {
       return new Response(
         JSON.stringify({ error: 'business_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    if (!datetime) {
-      return new Response(
-        JSON.stringify({ error: 'datetime is required (ISO 8601 UTC format expected)' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -67,12 +60,12 @@ serve(async (req) => {
     console.log('Found business for user_id:', businessSettings.user_id);
 
     // Log the tool call to client_tool_events
-    const toolCallId = `convert_timezone_${Date.now()}`;
+    const toolCallId = `get_current_time_${Date.now()}`;
     supabase.from('client_tool_events').insert({
       call_sid: requestBody.call_sid || requestBody.conversation_id || 'direct_call',
-      tool_name: 'convert_timezone',
+      tool_name: 'get_current_time',
       tool_call_id: toolCallId,
-      parameters: { business_id, datetime, full_request: requestBody },
+      parameters: { business_id, full_request: requestBody },
       business_id: businessSettings.user_id,
       user_id: businessSettings.user_id
     }).then(({ error: logError }) => {
@@ -80,27 +73,15 @@ serve(async (req) => {
       else console.log('Successfully logged tool call to client_tool_events');
     });
 
-    // Parse the input datetime (assuming UTC)
-    let inputDate: Date;
-    try {
-      inputDate = new Date(datetime);
-      if (isNaN(inputDate.getTime())) {
-        throw new Error('Invalid date');
-      }
-    } catch (error) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid datetime format. Please provide ISO 8601 format (e.g., 2025-01-15T14:30:00Z)' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    console.log('Input UTC datetime:', inputDate.toISOString());
+    // Get current time
+    const now = new Date();
+    console.log('Current UTC time:', now.toISOString());
     
     // Get business timezone
     const businessTimezone = businessSettings.business_timezone || 'America/New_York';
     const businessOffset = businessSettings.business_timezone_offset || '-05:00';
     
-    // Format input datetime in business timezone
+    // Format current time in business timezone
     const formatter = new Intl.DateTimeFormat('en-US', {
       timeZone: businessTimezone,
       year: 'numeric',
@@ -112,7 +93,7 @@ serve(async (req) => {
       hour12: false
     });
     
-    const parts = formatter.formatToParts(inputDate);
+    const parts = formatter.formatToParts(now);
     const year = parts.find(p => p.type === 'year')?.value;
     const month = parts.find(p => p.type === 'month')?.value;
     const day = parts.find(p => p.type === 'day')?.value;
@@ -121,21 +102,20 @@ serve(async (req) => {
     const second = parts.find(p => p.type === 'second')?.value;
     
     // Construct ISO-like string with timezone offset
-    const convertedDateTime = `${year}-${month}-${day}T${hour}:${minute}:${second}.000${businessOffset}`;
+    const currentDateTime = `${year}-${month}-${day}T${hour}:${minute}:${second}.000${businessOffset}`;
     
     // Also provide separate date and time for convenience
-    const convertedDate = `${year}-${month}-${day}`;
-    const convertedTime = `${hour}:${minute}`;
+    const currentDate = `${year}-${month}-${day}`;
+    const currentTime = `${hour}:${minute}`;
     
-    console.log('Converted time in business timezone:', convertedDateTime);
+    console.log('Current time in business timezone:', currentDateTime);
     
     // Build response object
     const response = {
       success: true,
-      input_utc_datetime: datetime,
-      converted_datetime: convertedDateTime,
-      converted_date: convertedDate,
-      converted_time: convertedTime,
+      current_datetime: currentDateTime,
+      current_date: currentDate,
+      current_time: currentTime,
       timezone: businessTimezone,
       timezone_offset: businessOffset
     };
@@ -162,8 +142,8 @@ serve(async (req) => {
     
     errorSupabase.from('client_tool_events').insert({
       call_sid: 'error_' + Date.now(),
-      tool_name: 'convert_timezone',
-      tool_call_id: `convert_timezone_error_${Date.now()}`,
+      tool_name: 'get_current_time',
+      tool_call_id: `get_current_time_error_${Date.now()}`,
       parameters: { error_context: 'Failed to parse request or process' },
       result: error.message,
       is_error: true
