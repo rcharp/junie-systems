@@ -40,7 +40,7 @@ const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
 
 Deno.serve(async (req) => {
-  console.log('google-calendar-availability function called with method:', req.method)
+  console.log('google-calendar-availability function v2 called with method:', req.method)
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -188,13 +188,13 @@ Deno.serve(async (req) => {
           }
           
           const retryData = await retryResponse.json()
-          return processAvailability(retryData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate)
+          return processAvailability(retryData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate, preferredTime)
         }
       }
       throw new Error(`Failed to fetch calendar data: ${freeBusyData.error?.message}`)
     }
 
-    return processAvailability(freeBusyData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate)
+    return processAvailability(freeBusyData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate, preferredTime)
   } catch (error) {
     console.error('Error in google-calendar-availability function:', error)
     return new Response(JSON.stringify({ 
@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
   }
 })
 
-function processAvailability(freeBusyData: any, calendarId: string, calendarSettings: any, userProfile: any, startDate: Date, limit: number, skip: number, preferredDate?: string) {
+function processAvailability(freeBusyData: any, calendarId: string, calendarSettings: any, userProfile: any, startDate: Date, limit: number, skip: number, preferredDate?: string, preferredTime?: string) {
   try {
     const busyTimes = freeBusyData.calendars[calendarId]?.busy || []
     const availabilityHours = calendarSettings.availability_hours || {}
@@ -218,6 +218,86 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
     let availableSlots = []
     const userTimezone = calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
     let slotsFound = 0;
+    
+    // If preferred time is specified, check if that specific slot is available first
+    if (preferredDate && preferredTime) {
+      const [reqHour, reqMinute] = preferredTime.split(':').map(Number)
+      // Parse date correctly by adding T00:00:00Z to ensure UTC parsing
+      const reqDate = new Date(preferredDate + 'T00:00:00Z')
+      const dayName = reqDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }).toLowerCase()
+      const daySettings = availabilityHours[dayName]
+      
+      console.log(`Checking if preferred time ${preferredTime} on ${preferredDate} (${dayName}) is available`)
+      
+      if (daySettings?.enabled) {
+        const [dayStartHour, dayStartMinute] = daySettings.start.split(':').map(Number)
+        const [dayEndHour, dayEndMinute] = daySettings.end.split(':').map(Number)
+        
+        // Check if requested time is within working hours
+        const reqMinutes = reqHour * 60 + reqMinute
+        const startMinutes = dayStartHour * 60 + dayStartMinute
+        const endMinutes = dayEndHour * 60 + dayEndMinute
+        
+        if (reqMinutes >= startMinutes && reqMinutes + appointmentDuration <= endMinutes) {
+          // Create a local time for the requested slot in the user's timezone
+          // We need to create it as if it's a local date, then convert to UTC
+          const year = reqDate.getUTCFullYear()
+          const month = reqDate.getUTCMonth()
+          const date = reqDate.getUTCDate()
+          
+          // Create date as local (using Date constructor which creates in local/system timezone)
+          // But we want it in the USER'S timezone, so we need to be careful
+          // Actually, let's create a UTC date representing the local time in the user's timezone
+          const localSlotStart = new Date(Date.UTC(year, month, date, 0, 0, 0))
+          
+          // Now add the hours and minutes
+          localSlotStart.setUTCHours(reqHour, reqMinute, 0, 0)
+          
+          const offsetMs = getTimezoneOffsetMs(userTimezone, localSlotStart)
+          const utcSlotStart = new Date(localSlotStart.getTime() - offsetMs)
+          const utcSlotEnd = new Date(utcSlotStart.getTime() + (appointmentDuration * 60 * 1000))
+          
+          console.log(`Checking slot: ${utcSlotStart.toISOString()} to ${utcSlotEnd.toISOString()}`)
+          
+          // Check if it's in the past
+          if (utcSlotStart > now) {
+            // Check if there's a conflict
+            const hasConflict = busyTimes.some((busy: any) => {
+              const busyStart = new Date(busy.start)
+              const busyEnd = new Date(busy.end)
+              const conflict = (utcSlotStart < busyEnd && utcSlotEnd > busyStart)
+              if (conflict) {
+                console.log(`Conflict found with busy period: ${busyStart.toISOString()} to ${busyEnd.toISOString()}`)
+              }
+              return conflict
+            })
+            
+            if (!hasConflict) {
+              console.log(`✓ Preferred time ${preferredTime} is available!`)
+              console.log(`Adding slot: ${utcSlotStart.toISOString()} to ${utcSlotEnd.toISOString()}`)
+              // Store as UTC times (which is what the rest of the code expects)
+              const slotToAdd = {
+                startTime: utcSlotStart.toISOString(),
+                endTime: utcSlotEnd.toISOString(),
+                timeOfDay: "pending",
+                humanReadable: "pending"
+              };
+              console.log(`Slot object:`, JSON.stringify(slotToAdd))
+              availableSlots.push(slotToAdd)
+              slotsFound++
+            } else {
+              console.log(`✗ Preferred time ${preferredTime} is not available (conflict)`)
+            }
+          } else {
+            console.log(`✗ Preferred time ${preferredTime} is in the past`)
+          }
+        } else {
+          console.log(`✗ Preferred time ${preferredTime} is outside working hours (${daySettings.start}-${daySettings.end})`)
+        }
+      } else {
+        console.log(`✗ ${dayName} is not enabled for appointments`)
+      }
+    }
     
     for (let dayOffset = 0; dayOffset < 2 && slotsFound < MAX_SLOTS; dayOffset++) {
       const currentDate = new Date(startDate)
@@ -334,9 +414,12 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
 
     // Format slots with basic timezone conversion (no Claude API)
     if (availableSlots.length > 0) {
+      console.log(`Formatting ${availableSlots.length} slots:`, JSON.stringify(availableSlots))
       availableSlots = availableSlots.map(slot => {
+        console.log(`Processing slot:`, JSON.stringify(slot))
         const startDate = new Date(slot.startTime);
         const endDate = new Date(slot.endTime);
+        console.log(`Parsed dates: ${startDate.toISOString()} - ${endDate.toISOString()}`)
         
         // Format in user's timezone
         const formatter = new Intl.DateTimeFormat('en-US', {
