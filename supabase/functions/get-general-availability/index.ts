@@ -197,7 +197,7 @@ Deno.serve(async (req) => {
         natural_language_input: natural_language,
         parsed_date: parsed.date,
         parsed_time: parsed.time,
-        available_slots: availabilityData.availableSlots || [],
+        available_slots: availabilityData.slots || [],
         message: availabilityData.message,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         timezone: business_timezone,
         requested_date: date,
         requested_time: time,
-        available_slots: availabilityData.availableSlots || [],
+        available_slots: availabilityData.slots || [],
         message: availabilityData.message,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
