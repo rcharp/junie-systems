@@ -88,8 +88,10 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       const match = lowerInput.match(pattern);
       if (match) {
         let hours = parseInt(match[1]);
-        const minutes = match[2] ? match[2] : '00';
-        const meridiem = match[3] || match[2];
+        // For pattern 1: match[2] is minutes, match[3] is meridiem
+        // For pattern 2: match[2] is meridiem, no minutes captured
+        const minutes = (match[2] && !isNaN(parseInt(match[2]))) ? match[2] : '00';
+        const meridiem = match[3] || (match[2] && /^(am|pm)$/i.test(match[2]) ? match[2] : undefined);
 
         if (meridiem && meridiem.toLowerCase() === 'pm' && hours < 12) {
           hours += 12;
