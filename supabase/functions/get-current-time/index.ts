@@ -16,13 +16,22 @@ serve(async (req) => {
   try {
     console.log('=== GET CURRENT TIME ENDPOINT CALLED ===');
     
-    const requestBody = await req.json();
-    console.log('Request body:', JSON.stringify(requestBody));
-    const { business_id } = requestBody;
+    // Only accept GET requests
+    if (req.method !== 'GET') {
+      return new Response(
+        JSON.stringify({ error: 'Method not allowed. Use GET.' }),
+        { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Get business_id from query parameters
+    const url = new URL(req.url);
+    const business_id = url.searchParams.get('business_id');
+    console.log('Query parameters:', Object.fromEntries(url.searchParams));
     
     if (!business_id) {
       return new Response(
-        JSON.stringify({ error: 'business_id is required' }),
+        JSON.stringify({ error: 'business_id query parameter is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -62,10 +71,10 @@ serve(async (req) => {
     // Log the tool call to client_tool_events
     const toolCallId = `get_current_time_${Date.now()}`;
     supabase.from('client_tool_events').insert({
-      call_sid: requestBody.call_sid || requestBody.conversation_id || 'direct_call',
+      call_sid: 'web-request',
       tool_name: 'get_current_time',
       tool_call_id: toolCallId,
-      parameters: { business_id, full_request: requestBody },
+      parameters: { business_id },
       business_id: businessSettings.user_id,
       user_id: businessSettings.user_id
     }).then(({ error: logError }) => {
