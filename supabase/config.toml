@@ -136,3 +136,6 @@ verify_jwt = true
 
 [functions.get-available-times]
 verify_jwt = false
+
+[functions.get-current-time]
+verify_jwt = false
