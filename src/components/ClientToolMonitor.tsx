@@ -258,6 +258,11 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                       type="text"
                       value={naturalLanguage}
                       onChange={(e) => setNaturalLanguage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && naturalLanguage.trim() && !isTestingNL) {
+                          testGeneralAvailability();
+                        }
+                      }}
                       placeholder='e.g., "tomorrow", "next Friday", "Monday morning"'
                       className="h-9 text-xs"
                     />
