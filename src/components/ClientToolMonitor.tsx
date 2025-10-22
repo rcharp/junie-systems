@@ -24,8 +24,18 @@ interface ClientToolEvent {
   created_at: string;
 }
 
+interface TestResult {
+  id: string;
+  endpoint: string;
+  parameters: any;
+  response: any;
+  error: boolean;
+  timestamp: string;
+}
+
 export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded?: boolean }) {
   const [events, setEvents] = useState<ClientToolEvent[]>([]);
+  const [testResults, setTestResults] = useState<TestResult[]>([]);
   const [isMinimized, setIsMinimized] = useState(!defaultExpanded);
   const [testDate, setTestDate] = useState<Date>();
   const [testTime, setTestTime] = useState<string>("");
@@ -102,6 +112,17 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         body: requestBody
       });
 
+      const testResult: TestResult = {
+        id: Date.now().toString(),
+        endpoint: 'get-specific-availability',
+        parameters: requestBody,
+        response: error ? { error: error.message } : data,
+        error: !!error,
+        timestamp: new Date().toISOString()
+      };
+
+      setTestResults(prev => [testResult, ...prev].slice(0, 20));
+
       if (error) {
         toast.error(`Error: ${error.message}`);
         console.error('Error response:', error);
@@ -137,6 +158,17 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
       const { data, error } = await supabase.functions.invoke('get-general-availability', {
         body: requestBody
       });
+
+      const testResult: TestResult = {
+        id: Date.now().toString(),
+        endpoint: 'get-general-availability',
+        parameters: requestBody,
+        response: error ? { error: error.message } : data,
+        error: !!error,
+        timestamp: new Date().toISOString()
+      };
+
+      setTestResults(prev => [testResult, ...prev].slice(0, 20));
 
       if (error) {
         toast.error(`Error: ${error.message}`);
@@ -285,6 +317,48 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
 
             {/* Right Side - Events List */}
             <div className="space-y-4">
+              {/* Test Results Section */}
+              {testResults.length > 0 && (
+                <div className="space-y-2">
+                  <div>
+                    <h3 className="text-sm font-semibold mb-1">Test Results</h3>
+                    <p className="text-xs text-muted-foreground">
+                      API test responses ({testResults.length})
+                    </p>
+                  </div>
+                  <ScrollArea className="h-[280px] pr-4">
+                    <div className="space-y-2">
+                      {testResults.map((result) => (
+                        <div key={result.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
+                          <div className="flex items-center justify-between">
+                            <Badge variant={result.error ? "destructive" : "default"} className="text-xs">
+                              {result.endpoint}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(result.timestamp), { addSuffix: true })}
+                            </span>
+                          </div>
+                          <div className="space-y-1.5">
+                            <div className="text-sm">
+                              <span className="font-medium text-xs">Parameters:</span>
+                              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
+                                {JSON.stringify(result.parameters, null, 2)}
+                              </pre>
+                            </div>
+                            <div className="text-sm">
+                              <span className="font-medium text-xs">Response:</span>
+                              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto max-h-32">
+                                {JSON.stringify(result.response, null, 2)}
+                              </pre>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold mb-1">Live Events</h3>
@@ -294,7 +368,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                 </div>
               </div>
 
-              <ScrollArea className="h-[600px] pr-4">
+              <ScrollArea className={cn("pr-4", testResults.length > 0 ? "h-[280px]" : "h-[600px]")}>
                 <div className="space-y-3">
                   {events.length === 0 ? (
                     <div className="flex items-center justify-center py-12">
