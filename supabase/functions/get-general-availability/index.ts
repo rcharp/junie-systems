@@ -17,33 +17,10 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
   let targetDate = new Date(businessNow);
   let timeString: string | undefined;
 
-  // Parse date-related keywords - ORDER MATTERS: most specific patterns first!
-  if (lowerInput.includes('today')) {
-    // Keep current date
-  } else if (lowerInput.includes('tomorrow')) {
-    targetDate.setDate(targetDate.getDate() + 1);
-  } else if (lowerInput.includes('next week')) {
-    targetDate.setDate(targetDate.getDate() + 7);
-  } else if (lowerInput.match(/(\d+|two|three|four)\s+(weeks?)\s*(from\s+(now|today))?/)) {
-    // Handle "2 weeks from now", "3 weeks", etc.
-    const match = lowerInput.match(/(\d+|two|three|four)\s+(weeks?)\s*(from\s+(now|today))?/);
-    if (match) {
-      console.log('Matched weeks pattern:', match);
-      const numberWords: { [key: string]: number } = { 'two': 2, 'three': 3, 'four': 4 };
-      const numWeeks = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
-      targetDate.setDate(targetDate.getDate() + (numWeeks * 7));
-    }
-  } else if (lowerInput.match(/(\d+|two|three|four)\s+(days?)\s*(from\s+(now|today))?/)) {
-    // Handle "2 days from now", "3 days", etc.
-    const match = lowerInput.match(/(\d+|two|three|four)\s+(days?)\s*(from\s+(now|today))?/);
-    if (match) {
-      console.log('Matched days pattern:', match);
-      const numberWords: { [key: string]: number } = { 'two': 2, 'three': 3, 'four': 4 };
-      const numDays = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
-      targetDate.setDate(targetDate.getDate() + numDays);
-    }
-  } else if (lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s*(from\s+(now|today))?/)) {
-    // Handle "two fridays from now", "3 mondays from today", etc. - CHECK THIS BEFORE simple day names!
+  // Parse date-related keywords - ORDER MATTERS: most specific patterns FIRST!
+  // Check compound patterns with numbers/words + days/weeks BEFORE simple keywords
+  if (lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s*(from\s+(now|today))?/)) {
+    // Handle "two fridays from now", "3 mondays from today", etc. - CHECK THIS FIRST!
     const match = lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s*(from\s+(now|today))?/);
     if (match) {
       console.log('Matched day count pattern:', match);
@@ -67,6 +44,24 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       console.log(`Adding ${daysToAdd} days`);
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
+  } else if (lowerInput.match(/(\d+|two|three|four)\s+(weeks?)\s*(from\s+(now|today))?/)) {
+    // Handle "2 weeks from now", "3 weeks", etc.
+    const match = lowerInput.match(/(\d+|two|three|four)\s+(weeks?)\s*(from\s+(now|today))?/);
+    if (match) {
+      console.log('Matched weeks pattern:', match);
+      const numberWords: { [key: string]: number } = { 'two': 2, 'three': 3, 'four': 4 };
+      const numWeeks = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
+      targetDate.setDate(targetDate.getDate() + (numWeeks * 7));
+    }
+  } else if (lowerInput.match(/(\d+|two|three|four)\s+(days?)\s*(from\s+(now|today))?/)) {
+    // Handle "2 days from now", "3 days", etc.
+    const match = lowerInput.match(/(\d+|two|three|four)\s+(days?)\s*(from\s+(now|today))?/);
+    if (match) {
+      console.log('Matched days pattern:', match);
+      const numberWords: { [key: string]: number } = { 'two': 2, 'three': 3, 'four': 4 };
+      const numDays = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
+      targetDate.setDate(targetDate.getDate() + numDays);
+    }
   } else if (lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const match = lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
@@ -77,8 +72,10 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       if (daysToAdd <= 0) daysToAdd += 7;
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
+  } else if (lowerInput.includes('next week')) {
+    targetDate.setDate(targetDate.getDate() + 7);
   } else if (lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
-    // Simple day name - check this LAST since it's least specific
+    // Simple day name - check after "next [day]"
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const match = lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
     if (match) {
@@ -88,6 +85,10 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       if (daysToAdd <= 0) daysToAdd += 7;
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
+  } else if (lowerInput.includes('tomorrow')) {
+    targetDate.setDate(targetDate.getDate() + 1);
+  } else if (lowerInput.includes('today')) {
+    // Keep current date - check this LAST since it's most generic
   }
 
   // Parse time-related keywords
