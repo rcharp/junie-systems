@@ -221,10 +221,14 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
     const availabilityHours = calendarSettings.availability_hours || {}
     const appointmentDuration = calendarSettings.appointment_duration || 60
     const MAX_SLOTS = Math.min(limit, 3)
+    
+    // Get current time in business timezone
+    const userTimezone = calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
     const now = new Date()
+    const businessNow = toZonedTime(now, userTimezone)
+    console.log(`Current time in business timezone (${userTimezone}):`, businessNow.toISOString())
 
     let availableSlots = []
-    const userTimezone = calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
     let slotsFound = 0;
     
     // If preferred time is specified, check if that specific slot is available first
@@ -267,8 +271,13 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
           
           console.log(`Checking slot: ${utcSlotStart.toISOString()} to ${utcSlotEnd.toISOString()}`)
           
-          // Check if it's in the past
-          if (utcSlotStart > now) {
+          // Convert slot to business timezone to check if it's in the past
+          const slotInBusinessTz = toZonedTime(utcSlotStart, userTimezone)
+          const isPast = slotInBusinessTz <= businessNow
+          console.log(`Slot in business TZ: ${slotInBusinessTz.toISOString()}, Business now: ${businessNow.toISOString()}, Is past: ${isPast}`)
+          
+          // Check if it's in the past (based on business timezone)
+          if (!isPast) {
             // Check if there's a conflict
             const hasConflict = busyTimes.some((busy: any) => {
               const busyStart = new Date(busy.start)
@@ -352,7 +361,9 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
       while (currentStart.getTime() < utcEndTime.getTime() && slotsFound < MAX_SLOTS) {
         const slotEnd = new Date(currentStart.getTime() + (slotIncrement * 60 * 1000))
         
-        if (currentStart <= now) {
+        // Check if slot is in the past based on business timezone
+        const slotInBusinessTz = toZonedTime(currentStart, userTimezone)
+        if (slotInBusinessTz <= businessNow) {
           currentStart.setTime(currentStart.getTime() + (slotIncrement * 60 * 1000))
           continue
         }
