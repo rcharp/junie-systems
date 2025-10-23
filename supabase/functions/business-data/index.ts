@@ -276,20 +276,19 @@ serve(async (req) => {
           }
         }
 
-        // Fetch calendar settings and available times if appointment booking is enabled
+        // Fetch calendar settings first (needed for both availability and appointment duration)
+        const { data: calendarSettings } = await supabase
+          .from("google_calendar_settings")
+          .select("*")
+          .eq("user_id", businessDataForInit.user_id)
+          .single();
+        
+        // Get appointment duration from calendar settings
+        let appointmentDuration = calendarSettings?.appointment_duration || 60;
+
+        // Fetch available times if appointment booking is enabled
         let dynamicAvailableTimes = businessDataForInit?.business_hours || "Monday-Friday: 9:00 AM - 5:00 PM";
-        let appointmentDuration = 60; // Default duration
         if (businessDataForInit?.appointment_booking) {
-          const { data: calendarSettings } = await supabase
-            .from("google_calendar_settings")
-            .select("*")
-            .eq("user_id", businessDataForInit.user_id)
-            .single();
-          
-          // Get appointment duration from calendar settings
-          if (calendarSettings?.appointment_duration) {
-            appointmentDuration = calendarSettings.appointment_duration;
-          }
 
           if (calendarSettings && calendarSettings.is_connected) {
             try {
