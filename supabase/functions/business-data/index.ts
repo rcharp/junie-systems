@@ -316,14 +316,8 @@ serve(async (req) => {
                 !availabilityResponse.error &&
                 availabilityResponse.data.slots?.length > 0
               ) {
-                // Filter out past time slots based on business timezone
-                const businessNow = new Date(formatInTimeZone(new Date(), businessTimezone, "yyyy-MM-dd'T'HH:mm:ssXXX"));
-                const futureSlots = availabilityResponse.data.slots.filter((slot: any) => {
-                  const slotStart = new Date(slot.startTime);
-                  return slotStart > businessNow;
-                });
-                
-                const slots = futureSlots.slice(0, 5); // Show first 5 available future slots
+                // google-calendar-availability already filters out past slots based on business timezone
+                const slots = availabilityResponse.data.slots.slice(0, 5); // Show first 5 available slots
                 // Format as JSON string with date and time separated (times already in user's timezone from Claude)
                 const formattedSlots = slots.map((slot: any) => {
                   // Extract date in YYYY-MM-DD format from humanReadable
