@@ -62,6 +62,18 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       const numDays = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
       targetDate.setDate(targetDate.getDate() + numDays);
     }
+  } else if (lowerInput.match(/next week (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
+    // Handle "next week friday", "next week monday", etc.
+    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const match = lowerInput.match(/next week (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
+    if (match) {
+      const targetDay = days.indexOf(match[1]);
+      const currentDay = targetDate.getDay();
+      // Always go to next week (minimum 7 days)
+      let daysToAdd = targetDay - currentDay + 7;
+      if (daysToAdd < 7) daysToAdd += 7;
+      targetDate.setDate(targetDate.getDate() + daysToAdd);
+    }
   } else if (lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const match = lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
