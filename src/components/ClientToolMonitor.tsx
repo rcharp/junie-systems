@@ -38,9 +38,9 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
     // Fetch initial events
     const fetchEvents = async () => {
       const { data, error } = await supabase
-        .from('client_tool_events')
-        .select('*')
-        .order('created_at', { ascending: false })
+        .from("client_tool_events")
+        .select("*")
+        .order("created_at", { ascending: false })
         .limit(50);
 
       if (data && !error) {
@@ -52,23 +52,21 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel('client-tool-events')
+      .channel("client-tool-events")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'client_tool_events'
+          event: "*",
+          schema: "public",
+          table: "client_tool_events",
         },
         (payload) => {
-          if (payload.eventType === 'INSERT') {
-            setEvents(prev => [payload.new as ClientToolEvent, ...prev].slice(0, 50));
-          } else if (payload.eventType === 'UPDATE') {
-            setEvents(prev => prev.map(e => 
-              e.id === payload.new.id ? payload.new as ClientToolEvent : e
-            ));
+          if (payload.eventType === "INSERT") {
+            setEvents((prev) => [payload.new as ClientToolEvent, ...prev].slice(0, 50));
+          } else if (payload.eventType === "UPDATE") {
+            setEvents((prev) => prev.map((e) => (e.id === payload.new.id ? (payload.new as ClientToolEvent) : e)));
           }
-        }
+        },
       )
       .subscribe();
 
@@ -85,48 +83,48 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
 
     setIsTesting(true);
     try {
-      const dateStr = format(testDate, 'yyyy-MM-dd');
-      const testBusinessId = '16739d7f-5a78-499f-ba6d-7a8b72ccba58';
+      const dateStr = format(testDate, "yyyy-MM-dd");
+      const testBusinessId = "16739d7f-5a78-499f-ba6d-7a8b72ccba58";
 
       const requestBody: any = {
         business_id: testBusinessId,
-        date: dateStr
+        date: dateStr,
       };
 
       if (testTime) {
         requestBody.time = testTime;
       }
 
-      console.log('Testing get-specific-availability with:', requestBody);
+      console.log("Testing get-specific-availability with:", requestBody);
 
-      const { data, error } = await supabase.functions.invoke('get-specific-availability', {
-        body: requestBody
+      const { data, error } = await supabase.functions.invoke("get-specific-availability", {
+        body: requestBody,
       });
 
       const testEvent: ClientToolEvent = {
         id: `test-${Date.now()}`,
-        call_sid: 'TEST',
-        tool_name: 'get-specific-availability',
+        call_sid: "TEST",
+        tool_name: "get-specific-availability",
         tool_call_id: `test-call-${Date.now()}`,
         parameters: requestBody,
         result: error ? `Error: ${error.message}` : JSON.stringify(data, null, 2),
         is_error: !!error,
         created_at: new Date().toISOString(),
-        is_test: true
+        is_test: true,
       };
 
-      setEvents(prev => [testEvent, ...prev].slice(0, 50));
+      setEvents((prev) => [testEvent, ...prev].slice(0, 50));
 
       if (error) {
         toast.error(`Error: ${error.message}`);
-        console.error('Error response:', error);
+        console.error("Error response:", error);
       } else {
         toast.success(`Found ${data.available_slots?.length || 0} available slots`);
-        console.log('Specific availability response:', data);
+        console.log("Specific availability response:", data);
       }
     } catch (error: any) {
       toast.error(`Error: ${error.message}`);
-      console.error('Exception:', error);
+      console.error("Exception:", error);
     } finally {
       setIsTesting(false);
     }
@@ -140,43 +138,43 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
 
     setIsTestingNL(true);
     try {
-      const testBusinessId = '16739d7f-5a78-499f-ba6d-7a8b72ccba58';
+      const testBusinessId = "16739d7f-5a78-499f-ba6d-7a8b72ccba58";
 
       const requestBody = {
         business_id: testBusinessId,
-        natural_language: naturalLanguage
+        natural_language: naturalLanguage,
       };
 
-      console.log('Testing get-general-availability with:', requestBody);
+      console.log("Testing get-general-availability with:", requestBody);
 
-      const { data, error } = await supabase.functions.invoke('get-general-availability', {
-        body: requestBody
+      const { data, error } = await supabase.functions.invoke("get-general-availability", {
+        body: requestBody,
       });
 
       const testEvent: ClientToolEvent = {
         id: `test-${Date.now()}`,
-        call_sid: 'TEST',
-        tool_name: 'get-general-availability',
+        call_sid: "TEST",
+        tool_name: "get-general-availability",
         tool_call_id: `test-call-${Date.now()}`,
         parameters: requestBody,
         result: error ? `Error: ${error.message}` : JSON.stringify(data, null, 2),
         is_error: !!error,
         created_at: new Date().toISOString(),
-        is_test: true
+        is_test: true,
       };
 
-      setEvents(prev => [testEvent, ...prev].slice(0, 50));
+      setEvents((prev) => [testEvent, ...prev].slice(0, 50));
 
       if (error) {
         toast.error(`Error: ${error.message}`);
-        console.error('Error response:', error);
+        console.error("Error response:", error);
       } else {
         toast.success(`Found ${data.available_slots?.length || 0} available slots for "${naturalLanguage}"`);
-        console.log('General availability response:', data);
+        console.log("General availability response:", data);
       }
     } catch (error: any) {
       toast.error(`Error: ${error.message}`);
-      console.error('Exception:', error);
+      console.error("Exception:", error);
     } finally {
       setIsTestingNL(false);
     }
@@ -188,16 +186,8 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <CardTitle className="text-lg">Client Tool Events</CardTitle>
-            <CardDescription className="mt-1.5">
-              Real-time monitoring of ElevenLabs client tool calls and availability testing
-            </CardDescription>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsMinimized(!isMinimized)}
-            className="shrink-0"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setIsMinimized(!isMinimized)} className="shrink-0">
             {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
           </Button>
         </div>
@@ -220,7 +210,9 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <Label htmlFor="specific-date" className="text-xs mb-1 block">Date</Label>
+                    <Label htmlFor="specific-date" className="text-xs mb-1 block">
+                      Date
+                    </Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -229,7 +221,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                           size="sm"
                           className={cn(
                             "w-full justify-start text-left font-normal h-9",
-                            !testDate && "text-muted-foreground"
+                            !testDate && "text-muted-foreground",
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
@@ -247,9 +239,11 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                       </PopoverContent>
                     </Popover>
                   </div>
-                  
+
                   <div>
-                    <Label htmlFor="specific-time" className="text-xs mb-1 block">Time (optional)</Label>
+                    <Label htmlFor="specific-time" className="text-xs mb-1 block">
+                      Time (optional)
+                    </Label>
                     <Input
                       id="specific-time"
                       type="time"
@@ -259,9 +253,9 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                       className="h-9 text-xs"
                     />
                   </div>
-                  
-                  <Button 
-                    onClick={testSpecificAvailability} 
+
+                  <Button
+                    onClick={testSpecificAvailability}
                     disabled={!testDate || isTesting}
                     size="sm"
                     className="w-full"
@@ -279,14 +273,16 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                 </div>
                 <div className="flex flex-col gap-3">
                   <div>
-                    <Label htmlFor="natural-language" className="text-xs mb-1 block">Natural Language Input</Label>
+                    <Label htmlFor="natural-language" className="text-xs mb-1 block">
+                      Natural Language Input
+                    </Label>
                     <Input
                       id="natural-language"
                       type="text"
                       value={naturalLanguage}
                       onChange={(e) => setNaturalLanguage(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && naturalLanguage.trim() && !isTestingNL) {
+                        if (e.key === "Enter" && naturalLanguage.trim() && !isTestingNL) {
                           testGeneralAvailability();
                         }
                       }}
@@ -297,9 +293,9 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                       Try: "tomorrow", "next week", "Friday afternoon"
                     </p>
                   </div>
-                  
-                  <Button 
-                    onClick={testGeneralAvailability} 
+
+                  <Button
+                    onClick={testGeneralAvailability}
                     disabled={!naturalLanguage.trim() || isTestingNL}
                     size="sm"
                     className="w-full"
@@ -315,9 +311,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold mb-1">Live Events</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Showing {events.length} recent events
-                  </p>
+                  <p className="text-xs text-muted-foreground">Showing {events.length} recent events</p>
                 </div>
               </div>
 
@@ -325,7 +319,9 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                 <div className="space-y-3">
                   {events.length === 0 ? (
                     <div className="flex items-center justify-center py-12">
-                      <p className="text-sm text-muted-foreground text-center">No events yet. Events will appear here in real-time.</p>
+                      <p className="text-sm text-muted-foreground text-center">
+                        No events yet. Events will appear here in real-time.
+                      </p>
                     </div>
                   ) : (
                     events.map((event) => (
@@ -333,33 +329,55 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-wrap">
                             {event.is_test ? (
-                              <Badge variant="secondary" className="text-xs">TEST</Badge>
+                              <Badge variant="secondary" className="text-xs">
+                                TEST
+                              </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20">LIVE</Badge>
+                              <Badge
+                                variant="outline"
+                                className="text-xs bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
+                              >
+                                LIVE
+                              </Badge>
                             )}
-                            <Badge variant={event.is_error ? "destructive" : event.result ? "default" : "secondary"} className="text-xs">
+                            <Badge
+                              variant={event.is_error ? "destructive" : event.result ? "default" : "secondary"}
+                              className="text-xs"
+                            >
                               {event.tool_name}
                             </Badge>
-                            {event.is_error && <Badge variant="destructive" className="text-xs">Error</Badge>}
-                            {event.result && !event.is_error && <Badge variant="outline" className="text-xs">Completed</Badge>}
+                            {event.is_error && (
+                              <Badge variant="destructive" className="text-xs">
+                                Error
+                              </Badge>
+                            )}
+                            {event.result && !event.is_error && (
+                              <Badge variant="outline" className="text-xs">
+                                Completed
+                              </Badge>
+                            )}
                           </div>
                           <span className="text-xs text-muted-foreground">
                             {formatDistanceToNow(new Date(event.created_at), { addSuffix: true })}
                           </span>
                         </div>
-                        
+
                         <div className="space-y-1.5">
                           <div className="text-sm">
-                            <span className="font-medium text-xs">Call SID:</span> 
-                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded break-all">{event.call_sid}</code>
+                            <span className="font-medium text-xs">Call SID:</span>
+                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded break-all">
+                              {event.call_sid}
+                            </code>
                           </div>
                           <div className="text-sm">
-                            <span className="font-medium text-xs">Tool Call ID:</span> 
-                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded break-all">{event.tool_call_id}</code>
+                            <span className="font-medium text-xs">Tool Call ID:</span>
+                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded break-all">
+                              {event.tool_call_id}
+                            </code>
                           </div>
                           {event.parameters && Object.keys(event.parameters).length > 0 && (
                             <div className="text-sm">
-                              <span className="font-medium text-xs">Parameters:</span> 
+                              <span className="font-medium text-xs">Parameters:</span>
                               <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto max-w-full">
                                 {JSON.stringify(event.parameters, null, 2)}
                               </pre>
@@ -367,8 +385,10 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                           )}
                           {event.result && (
                             <div className="text-sm">
-                              <span className="font-medium text-xs">Result:</span> 
-                              <p className="mt-1 text-xs bg-muted p-2 rounded break-words max-w-full overflow-x-auto">{event.result}</p>
+                              <span className="font-medium text-xs">Result:</span>
+                              <p className="mt-1 text-xs bg-muted p-2 rounded break-words max-w-full overflow-x-auto">
+                                {event.result}
+                              </p>
                             </div>
                           )}
                         </div>
