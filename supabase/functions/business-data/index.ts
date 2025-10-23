@@ -294,13 +294,16 @@ serve(async (req) => {
             try {
               console.log("Fetching calendar availability for conversation initiation");
               
-              // Set a 3-second timeout for calendar availability to prevent ElevenLabs timeout
+              // Set an 8-second timeout for calendar availability to prevent blocking
               const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Calendar availability timeout')), 3000)
+                setTimeout(() => reject(new Error('Calendar availability timeout')), 8000)
               );
               
               const availabilityPromise = supabase.functions.invoke("google-calendar-availability", {
-                body: { user_id: businessDataForInit.user_id },
+                body: { 
+                  user_id: businessDataForInit.user_id,
+                  limit: 5 // Only get first 5 slots to speed up response
+                },
               });
 
               const availabilityResponse = await Promise.race([availabilityPromise, timeoutPromise]) as any;
