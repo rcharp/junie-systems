@@ -393,6 +393,35 @@ serve(async (req) => {
         const businessTimezone = businessDataForInit?.business_timezone || 'America/New_York';
         const now = formatInTimeZone(new Date(), businessTimezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
 
+        // Fetch available slots for conversation initiation
+        let availableSlots: any[] = [];
+        if (calendarSettings && calendarSettings.is_connected) {
+          try {
+            console.log("Fetching calendar availability for conversation init - user_id:", businessDataForInit.user_id);
+            const availabilityResponse = await supabase.functions.invoke("google-calendar-availability", {
+              body: { user_id: businessDataForInit.user_id, limit: 3 },
+            });
+
+            if (availabilityResponse.data && !availabilityResponse.error && availabilityResponse.data.available) {
+              const slots = availabilityResponse.data.slots || [];
+              console.log("Calendar slots for conversation init:", slots.length);
+
+              if (slots.length > 0) {
+                availableSlots = slots.map((slot: any) => ({
+                  date: slot.date || '',
+                  startTime: slot.startTime || '',
+                  endTime: slot.endTime || '',
+                  timeOfDay: slot.timeOfDay || '',
+                  humanReadable: slot.humanReadable || '',
+                }));
+                console.log("Formatted available slots for conversation init:", availableSlots);
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching calendar availability for conversation init:", error);
+          }
+        }
+
         // Format services with details for the agent
         const servicesFormatted = servicesData && servicesData.length > 0
           ? JSON.stringify(servicesData.map(s => ({
@@ -421,7 +450,7 @@ serve(async (req) => {
             appointment_booking: String(businessDataForInit?.appointment_booking || false),
             appointment_duration: String(appointmentDuration),
             business_timezone: businessTimezone,
-            // available_times: dynamicAvailableTimes, // Moved to /get-available-times endpoint
+            available_slots: JSON.stringify(availableSlots),
             services: servicesFormatted,
             transfer_number: addUSCountryCode(businessDataForInit?.transfer_number || ""),
             urgent_keywords: businessDataForInit?.urgent_keywords || "emergency, urgent, asap, immediately",
