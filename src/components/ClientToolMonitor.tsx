@@ -219,47 +219,45 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                   <p className="text-xs text-muted-foreground mt-0.5">Uses get-specific-availability endpoint</p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1">
-                      <Label htmlFor="specific-date" className="text-xs mb-1 block">Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            id="specific-date"
-                            variant="outline"
-                            size="sm"
-                            className={cn(
-                              "w-full justify-start text-left font-normal h-9",
-                              !testDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={testDate}
-                            onSelect={setTestDate}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    
-                    <div className="flex-1">
-                      <Label htmlFor="specific-time" className="text-xs mb-1 block">Time (optional)</Label>
-                      <Input
-                        id="specific-time"
-                        type="time"
-                        value={testTime}
-                        onChange={(e) => setTestTime(e.target.value)}
-                        placeholder="HH:MM"
-                        className="h-9 text-xs"
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="specific-date" className="text-xs mb-1 block">Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          id="specific-date"
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left font-normal h-9",
+                            !testDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {testDate ? format(testDate, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={testDate}
+                          onSelect={setTestDate}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="specific-time" className="text-xs mb-1 block">Time (optional)</Label>
+                    <Input
+                      id="specific-time"
+                      type="time"
+                      value={testTime}
+                      onChange={(e) => setTestTime(e.target.value)}
+                      placeholder="HH:MM"
+                      className="h-9 text-xs"
+                    />
                   </div>
                   
                   <Button 
