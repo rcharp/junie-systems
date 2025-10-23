@@ -353,16 +353,16 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                         <div className="space-y-1.5">
                           <div className="text-sm">
                             <span className="font-medium text-xs">Call SID:</span> 
-                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">{event.call_sid}</code>
+                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded break-all">{event.call_sid}</code>
                           </div>
                           <div className="text-sm">
                             <span className="font-medium text-xs">Tool Call ID:</span> 
-                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded">{event.tool_call_id}</code>
+                            <code className="ml-2 text-xs bg-muted px-2 py-0.5 rounded break-all">{event.tool_call_id}</code>
                           </div>
                           {event.parameters && Object.keys(event.parameters).length > 0 && (
                             <div className="text-sm">
                               <span className="font-medium text-xs">Parameters:</span> 
-                              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto">
+                              <pre className="mt-1 text-xs bg-muted p-2 rounded overflow-x-auto max-w-full">
                                 {JSON.stringify(event.parameters, null, 2)}
                               </pre>
                             </div>
@@ -370,7 +370,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                           {event.result && (
                             <div className="text-sm">
                               <span className="font-medium text-xs">Result:</span> 
-                              <p className="mt-1 text-xs bg-muted p-2 rounded">{event.result}</p>
+                              <p className="mt-1 text-xs bg-muted p-2 rounded break-words max-w-full overflow-x-auto">{event.result}</p>
                             </div>
                           )}
                         </div>
