@@ -8,13 +8,20 @@ const corsHeaders = {
 
 // Helper function to parse natural language dates
 function parseNaturalLanguageDate(input: string, timezone: string): { date?: string; time?: string } {
-  const now = new Date();
   const lowerInput = input.toLowerCase().trim();
 
-  // Convert current time to business timezone
+  // Get current time in business timezone - this is our reference point
+  const now = new Date();
   const businessNow = toZonedTime(now, timezone);
-
-  let targetDate = new Date(businessNow);
+  
+  // Extract date components in the business timezone
+  const currentYear = parseInt(format(businessNow, 'yyyy', { timeZone: timezone }));
+  const currentMonth = parseInt(format(businessNow, 'M', { timeZone: timezone })) - 1; // 0-indexed
+  const currentDate = parseInt(format(businessNow, 'd', { timeZone: timezone }));
+  const currentDay = parseInt(format(businessNow, 'i', { timeZone: timezone })); // day of week (1=Monday, 7=Sunday)
+  
+  // Create target date starting from business timezone's current date
+  let targetDate = new Date(currentYear, currentMonth, currentDate);
   let timeString: string | undefined;
 
   // Parse date-related keywords - ORDER MATTERS: most specific patterns FIRST!
@@ -28,14 +35,14 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       const occurrences = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
       const dayName = match[2].replace(/s$/, ''); // Remove plural 's'
       
-      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const targetDay = days.indexOf(dayName);
-      const currentDay = targetDate.getDay();
+      const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+      const targetDay = days.indexOf(dayName) + 1; // 1=Monday, 7=Sunday
+      const todayDayOfWeek = currentDay; // Already in 1-7 format from above
       
-      console.log(`Looking for ${occurrences} occurrences of ${dayName}, current day: ${currentDay}, target day: ${targetDay}`);
+      console.log(`Looking for ${occurrences} occurrences of ${dayName}, current day: ${todayDayOfWeek}, target day: ${targetDay}`);
       
       // Find the first occurrence
-      let daysToAdd = targetDay - currentDay;
+      let daysToAdd = targetDay - todayDayOfWeek;
       if (daysToAdd <= 0) daysToAdd += 7;
       
       // Add additional weeks for the nth occurrence
@@ -64,39 +71,35 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
     }
   } else if (lowerInput.match(/next week (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
     // Handle "next week friday", "next week monday", etc.
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const match = lowerInput.match(/next week (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
     if (match) {
-      const targetDay = days.indexOf(match[1]);
-      const currentDay = targetDate.getDay();
+      const targetDay = days.indexOf(match[1]) + 1; // 1=Monday, 7=Sunday
       // Always go to next week (minimum 7 days)
       let daysToAdd = targetDay - currentDay + 7;
       if (daysToAdd < 7) daysToAdd += 7;
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
   } else if (lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const match = lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
     if (match) {
-      const targetDay = days.indexOf(match[1]);
-      const currentDay = targetDate.getDay();
+      const targetDay = days.indexOf(match[1]) + 1; // 1=Monday, 7=Sunday
       let daysToAdd = targetDay - currentDay;
       if (daysToAdd <= 0) daysToAdd += 7;
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
   } else if (lowerInput.includes('next week')) {
     // "next week" means the first day of the next calendar week (Monday)
-    const currentDay = targetDate.getDay();
-    // Days until next Monday (1 = Monday)
-    const daysUntilMonday = currentDay === 0 ? 1 : 8 - currentDay; // If Sunday, add 1 day; otherwise 8 - current day
+    // Days until next Monday (1 = Monday in our 1-7 system)
+    const daysUntilMonday = currentDay === 7 ? 1 : 8 - currentDay; // If Sunday (7), add 1 day; otherwise 8 - current day
     targetDate.setDate(targetDate.getDate() + daysUntilMonday);
   } else if (lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
     // Simple day name - check after "next [day]"
-    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const match = lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
     if (match) {
-      const targetDay = days.indexOf(match[1]);
-      const currentDay = targetDate.getDay();
+      const targetDay = days.indexOf(match[1]) + 1; // 1=Monday, 7=Sunday
       let daysToAdd = targetDay - currentDay;
       if (daysToAdd <= 0) daysToAdd += 7;
       targetDate.setDate(targetDate.getDate() + daysToAdd);
