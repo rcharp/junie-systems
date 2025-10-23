@@ -85,7 +85,11 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
   } else if (lowerInput.includes('next week')) {
-    targetDate.setDate(targetDate.getDate() + 7);
+    // "next week" means the first day of the next calendar week (Monday)
+    const currentDay = targetDate.getDay();
+    // Days until next Monday (1 = Monday)
+    const daysUntilMonday = currentDay === 0 ? 1 : 8 - currentDay; // If Sunday, add 1 day; otherwise 8 - current day
+    targetDate.setDate(targetDate.getDate() + daysUntilMonday);
   } else if (lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
     // Simple day name - check after "next [day]"
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
