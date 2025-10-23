@@ -204,7 +204,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
       </CardHeader>
       {!isMinimized && (
         <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Left Side - Testing Controls */}
             <div className="space-y-4">
               <div>
@@ -313,7 +313,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
             </div>
 
             {/* Right Side - Events List */}
-            <div className="space-y-4">
+            <div className="space-y-4 lg:col-span-2">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold mb-1">Live Events</h3>
