@@ -2697,7 +2697,7 @@ const Settings = () => {
                     <Label htmlFor="twilioPhoneNumber" className="font-semibold">
                       Your Junie Phone Number
                     </Label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Input
                         id="twilioPhoneNumber"
                         value={twilioPhoneNumber || "Not assigned yet"}
@@ -2708,7 +2708,7 @@ const Settings = () => {
                         type="button"
                         onClick={handleAssignPhoneNumber}
                         disabled={!!twilioPhoneNumber || assigningPhoneNumber}
-                        className="whitespace-nowrap"
+                        className="whitespace-nowrap shrink-0"
                       >
                         {assigningPhoneNumber ? "Assigning..." : "Get Your Phone Number"}
                       </Button>
