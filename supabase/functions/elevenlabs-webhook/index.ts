@@ -1036,20 +1036,34 @@ async function handleCalendarBooking({
     const customerEmail = normalizedEmail || analysisData.email_address?.value || callerInfo.email;
     console.log('📧 Using email for calendar booking:', customerEmail);
     
-    // Call the google-calendar-book function
+    // Validate required fields before adding to queue
+    const hasRequiredFields = 
+      analysisData.customer_name?.value &&
+      analysisData.phone_number?.value &&
+      analysisData.service_address?.value &&
+      parsedAppointmentDateTime;
+
+    if (!hasRequiredFields) {
+      console.log('❌ Missing required fields for calendar booking:');
+      console.log('  - Name:', !!analysisData.customer_name?.value);
+      console.log('  - Phone:', !!analysisData.phone_number?.value);
+      console.log('  - Address:', !!analysisData.service_address?.value);
+      console.log('  - DateTime:', !!parsedAppointmentDateTime);
+      return null;
+    }
+
+    // Call the google-calendar-book function to add to queue
     const bookingPayload = {
       userId: businessUserId,
-      customerName: analysisData.customer_name?.value || callerInfo.caller_name || 'Unknown Customer',
-      customerEmail: customerEmail,
-      customerPhone: String(analysisData.phone_number?.value || callerInfo.phone_number || ''),
-      serviceType: serviceType || analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
-      serviceAddress: analysisData.service_address?.value || '',
+      customerName: analysisData.customer_name?.value,
+      customerPhone: String(analysisData.phone_number?.value),
+      serviceAddress: analysisData.service_address?.value,
       appointmentDateTime: typeof parsedAppointmentDateTime === 'string' ? parsedAppointmentDateTime : parsedAppointmentDateTime.toISOString(),
+      serviceType: serviceType || analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
       additionalNotes: additionalNotes,
-      notes: `Service requested: ${serviceType || analysisData.service_requested?.value || analysisData.service_type?.value || 'Service appointment'}`
     };
 
-    console.log('📅 Calling google-calendar-book with payload:', JSON.stringify(bookingPayload, null, 2));
+    console.log('📅 Adding appointment to sync queue:', JSON.stringify(bookingPayload, null, 2));
 
     const bookingResponse = await fetch(`${supabaseUrl}/functions/v1/google-calendar-book`, {
       method: 'POST',
@@ -1060,18 +1074,14 @@ async function handleCalendarBooking({
       body: JSON.stringify(bookingPayload)
     });
 
-    console.log('📅 Calendar booking response status:', bookingResponse.status);
-
     if (bookingResponse.ok) {
       const bookingResult = await bookingResponse.json();
-      console.log('✅ Calendar booking completed successfully:', JSON.stringify(bookingResult, null, 2));
+      console.log('✅ Appointment added to sync queue:', bookingResult.queueId);
       return bookingResult;
     } else {
       const errorText = await bookingResponse.text();
-      console.error('❌ Calendar booking failed:', bookingResponse.status);
-      console.error('❌ Error details:', errorText);
-      // Log to help debug - don't fail silently
-      throw new Error(`Calendar booking failed: ${errorText}`);
+      console.error('❌ Failed to add to sync queue:', errorText);
+      return null;
     }
 
   } catch (error) {

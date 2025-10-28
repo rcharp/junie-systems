@@ -18,6 +18,7 @@ import { AdminUsersList } from '@/components/AdminUsersList';
 import { ClientToolMonitor } from '@/components/ClientToolMonitor';
 import { CallInitiationFailuresMonitor } from '@/components/CallInitiationFailuresMonitor';
 import { SystemTestRunner } from '@/components/SystemTestRunner';
+import { AppointmentSyncQueue } from '@/components/AppointmentSyncQueue';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -427,6 +428,9 @@ const AdminDashboard = () => {
 
             {/* Business Types Manager */}
             <BusinessTypesManager />
+
+            {/* Appointment Sync Queue */}
+            <AppointmentSyncQueue />
 
             {/* Junie Info */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_sync_queue: {
+        Row: {
+          additional_notes: string | null
+          appointment_date_time: string
+          business_id: string
+          calendar_event_id: string | null
+          completed_at: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string
+          error_details: Json | null
+          error_message: string | null
+          id: string
+          last_retry_at: string | null
+          max_retries: number
+          next_retry_at: string | null
+          retry_count: number
+          service_address: string
+          service_type: string | null
+          sync_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          appointment_date_time: string
+          business_id: string
+          calendar_event_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone: string
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          last_retry_at?: string | null
+          max_retries?: number
+          next_retry_at?: string | null
+          retry_count?: number
+          service_address: string
+          service_type?: string | null
+          sync_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_notes?: string | null
+          appointment_date_time?: string
+          business_id?: string
+          calendar_event_id?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string
+          error_details?: Json | null
+          error_message?: string | null
+          id?: string
+          last_retry_at?: string | null
+          max_retries?: number
+          next_retry_at?: string | null
+          retry_count?: number
+          service_address?: string
+          service_type?: string | null
+          sync_status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_sync_queue_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "business_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           additional_notes: string | null
@@ -70,7 +150,7 @@ export type Database = {
           business_id: string
           created_at: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           request_data: Json | null
           request_source: string
           request_type: string
@@ -83,7 +163,7 @@ export type Database = {
           business_id: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_data?: Json | null
           request_source?: string
           request_type?: string
@@ -96,7 +176,7 @@ export type Database = {
           business_id?: string
           created_at?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           request_data?: Json | null
           request_source?: string
           request_type?: string
@@ -552,7 +632,7 @@ export type Database = {
           created_at: string
           id: string
           identifier: string
-          ip_address: unknown | null
+          ip_address: unknown
           metadata: Json | null
         }
         Insert: {
@@ -560,7 +640,7 @@ export type Database = {
           created_at?: string
           id?: string
           identifier: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
         }
         Update: {
@@ -568,7 +648,7 @@ export type Database = {
           created_at?: string
           id?: string
           identifier?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
         }
         Relationships: []
@@ -578,7 +658,7 @@ export type Database = {
           action: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           justification: string | null
           record_id: string | null
           sensitive_data_accessed: boolean | null
@@ -590,7 +670,7 @@ export type Database = {
           action: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           justification?: string | null
           record_id?: string | null
           sensitive_data_accessed?: boolean | null
@@ -602,7 +682,7 @@ export type Database = {
           action?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           justification?: string | null
           record_id?: string | null
           sensitive_data_accessed?: boolean | null
@@ -722,7 +802,7 @@ export type Database = {
           activity_type: string
           created_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string
         }
@@ -731,7 +811,7 @@ export type Database = {
           activity_type: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id: string
         }
@@ -740,7 +820,7 @@ export type Database = {
           activity_type?: string
           created_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string
         }
@@ -835,22 +915,10 @@ export type Database = {
         Args: { justification: string; target_appointment_id?: string }
         Returns: boolean
       }
-      cleanup_old_rate_limit_logs: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      decrypt_token: {
-        Args: { encoded_token: string }
-        Returns: string
-      }
-      encrypt_token: {
-        Args: { token: string }
-        Returns: string
-      }
-      exec_sql: {
-        Args: { sql: string }
-        Returns: undefined
-      }
+      cleanup_old_rate_limit_logs: { Args: never; Returns: undefined }
+      decrypt_token: { Args: { encoded_token: string }; Returns: string }
+      encrypt_token: { Args: { token: string }; Returns: string }
+      exec_sql: { Args: { sql: string }; Returns: undefined }
       get_appointments_summary: {
         Args: { target_user_id?: string }
         Returns: {
@@ -930,20 +998,14 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_tiktok_tokens: {
-        Args: { account_id: string }
-        Returns: Json
-      }
-      get_user_id_by_email: {
-        Args: { _email: string }
-        Returns: string
-      }
+      get_tiktok_tokens: { Args: { account_id: string }; Returns: Json }
+      get_user_id_by_email: { Args: { _email: string }; Returns: string }
       get_user_id_by_webhook_id: {
         Args: { _webhook_id: string }
         Returns: string
       }
       get_users_with_business_ids_for_admin: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           business_id: string
           company_name: string
@@ -959,7 +1021,7 @@ export type Database = {
         }[]
       }
       get_users_with_emails_for_admin: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           company_name: string
           created_at: string
@@ -980,10 +1042,7 @@ export type Database = {
         Args: { event_data?: Json; event_type: string }
         Returns: undefined
       }
-      normalize_phone: {
-        Args: { phone: string }
-        Returns: string
-      }
+      normalize_phone: { Args: { phone: string }; Returns: string }
       store_tiktok_tokens: {
         Args: {
           access_token: string
