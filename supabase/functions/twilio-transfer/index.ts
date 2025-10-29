@@ -17,7 +17,11 @@ Deno.serve(async (req) => {
     const requestBody = await req.json()
     console.log('[Transfer] Request received:', JSON.stringify(requestBody, null, 2))
 
-    const { callSid, businessId, userId, agentNumber } = requestBody
+    // Support both camelCase (from elevenlabs-websocket) and snake_case (from direct ElevenLabs webhook)
+    const callSid = requestBody.callSid || requestBody.call_sid
+    const businessId = requestBody.businessId || requestBody.business_id
+    const userId = requestBody.userId || requestBody.user_id
+    const agentNumber = requestBody.agentNumber || requestBody.transfer_number
 
     // Validate required parameters
     if (!callSid || callSid === 'null' || callSid === null) {
