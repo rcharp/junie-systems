@@ -33,21 +33,31 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
   const [naturalLanguage, setNaturalLanguage] = useState<string>("");
   const [isTesting, setIsTesting] = useState(false);
   const [isTestingNL, setIsTestingNL] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    // Fetch initial events
-    const fetchEvents = async () => {
+  const fetchEvents = async () => {
+    setIsRefreshing(true);
+    try {
       const { data, error } = await supabase
         .from("client_tool_events")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (data && !error) {
+      if (error) {
+        console.error("Error fetching client tool events:", error);
+        toast.error(`Error loading events: ${error.message}`);
+      } else if (data) {
+        console.log(`Loaded ${data.length} client tool events`);
         setEvents(data);
       }
-    };
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
+  useEffect(() => {
+    // Fetch initial events
     fetchEvents();
 
     // Subscribe to real-time updates
@@ -313,6 +323,14 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                   <h3 className="text-sm font-semibold mb-1">Live Events</h3>
                   <p className="text-xs text-muted-foreground">Showing {events.length} recent events</p>
                 </div>
+                <Button
+                  onClick={fetchEvents}
+                  disabled={isRefreshing}
+                  size="sm"
+                  variant="outline"
+                >
+                  {isRefreshing ? "Refreshing..." : "Refresh"}
+                </Button>
               </div>
 
               <ScrollArea className="h-[600px] pr-4">
