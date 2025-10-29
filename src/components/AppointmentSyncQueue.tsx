@@ -194,23 +194,21 @@ export function AppointmentSyncQueue() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {(entry.sync_status === 'failed' || entry.sync_status === 'pending') && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleRetry(entry.id)}
-                          disabled={retrying === entry.id}
-                        >
-                          {retrying === entry.id ? (
-                            <RefreshCw className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <>
-                              <RefreshCw className="w-3 h-3 mr-1" />
-                              Retry
-                            </>
-                          )}
-                        </Button>
-                      )}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRetry(entry.id)}
+                        disabled={entry.sync_status === 'completed' || retrying === entry.id}
+                      >
+                        {retrying === entry.id ? (
+                          <RefreshCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <>
+                            <RefreshCw className="w-3 h-3 mr-1" />
+                            Retry
+                          </>
+                        )}
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
