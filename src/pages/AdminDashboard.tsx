@@ -482,22 +482,20 @@ const AdminDashboard = () => {
             </div>
 
             {/* API Sub-tabs */}
-            <Tabs defaultValue="post-call-data" className="w-full">
-              <TabsList className="w-full grid grid-cols-6 mb-4">
-                <TabsTrigger value="post-call-data" className="text-xs sm:text-sm">Post Call Data</TabsTrigger>
-                <TabsTrigger value="business-data" className="text-xs sm:text-sm">Business Data</TabsTrigger>
+            <Tabs defaultValue="webhooks" className="w-full">
+              <TabsList className="w-full grid grid-cols-5 mb-4">
+                <TabsTrigger value="webhooks" className="text-xs sm:text-sm">Webhooks</TabsTrigger>
                 <TabsTrigger value="client-tools" className="text-xs sm:text-sm">Client Tools</TabsTrigger>
                 <TabsTrigger value="calendar-test" className="text-xs sm:text-sm">Calendar Test</TabsTrigger>
                 <TabsTrigger value="call-failures" className="text-xs sm:text-sm">Call Failures</TabsTrigger>
                 <TabsTrigger value="sync-queue" className="text-xs sm:text-sm">Sync Queue</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="post-call-data">
-                <WebhookMonitor defaultExpanded={true} />
-              </TabsContent>
-
-              <TabsContent value="business-data">
-                <BusinessDataMonitor defaultExpanded={true} />
+              <TabsContent value="webhooks">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <WebhookMonitor defaultExpanded={true} />
+                  <BusinessDataMonitor defaultExpanded={true} />
+                </div>
               </TabsContent>
 
               <TabsContent value="call-failures">
