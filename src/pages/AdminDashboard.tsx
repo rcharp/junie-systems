@@ -483,11 +483,10 @@ const AdminDashboard = () => {
 
             {/* API Sub-tabs */}
             <Tabs defaultValue="webhooks" className="w-full">
-              <TabsList className="w-full grid grid-cols-5 mb-4">
+              <TabsList className="w-full grid grid-cols-4 mb-4">
                 <TabsTrigger value="webhooks" className="text-xs sm:text-sm">Webhooks</TabsTrigger>
                 <TabsTrigger value="client-tools" className="text-xs sm:text-sm">Client Tools</TabsTrigger>
                 <TabsTrigger value="calendar-test" className="text-xs sm:text-sm">Calendar Test</TabsTrigger>
-                <TabsTrigger value="call-failures" className="text-xs sm:text-sm">Call Failures</TabsTrigger>
                 <TabsTrigger value="sync-queue" className="text-xs sm:text-sm">Sync Queue</TabsTrigger>
               </TabsList>
 
@@ -496,23 +495,6 @@ const AdminDashboard = () => {
                   <WebhookMonitor defaultExpanded={true} />
                   <BusinessDataMonitor defaultExpanded={true} />
                 </div>
-              </TabsContent>
-
-              <TabsContent value="call-failures">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Phone className="w-5 h-5 text-destructive" />
-                      Call Initiation Failures
-                    </CardTitle>
-                    <CardDescription>
-                      Failed attempts to initiate calls via ElevenLabs
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <CallInitiationFailuresMonitor />
-                  </CardContent>
-                </Card>
               </TabsContent>
 
               <TabsContent value="client-tools">
