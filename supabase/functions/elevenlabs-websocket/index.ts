@@ -264,15 +264,13 @@ serve(async (req) => {
 
               try {
                 const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
-                const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
                 
                 const response = await fetch(
                   `${SUPABASE_URL}/functions/v1/twilio-transfer`,
                   {
                     method: 'POST',
                     headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                      'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
                       callSid: callSid,
