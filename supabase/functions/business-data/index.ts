@@ -438,6 +438,7 @@ serve(async (req) => {
           type: "conversation_initiation_client_data",
           dynamic_variables: {
             business_id: conversationBusinessId,
+            call_sid: parsedBody.call_sid || "",
             business_name: businessDataForInit?.business_name || "Charpentier Air Conditioning",
             business_type: businessDataForInit?.business_type || "hvac",
             business_type_full_name: businessTypeFullName || "HVAC & Air Conditioning",
