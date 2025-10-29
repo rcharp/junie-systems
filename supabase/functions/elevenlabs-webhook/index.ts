@@ -1217,7 +1217,7 @@ async function parseCallDataWithClaude(
               properties: {
                 appointment_datetime: {
                   type: 'string',
-                  description: 'The parsed datetime in ISO 8601 format (YYYY-MM-DDTHH:MM:SS.000Z) in UTC timezone. Return null if no datetime to parse.'
+                  description: 'The parsed datetime in ISO 8601 format with timezone offset (e.g., 2025-10-27T09:00:00-04:00) preserving the business timezone. Return null if no datetime to parse.'
                 },
                 normalized_email: {
                   type: 'string',
@@ -1229,14 +1229,20 @@ async function parseCallDataWithClaude(
           tool_choice: { type: 'tool', name: 'parse_call_data' },
           messages: [{
             role: 'user',
-            content: `Current date and time: ${currentDate} ${currentTime} (timezone: America/New_York, UTC-4)
+            content: `Current date and time: ${currentDate} ${currentTime}
+
+Business timezone: America/New_York (Eastern Time)
 
 ${!parsedDateTime && appointmentTimeValue ? `Appointment time to parse: "${appointmentTimeValue}"
-Instructions for datetime:
-- If only a time range is given (like "from nine forty-five to twelve fifteen"), use the START time
+
+CRITICAL TIMEZONE INSTRUCTIONS:
+- When the caller says a time like "9am", they mean 9am in the business's timezone (America/New_York)
+- DO NOT convert to UTC or any other timezone
+- Keep the time exactly as stated by the caller in Eastern Time
+- Then express it in ISO 8601 format with the timezone offset (e.g., "2025-10-27T09:00:00-04:00" for 9am ET in summer, or "-05:00" for winter)
+- If only a time range is given (like "from 9:45 to 12:15"), use the START time
 - If the date seems to be in the past, assume it's meant for the future (next occurrence)
-- Convert to UTC timezone (subtract 4 hours from Eastern Time)
-- Return as ISO 8601 string (YYYY-MM-DDTHH:MM:SS.000Z)
+- The ISO string should preserve the local time intent, not convert it away
 ` : ''}
 ${!normalizedEmail && emailValue ? `Email to normalize: "${emailValue}"
 Instructions for email:
