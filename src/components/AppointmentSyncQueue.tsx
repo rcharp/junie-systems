@@ -10,6 +10,7 @@ import { format } from "date-fns";
 
 interface QueueEntry {
   id: string;
+  business_id: string;
   customer_name: string;
   customer_phone: string;
   appointment_date_time: string;
@@ -22,6 +23,9 @@ interface QueueEntry {
   calendar_event_id: string | null;
   created_at: string;
   next_retry_at: string | null;
+  business_settings?: {
+    business_name: string | null;
+  };
 }
 
 export function AppointmentSyncQueue() {
@@ -33,7 +37,10 @@ export function AppointmentSyncQueue() {
     try {
       const { data, error } = await supabase
         .from('appointment_sync_queue')
-        .select('*')
+        .select(`
+          *,
+          business_settings!inner(business_name)
+        `)
         .order('created_at', { ascending: false })
         .limit(50);
 
@@ -153,11 +160,9 @@ export function AppointmentSyncQueue() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Business</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Appointment</TableHead>
-                  <TableHead>Address</TableHead>
-                  <TableHead>Service</TableHead>
+                  <TableHead>Appointment Date/Time</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Retries</TableHead>
                   <TableHead>Actions</TableHead>
@@ -166,26 +171,19 @@ export function AppointmentSyncQueue() {
               <TableBody>
                 {queueEntries.map((entry) => (
                   <TableRow key={entry.id}>
-                    <TableCell className="font-medium">{entry.customer_name}</TableCell>
-                    <TableCell>{entry.customer_phone}</TableCell>
+                    <TableCell className="font-medium">
+                      {entry.business_settings?.business_name || 'Unknown Business'}
+                    </TableCell>
+                    <TableCell>{entry.customer_name}</TableCell>
                     <TableCell>
                       {format(new Date(entry.appointment_date_time), 'MMM d, yyyy h:mm a')}
                     </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {entry.service_address}
-                    </TableCell>
-                    <TableCell>{entry.service_type || 'N/A'}</TableCell>
                     <TableCell>
                       <div className="space-y-1">
                         {getStatusBadge(entry.sync_status)}
                         {entry.error_message && (
-                          <p className="text-xs text-destructive mt-1">
+                          <p className="text-xs text-destructive mt-1 max-w-[200px] truncate" title={entry.error_message}>
                             {entry.error_message}
-                          </p>
-                        )}
-                        {entry.calendar_event_id && (
-                          <p className="text-xs text-muted-foreground">
-                            Event: {entry.calendar_event_id}
                           </p>
                         )}
                       </div>
