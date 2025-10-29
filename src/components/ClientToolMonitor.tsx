@@ -38,19 +38,30 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
   const fetchEvents = async () => {
     setIsRefreshing(true);
     try {
+      console.log('Fetching client tool events...');
       const { data, error } = await supabase
         .from("client_tool_events")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(50);
 
+      console.log('Client tool events query result:', { data, error, count: data?.length });
+
       if (error) {
         console.error("Error fetching client tool events:", error);
         toast.error(`Error loading events: ${error.message}`);
       } else if (data) {
-        console.log(`Loaded ${data.length} client tool events`);
+        console.log(`✅ Loaded ${data.length} client tool events`);
+        console.log('First event:', data[0]);
+        console.log('Setting events state with:', data);
         setEvents(data);
+        if (data.length === 0) {
+          toast.info("No client tool events found in database");
+        }
       }
+    } catch (err) {
+      console.error('Exception fetching events:', err);
+      toast.error('Failed to fetch events');
     } finally {
       setIsRefreshing(false);
     }
@@ -321,7 +332,14 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-semibold mb-1">Live Events</h3>
-                  <p className="text-xs text-muted-foreground">Showing {events.length} recent events</p>
+                  <p className="text-xs text-muted-foreground">
+                    Showing {events.length} recent events
+                    {events.length > 0 && (
+                      <span className="ml-2 text-xs">
+                        (Latest: {new Date(events[0]?.created_at).toLocaleDateString()})
+                      </span>
+                    )}
+                  </p>
                 </div>
                 <Button
                   onClick={fetchEvents}
@@ -336,12 +354,15 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
               <ScrollArea className="h-[600px] pr-4">
                 <div className="space-y-3">
                   {events.length === 0 ? (
-                    <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center justify-center py-12 gap-2">
                       <p className="text-sm text-muted-foreground text-center">
                         No events yet. Events will appear here in real-time.
                       </p>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Try using the test buttons above or make a live call to see events.
+                      </p>
                     </div>
-                  ) : (
+                   ) : (
                     events.map((event) => (
                       <div key={event.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
                         <div className="flex items-center justify-between">
