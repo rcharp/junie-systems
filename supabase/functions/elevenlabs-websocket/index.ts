@@ -242,9 +242,9 @@ serve(async (req) => {
                 }));
               }
             }
-            // Handle transfer_call tool
-            else if (message.client_tool_call?.tool_name === "transfer_call" && callSid) {
-              console.log(`[II] Processing transfer_call for call ${callSid}`);
+            // Handle transfer_call or transfer_call_webhook tool
+            else if ((message.client_tool_call?.tool_name === "transfer_call" || message.client_tool_call?.tool_name === "transfer_call_webhook") && callSid) {
+              console.log(`[II] Processing ${message.client_tool_call?.tool_name} for call ${callSid}`);
 
               const callContext = activeCalls.get(callSid);
               if (!callContext || !callContext.transfer_number) {
