@@ -142,3 +142,12 @@ verify_jwt = false
 
 [functions.get-current-time]
 verify_jwt = false
+
+[functions.twilio-transfer]
+verify_jwt = false
+
+[functions.twilio-transfer-twiml]
+verify_jwt = false
+
+[functions.twilio-transfer-status]
+verify_jwt = false
