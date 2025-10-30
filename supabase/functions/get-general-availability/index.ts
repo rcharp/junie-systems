@@ -1,5 +1,32 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
-import { toZonedTime, format } from 'https://esm.sh/date-fns-tz@3.2.0';
+import { toZonedTime, fromZonedTime, format } from 'https://esm.sh/date-fns-tz@3.2.0';
+import { decryptToken, encryptToken } from '../_shared/encryption.ts';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+// 5-minute cache for availability results
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const availabilityCache = new Map<string, { data: any; timestamp: number }>();
+
+function getCacheKey(userId: string, date: string, time?: string): string {
+  return `${userId}:${date}:${time || ''}`;
+}
+
+function getFromCache(key: string): any | null {
+  const cached = availabilityCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
+  }
+  availabilityCache.delete(key);
+  return null;
+}
+
+function setCache(key: string, data: any): void {
+  availabilityCache.set(key, { data, timestamp: Date.now() });
+}
 
 // Helper to get ordinal suffix (1st, 2nd, 3rd, etc.)
 function getOrdinalSuffix(day: number): string {
@@ -12,81 +39,53 @@ function getOrdinalSuffix(day: number): string {
   }
 }
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 // Helper function to parse natural language dates
 function parseNaturalLanguageDate(input: string, timezone: string): { date?: string; time?: string } {
   const lowerInput = input.toLowerCase().trim();
-
-  // Get current time in business timezone - this is our reference point
   const now = new Date();
   const businessNow = toZonedTime(now, timezone);
   
-  // Extract date components in the business timezone
   const currentYear = parseInt(format(businessNow, 'yyyy', { timeZone: timezone }));
-  const currentMonth = parseInt(format(businessNow, 'M', { timeZone: timezone })) - 1; // 0-indexed
+  const currentMonth = parseInt(format(businessNow, 'M', { timeZone: timezone })) - 1;
   const currentDate = parseInt(format(businessNow, 'd', { timeZone: timezone }));
-  const currentDay = parseInt(format(businessNow, 'i', { timeZone: timezone })); // day of week (1=Monday, 7=Sunday)
+  const currentDay = parseInt(format(businessNow, 'i', { timeZone: timezone }));
   
-  // Create target date starting from business timezone's current date
   let targetDate = new Date(currentYear, currentMonth, currentDate);
   let timeString: string | undefined;
 
-  // Parse date-related keywords - ORDER MATTERS: most specific patterns FIRST!
-  // Check compound patterns with numbers/words + days/weeks BEFORE simple keywords
-  if (lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s*(from\s+(now|today))?/)) {
-    // Handle "two fridays from now", "3 mondays from today", etc. - CHECK THIS FIRST!
-    const match = lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)\s*(from\s+(now|today))?/);
+  // Parse date patterns
+  if (lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)/)) {
+    const match = lowerInput.match(/(\d+|two|three|four)\s+(mondays?|tuesdays?|wednesdays?|thursdays?|fridays?|saturdays?|sundays?)/);
     if (match) {
-      console.log('Matched day count pattern:', match);
       const numberWords: { [key: string]: number } = { 'two': 2, 'three': 3, 'four': 4 };
       const occurrences = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
-      const dayName = match[2].replace(/s$/, ''); // Remove plural 's'
-      
+      const dayName = match[2].replace(/s$/, '');
       const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-      const targetDay = days.indexOf(dayName) + 1; // 1=Monday, 7=Sunday
-      const todayDayOfWeek = currentDay; // Already in 1-7 format from above
-      
-      console.log(`Looking for ${occurrences} occurrences of ${dayName}, current day: ${todayDayOfWeek}, target day: ${targetDay}`);
-      
-      // Find the first occurrence
-      let daysToAdd = targetDay - todayDayOfWeek;
+      const targetDay = days.indexOf(dayName) + 1;
+      let daysToAdd = targetDay - currentDay;
       if (daysToAdd <= 0) daysToAdd += 7;
-      
-      // Add additional weeks for the nth occurrence
       daysToAdd += (occurrences - 1) * 7;
-      
-      console.log(`Adding ${daysToAdd} days`);
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
-  } else if (lowerInput.match(/(\d+|two|three|four)\s+(weeks?)\s*(from\s+(now|today))?/)) {
-    // Handle "2 weeks from now", "3 weeks", etc.
-    const match = lowerInput.match(/(\d+|two|three|four)\s+(weeks?)\s*(from\s+(now|today))?/);
+  } else if (lowerInput.match(/(\d+|two|three|four)\s+weeks?/)) {
+    const match = lowerInput.match(/(\d+|two|three|four)\s+weeks?/);
     if (match) {
-      console.log('Matched weeks pattern:', match);
       const numberWords: { [key: string]: number } = { 'two': 2, 'three': 3, 'four': 4 };
       const numWeeks = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
       targetDate.setDate(targetDate.getDate() + (numWeeks * 7));
     }
-  } else if (lowerInput.match(/(\d+|two|three|four)\s+(days?)\s*(from\s+(now|today))?/)) {
-    // Handle "2 days from now", "3 days", etc.
-    const match = lowerInput.match(/(\d+|two|three|four)\s+(days?)\s*(from\s+(now|today))?/);
+  } else if (lowerInput.match(/(\d+|two|three|four)\s+days?/)) {
+    const match = lowerInput.match(/(\d+|two|three|four)\s+days?/);
     if (match) {
-      console.log('Matched days pattern:', match);
       const numberWords: { [key: string]: number } = { 'two': 2, 'three': 3, 'four': 4 };
       const numDays = isNaN(parseInt(match[1])) ? numberWords[match[1]] : parseInt(match[1]);
       targetDate.setDate(targetDate.getDate() + numDays);
     }
   } else if (lowerInput.match(/next week (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
-    // Handle "next week friday", "next week monday", etc.
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const match = lowerInput.match(/next week (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
     if (match) {
-      const targetDay = days.indexOf(match[1]) + 1; // 1=Monday, 7=Sunday
-      // Always go to next week (minimum 7 days)
+      const targetDay = days.indexOf(match[1]) + 1;
       let daysToAdd = targetDay - currentDay + 7;
       if (daysToAdd < 7) daysToAdd += 7;
       targetDate.setDate(targetDate.getDate() + daysToAdd);
@@ -95,33 +94,28 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const match = lowerInput.match(/next (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
     if (match) {
-      const targetDay = days.indexOf(match[1]) + 1; // 1=Monday, 7=Sunday
+      const targetDay = days.indexOf(match[1]) + 1;
       let daysToAdd = targetDay - currentDay;
       if (daysToAdd <= 0) daysToAdd += 7;
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
   } else if (lowerInput.includes('next week')) {
-    // "next week" means the first day of the next calendar week (Monday)
-    // Days until next Monday (1 = Monday in our 1-7 system)
-    const daysUntilMonday = currentDay === 7 ? 1 : 8 - currentDay; // If Sunday (7), add 1 day; otherwise 8 - current day
+    const daysUntilMonday = currentDay === 7 ? 1 : 8 - currentDay;
     targetDate.setDate(targetDate.getDate() + daysUntilMonday);
   } else if (lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/)) {
-    // Simple day name - check after "next [day]"
     const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
     const match = lowerInput.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/);
     if (match) {
-      const targetDay = days.indexOf(match[1]) + 1; // 1=Monday, 7=Sunday
+      const targetDay = days.indexOf(match[1]) + 1;
       let daysToAdd = targetDay - currentDay;
       if (daysToAdd <= 0) daysToAdd += 7;
       targetDate.setDate(targetDate.getDate() + daysToAdd);
     }
   } else if (lowerInput.includes('tomorrow')) {
     targetDate.setDate(targetDate.getDate() + 1);
-  } else if (lowerInput.includes('today')) {
-    // Keep current date - check this LAST since it's most generic
   }
 
-  // Parse time-related keywords
+  // Parse time
   if (lowerInput.includes('morning')) {
     timeString = '09:00';
   } else if (lowerInput.includes('afternoon')) {
@@ -130,47 +124,10 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
     timeString = '18:00';
   } else if (lowerInput.includes('noon')) {
     timeString = '12:00';
-  } else {
-    // Try to extract time in various formats
-    const timePatterns = [
-      /(\d{1,2}):(\d{2})\s*(am|pm)?/i,
-      /(\d{1,2})\s*(am|pm)/i,
-      /\bat\s+(\d{1,2})(?:\s|$)/i, // "at 3" - bare number after "at"
-    ];
-
-    for (const pattern of timePatterns) {
-      const match = lowerInput.match(pattern);
-      if (match) {
-        let hours = parseInt(match[1]);
-        // For pattern 1: match[2] is minutes, match[3] is meridiem
-        // For pattern 2: match[2] is meridiem, no minutes captured
-        // For pattern 3: match[1] is hours, no meridiem or minutes
-        const minutes = (match[2] && !isNaN(parseInt(match[2]))) ? match[2] : '00';
-        const meridiem = match[3] || (match[2] && /^(am|pm)$/i.test(match[2]) ? match[2] : undefined);
-
-        // Handle AM/PM conversion
-        if (meridiem && meridiem.toLowerCase() === 'pm' && hours < 12) {
-          hours += 12;
-        } else if (meridiem && meridiem.toLowerCase() === 'am' && hours === 12) {
-          hours = 0;
-        } else if (!meridiem && hours >= 1 && hours <= 11) {
-          // No meridiem specified - assume PM for times 1-11 (common for appointments)
-          hours += 12;
-        }
-
-        timeString = `${hours.toString().padStart(2, '0')}:${minutes}`;
-        break;
-      }
-    }
   }
 
-  // Format date in YYYY-MM-DD format using the business timezone
   const dateString = format(targetDate, 'yyyy-MM-dd', { timeZone: timezone });
-
-  return {
-    date: dateString,
-    time: timeString,
-  };
+  return { date: dateString, time: timeString };
 }
 
 Deno.serve(async (req) => {
@@ -181,16 +138,9 @@ Deno.serve(async (req) => {
   try {
     const { business_id, natural_language } = await req.json();
 
-    if (!business_id) {
+    if (!business_id || !natural_language) {
       return new Response(
-        JSON.stringify({ error: 'business_id is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!natural_language) {
-      return new Response(
-        JSON.stringify({ error: 'natural_language is required' }),
+        JSON.stringify({ error: 'business_id and natural_language are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -199,6 +149,8 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
+    const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!;
+    const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!;
 
     // Fetch business settings
     const { data: businessSettings, error: businessError } = await supabase
@@ -214,66 +166,179 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Parse natural language and fetch availability in parallel
+    // Parse natural language
     const parsed = parseNaturalLanguageDate(natural_language, businessSettings.business_timezone);
-    console.log('Parsed date/time:', parsed);
+    const cacheKey = getCacheKey(businessSettings.user_id, parsed.date!, parsed.time);
     
-    const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
-      'google-calendar-availability',
-      {
-        body: {
-          user_id: businessSettings.user_id,
-          preferred_date: parsed.date,
-          preferred_time: parsed.time,
-          limit: 100,
-        },
-      }
-    );
-
-    console.log('Availability invoke result:', { availabilityData, availabilityError });
-
-    if (availabilityError) {
-      console.error('Availability error:', availabilityError);
-      return new Response(JSON.stringify({ error: 'Failed to fetch availability', details: availabilityError }), { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    // Check cache
+    const cached = getFromCache(cacheKey);
+    if (cached) {
+      return new Response(JSON.stringify(cached), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    // Process slots efficiently
-    const tz = businessSettings.business_timezone;
-    console.log('Processing slots, availabilityData:', availabilityData);
-    console.log('Slots from availabilityData:', availabilityData?.slots);
-    
-    const processedSlots = (availabilityData?.slots || []).map((slot: any) => {
-      const zonedStart = toZonedTime(new Date(slot.startTime), tz);
-      const dayName = format(zonedStart, 'EEEE', { timeZone: tz });
-      const monthName = format(zonedStart, 'MMMM', { timeZone: tz });
-      const day = parseInt(format(zonedStart, 'd', { timeZone: tz }));
-      const time = format(zonedStart, 'h:mmaaa', { timeZone: tz }).toLowerCase();
-      
-      return {
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        timeOfDay: slot.timeOfDay,
-        humanReadable: `${dayName}, ${monthName} ${day}${getOrdinalSuffix(day)} at ${time}`
-      };
-    });
-    
-    console.log('Processed slots:', processedSlots);
-    
-    // Check if requested time is available
-    const timeAvailable = parsed.time ? processedSlots.some((slot: any) => {
-      const slotTime = new Date(slot.startTime);
-      return `${slotTime.getUTCHours().toString().padStart(2, '0')}:${slotTime.getUTCMinutes().toString().padStart(2, '0')}` === parsed.time;
-    }) : null;
+    // Fetch calendar settings and tokens
+    const { data: calendarTokens, error: tokensError } = await supabase.rpc(
+      'get_google_calendar_encrypted_tokens',
+      { p_user_id: businessSettings.user_id }
+    );
 
-    return new Response(JSON.stringify({
+    if (tokensError || !calendarTokens || calendarTokens.length === 0 || !calendarTokens[0].is_connected) {
+      return new Response(JSON.stringify({ 
+        success: false,
+        available_slots: [],
+        message: 'Google Calendar not connected' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const calendarSettings = calendarTokens[0];
+    let accessToken = await decryptToken(calendarSettings.encrypted_access_token);
+    const refreshToken = calendarSettings.encrypted_refresh_token ? await decryptToken(calendarSettings.encrypted_refresh_token) : null;
+    const userTimezone = calendarSettings.timezone || businessSettings.business_timezone;
+    
+    // Build date range
+    let startDate: Date;
+    if (parsed.date && parsed.time) {
+      startDate = fromZonedTime(`${parsed.date}T${parsed.time}:00`, userTimezone);
+    } else if (parsed.date) {
+      startDate = fromZonedTime(`${parsed.date}T09:00:00`, userTimezone);
+    } else {
+      startDate = new Date();
+    }
+    const endDate = new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000));
+    const calendarId = calendarSettings.calendar_id || 'primary';
+    
+    // Call Google Calendar API
+    let freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        items: [{ id: calendarId }],
+      }),
+    });
+
+    // Token refresh logic
+    if (!freeBusyResponse.ok && freeBusyResponse.status === 401 && refreshToken) {
+      const tokenData = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: googleClientId,
+          client_secret: googleClientSecret,
+          refresh_token: refreshToken,
+          grant_type: 'refresh_token',
+        }),
+      }).then(r => r.json());
+
+      accessToken = tokenData.access_token;
+      await supabase.from('google_calendar_settings').update({ 
+        encrypted_access_token: await encryptToken(accessToken),
+        expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+      }).eq('user_id', businessSettings.user_id);
+      
+      freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          timeMin: startDate.toISOString(),
+          timeMax: endDate.toISOString(),
+          items: [{ id: calendarId }],
+        }),
+      });
+    }
+
+    if (!freeBusyResponse.ok) {
+      throw new Error('Failed to fetch calendar data');
+    }
+
+    const freeBusyData = await freeBusyResponse.json();
+    const busyTimes = freeBusyData.calendars[calendarId]?.busy || [];
+    const availabilityHours = calendarSettings.availability_hours || {};
+    const appointmentDuration = calendarSettings.appointment_duration || 60;
+    const businessNow = toZonedTime(new Date(), userTimezone);
+
+    // Find available slots
+    const availableSlots = [];
+    const MAX_SLOTS = 3;
+    
+    for (let dayOffset = 0; dayOffset < 2 && availableSlots.length < MAX_SLOTS; dayOffset++) {
+      const currentDate = new Date(startDate);
+      currentDate.setDate(startDate.getDate() + dayOffset);
+      
+      const dayName = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+      const daySettings = availabilityHours[dayName];
+      
+      if (!daySettings?.enabled) continue;
+      
+      const [startHour, startMinute] = daySettings.start.split(':').map(Number);
+      const [endHour, endMinute] = daySettings.end.split(':').map(Number);
+      
+      const localDateStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), startHour, startMinute);
+      const localDateEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), endHour, endMinute);
+      const utcStartTime = fromZonedTime(localDateStart, userTimezone);
+      const utcEndTime = fromZonedTime(localDateEnd, userTimezone);
+      
+      let currentStart = new Date(utcStartTime);
+      const slotIncrement = 30;
+      
+      while (currentStart.getTime() < utcEndTime.getTime() && availableSlots.length < MAX_SLOTS) {
+        const slotEnd = new Date(currentStart.getTime() + appointmentDuration * 60000);
+        
+        if (toZonedTime(currentStart, userTimezone) <= businessNow || slotEnd.getTime() > utcEndTime.getTime()) {
+          currentStart.setTime(currentStart.getTime() + slotIncrement * 60000);
+          continue;
+        }
+        
+        const hasConflict = busyTimes.some((busy: any) => 
+          currentStart < new Date(busy.end) && slotEnd > new Date(busy.start)
+        );
+        
+        if (!hasConflict) {
+          const zonedStart = toZonedTime(currentStart, userTimezone);
+          const dayName = format(zonedStart, 'EEEE', { timeZone: userTimezone });
+          const monthName = format(zonedStart, 'MMMM', { timeZone: userTimezone });
+          const day = parseInt(format(zonedStart, 'd', { timeZone: userTimezone }));
+          const time = format(zonedStart, 'h:mmaaa', { timeZone: userTimezone }).toLowerCase();
+          const localHour = parseInt(format(zonedStart, 'H', { timeZone: userTimezone }));
+          
+          let timeOfDay = 'morning';
+          if (localHour >= 18) timeOfDay = 'evening';
+          else if (localHour >= 12) timeOfDay = 'afternoon';
+          
+          availableSlots.push({
+            startTime: currentStart.toISOString(),
+            endTime: slotEnd.toISOString(),
+            timeOfDay,
+            humanReadable: `${dayName}, ${monthName} ${day}${getOrdinalSuffix(day)} at ${time}`
+          });
+        }
+        
+        currentStart.setTime(currentStart.getTime() + slotIncrement * 60000);
+      }
+    }
+
+    const result = {
       success: true,
-      timezone: tz,
-      time_available: timeAvailable,
-      available_slots: processedSlots,
-    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      timezone: userTimezone,
+      time_available: parsed.time ? availableSlots.some(slot => {
+        const slotTime = new Date(slot.startTime);
+        return `${slotTime.getUTCHours().toString().padStart(2, '0')}:${slotTime.getUTCMinutes().toString().padStart(2, '0')}` === parsed.time;
+      }) : null,
+      available_slots: availableSlots,
+    };
+    
+    setCache(cacheKey, result);
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   } catch (error) {
     console.error('Error in get-general-availability:', error);
     return new Response(
