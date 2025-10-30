@@ -483,11 +483,12 @@ const AdminDashboard = () => {
 
             {/* API Sub-tabs */}
             <Tabs defaultValue="webhooks" className="w-full">
-              <TabsList className="w-full grid grid-cols-4 mb-4">
+              <TabsList className="w-full grid grid-cols-5 mb-4">
                 <TabsTrigger value="webhooks" className="text-xs sm:text-sm">Webhooks</TabsTrigger>
                 <TabsTrigger value="client-tools" className="text-xs sm:text-sm">Client Tools</TabsTrigger>
                 <TabsTrigger value="calendar-test" className="text-xs sm:text-sm">Calendar Test</TabsTrigger>
                 <TabsTrigger value="sync-queue" className="text-xs sm:text-sm">Sync Queue</TabsTrigger>
+                <TabsTrigger value="backfill" className="text-xs sm:text-sm">Data Tasks</TabsTrigger>
               </TabsList>
 
               <TabsContent value="webhooks">
@@ -604,6 +605,48 @@ const AdminDashboard = () => {
 
               <TabsContent value="sync-queue">
                 <AppointmentSyncQueue />
+              </TabsContent>
+
+              <TabsContent value="backfill">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Issue Details Backfill</CardTitle>
+                    <CardDescription>Extract issue details from existing call log transcripts</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      This will process all call logs with transcripts and extract specific issue details using AI.
+                    </p>
+                    <Button
+                      onClick={async () => {
+                        try {
+                          toast({
+                            title: "Processing",
+                            description: "Starting backfill operation...",
+                          });
+                          
+                          const { data, error } = await supabase.functions.invoke('backfill-issue-details');
+                          
+                          if (error) throw error;
+                          
+                          toast({
+                            title: "Success",
+                            description: `Processed ${data.processed} of ${data.total} call logs. ${data.errors} errors.`,
+                          });
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: error.message,
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Run Issue Details Backfill
+                    </Button>
+                  </CardContent>
+                </Card>
               </TabsContent>
             </Tabs>
           </TabsContent>
