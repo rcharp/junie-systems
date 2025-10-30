@@ -234,6 +234,29 @@ Deno.serve(async (req) => {
 
     console.log('Availability response:', availabilityData);
 
+    // If a specific time was requested, filter to show only that time if available
+    let filteredSlots = availabilityData.slots || [];
+    let responseMessage = availabilityData.message;
+    
+    if (parsed.time && filteredSlots.length > 0) {
+      // Find the slot matching the requested time
+      const requestedSlot = filteredSlots.find((slot: any) => {
+        if (!slot.startTime) return false;
+        const slotTime = new Date(slot.startTime);
+        const slotTimeStr = `${slotTime.getUTCHours().toString().padStart(2, '0')}:${slotTime.getUTCMinutes().toString().padStart(2, '0')}`;
+        return slotTimeStr === parsed.time;
+      });
+      
+      if (requestedSlot) {
+        filteredSlots = [requestedSlot];
+        responseMessage = `The requested time ${parsed.time} on ${parsed.date} is available.`;
+        console.log('Found exact match for requested time:', parsed.time);
+      } else {
+        responseMessage = `The requested time ${parsed.time} on ${parsed.date} is not available. Here are other available slots:`;
+        console.log('Requested time not available, showing all slots for the date');
+      }
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -242,8 +265,8 @@ Deno.serve(async (req) => {
         natural_language_input: natural_language,
         parsed_date: parsed.date,
         parsed_time: parsed.time,
-        available_slots: availabilityData.slots || [],
-        message: availabilityData.message,
+        available_slots: filteredSlots,
+        message: responseMessage,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
