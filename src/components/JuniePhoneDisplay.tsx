@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Phone } from "lucide-react";
+import { formatPhoneNumber } from "@/lib/phone-utils";
 
 export function JuniePhoneDisplay() {
   const [phoneNumber, setPhoneNumber] = useState<string>("");
@@ -26,15 +27,10 @@ export function JuniePhoneDisplay() {
 
   if (!phoneNumber) return null;
 
-  const formattedNumber = phoneNumber.replace(
-    /^\+?1?(\d{3})(\d{3})(\d{4})$/,
-    "($1) $2-$3"
-  );
-
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
       <Phone className="w-4 h-4" />
-      <span>Your Junie phone number: {formattedNumber}</span>
+      <span>Your Junie phone number: {formatPhoneNumber(phoneNumber)}</span>
     </div>
   );
 }
