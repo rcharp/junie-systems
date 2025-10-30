@@ -153,7 +153,8 @@ serve(async (req) => {
                 tool_call_id: message.client_tool_call?.tool_call_id,
                 parameters: message.client_tool_call?.parameters || {},
                 business_id: callContext?.businessId,
-                user_id: callContext?.userId
+                user_id: callContext?.userId,
+                is_test_call: false
               });
               
               if (insertError) {

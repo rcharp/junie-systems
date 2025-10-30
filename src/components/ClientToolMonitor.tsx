@@ -23,7 +23,7 @@ interface ClientToolEvent {
   is_error: boolean;
   created_at: string;
   duration_ms?: number | null;
-  is_test?: boolean;
+  is_test_call?: boolean;
 }
 
 export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded?: boolean }) {
@@ -104,6 +104,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
     }
 
     setIsTesting(true);
+    const startTime = Date.now();
     try {
       const dateStr = format(testDate, "yyyy-MM-dd");
       const testBusinessId = "16739d7f-5a78-499f-ba6d-7a8b72ccba58";
@@ -123,19 +124,25 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         body: requestBody,
       });
 
-      const testEvent: ClientToolEvent = {
-        id: `test-${Date.now()}`,
+      const durationMs = Date.now() - startTime;
+
+      // Insert test event into database
+      const { error: insertError } = await supabase.from("client_tool_events").insert({
         call_sid: "TEST",
         tool_name: "get-specific-availability",
         tool_call_id: `test-call-${Date.now()}`,
         parameters: requestBody,
         result: error ? `Error: ${error.message}` : JSON.stringify(data, null, 2),
         is_error: !!error,
-        created_at: new Date().toISOString(),
-        is_test: true,
-      };
+        duration_ms: durationMs,
+        is_test_call: true,
+        business_id: testBusinessId,
+      });
 
-      setEvents((prev) => [testEvent, ...prev].slice(0, 50));
+      if (insertError) {
+        console.error("Failed to insert test event:", insertError);
+        toast.error("Failed to save test event to database");
+      }
 
       if (error) {
         toast.error(`Error: ${error.message}`);
@@ -159,6 +166,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
     }
 
     setIsTestingNL(true);
+    const startTime = Date.now();
     try {
       const testBusinessId = "16739d7f-5a78-499f-ba6d-7a8b72ccba58";
 
@@ -173,19 +181,25 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
         body: requestBody,
       });
 
-      const testEvent: ClientToolEvent = {
-        id: `test-${Date.now()}`,
+      const durationMs = Date.now() - startTime;
+
+      // Insert test event into database
+      const { error: insertError } = await supabase.from("client_tool_events").insert({
         call_sid: "TEST",
         tool_name: "get-general-availability",
         tool_call_id: `test-call-${Date.now()}`,
         parameters: requestBody,
         result: error ? `Error: ${error.message}` : JSON.stringify(data, null, 2),
         is_error: !!error,
-        created_at: new Date().toISOString(),
-        is_test: true,
-      };
+        duration_ms: durationMs,
+        is_test_call: true,
+        business_id: testBusinessId,
+      });
 
-      setEvents((prev) => [testEvent, ...prev].slice(0, 50));
+      if (insertError) {
+        console.error("Failed to insert test event:", insertError);
+        toast.error("Failed to save test event to database");
+      }
 
       if (error) {
         toast.error(`Error: ${error.message}`);
@@ -370,7 +384,7 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                       <div key={event.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-wrap">
-                            {event.is_test ? (
+                            {event.is_test_call ? (
                               <Badge variant="secondary" className="text-xs">
                                 TEST
                               </Badge>

@@ -526,6 +526,7 @@ export type Database = {
           duration_ms: number | null
           id: string
           is_error: boolean | null
+          is_test_call: boolean
           parameters: Json | null
           result: string | null
           tool_call_id: string
@@ -539,6 +540,7 @@ export type Database = {
           duration_ms?: number | null
           id?: string
           is_error?: boolean | null
+          is_test_call?: boolean
           parameters?: Json | null
           result?: string | null
           tool_call_id: string
@@ -552,6 +554,7 @@ export type Database = {
           duration_ms?: number | null
           id?: string
           is_error?: boolean | null
+          is_test_call?: boolean
           parameters?: Json | null
           result?: string | null
           tool_call_id?: string
