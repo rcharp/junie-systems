@@ -151,6 +151,3 @@ verify_jwt = false
 
 [functions.twilio-transfer-status]
 verify_jwt = false
-
-[functions.update-calendar-event]
-verify_jwt = true
