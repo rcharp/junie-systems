@@ -28,6 +28,7 @@ export type Database = {
           error_details: Json | null
           error_message: string | null
           id: string
+          issue_details: string | null
           last_retry_at: string | null
           max_retries: number
           next_retry_at: string | null
@@ -51,6 +52,7 @@ export type Database = {
           error_details?: Json | null
           error_message?: string | null
           id?: string
+          issue_details?: string | null
           last_retry_at?: string | null
           max_retries?: number
           next_retry_at?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           error_details?: Json | null
           error_message?: string | null
           id?: string
+          issue_details?: string | null
           last_retry_at?: string | null
           max_retries?: number
           next_retry_at?: string | null

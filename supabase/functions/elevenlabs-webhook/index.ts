@@ -1109,6 +1109,7 @@ async function handleCalendarBooking({
       appointmentDateTime: typeof parsedAppointmentDateTime === 'string' ? parsedAppointmentDateTime : parsedAppointmentDateTime.toISOString(),
       serviceType: serviceType || analysisData.service_requested?.value || analysisData.service_type?.value || 'Service Appointment',
       additionalNotes: additionalNotes,
+      issueDetails: issueDetails || null, // Add issue details to appointment
     };
 
     console.log('📅 Adding appointment to sync queue:', JSON.stringify(bookingPayload, null, 2));

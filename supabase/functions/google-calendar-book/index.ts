@@ -19,6 +19,7 @@ interface AppointmentData {
   customerEmail?: string;
   serviceType?: string;
   additionalNotes?: string;
+  issueDetails?: string;
 }
 
 Deno.serve(async (req) => {
@@ -68,6 +69,7 @@ Deno.serve(async (req) => {
       customer_email: appointmentData.customerEmail || null,
       service_type: appointmentData.serviceType || 'Service Appointment',
       additional_notes: appointmentData.additionalNotes || null,
+      issue_details: appointmentData.issueDetails || null,
       sync_status: 'pending',
       next_retry_at: new Date().toISOString(),
     };
