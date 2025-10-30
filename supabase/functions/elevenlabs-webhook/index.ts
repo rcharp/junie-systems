@@ -505,9 +505,10 @@ async function processWebhookInBackground(
       }
     }
 
-    // Format appointment details 
+    // Format appointment details and extract issue details
     let formattedAppointmentDetails = null;
     let enhancedCallSummary = null;
+    let issueDetails = null;
 
     if (parsedAppointmentDateTime) {
       // For manual test calls, use simple formatting to avoid slow Claude API calls
@@ -541,12 +542,14 @@ Date/Time: ${parsedAppointmentDateTime}
 Customer: ${analysisData.customer_name?.value || 'Unknown'}
 Service: ${analysisData.service_address?.value || 'Service requested'}
 Business: ${analysisData.business_name?.value || 'Business'}
+Transcript: ${fullTranscript.substring(0, 1000)}
 
 Please provide:
 1. A human-friendly date/time format (like "Tuesday, September 30 at 9:30 AM")
 2. A brief call summary (like "Scheduled A/C repair appointment for [Customer] at [Address]")
+3. Specific issue details mentioned by the caller (extract any specific problems, symptoms, or details about what's wrong - for example: "A/C not cooling, making loud noise" or "Leaking pipe under sink"). If no specific issue is mentioned, set to null.
 
-Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
+Return as JSON: {"formattedDate": "...", "callSummary": "...", "issueDetails": "..." or null}`;
 
         try {
           const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
@@ -574,7 +577,9 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
               const parsed = JSON.parse(cleanText);
               formattedAppointmentDetails = parsed.formattedDate;
               enhancedCallSummary = parsed.callSummary;
+              issueDetails = parsed.issueDetails;
               console.log('Enhanced call summary:', enhancedCallSummary);
+              console.log('Extracted issue details:', issueDetails);
             } catch (parseErr) {
               console.error('Failed to parse Claude formatting response:', parseErr);
             }
@@ -582,6 +587,48 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
         } catch (claudeErr) {
           console.error('Error calling Claude for formatting:', claudeErr);
         }
+      }
+    }
+
+    // If we didn't extract issue details from appointment flow, try to extract from full transcript
+    if (!issueDetails && fullTranscript && anthropicApiKey) {
+      console.log('=== EXTRACTING ISSUE DETAILS FROM TRANSCRIPT ===');
+      
+      const issueExtractionPrompt = `Review this call transcript and extract any specific issue details mentioned by the caller.
+      
+Transcript:
+${fullTranscript.substring(0, 2000)}
+
+Extract specific problems, symptoms, or details about what's wrong (for example: "A/C not cooling, making loud noise" or "Leaking pipe under sink, water damage visible").
+
+Return ONLY the issue details as plain text, or return "null" if no specific issue was mentioned.`;
+
+      try {
+        const claudeResponse = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${anthropicApiKey}`,
+            'Content-Type': 'application/json',
+            'x-api-key': anthropicApiKey,
+            'anthropic-version': '2023-06-01'
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 500,
+            messages: [{ role: 'user', content: issueExtractionPrompt }]
+          })
+        });
+
+        if (claudeResponse.ok) {
+          const claudeData = await claudeResponse.json();
+          const extractedIssue = claudeData.content[0].text.trim();
+          if (extractedIssue && extractedIssue.toLowerCase() !== 'null') {
+            issueDetails = extractedIssue;
+            console.log('Extracted issue details:', issueDetails);
+          }
+        }
+      } catch (claudeErr) {
+        console.error('Error calling Claude for issue extraction:', claudeErr);
       }
     }
 
@@ -647,6 +694,7 @@ Return as JSON: {"formattedDate": "...", "callSummary": "..."}`;
       incoming_call_phone_number: incomingCallPhoneNumber, // The actual incoming phone number from phone system
       additional_notes: additionalNotes,
       service_type: serviceTypeFromWebhook,
+      issue_details: issueDetails,
       metadata: {
         caller_zip: '',
         caller_address: analysisData.service_address?.value || '',

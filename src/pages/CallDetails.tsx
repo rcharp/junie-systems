@@ -43,6 +43,7 @@ interface CallData {
   incoming_call_phone_number?: string;
   additional_notes?: string;
   service_type?: string;
+  issue_details?: string;
   metadata?: any;
 }
 
@@ -417,6 +418,12 @@ const CallDetails = () => {
                     <span className="text-sm font-medium text-muted-foreground">Service Type</span>
                     <p className="mt-1">{callData.service_type || 'N/A'}</p>
                   </div>
+                  {callData.issue_details && (
+                    <div className="col-span-2">
+                      <span className="text-sm font-medium text-muted-foreground">Issue Details</span>
+                      <p className="mt-1 text-foreground font-medium">{callData.issue_details}</p>
+                    </div>
+                  )}
                   <div>
                     <span className="text-sm font-medium text-muted-foreground">Appointment Scheduled</span>
                     <p className="mt-1">{callData.appointment_scheduled ? 'Yes' : 'No'}</p>

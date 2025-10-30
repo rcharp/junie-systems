@@ -27,6 +27,7 @@ interface CallLog {
   created_at: string;
   updated_at: string;
   best_time_to_call?: string;
+  issue_details?: string;
 }
 
 interface CallMessage {
