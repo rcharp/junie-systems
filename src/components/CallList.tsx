@@ -195,6 +195,11 @@ const CallList = () => {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {call.call_status === 'transferred' && (
+                      <Badge className="text-xs whitespace-nowrap border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100">
+                        Transfer
+                      </Badge>
+                    )}
                     <Badge className={`text-xs whitespace-nowrap border ${getCallTypeColor(call.call_type)}`}>
                       {call.call_type}
                     </Badge>

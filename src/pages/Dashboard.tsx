@@ -59,6 +59,7 @@ interface RecentActivity {
   type: "success" | "warning" | "error";
   caller_name: string;
   call_type: string;
+  call_status?: string;
   created_at: string;
   source: "call" | "message"; // Track whether it's from call_logs or call_messages
 }
@@ -426,6 +427,7 @@ const Dashboard = () => {
               type: log.urgency_level === "urgent" ? "error" : log.urgency_level === "high" ? "warning" : "success",
               caller_name: log.caller_name,
               call_type: log.call_type,
+              call_status: log.call_status,
               created_at: log.created_at,
               source: "call" as const,
             });
@@ -822,6 +824,11 @@ const Dashboard = () => {
                                       <><MessageSquare className="w-3 h-3 mr-1" /> Message</>
                                     )}
                                   </Badge>
+                                  {activity.call_status === 'transferred' && (
+                                    <Badge className="text-xs bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100">
+                                      Transfer
+                                    </Badge>
+                                  )}
                                   <Badge variant="secondary" className="text-xs">
                                     {activity.call_type.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}
                                   </Badge>
