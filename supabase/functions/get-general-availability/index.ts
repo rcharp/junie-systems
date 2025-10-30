@@ -124,6 +124,7 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
     const timePatterns = [
       /(\d{1,2}):(\d{2})\s*(am|pm)?/i,
       /(\d{1,2})\s*(am|pm)/i,
+      /\bat\s+(\d{1,2})(?:\s|$)/i, // "at 3" - bare number after "at"
     ];
 
     for (const pattern of timePatterns) {
@@ -132,13 +133,18 @@ function parseNaturalLanguageDate(input: string, timezone: string): { date?: str
         let hours = parseInt(match[1]);
         // For pattern 1: match[2] is minutes, match[3] is meridiem
         // For pattern 2: match[2] is meridiem, no minutes captured
+        // For pattern 3: match[1] is hours, no meridiem or minutes
         const minutes = (match[2] && !isNaN(parseInt(match[2]))) ? match[2] : '00';
         const meridiem = match[3] || (match[2] && /^(am|pm)$/i.test(match[2]) ? match[2] : undefined);
 
+        // Handle AM/PM conversion
         if (meridiem && meridiem.toLowerCase() === 'pm' && hours < 12) {
           hours += 12;
         } else if (meridiem && meridiem.toLowerCase() === 'am' && hours === 12) {
           hours = 0;
+        } else if (!meridiem && hours >= 1 && hours <= 11) {
+          // No meridiem specified - assume PM for times 1-11 (common for appointments)
+          hours += 12;
         }
 
         timeString = `${hours.toString().padStart(2, '0')}:${minutes}`;
