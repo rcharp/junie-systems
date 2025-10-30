@@ -2,34 +2,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
 import { decryptToken, encryptToken } from '../_shared/encryption.ts'
 import { toZonedTime, fromZonedTime } from 'https://esm.sh/date-fns-tz@3.2.0'
 
-// Helper function to get timezone offset in milliseconds
-function getTimezoneOffsetMs(timezone: string, date: Date): number {
-  try {
-    // Use Intl.DateTimeFormat to get the proper timezone offset
-    const formatter = new Intl.DateTimeFormat('en', {
-      timeZone: timezone,
-      timeZoneName: 'longOffset'
-    })
-    const parts = formatter.formatToParts(date)
-    const offsetPart = parts.find(part => part.type === 'timeZoneName')
-    if (offsetPart) {
-      const offset = offsetPart.value // e.g., "GMT-4" or "GMT+5"
-      const match = offset.match(/GMT([+-])(\d{1,2})/)
-      if (match) {
-        const sign = match[1] === '+' ? 1 : -1
-        const hours = parseInt(match[2])
-        return sign * hours * 60 * 60 * 1000
-      }
-    }
-    // Fallback: use a simple approach
-    console.log('Falling back to simple timezone offset calculation')
-    return 0
-  } catch (error) {
-    console.error('Error calculating timezone offset:', error)
-    return 0
-  }
-}
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -40,10 +12,37 @@ const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
 
-Deno.serve(async (req) => {
-  console.log('google-calendar-availability function v2 called with method:', req.method)
+// 5-minute cache for availability results
+const CACHE_TTL_MS = 5 * 60 * 1000
+const availabilityCache = new Map<string, { data: any; timestamp: number }>()
 
-  // Handle CORS preflight requests
+function getCacheKey(userId: string, startDate: Date, preferredDate?: string, preferredTime?: string): string {
+  return `${userId}:${startDate.toISOString()}:${preferredDate || ''}:${preferredTime || ''}`
+}
+
+function getFromCache(key: string): any | null {
+  const cached = availabilityCache.get(key)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data
+  }
+  availabilityCache.delete(key)
+  return null
+}
+
+function setCache(key: string, data: any): void {
+  availabilityCache.set(key, { data, timestamp: Date.now() })
+  // Clean old cache entries periodically
+  if (availabilityCache.size > 100) {
+    const now = Date.now()
+    for (const [k, v] of availabilityCache.entries()) {
+      if (now - v.timestamp >= CACHE_TTL_MS) {
+        availabilityCache.delete(k)
+      }
+    }
+  }
+}
+
+Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -51,31 +50,45 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
-    // Try to get user_id from request body first, then fall back to URL path
+    // Parse request body
     let userId, limit, skip, preferredDate, preferredTime;
     try {
       const body = await req.json();
       userId = body.user_id;
-      limit = body.limit || 3; // Default to 3 slots for faster response
-      skip = body.skip || 0; // Default to 0 (no skip)
-      preferredDate = body.preferred_date; // Optional preferred date
-      preferredTime = body.preferred_time; // Optional preferred time
-      console.log('Extracted from request body:', { userId, limit, skip, preferredDate, preferredTime });
+      limit = body.limit || 3;
+      skip = body.skip || 0;
+      preferredDate = body.preferred_date;
+      preferredTime = body.preferred_time;
     } catch (error) {
-      // If no body or JSON parsing fails, try URL path
       const url = new URL(req.url);
       userId = url.pathname.split('/').pop();
       limit = 3;
       skip = 0;
-      preferredDate = null;
-      console.log('Extracted user_id from URL path:', userId);
     }
 
     if (!userId) {
       throw new Error('User ID is required')
     }
 
-    // Fetch calendar tokens and user profile in parallel for better performance
+    // Check cache first
+    let startDate: Date;
+    if (preferredDate && preferredTime) {
+      startDate = new Date(`${preferredDate}T${preferredTime}:00Z`);
+    } else if (preferredDate) {
+      startDate = new Date(`${preferredDate}T09:00:00Z`);
+    } else {
+      startDate = new Date();
+    }
+    
+    const cacheKey = getCacheKey(userId, startDate, preferredDate, preferredTime)
+    const cachedResult = getFromCache(cacheKey)
+    if (cachedResult) {
+      return new Response(JSON.stringify(cachedResult), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // Fetch calendar tokens and settings
     const [calendarTokensResult, userProfileResult] = await Promise.all([
       supabase.rpc('get_google_calendar_encrypted_tokens', { p_user_id: userId }),
       supabase.from('user_profiles').select('timezone').eq('id', userId).maybeSingle()
@@ -84,7 +97,7 @@ Deno.serve(async (req) => {
     const { data: calendarTokens, error: tokensError } = calendarTokensResult
     const { data: userProfile } = userProfileResult
 
-    if (tokensError || !calendarTokens || calendarTokens.length === 0) {
+    if (tokensError || !calendarTokens || calendarTokens.length === 0 || !calendarTokens[0].is_connected) {
       return new Response(JSON.stringify({ 
         available: false, 
         message: 'Google Calendar not connected' 
@@ -94,48 +107,21 @@ Deno.serve(async (req) => {
     }
 
     const calendarSettings = calendarTokens[0]
-    
-    if (!calendarSettings.is_connected || !calendarSettings.encrypted_access_token) {
-      return new Response(JSON.stringify({ 
-        available: false, 
-        message: 'Google Calendar not connected' 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
-    // Decrypt tokens
     const accessToken = await decryptToken(calendarSettings.encrypted_access_token)
     const refreshToken = calendarSettings.encrypted_refresh_token ? await decryptToken(calendarSettings.encrypted_refresh_token) : null
-
-    // Get user's timezone
     const userTimezone = calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
 
-    // Use preferred date/time if provided, otherwise query 2 days starting from now
-    let startDate: Date;
+    // Refine start date with timezone
     if (preferredDate && preferredTime) {
-      // Combine date and time in the user's timezone
-      const dateTimeString = `${preferredDate}T${preferredTime}:00`;
-      // Parse the date/time as if it's in the user's timezone, then convert to UTC
-      const zonedDate = fromZonedTime(dateTimeString, userTimezone);
-      startDate = zonedDate;
-      console.log(`Using preferred date+time: ${dateTimeString} in ${userTimezone}, parsed to: ${startDate.toISOString()}`);
+      startDate = fromZonedTime(`${preferredDate}T${preferredTime}:00`, userTimezone);
     } else if (preferredDate) {
-      // Parse the date as 9am in the user's timezone (start of business day)
-      const dateTimeString = `${preferredDate}T09:00:00`;
-      const zonedDate = fromZonedTime(dateTimeString, userTimezone);
-      startDate = zonedDate;
-      console.log(`Using preferred date: ${preferredDate} at 9am ${userTimezone}, parsed to: ${startDate.toISOString()}`);
-    } else {
-      startDate = new Date();
-      console.log('Using current date/time as start:', startDate.toISOString());
+      startDate = fromZonedTime(`${preferredDate}T09:00:00`, userTimezone);
     }
     
     const endDate = new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000))
     const calendarId = calendarSettings.calendar_id || 'primary'
-    console.log('Searching availability from', startDate.toISOString(), 'to', endDate.toISOString())
     
-    // Fetch freeBusy data only (skip calendar info call - we already have timezone)
+    // Call Google Calendar freeBusy API
     const freeBusyResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
       method: 'POST',
       headers: {
@@ -149,12 +135,10 @@ Deno.serve(async (req) => {
       }),
     })
 
-    const freeBusyData = await freeBusyResponse.json()
-
     if (!freeBusyResponse.ok) {
-      // Try to refresh token if unauthorized
+      // Try token refresh on 401
       if (freeBusyResponse.status === 401 && refreshToken) {
-        const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        const tokenData = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
           body: new URLSearchParams({
@@ -163,46 +147,46 @@ Deno.serve(async (req) => {
             refresh_token: refreshToken,
             grant_type: 'refresh_token',
           }),
-        })
+        }).then(r => r.json())
 
-        if (tokenResponse.ok) {
-          const tokenData = await tokenResponse.json()
-          const newAccessToken = tokenData.access_token
-          const newExpiresAt = new Date(Date.now() + (tokenData.expires_in * 1000)).toISOString()
+        const newAccessToken = tokenData.access_token
+        
+        // Update token and retry
+        await Promise.all([
+          supabase.from('google_calendar_settings').update({ 
+            encrypted_access_token: await encryptToken(newAccessToken),
+            expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+          }).eq('user_id', userId),
           
-          // Update stored token
-          const encryptedNewToken = await encryptToken(newAccessToken)
-          await supabase
-            .from('google_calendar_settings')
-            .update({ encrypted_access_token: encryptedNewToken, expires_at: newExpiresAt })
-            .eq('user_id', userId)
-          
-          // Retry freeBusy request with new token
-          const retryResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+          fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
             method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${newAccessToken}`,
-              'Content-Type': 'application/json',
-            },
+            headers: { 'Authorization': `Bearer ${newAccessToken}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
               timeMin: startDate.toISOString(),
               timeMax: endDate.toISOString(),
               items: [{ id: calendarId }],
             }),
+          }).then(async r => {
+            if (!r.ok) throw new Error('Failed after token refresh')
+            const data = await r.json()
+            const result = processAvailability(data, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate, preferredTime, userTimezone)
+            setCache(cacheKey, result)
+            return new Response(JSON.stringify(result), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            })
           })
-          
-          if (!retryResponse.ok) {
-            throw new Error(`Failed to fetch calendar data after token refresh`)
-          }
-          
-          const retryData = await retryResponse.json()
-          return processAvailability(retryData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate, preferredTime)
-        }
+        ])
       }
-      throw new Error(`Failed to fetch calendar data: ${freeBusyData.error?.message}`)
+      throw new Error('Failed to fetch calendar data')
     }
 
-    return processAvailability(freeBusyData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate, preferredTime)
+    const freeBusyData = await freeBusyResponse.json()
+    const result = processAvailability(freeBusyData, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate, preferredTime, userTimezone)
+    setCache(cacheKey, result)
+    
+    return new Response(JSON.stringify(result), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    })
   } catch (error) {
     console.error('Error in google-calendar-availability function:', error)
     return new Response(JSON.stringify({ 
@@ -215,18 +199,14 @@ Deno.serve(async (req) => {
   }
 })
 
-function processAvailability(freeBusyData: any, calendarId: string, calendarSettings: any, userProfile: any, startDate: Date, limit: number, skip: number, preferredDate?: string, preferredTime?: string) {
+function processAvailability(freeBusyData: any, calendarId: string, calendarSettings: any, userProfile: any, startDate: Date, limit: number, skip: number, preferredDate?: string, preferredTime?: string, userTimezone?: string) {
   try {
     const busyTimes = freeBusyData.calendars[calendarId]?.busy || []
     const availabilityHours = calendarSettings.availability_hours || {}
     const appointmentDuration = calendarSettings.appointment_duration || 60
     const MAX_SLOTS = Math.min(limit, 3)
-    
-    // Get current time in business timezone
-    const userTimezone = calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
-    const now = new Date()
-    const businessNow = toZonedTime(now, userTimezone)
-    console.log(`Current time in business timezone (${userTimezone}):`, businessNow.toISOString())
+    const tz = userTimezone || calendarSettings.timezone || userProfile?.timezone || 'America/New_York'
+    const businessNow = toZonedTime(new Date(), tz)
 
     let availableSlots = []
     let slotsFound = 0;
@@ -234,12 +214,9 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
     // If preferred time is specified, check if that specific slot is available first
     if (preferredDate && preferredTime) {
       const [reqHour, reqMinute] = preferredTime.split(':').map(Number)
-      // Parse date correctly by adding T00:00:00Z to ensure UTC parsing
       const reqDate = new Date(preferredDate + 'T00:00:00Z')
       const dayName = reqDate.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }).toLowerCase()
       const daySettings = availabilityHours[dayName]
-      
-      console.log(`Checking if preferred time ${preferredTime} on ${preferredDate} (${dayName}) is available`)
       
       if (daySettings?.enabled) {
         const [dayStartHour, dayStartMinute] = daySettings.start.split(':').map(Number)
@@ -260,59 +237,30 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
           // Create date as local (using Date constructor which creates in local/system timezone)
           // But we want it in the USER'S timezone, so we need to be careful
           // Actually, let's create a UTC date representing the local time in the user's timezone
-          const localSlotStart = new Date(Date.UTC(year, month, date, 0, 0, 0))
-          
-          // Now add the hours and minutes
-          localSlotStart.setUTCHours(reqHour, reqMinute, 0, 0)
-          
-          const offsetMs = getTimezoneOffsetMs(userTimezone, localSlotStart)
-          const utcSlotStart = new Date(localSlotStart.getTime() - offsetMs)
-          const utcSlotEnd = new Date(utcSlotStart.getTime() + (appointmentDuration * 60 * 1000))
-          
-          console.log(`Checking slot: ${utcSlotStart.toISOString()} to ${utcSlotEnd.toISOString()}`)
-          
-          // Convert slot to business timezone to check if it's in the past
-          const slotInBusinessTz = toZonedTime(utcSlotStart, userTimezone)
+          const localSlotStart = new Date(Date.UTC(year, month, date, reqHour, reqMinute, 0, 0))
+          const utcSlotStart = fromZonedTime(localSlotStart, tz)
+          const utcSlotEnd = new Date(utcSlotStart.getTime() + appointmentDuration * 60000)
+          const slotInBusinessTz = toZonedTime(utcSlotStart, tz)
           const isPast = slotInBusinessTz <= businessNow
-          console.log(`Slot in business TZ: ${slotInBusinessTz.toISOString()}, Business now: ${businessNow.toISOString()}, Is past: ${isPast}`)
           
-          // Check if it's in the past (based on business timezone)
           if (!isPast) {
-            // Check if there's a conflict
             const hasConflict = busyTimes.some((busy: any) => {
               const busyStart = new Date(busy.start)
               const busyEnd = new Date(busy.end)
-              const conflict = (utcSlotStart < busyEnd && utcSlotEnd > busyStart)
-              if (conflict) {
-                console.log(`Conflict found with busy period: ${busyStart.toISOString()} to ${busyEnd.toISOString()}`)
-              }
-              return conflict
+              return (utcSlotStart < busyEnd && utcSlotEnd > busyStart)
             })
             
             if (!hasConflict) {
-              console.log(`✓ Preferred time ${preferredTime} is available!`)
-              console.log(`Adding slot: ${utcSlotStart.toISOString()} to ${utcSlotEnd.toISOString()}`)
-              // Store as UTC times (which is what the rest of the code expects)
-              const slotToAdd = {
+              availableSlots.push({
                 startTime: utcSlotStart.toISOString(),
                 endTime: utcSlotEnd.toISOString(),
                 timeOfDay: "pending",
                 humanReadable: "pending"
-              };
-              console.log(`Slot object:`, JSON.stringify(slotToAdd))
-              availableSlots.push(slotToAdd)
+              })
               slotsFound++
-            } else {
-              console.log(`✗ Preferred time ${preferredTime} is not available (conflict)`)
             }
-          } else {
-            console.log(`✗ Preferred time ${preferredTime} is in the past`)
           }
-        } else {
-          console.log(`✗ Preferred time ${preferredTime} is outside working hours (${daySettings.start}-${daySettings.end})`)
         }
-      } else {
-        console.log(`✗ ${dayName} is not enabled for appointments`)
       }
     }
     
@@ -335,73 +283,44 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
       const [startHour, startMinute] = daySettings.start.split(':').map(Number)
       const [endHour, endMinute] = daySettings.end.split(':').map(Number)
       
-      // Create date in local timezone, then convert to UTC for API query
-      const year = currentDate.getFullYear()
-      const month = currentDate.getMonth()
-      const date = currentDate.getDate()
+      const localDateStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), startHour, startMinute)
+      const localDateEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), endHour, endMinute)
+      const utcStartTime = fromZonedTime(localDateStart, tz)
+      const utcEndTime = fromZonedTime(localDateEnd, tz)
       
-      // Create a date object in the user's timezone
-      const localDateStart = new Date(year, month, date, startHour, startMinute, 0)
-      const localDateEnd = new Date(year, month, date, endHour, endMinute, 0)
-      
-      // Get the timezone offset for this specific date (handles DST)
-      const offsetMs = getTimezoneOffsetMs(userTimezone, localDateStart)
-      
-      // Convert to UTC by subtracting the offset
-      const utcStartTime = new Date(localDateStart.getTime() - offsetMs)
-      const utcEndTime = new Date(localDateEnd.getTime() - offsetMs)
-      
-      console.log(`Day ${dayOffset} (${dayName}): Local ${localDateStart.toISOString()} -> UTC ${utcStartTime.toISOString()}`)
-      
-      // Find continuous available time blocks (using 30-min increments for speed)
       const availableBlocks = []
       let currentStart = new Date(utcStartTime)
       const slotIncrement = 30
       
       while (currentStart.getTime() < utcEndTime.getTime() && slotsFound < MAX_SLOTS) {
-        const slotEnd = new Date(currentStart.getTime() + (slotIncrement * 60 * 1000))
+        const slotEnd = new Date(currentStart.getTime() + slotIncrement * 60000)
         
-        // Check if slot is in the past based on business timezone
-        const slotInBusinessTz = toZonedTime(currentStart, userTimezone)
-        if (slotInBusinessTz <= businessNow) {
-          currentStart.setTime(currentStart.getTime() + (slotIncrement * 60 * 1000))
+        if (toZonedTime(currentStart, tz) <= businessNow) {
+          currentStart.setTime(currentStart.getTime() + slotIncrement * 60000)
           continue
         }
         
-        const hasConflict = busyTimes.some((busy: any) => {
-          const busyStart = new Date(busy.start)
-          const busyEnd = new Date(busy.end)
-          return (currentStart < busyEnd && slotEnd > busyStart)
-        })
+        const hasConflict = busyTimes.some((busy: any) => 
+          currentStart < new Date(busy.end) && slotEnd > new Date(busy.start)
+        )
         
         if (!hasConflict) {
-          let blockStart = new Date(currentStart)
           let blockEnd = new Date(slotEnd)
-          
           let nextSlot = new Date(slotEnd)
+          
           while (nextSlot.getTime() < utcEndTime.getTime()) {
-            const nextSlotEnd = new Date(nextSlot.getTime() + (slotIncrement * 60 * 1000))
-            
-            const nextHasConflict = busyTimes.some((busy: any) => {
-              const busyStart = new Date(busy.start)
-              const busyEnd = new Date(busy.end)
-              return (nextSlot < busyEnd && nextSlotEnd > busyStart)
-            })
-            
-            if (nextHasConflict) break
-            
-            blockEnd = new Date(nextSlotEnd)
-            nextSlot.setTime(nextSlot.getTime() + (slotIncrement * 60 * 1000))
+            const nextSlotEnd = new Date(nextSlot.getTime() + slotIncrement * 60000)
+            if (busyTimes.some((busy: any) => nextSlot < new Date(busy.end) && nextSlotEnd > new Date(busy.start))) break
+            blockEnd = nextSlotEnd
+            nextSlot = nextSlotEnd
           }
           
-          const blockDuration = blockEnd.getTime() - blockStart.getTime()
-          if (blockDuration >= (appointmentDuration * 60 * 1000)) {
-            availableBlocks.push({ start: blockStart, end: blockEnd })
+          if (blockEnd.getTime() - currentStart.getTime() >= appointmentDuration * 60000) {
+            availableBlocks.push({ start: new Date(currentStart), end: blockEnd })
           }
-          
-          currentStart = new Date(blockEnd)
+          currentStart = blockEnd
         } else {
-          currentStart.setTime(currentStart.getTime() + (slotIncrement * 60 * 1000))
+          currentStart.setTime(currentStart.getTime() + slotIncrement * 60000)
         }
       }
       

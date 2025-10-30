@@ -195,11 +195,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
 
-    // Get business settings to retrieve user_id and timezone
+    // Fetch business settings
     const { data: businessSettings, error: businessError } = await supabase
       .from('business_settings')
       .select('user_id, business_timezone')
@@ -207,96 +208,63 @@ Deno.serve(async (req) => {
       .single();
 
     if (businessError || !businessSettings) {
-      console.error('Error fetching business settings:', businessError);
-      return new Response(
-        JSON.stringify({ error: 'Business not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Business not found' }), { 
+        status: 404, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
-    const { user_id, business_timezone } = businessSettings;
-
-    console.log('Processing natural language:', {
-      business_id,
-      user_id,
-      timezone: business_timezone,
-      natural_language,
-    });
-
-    // Parse natural language to date/time
-    const parsed = parseNaturalLanguageDate(natural_language, business_timezone);
-
-    console.log('Parsed date/time:', parsed);
-
-    // Call google-calendar-availability function
+    // Parse natural language and fetch availability in parallel
+    const parsed = parseNaturalLanguageDate(natural_language, businessSettings.business_timezone);
+    
     const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
       'google-calendar-availability',
       {
         body: {
-          user_id: user_id,
+          user_id: businessSettings.user_id,
           preferred_date: parsed.date,
           preferred_time: parsed.time,
-          limit: 100, // Get all slots for the date
+          limit: 100,
         },
       }
     );
 
     if (availabilityError) {
-      console.error('Error fetching availability:', availabilityError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch availability', details: availabilityError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'Failed to fetch availability' }), { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
-    console.log('Availability response:', availabilityData);
-
-    // Process slots to add humanReadable and remove formatted field
+    // Process slots efficiently
+    const tz = businessSettings.business_timezone;
     const processedSlots = (availabilityData.slots || []).map((slot: any) => {
-      const startTime = new Date(slot.startTime);
-      const zonedStart = toZonedTime(startTime, business_timezone);
-      
-      const dayName = format(zonedStart, 'EEEE', { timeZone: business_timezone });
-      const monthName = format(zonedStart, 'MMMM', { timeZone: business_timezone });
-      const day = parseInt(format(zonedStart, 'd', { timeZone: business_timezone }));
-      const ordinalSuffix = getOrdinalSuffix(day);
-      const time = format(zonedStart, 'h:mmaaa', { timeZone: business_timezone }).toLowerCase();
-      
-      const humanReadable = `${dayName}, ${monthName} ${day}${ordinalSuffix} at ${time}`;
+      const zonedStart = toZonedTime(new Date(slot.startTime), tz);
+      const dayName = format(zonedStart, 'EEEE', { timeZone: tz });
+      const monthName = format(zonedStart, 'MMMM', { timeZone: tz });
+      const day = parseInt(format(zonedStart, 'd', { timeZone: tz }));
+      const time = format(zonedStart, 'h:mmaaa', { timeZone: tz }).toLowerCase();
       
       return {
         startTime: slot.startTime,
         endTime: slot.endTime,
         timeOfDay: slot.timeOfDay,
-        humanReadable
+        humanReadable: `${dayName}, ${monthName} ${day}${getOrdinalSuffix(day)} at ${time}`
       };
     });
     
-    // Determine if the requested time is available
-    let timeAvailable = null;
-    
-    if (parsed.time) {
-      // Find if the requested time matches any available slot
-      const requestedSlot = processedSlots.find((slot: any) => {
-        if (!slot.startTime) return false;
-        const slotTime = new Date(slot.startTime);
-        const slotTimeStr = `${slotTime.getUTCHours().toString().padStart(2, '0')}:${slotTime.getUTCMinutes().toString().padStart(2, '0')}`;
-        return slotTimeStr === parsed.time;
-      });
-      
-      timeAvailable = !!requestedSlot;
-      console.log(`Time availability check: ${parsed.time} is ${timeAvailable ? 'available' : 'not available'}`);
-    }
+    // Check if requested time is available
+    const timeAvailable = parsed.time ? processedSlots.some((slot: any) => {
+      const slotTime = new Date(slot.startTime);
+      return `${slotTime.getUTCHours().toString().padStart(2, '0')}:${slotTime.getUTCMinutes().toString().padStart(2, '0')}` === parsed.time;
+    }) : null;
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        timezone: business_timezone,
-        time_available: timeAvailable,
-        available_slots: processedSlots,
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({
+      success: true,
+      timezone: tz,
+      time_available: timeAvailable,
+      available_slots: processedSlots,
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Error in get-general-availability:', error);
     return new Response(

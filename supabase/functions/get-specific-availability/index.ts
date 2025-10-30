@@ -27,63 +27,41 @@ Deno.serve(async (req) => {
       );
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get business settings to retrieve user_id and timezone
-    const { data: businessSettings, error: businessError } = await supabase
-      .from('business_settings')
-      .select('user_id, business_timezone')
-      .eq('id', business_id)
-      .single();
-
-    if (businessError || !businessSettings) {
-      console.error('Error fetching business settings:', businessError);
-      return new Response(
-        JSON.stringify({ error: 'Business not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const { user_id, business_timezone } = businessSettings;
-
-    console.log('Fetching availability for business:', {
-      business_id,
-      user_id,
-      timezone: business_timezone,
-      date,
-      time,
-    });
-
-    // Call google-calendar-availability function
-    const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
-      'google-calendar-availability',
-      {
-        body: {
-          user_id: user_id,
-          preferred_date: date,
-          preferred_time: time,
-          limit: 100, // Get all slots for the date
-        },
-      }
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    if (availabilityError) {
-      console.error('Error fetching availability:', availabilityError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch availability', details: availabilityError.message }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    // Fetch business settings and call availability in parallel
+    const [settingsResult, availabilityResult] = await Promise.all([
+      supabase.from('business_settings').select('user_id, business_timezone').eq('id', business_id).single(),
+      supabase.from('business_settings').select('user_id').eq('id', business_id).single()
+        .then(({ data }) => data ? supabase.functions.invoke('google-calendar-availability', {
+          body: { user_id: data.user_id, preferred_date: date, preferred_time: time, limit: 100 }
+        }) : null)
+    ]);
+
+    const { data: businessSettings, error: businessError } = settingsResult;
+    if (businessError || !businessSettings) {
+      return new Response(JSON.stringify({ error: 'Business not found' }), { 
+        status: 404, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
-    console.log('Availability response:', availabilityData);
+    const { data: availabilityData, error: availabilityError } = availabilityResult || {};
+    if (availabilityError) {
+      return new Response(JSON.stringify({ error: 'Failed to fetch availability' }), { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         business_id,
-        timezone: business_timezone,
+        timezone: businessSettings.business_timezone,
         requested_date: date,
         requested_time: time,
         available_slots: availabilityData.slots || [],
