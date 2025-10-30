@@ -77,12 +77,17 @@ Deno.serve(async (req) => {
       try {
         console.log(`Processing call log ${log.id}...`);
 
-        const extractionPrompt = `Extract the specific issue details from this phone call transcript. Focus on concrete problems, requests, or needs mentioned by the caller. Be concise and specific.
+        const extractionPrompt = `Extract the specific issue or problem that prompted this appointment from the phone call transcript. Focus on:
+- What specific problem, issue, or service need does the caller have?
+- What is broken, not working, or needs attention?
+- Why are they scheduling this appointment?
+
+Be very specific and concise (1-2 sentences max). If the caller mentions a specific issue like "leaky faucet" or "broken AC", use those exact terms.
 
 Transcript:
 ${log.transcript}
 
-Return only the issue details as plain text (no JSON, no formatting). If no specific issue is mentioned, return "General inquiry" or a brief description of what the caller wanted.`;
+Return only the issue description as plain text (no JSON, no formatting).`;
 
         const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
