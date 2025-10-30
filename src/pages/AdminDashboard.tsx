@@ -611,11 +611,11 @@ const AdminDashboard = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle>Issue Details Backfill</CardTitle>
-                    <CardDescription>Extract issue details from existing call log transcripts</CardDescription>
+                    <CardDescription>Extract issue details from existing call log transcripts (processes 20 at a time)</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      This will process all call logs with transcripts and extract specific issue details using AI.
+                      This will process call logs with transcripts and extract specific issue details using AI. Run multiple times to process all records.
                     </p>
                     <Button
                       onClick={async () => {
@@ -625,13 +625,16 @@ const AdminDashboard = () => {
                             description: "Starting backfill operation...",
                           });
                           
-                          const { data, error } = await supabase.functions.invoke('backfill-issue-details');
+                          const { data, error } = await supabase.functions.invoke('backfill-issue-details', {
+                            body: { batchSize: 20 }
+                          });
                           
                           if (error) throw error;
                           
+                          const hasMore = data.hasMore ? ` ${data.remaining} remaining.` : ' All done!';
                           toast({
                             title: "Success",
-                            description: `Processed ${data.processed} of ${data.total} call logs. ${data.errors} errors.`,
+                            description: `Processed ${data.processed} of ${data.total} call logs. ${data.errors} errors.${hasMore}`,
                           });
                         } catch (error) {
                           toast({
@@ -643,7 +646,7 @@ const AdminDashboard = () => {
                       }}
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Run Issue Details Backfill
+                      Process Next 20 Records
                     </Button>
                   </CardContent>
                 </Card>

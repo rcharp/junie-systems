@@ -23,13 +23,19 @@ Deno.serve(async (req) => {
 
     console.log('Starting backfill of issue_details...');
 
+    // Get batch size from request or default to 20
+    const { batchSize = 20 } = await req.json().catch(() => ({}));
+    
+    console.log(`Processing up to ${batchSize} call logs per request`);
+
     // Fetch call logs that have transcripts but no issue_details
     const { data: callLogs, error: fetchError } = await supabase
       .from('call_logs')
       .select('id, transcript, caller_name, phone_number')
       .not('transcript', 'is', null)
       .is('issue_details', null)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(batchSize);
 
     if (fetchError) {
       console.error('Error fetching call logs:', fetchError);
@@ -109,9 +115,9 @@ Return only the issue details as plain text (no JSON, no formatting). If no spec
         }
 
         processedCount++;
-        console.log(`✅ Successfully processed ${log.id}`);
+        console.log(`✅ Successfully processed ${processedCount}/${callLogs.length}: ${log.id}`);
 
-        // Add small delay to avoid rate limits
+        // Add delay to avoid rate limits (100ms between requests)
         await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (error) {
@@ -121,14 +127,23 @@ Return only the issue details as plain text (no JSON, no formatting). If no spec
       }
     }
 
+    // Check if there are more to process
+    const { count: remainingCount } = await supabase
+      .from('call_logs')
+      .select('id', { count: 'exact', head: true })
+      .not('transcript', 'is', null)
+      .is('issue_details', null);
+
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'Backfill completed',
+        message: 'Backfill batch completed',
         total: callLogs.length,
         processed: processedCount,
         errors: errorCount,
-        errorDetails: errors.length > 0 ? errors : undefined
+        remaining: remainingCount || 0,
+        hasMore: (remainingCount || 0) > 0,
+        errorDetails: errors.length > 0 ? errors.slice(0, 10) : undefined
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
