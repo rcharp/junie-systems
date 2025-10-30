@@ -249,7 +249,6 @@ Deno.serve(async (req) => {
     
     // Determine if the requested time is available
     let timeAvailable = null;
-    let responseMessage = availabilityData.message;
     
     if (parsed.time) {
       // Find if the requested time matches any available slot
@@ -261,27 +260,15 @@ Deno.serve(async (req) => {
       });
       
       timeAvailable = !!requestedSlot;
-      
-      if (timeAvailable) {
-        responseMessage = `The requested time ${parsed.time} on ${parsed.date} is available.`;
-        console.log('Found exact match for requested time:', parsed.time);
-      } else {
-        responseMessage = `The requested time ${parsed.time} on ${parsed.date} is not available. Here are other available slots:`;
-        console.log('Requested time not available, showing all slots for the date');
-      }
+      console.log(`Time availability check: ${parsed.time} is ${timeAvailable ? 'available' : 'not available'}`);
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        business_id,
         timezone: business_timezone,
-        natural_language_input: natural_language,
-        parsed_date: parsed.date,
-        parsed_time: parsed.time,
         time_available: timeAvailable,
         available_slots: processedSlots,
-        message: responseMessage,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
