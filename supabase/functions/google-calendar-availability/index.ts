@@ -152,30 +152,28 @@ Deno.serve(async (req) => {
         const newAccessToken = tokenData.access_token
         
         // Update token and retry
-        await Promise.all([
-          supabase.from('google_calendar_settings').update({ 
-            encrypted_access_token: await encryptToken(newAccessToken),
-            expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
-          }).eq('user_id', userId),
-          
-          fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${newAccessToken}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              timeMin: startDate.toISOString(),
-              timeMax: endDate.toISOString(),
-              items: [{ id: calendarId }],
-            }),
-          }).then(async r => {
-            if (!r.ok) throw new Error('Failed after token refresh')
-            const data = await r.json()
-            const result = processAvailability(data, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate, preferredTime, userTimezone)
-            setCache(cacheKey, result)
-            return new Response(JSON.stringify(result), {
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            })
-          })
-        ])
+        await supabase.from('google_calendar_settings').update({ 
+          encrypted_access_token: await encryptToken(newAccessToken),
+          expires_at: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+        }).eq('user_id', userId)
+        
+        const retryResponse = await fetch('https://www.googleapis.com/calendar/v3/freeBusy', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${newAccessToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            timeMin: startDate.toISOString(),
+            timeMax: endDate.toISOString(),
+            items: [{ id: calendarId }],
+          }),
+        })
+        
+        if (!retryResponse.ok) throw new Error('Failed after token refresh')
+        const data = await retryResponse.json()
+        const result = processAvailability(data, calendarId, calendarSettings, userProfile, startDate, limit, skip, preferredDate, preferredTime, userTimezone)
+        setCache(cacheKey, result)
+        return new Response(JSON.stringify(result), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        })
       }
       throw new Error('Failed to fetch calendar data')
     }
@@ -415,23 +413,19 @@ function processAvailability(freeBusyData: any, calendarId: string, calendarSett
       });
     }
 
-    return new Response(JSON.stringify({
+    return {
       available: availableSlots.length > 0,
       slots: availableSlots,
       timezone: userTimezone,
       duration: appointmentDuration,
       message: availableSlots.length > 0 ? `Found ${availableSlots.length} available slots` : 'No available slots found'
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    }
   } catch (error) {
-    console.error('Error in google-calendar-availability function:', error)
-    return new Response(JSON.stringify({ 
+    console.error('Error in processAvailability:', error)
+    return { 
       available: false, 
+      slots: [],
       error: error instanceof Error ? error.message : 'Unknown error' 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    }
   }
 }
