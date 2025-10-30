@@ -469,6 +469,9 @@ async function processWebhookInBackground(
     let calendarBookingResult = null;
     const isAppointmentScheduled = analysisData.appointment_scheduled?.value === true;
     
+    // Extract issue details early so we can use it in calendar booking
+    let issueDetails: string | null = null;
+    
     console.log('=== CALENDAR BOOKING CHECK ===');
     console.log('appointment_scheduled flag:', analysisData.appointment_scheduled?.value);
     console.log('isAppointmentScheduled:', isAppointmentScheduled);
@@ -487,7 +490,8 @@ async function processWebhookInBackground(
         supabaseAdmin: supabase,
         supabaseUrl,
         serviceType: serviceTypeFromWebhook,
-        additionalNotes
+        additionalNotes,
+        issueDetails: null // Will be filled in later if needed
       });
       
       if (calendarBookingResult) {
@@ -505,10 +509,9 @@ async function processWebhookInBackground(
       }
     }
 
-    // Format appointment details and extract issue details
+    // Format appointment details
     let formattedAppointmentDetails = null;
     let enhancedCallSummary = null;
-    let issueDetails = null;
 
     if (parsedAppointmentDateTime) {
       // For manual test calls, use simple formatting to avoid slow Claude API calls
@@ -694,7 +697,6 @@ Return ONLY the issue details as plain text, or return "null" if no specific iss
       incoming_call_phone_number: incomingCallPhoneNumber, // The actual incoming phone number from phone system
       additional_notes: additionalNotes,
       service_type: serviceTypeFromWebhook,
-      issue_details: issueDetails,
       metadata: {
         caller_zip: '',
         caller_address: analysisData.service_address?.value || '',
@@ -1030,7 +1032,8 @@ async function handleCalendarBooking({
   supabaseAdmin,
   supabaseUrl,
   serviceType,
-  additionalNotes
+  additionalNotes,
+  issueDetails
 }: {
   isAppointmentScheduled: boolean,
   parsedAppointmentDateTime: string | Date | null,
@@ -1042,7 +1045,8 @@ async function handleCalendarBooking({
   supabaseAdmin: any,
   supabaseUrl: string,
   serviceType?: string | null,
-  additionalNotes?: string | null
+  additionalNotes?: string | null,
+  issueDetails?: string | null
 }) {
   try {
     console.log('📅 === HANDLE CALENDAR BOOKING START ===');
