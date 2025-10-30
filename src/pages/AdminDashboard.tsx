@@ -483,11 +483,10 @@ const AdminDashboard = () => {
 
             {/* API Sub-tabs */}
             <Tabs defaultValue="webhooks" className="w-full">
-              <TabsList className="w-full grid grid-cols-5 mb-4">
+              <TabsList className="w-full grid grid-cols-4 mb-4">
                 <TabsTrigger value="webhooks" className="text-xs sm:text-sm">Webhooks</TabsTrigger>
                 <TabsTrigger value="client-tools" className="text-xs sm:text-sm">Client Tools</TabsTrigger>
                 <TabsTrigger value="calendar-test" className="text-xs sm:text-sm">Calendar Test</TabsTrigger>
-                <TabsTrigger value="sync-queue" className="text-xs sm:text-sm">Sync Queue</TabsTrigger>
                 <TabsTrigger value="backfill" className="text-xs sm:text-sm">Data Tasks</TabsTrigger>
               </TabsList>
 
@@ -603,9 +602,6 @@ const AdminDashboard = () => {
               </Card>
               </TabsContent>
 
-              <TabsContent value="sync-queue">
-                <CallInitiationFailuresMonitor />
-              </TabsContent>
 
               <TabsContent value="backfill" className="space-y-6">
                 {/* Appointment Sync Queue */}
