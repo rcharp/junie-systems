@@ -425,9 +425,16 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                           {event.result && (
                             <div className="text-sm">
                               <span className="font-medium text-xs">Result:</span>
-                              <p className="mt-1 text-xs bg-muted p-2 rounded break-words max-w-full overflow-x-auto">
-                                {event.result}
-                              </p>
+                              <pre className="mt-1 text-xs bg-muted p-2 rounded break-words max-w-full overflow-x-auto whitespace-pre-wrap">
+                                {(() => {
+                                  try {
+                                    const parsed = JSON.parse(event.result);
+                                    return JSON.stringify(parsed, null, 2);
+                                  } catch {
+                                    return event.result;
+                                  }
+                                })()}
+                              </pre>
                             </div>
                           )}
                         </div>
