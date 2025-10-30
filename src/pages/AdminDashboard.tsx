@@ -21,6 +21,7 @@ import { SystemTestRunner } from '@/components/SystemTestRunner';
 import { AppointmentSyncQueue } from '@/components/AppointmentSyncQueue';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
+import { UpdateCalendarEvent } from '@/components/UpdateCalendarEvent';
 
 interface Stats {
   totalUsers: number;
@@ -423,6 +424,17 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="settings" className="space-y-6 sm:space-y-8">
+            {/* Update Calendar Event */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Update Calendar Event</CardTitle>
+                <CardDescription>Update the most recent calendar event with issue details</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <UpdateCalendarEvent />
+              </CardContent>
+            </Card>
+
             {/* Admin Settings */}
             <AdminSettings />
 
