@@ -152,13 +152,13 @@ Deno.serve(async (req) => {
     const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!;
     const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!;
 
-    // Fetch business settings and calendar tokens in parallel
-    const [businessResult, calendarResult] = await Promise.all([
-      supabase.from('business_settings').select('user_id, business_timezone').eq('id', business_id).single(),
-      supabase.rpc('get_google_calendar_encrypted_tokens', { p_user_id: business_id })
-    ]);
+    // Fetch business settings first to get user_id
+    const { data: businessSettings, error: businessError } = await supabase
+      .from('business_settings')
+      .select('user_id, business_timezone')
+      .eq('id', business_id)
+      .single();
 
-    const { data: businessSettings, error: businessError } = businessResult;
     if (businessError || !businessSettings) {
       return new Response(JSON.stringify({ error: 'Business not found' }), { 
         status: 404, 
@@ -178,7 +178,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { data: calendarTokens, error: tokensError } = calendarResult;
+    // Fetch calendar tokens using user_id
+    const { data: calendarTokens, error: tokensError } = await supabase.rpc(
+      'get_google_calendar_encrypted_tokens',
+      { p_user_id: businessSettings.user_id }
+    );
 
     if (tokensError || !calendarTokens || calendarTokens.length === 0 || !calendarTokens[0].is_connected) {
       return new Response(JSON.stringify({ 
