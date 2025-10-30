@@ -363,7 +363,9 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                       </p>
                     </div>
                    ) : (
-                    events.map((event) => (
+                    events
+                      .filter(event => event.tool_name !== 'get_current_time')
+                      .map((event) => (
                       <div key={event.id} className="border rounded-lg p-3 space-y-2 bg-muted/30">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 flex-wrap">
