@@ -50,13 +50,18 @@ Deno.serve(async (req) => {
     }
 
     const { data: availabilityData, error: availabilityError } = availabilityResult || {};
+    console.log('Availability result:', { availabilityData, availabilityError });
+    
     if (availabilityError) {
-      return new Response(JSON.stringify({ error: 'Failed to fetch availability' }), { 
+      console.error('Availability error:', availabilityError);
+      return new Response(JSON.stringify({ error: 'Failed to fetch availability', details: availabilityError }), { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
     }
 
+    console.log('Final response slots:', availabilityData?.slots);
+    
     return new Response(
       JSON.stringify({
         success: true,
@@ -64,8 +69,8 @@ Deno.serve(async (req) => {
         timezone: businessSettings.business_timezone,
         requested_date: date,
         requested_time: time,
-        available_slots: availabilityData.slots || [],
-        message: availabilityData.message,
+        available_slots: availabilityData?.slots || [],
+        message: availabilityData?.message,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

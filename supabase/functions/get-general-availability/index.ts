@@ -216,6 +216,7 @@ Deno.serve(async (req) => {
 
     // Parse natural language and fetch availability in parallel
     const parsed = parseNaturalLanguageDate(natural_language, businessSettings.business_timezone);
+    console.log('Parsed date/time:', parsed);
     
     const { data: availabilityData, error: availabilityError } = await supabase.functions.invoke(
       'google-calendar-availability',
@@ -229,8 +230,11 @@ Deno.serve(async (req) => {
       }
     );
 
+    console.log('Availability invoke result:', { availabilityData, availabilityError });
+
     if (availabilityError) {
-      return new Response(JSON.stringify({ error: 'Failed to fetch availability' }), { 
+      console.error('Availability error:', availabilityError);
+      return new Response(JSON.stringify({ error: 'Failed to fetch availability', details: availabilityError }), { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       });
@@ -238,7 +242,10 @@ Deno.serve(async (req) => {
 
     // Process slots efficiently
     const tz = businessSettings.business_timezone;
-    const processedSlots = (availabilityData.slots || []).map((slot: any) => {
+    console.log('Processing slots, availabilityData:', availabilityData);
+    console.log('Slots from availabilityData:', availabilityData?.slots);
+    
+    const processedSlots = (availabilityData?.slots || []).map((slot: any) => {
       const zonedStart = toZonedTime(new Date(slot.startTime), tz);
       const dayName = format(zonedStart, 'EEEE', { timeZone: tz });
       const monthName = format(zonedStart, 'MMMM', { timeZone: tz });
@@ -252,6 +259,8 @@ Deno.serve(async (req) => {
         humanReadable: `${dayName}, ${monthName} ${day}${getOrdinalSuffix(day)} at ${time}`
       };
     });
+    
+    console.log('Processed slots:', processedSlots);
     
     // Check if requested time is available
     const timeAvailable = parsed.time ? processedSlots.some((slot: any) => {
