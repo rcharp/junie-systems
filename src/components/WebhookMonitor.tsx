@@ -22,6 +22,7 @@ interface WebhookData {
   address: string;
   email: string;
   service_info: string;
+  issue_details?: string;
   appointment_datetime: string;
   appointment_scheduled: string;
   call_datetime: string;
@@ -1060,6 +1061,7 @@ export const WebhookMonitor = ({ defaultExpanded = false }: { defaultExpanded?: 
                           email: data.email,
                           service_address: data.address,
                           service_type: data.service_info,
+                          issue_details: data.issue_details,
                           call_summary: data.call_summary,
                           appointment_scheduled: data.appointment_scheduled === 'Yes',
                           appointment_date_time: data.appointment_datetime !== 'Not scheduled' ? data.appointment_datetime : null,
