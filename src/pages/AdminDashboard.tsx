@@ -604,10 +604,14 @@ const AdminDashboard = () => {
               </TabsContent>
 
               <TabsContent value="sync-queue">
-                <AppointmentSyncQueue />
+                <CallInitiationFailuresMonitor />
               </TabsContent>
 
-              <TabsContent value="backfill">
+              <TabsContent value="backfill" className="space-y-6">
+                {/* Appointment Sync Queue */}
+                <AppointmentSyncQueue />
+
+                {/* Issue Details Backfill */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Issue Details Backfill</CardTitle>
@@ -634,7 +638,7 @@ const AdminDashboard = () => {
                           const hasMore = data.hasMore ? ` ${data.remaining} remaining.` : ' All done!';
                           toast({
                             title: "Success",
-                            description: `Processed ${data.processed} of ${data.total} call logs. ${data.errors} errors.${hasMore}`,
+                            description: `Processed ${data.processed} of ${data.total} appointments. ${data.errors} errors.${hasMore}`,
                           });
                         } catch (error) {
                           toast({
