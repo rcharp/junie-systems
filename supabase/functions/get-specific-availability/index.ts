@@ -50,13 +50,13 @@ Deno.serve(async (req) => {
     const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!;
     const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!;
 
-    // Fetch business settings
-    const { data: businessSettings, error: businessError } = await supabase
-      .from('business_settings')
-      .select('user_id, business_timezone')
-      .eq('id', business_id)
-      .single();
+    // Fetch business settings and calendar tokens in parallel
+    const [businessResult, calendarResult] = await Promise.all([
+      supabase.from('business_settings').select('user_id, business_timezone').eq('id', business_id).single(),
+      supabase.rpc('get_google_calendar_encrypted_tokens', { p_user_id: business_id })
+    ]);
 
+    const { data: businessSettings, error: businessError } = businessResult;
     if (businessError || !businessSettings) {
       return new Response(JSON.stringify({ error: 'Business not found' }), { 
         status: 404, 
@@ -72,11 +72,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch calendar settings
-    const { data: calendarTokens, error: tokensError } = await supabase.rpc(
-      'get_google_calendar_encrypted_tokens',
-      { p_user_id: businessSettings.user_id }
-    );
+    const { data: calendarTokens, error: tokensError } = calendarResult;
 
     if (tokensError || !calendarTokens || calendarTokens.length === 0 || !calendarTokens[0].is_connected) {
       return new Response(JSON.stringify({ 
@@ -89,11 +85,9 @@ Deno.serve(async (req) => {
     }
 
     const calendarSettings = calendarTokens[0];
-    let accessToken = await decryptToken(calendarSettings.encrypted_access_token);
-    const refreshToken = calendarSettings.encrypted_refresh_token ? await decryptToken(calendarSettings.encrypted_refresh_token) : null;
     const userTimezone = calendarSettings.timezone || businessSettings.business_timezone;
     
-    // Build date range
+    // Build optimized date range - only query what we need
     let startDate: Date;
     if (date && time) {
       startDate = fromZonedTime(`${date}T${time}:00`, userTimezone);
@@ -102,7 +96,14 @@ Deno.serve(async (req) => {
     } else {
       startDate = new Date();
     }
-    const endDate = new Date(startDate.getTime() + (2 * 24 * 60 * 60 * 1000));
+    // Only query 1 day ahead instead of 2 to reduce API response time
+    const endDate = new Date(startDate.getTime() + (24 * 60 * 60 * 1000));
+    
+    // Decrypt tokens in parallel with building date range
+    const [accessToken, refreshToken] = await Promise.all([
+      decryptToken(calendarSettings.encrypted_access_token),
+      calendarSettings.encrypted_refresh_token ? decryptToken(calendarSettings.encrypted_refresh_token) : Promise.resolve(null)
+    ]);
     const calendarId = calendarSettings.calendar_id || 'primary';
     
     // Call Google Calendar API
@@ -163,7 +164,7 @@ Deno.serve(async (req) => {
     const availableSlots = [];
     const MAX_SLOTS = 3;
     
-    for (let dayOffset = 0; dayOffset < 2 && availableSlots.length < MAX_SLOTS; dayOffset++) {
+    for (let dayOffset = 0; dayOffset < 1 && availableSlots.length < MAX_SLOTS; dayOffset++) {
       const currentDate = new Date(startDate);
       currentDate.setDate(startDate.getDate() + dayOffset);
       
