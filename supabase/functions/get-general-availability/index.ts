@@ -1,6 +1,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { toZonedTime, format } from 'https://esm.sh/date-fns-tz@3.2.0';
 
+// Helper to get ordinal suffix (1st, 2nd, 3rd, etc.)
+function getOrdinalSuffix(day: number): string {
+  if (day > 3 && day < 21) return 'th';
+  switch (day % 10) {
+    case 1: return 'st';
+    case 2: return 'nd';
+    case 3: return 'rd';
+    default: return 'th';
+  }
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -240,12 +251,26 @@ Deno.serve(async (req) => {
 
     console.log('Availability response:', availabilityData);
 
-    // Process slots to remove humanReadable and formatted fields
-    const processedSlots = (availabilityData.slots || []).map((slot: any) => ({
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-      timeOfDay: slot.timeOfDay
-    }));
+    // Process slots to add humanReadable and remove formatted field
+    const processedSlots = (availabilityData.slots || []).map((slot: any) => {
+      const startTime = new Date(slot.startTime);
+      const zonedStart = toZonedTime(startTime, business_timezone);
+      
+      const dayName = format(zonedStart, 'EEEE', { timeZone: business_timezone });
+      const monthName = format(zonedStart, 'MMMM', { timeZone: business_timezone });
+      const day = parseInt(format(zonedStart, 'd', { timeZone: business_timezone }));
+      const ordinalSuffix = getOrdinalSuffix(day);
+      const time = format(zonedStart, 'h:mmaaa', { timeZone: business_timezone }).toLowerCase();
+      
+      const humanReadable = `${dayName}, ${monthName} ${day}${ordinalSuffix} at ${time}`;
+      
+      return {
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        timeOfDay: slot.timeOfDay,
+        humanReadable
+      };
+    });
     
     // Determine if the requested time is available
     let timeAvailable = null;
