@@ -29,17 +29,10 @@ Deno.serve(async (req) => {
     console.log(`Processing up to ${batchSize} appointments per request`);
 
     // Fetch appointments that don't have issue_details yet
-    // Join with call_logs to get the transcript
     const { data: appointments, error: fetchError } = await supabase
       .from('appointments')
-      .select(`
-        id,
-        caller_name,
-        phone_number,
-        call_logs!inner(transcript)
-      `)
+      .select('id, caller_name, phone_number, preferred_date, preferred_time')
       .is('issue_details', null)
-      .not('call_logs.transcript', 'is', null)
       .order('created_at', { ascending: false })
       .limit(batchSize);
 
@@ -70,10 +63,24 @@ Deno.serve(async (req) => {
       try {
         console.log(`Processing appointment ${appointment.id}...`);
         
-        // Get the transcript from the joined call_logs data
-        const transcript = Array.isArray(appointment.call_logs) 
-          ? appointment.call_logs[0]?.transcript 
-          : appointment.call_logs?.transcript;
+        // Find the corresponding call_log by matching phone number and appointment scheduled
+        const { data: callLogs, error: callLogError } = await supabase
+          .from('call_logs')
+          .select('transcript')
+          .eq('phone_number', appointment.phone_number)
+          .eq('appointment_scheduled', true)
+          .not('transcript', 'is', null)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (callLogError) {
+          console.error(`Error fetching call log for appointment ${appointment.id}:`, callLogError);
+          errorCount++;
+          errors.push(`${appointment.id}: Call log fetch error`);
+          continue;
+        }
+
+        const transcript = callLogs?.[0]?.transcript;
 
         if (!transcript) {
           console.log(`No transcript found for appointment ${appointment.id}, skipping...`);
