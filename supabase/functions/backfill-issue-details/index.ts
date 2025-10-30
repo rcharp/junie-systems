@@ -28,11 +28,24 @@ Deno.serve(async (req) => {
     
     console.log(`Processing up to ${batchSize} call logs per request`);
 
-    // Fetch call logs that have transcripts but no issue_details
+    // First, clear issue_details for call logs where appointment_scheduled is false/null
+    console.log('Clearing issue_details for non-appointment calls...');
+    const { error: clearError } = await supabase
+      .from('call_logs')
+      .update({ issue_details: null })
+      .or('appointment_scheduled.is.null,appointment_scheduled.eq.false')
+      .not('issue_details', 'is', null);
+
+    if (clearError) {
+      console.error('Error clearing issue_details:', clearError);
+    }
+
+    // Fetch call logs that have transcripts, scheduled appointments, but no issue_details
     const { data: callLogs, error: fetchError } = await supabase
       .from('call_logs')
       .select('id, transcript, caller_name, phone_number')
       .not('transcript', 'is', null)
+      .eq('appointment_scheduled', true)
       .is('issue_details', null)
       .order('created_at', { ascending: false })
       .limit(batchSize);
@@ -132,6 +145,7 @@ Return only the issue details as plain text (no JSON, no formatting). If no spec
       .from('call_logs')
       .select('id', { count: 'exact', head: true })
       .not('transcript', 'is', null)
+      .eq('appointment_scheduled', true)
       .is('issue_details', null);
 
     return new Response(
