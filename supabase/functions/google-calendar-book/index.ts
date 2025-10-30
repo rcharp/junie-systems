@@ -236,6 +236,10 @@ async function createCalendarEvent(
     descriptionParts.unshift(`Service: ${queueEntry.service_type}`);
   }
 
+  if (queueEntry.issue_details) {
+    descriptionParts.push(`\nIssue: ${queueEntry.issue_details}`);
+  }
+
   if (queueEntry.additional_notes) {
     descriptionParts.push(`\nNotes: ${queueEntry.additional_notes}`);
   }
