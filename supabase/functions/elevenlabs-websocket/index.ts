@@ -135,7 +135,8 @@ serve(async (req) => {
             console.log(`[II] Tool call ID: ${message.client_tool_call?.tool_call_id}`);
             console.log(`[II] Parameters: ${JSON.stringify(message.client_tool_call?.parameters || {})}`);
 
-            // Log the client tool call event to database
+            // Log the client tool call event to database with start time
+            const toolCallStartTime = Date.now();
             if (callSid) {
               const callContext = activeCalls.get(callSid);
               await supabase.from('client_tool_events').insert({
@@ -204,12 +205,14 @@ serve(async (req) => {
 
                 console.log("[II] Formatted result:", resultMessage);
 
-                // Update the event with the result
+                // Update the event with the result and duration
+                const durationMs = Date.now() - toolCallStartTime;
                 await supabase
                   .from('client_tool_events')
                   .update({
                     result: resultMessage,
-                    is_error: false
+                    is_error: false,
+                    duration_ms: durationMs
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
 
@@ -225,12 +228,14 @@ serve(async (req) => {
                 
                 const errorMessage = `Unable to check availability at this time`;
 
-                // Update the event with the error
+                // Update the event with the error and duration
+                const durationMs = Date.now() - toolCallStartTime;
                 await supabase
                   .from('client_tool_events')
                   .update({
                     result: errorMessage,
-                    is_error: true
+                    is_error: true,
+                    duration_ms: durationMs
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
                 
@@ -288,12 +293,14 @@ serve(async (req) => {
                   ? "Transfer initiated successfully" 
                   : `Transfer failed: ${result.error}`;
 
-                // Update the event with the result
+                // Update the event with the result and duration
+                const durationMs = Date.now() - toolCallStartTime;
                 await supabase
                   .from('client_tool_events')
                   .update({
                     result: resultMessage,
-                    is_error: !result.success
+                    is_error: !result.success,
+                    duration_ms: durationMs
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
 
@@ -309,12 +316,14 @@ serve(async (req) => {
                 
                 const errorMessage = `Transfer failed: ${error.message}`;
 
-                // Update the event with the error
+                // Update the event with the error and duration
+                const durationMs = Date.now() - toolCallStartTime;
                 await supabase
                   .from('client_tool_events')
                   .update({
                     result: errorMessage,
-                    is_error: true
+                    is_error: true,
+                    duration_ms: durationMs
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
                 

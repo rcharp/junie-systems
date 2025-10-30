@@ -523,6 +523,7 @@ export type Database = {
           business_id: string | null
           call_sid: string
           created_at: string | null
+          duration_ms: number | null
           id: string
           is_error: boolean | null
           parameters: Json | null
@@ -535,6 +536,7 @@ export type Database = {
           business_id?: string | null
           call_sid: string
           created_at?: string | null
+          duration_ms?: number | null
           id?: string
           is_error?: boolean | null
           parameters?: Json | null
@@ -547,6 +549,7 @@ export type Database = {
           business_id?: string | null
           call_sid?: string
           created_at?: string | null
+          duration_ms?: number | null
           id?: string
           is_error?: boolean | null
           parameters?: Json | null

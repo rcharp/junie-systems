@@ -22,6 +22,7 @@ interface ClientToolEvent {
   result: string | null;
   is_error: boolean;
   created_at: string;
+  duration_ms?: number | null;
   is_test?: boolean;
 }
 
@@ -387,6 +388,11 @@ export function ClientToolMonitor({ defaultExpanded = false }: { defaultExpanded
                             >
                               {event.tool_name}
                             </Badge>
+                            {event.duration_ms != null && (
+                              <Badge variant="outline" className="text-xs">
+                                {event.duration_ms}ms
+                              </Badge>
+                            )}
                             {event.is_error && (
                               <Badge variant="destructive" className="text-xs">
                                 Error
