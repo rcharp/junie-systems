@@ -102,6 +102,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          issue_details: string | null
           notes: string | null
           phone_number: string
           preferred_date: string
@@ -118,6 +119,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          issue_details?: string | null
           notes?: string | null
           phone_number: string
           preferred_date: string
@@ -134,6 +136,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          issue_details?: string | null
           notes?: string | null
           phone_number?: string
           preferred_date?: string
@@ -357,7 +360,6 @@ export type Database = {
           ended_at: string | null
           id: string
           incoming_call_phone_number: string | null
-          issue_details: string | null
           message: string
           metadata: Json | null
           phone_number: string
@@ -389,7 +391,6 @@ export type Database = {
           ended_at?: string | null
           id?: string
           incoming_call_phone_number?: string | null
-          issue_details?: string | null
           message: string
           metadata?: Json | null
           phone_number: string
@@ -421,7 +422,6 @@ export type Database = {
           ended_at?: string | null
           id?: string
           incoming_call_phone_number?: string | null
-          issue_details?: string | null
           message?: string
           metadata?: Json | null
           phone_number?: string

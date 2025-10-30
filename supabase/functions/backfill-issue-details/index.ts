@@ -26,42 +26,35 @@ Deno.serve(async (req) => {
     // Get batch size from request or default to 20
     const { batchSize = 20 } = await req.json().catch(() => ({}));
     
-    console.log(`Processing up to ${batchSize} call logs per request`);
+    console.log(`Processing up to ${batchSize} appointments per request`);
 
-    // First, clear issue_details for call logs where appointment_scheduled is false/null
-    console.log('Clearing issue_details for non-appointment calls...');
-    const { error: clearError } = await supabase
-      .from('call_logs')
-      .update({ issue_details: null })
-      .or('appointment_scheduled.is.null,appointment_scheduled.eq.false')
-      .not('issue_details', 'is', null);
-
-    if (clearError) {
-      console.error('Error clearing issue_details:', clearError);
-    }
-
-    // Fetch call logs that have transcripts, scheduled appointments, but no issue_details
-    const { data: callLogs, error: fetchError } = await supabase
-      .from('call_logs')
-      .select('id, transcript, caller_name, phone_number')
-      .not('transcript', 'is', null)
-      .eq('appointment_scheduled', true)
+    // Fetch appointments that don't have issue_details yet
+    // Join with call_logs to get the transcript
+    const { data: appointments, error: fetchError } = await supabase
+      .from('appointments')
+      .select(`
+        id,
+        caller_name,
+        phone_number,
+        call_logs!inner(transcript)
+      `)
       .is('issue_details', null)
+      .not('call_logs.transcript', 'is', null)
       .order('created_at', { ascending: false })
       .limit(batchSize);
 
     if (fetchError) {
-      console.error('Error fetching call logs:', fetchError);
+      console.error('Error fetching appointments:', fetchError);
       throw fetchError;
     }
 
-    console.log(`Found ${callLogs?.length || 0} call logs to process`);
+    console.log(`Found ${appointments?.length || 0} appointments to process`);
 
-    if (!callLogs || callLogs.length === 0) {
+    if (!appointments || appointments.length === 0) {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'No call logs to process',
+          message: 'No appointments to process',
           processed: 0 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -72,10 +65,20 @@ Deno.serve(async (req) => {
     let errorCount = 0;
     const errors: string[] = [];
 
-    // Process each call log
-    for (const log of callLogs) {
+    // Process each appointment
+    for (const appointment of appointments) {
       try {
-        console.log(`Processing call log ${log.id}...`);
+        console.log(`Processing appointment ${appointment.id}...`);
+        
+        // Get the transcript from the joined call_logs data
+        const transcript = Array.isArray(appointment.call_logs) 
+          ? appointment.call_logs[0]?.transcript 
+          : appointment.call_logs?.transcript;
+
+        if (!transcript) {
+          console.log(`No transcript found for appointment ${appointment.id}, skipping...`);
+          continue;
+        }
 
         const extractionPrompt = `Extract the specific issue or problem that prompted this appointment from the phone call transcript. Focus on:
 - What specific problem, issue, or service need does the caller have?
@@ -85,7 +88,7 @@ Deno.serve(async (req) => {
 Be very specific and concise (1-2 sentences max). If the caller mentions a specific issue like "leaky faucet" or "broken AC", use those exact terms.
 
 Transcript:
-${log.transcript}
+${transcript}
 
 Return only the issue description as plain text (no JSON, no formatting).`;
 
@@ -108,56 +111,54 @@ Return only the issue description as plain text (no JSON, no formatting).`;
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`Lovable AI error for ${log.id}:`, response.status, errorText);
+          console.error(`Lovable AI error for ${appointment.id}:`, response.status, errorText);
           errorCount++;
-          errors.push(`${log.id}: API error ${response.status}`);
+          errors.push(`${appointment.id}: API error ${response.status}`);
           continue;
         }
 
         const data = await response.json();
         const issueDetails = data.choices?.[0]?.message?.content?.trim() || null;
 
-        console.log(`Extracted issue details for ${log.id}:`, issueDetails);
+        console.log(`Extracted issue details for ${appointment.id}:`, issueDetails);
 
-        // Update the call log
+        // Update the appointment
         const { error: updateError } = await supabase
-          .from('call_logs')
+          .from('appointments')
           .update({ issue_details: issueDetails })
-          .eq('id', log.id);
+          .eq('id', appointment.id);
 
         if (updateError) {
-          console.error(`Error updating call log ${log.id}:`, updateError);
+          console.error(`Error updating appointment ${appointment.id}:`, updateError);
           errorCount++;
-          errors.push(`${log.id}: Update error`);
+          errors.push(`${appointment.id}: Update error`);
           continue;
         }
 
         processedCount++;
-        console.log(`✅ Successfully processed ${processedCount}/${callLogs.length}: ${log.id}`);
+        console.log(`✅ Successfully processed ${processedCount}/${appointments.length}: ${appointment.id}`);
 
         // Add delay to avoid rate limits (100ms between requests)
         await new Promise(resolve => setTimeout(resolve, 100));
 
       } catch (error) {
-        console.error(`Error processing call log ${log.id}:`, error);
+        console.error(`Error processing appointment ${appointment.id}:`, error);
         errorCount++;
-        errors.push(`${log.id}: ${error.message}`);
+        errors.push(`${appointment.id}: ${error.message}`);
       }
     }
 
     // Check if there are more to process
     const { count: remainingCount } = await supabase
-      .from('call_logs')
+      .from('appointments')
       .select('id', { count: 'exact', head: true })
-      .not('transcript', 'is', null)
-      .eq('appointment_scheduled', true)
       .is('issue_details', null);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: 'Backfill batch completed',
-        total: callLogs.length,
+        total: appointments.length,
         processed: processedCount,
         errors: errorCount,
         remaining: remainingCount || 0,
