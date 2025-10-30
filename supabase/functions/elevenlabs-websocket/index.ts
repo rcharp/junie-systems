@@ -139,7 +139,15 @@ serve(async (req) => {
             const toolCallStartTime = Date.now();
             if (callSid) {
               const callContext = activeCalls.get(callSid);
-              await supabase.from('client_tool_events').insert({
+              console.log('[II] Inserting client_tool_event:', {
+                call_sid: callSid,
+                tool_name: message.client_tool_call?.tool_name,
+                tool_call_id: message.client_tool_call?.tool_call_id,
+                business_id: callContext?.businessId,
+                user_id: callContext?.userId
+              });
+              
+              const { data: insertData, error: insertError } = await supabase.from('client_tool_events').insert({
                 call_sid: callSid,
                 tool_name: message.client_tool_call?.tool_name,
                 tool_call_id: message.client_tool_call?.tool_call_id,
@@ -147,6 +155,12 @@ serve(async (req) => {
                 business_id: callContext?.businessId,
                 user_id: callContext?.userId
               });
+              
+              if (insertError) {
+                console.error('[II] ❌ Error inserting client_tool_event:', insertError);
+              } else {
+                console.log('[II] ✅ Successfully inserted client_tool_event');
+              }
             }
 
             // Handle get_availability tool
@@ -207,7 +221,7 @@ serve(async (req) => {
 
                 // Update the event with the result and duration
                 const durationMs = Date.now() - toolCallStartTime;
-                await supabase
+                const { data: updateData, error: updateError } = await supabase
                   .from('client_tool_events')
                   .update({
                     result: resultMessage,
@@ -215,6 +229,12 @@ serve(async (req) => {
                     duration_ms: durationMs
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
+                
+                if (updateError) {
+                  console.error('[II] ❌ Error updating client_tool_event:', updateError);
+                } else {
+                  console.log('[II] ✅ Successfully updated client_tool_event with result');
+                }
 
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
@@ -230,7 +250,7 @@ serve(async (req) => {
 
                 // Update the event with the error and duration
                 const durationMs = Date.now() - toolCallStartTime;
-                await supabase
+                const { data: updateData, error: updateError } = await supabase
                   .from('client_tool_events')
                   .update({
                     result: errorMessage,
@@ -238,6 +258,10 @@ serve(async (req) => {
                     duration_ms: durationMs
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
+                
+                if (updateError) {
+                  console.error('[II] ❌ Error updating client_tool_event with error:', updateError);
+                }
                 
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
@@ -295,7 +319,7 @@ serve(async (req) => {
 
                 // Update the event with the result and duration
                 const durationMs = Date.now() - toolCallStartTime;
-                await supabase
+                const { data: updateData, error: updateError } = await supabase
                   .from('client_tool_events')
                   .update({
                     result: resultMessage,
@@ -303,6 +327,10 @@ serve(async (req) => {
                     duration_ms: durationMs
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
+                
+                if (updateError) {
+                  console.error('[II] ❌ Error updating client_tool_event:', updateError);
+                }
 
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
@@ -318,7 +346,7 @@ serve(async (req) => {
 
                 // Update the event with the error and duration
                 const durationMs = Date.now() - toolCallStartTime;
-                await supabase
+                const { data: updateData, error: updateError } = await supabase
                   .from('client_tool_events')
                   .update({
                     result: errorMessage,
@@ -326,6 +354,10 @@ serve(async (req) => {
                     duration_ms: durationMs
                   })
                   .eq('tool_call_id', message.client_tool_call.tool_call_id);
+                
+                if (updateError) {
+                  console.error('[II] ❌ Error updating client_tool_event with error:', updateError);
+                }
                 
                 elevenLabsWs.send(JSON.stringify({
                   type: "client_tool_result",
