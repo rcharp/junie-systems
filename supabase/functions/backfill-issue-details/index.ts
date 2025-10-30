@@ -16,9 +16,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY');
-    if (!anthropicApiKey) {
-      throw new Error('ANTHROPIC_API_KEY not configured');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
     console.log('Starting backfill of issue_details...');
@@ -65,34 +65,33 @@ ${log.transcript}
 
 Return only the issue details as plain text (no JSON, no formatting). If no specific issue is mentioned, return "General inquiry" or a brief description of what the caller wanted.`;
 
-        const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
           method: 'POST',
           headers: {
+            'Authorization': `Bearer ${lovableApiKey}`,
             'Content-Type': 'application/json',
-            'x-api-key': anthropicApiKey,
-            'anthropic-version': '2023-06-01',
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-5',
-            max_tokens: 300,
-            temperature: 0.3,
+            model: 'google/gemini-2.5-flash',
             messages: [{
               role: 'user',
               content: extractionPrompt
-            }]
+            }],
+            max_tokens: 300,
+            temperature: 0.3
           })
         });
 
-        if (!anthropicResponse.ok) {
-          const errorText = await anthropicResponse.text();
-          console.error(`Anthropic API error for ${log.id}:`, errorText);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Lovable AI error for ${log.id}:`, response.status, errorText);
           errorCount++;
-          errors.push(`${log.id}: API error`);
+          errors.push(`${log.id}: API error ${response.status}`);
           continue;
         }
 
-        const anthropicData = await anthropicResponse.json();
-        const issueDetails = anthropicData.content?.[0]?.text?.trim() || null;
+        const data = await response.json();
+        const issueDetails = data.choices?.[0]?.message?.content?.trim() || null;
 
         console.log(`Extracted issue details for ${log.id}:`, issueDetails);
 
