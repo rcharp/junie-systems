@@ -465,51 +465,8 @@ async function processWebhookInBackground(
       isManualCall
     );
 
-    // Handle calendar booking if needed
-    let calendarBookingResult = null;
-    const isAppointmentScheduled = analysisData.appointment_scheduled?.value === true;
-    
-    // Extract issue details early so we can use it in calendar booking
+    // Extract issue details FIRST before calendar booking
     let issueDetails: string | null = null;
-    
-    console.log('=== CALENDAR BOOKING CHECK ===');
-    console.log('appointment_scheduled flag:', analysisData.appointment_scheduled?.value);
-    console.log('isAppointmentScheduled:', isAppointmentScheduled);
-    console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
-    
-    if (isAppointmentScheduled && parsedAppointmentDateTime) {
-      console.log('✅ Conditions met - attempting calendar booking...');
-      calendarBookingResult = await handleCalendarBooking({
-        isAppointmentScheduled,
-        parsedAppointmentDateTime, 
-        businessUserId,
-        callerInfo,
-        analysisData,
-        normalizedEmail, // Pass the pre-normalized email
-        isManualCall,
-        supabaseAdmin: supabase,
-        supabaseUrl,
-        serviceType: serviceTypeFromWebhook,
-        additionalNotes,
-        issueDetails: null // Will be filled in later if needed
-      });
-      
-      if (calendarBookingResult) {
-        console.log('✅ Calendar event created:', calendarBookingResult.event?.id);
-      } else {
-        console.log('⚠️ Calendar booking returned null - check logs above for errors');
-      }
-    } else {
-      console.log('❌ Calendar booking skipped:');
-      if (!isAppointmentScheduled) {
-        console.log('  - Reason: appointment_scheduled is not true');
-      }
-      if (!parsedAppointmentDateTime) {
-        console.log('  - Reason: parsedAppointmentDateTime is null');
-      }
-    }
-
-    // Format appointment details
     let formattedAppointmentDetails = null;
     let enhancedCallSummary = null;
 
@@ -632,6 +589,48 @@ Return ONLY the issue details as plain text, or return "null" if no specific iss
         }
       } catch (claudeErr) {
         console.error('Error calling Claude for issue extraction:', claudeErr);
+      }
+    }
+
+    // NOW handle calendar booking with the extracted issue details
+    let calendarBookingResult = null;
+    const isAppointmentScheduled = analysisData.appointment_scheduled?.value === true;
+    
+    console.log('=== CALENDAR BOOKING CHECK ===');
+    console.log('appointment_scheduled flag:', analysisData.appointment_scheduled?.value);
+    console.log('isAppointmentScheduled:', isAppointmentScheduled);
+    console.log('parsedAppointmentDateTime:', parsedAppointmentDateTime);
+    console.log('issueDetails for booking:', issueDetails);
+    
+    if (isAppointmentScheduled && parsedAppointmentDateTime) {
+      console.log('✅ Conditions met - attempting calendar booking...');
+      calendarBookingResult = await handleCalendarBooking({
+        isAppointmentScheduled,
+        parsedAppointmentDateTime, 
+        businessUserId,
+        callerInfo,
+        analysisData,
+        normalizedEmail, // Pass the pre-normalized email
+        isManualCall,
+        supabaseAdmin: supabase,
+        supabaseUrl,
+        serviceType: serviceTypeFromWebhook,
+        additionalNotes,
+        issueDetails: issueDetails // Now we have the actual issue details
+      });
+      
+      if (calendarBookingResult) {
+        console.log('✅ Calendar event created:', calendarBookingResult.event?.id);
+      } else {
+        console.log('⚠️ Calendar booking returned null - check logs above for errors');
+      }
+    } else {
+      console.log('❌ Calendar booking skipped:');
+      if (!isAppointmentScheduled) {
+        console.log('  - Reason: appointment_scheduled is not true');
+      }
+      if (!parsedAppointmentDateTime) {
+        console.log('  - Reason: parsedAppointmentDateTime is null');
       }
     }
 
