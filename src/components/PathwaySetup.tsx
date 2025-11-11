@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Phone, Loader2, Settings, CheckCircle } from 'lucide-react';
 import { WebsiteImporter } from '@/components/WebsiteImporter';
 import { AddressInput } from '@/components/AddressAutocomplete';
-import { formatPhoneNumber, normalizePhoneNumber } from '@/lib/phone-utils';
+import { formatPhoneNumber, normalizePhoneNumber, handlePhoneBackspace } from '@/lib/phone-utils';
 
 export const PathwaySetup = () => {
   const { toast } = useToast();
@@ -207,6 +207,7 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
               placeholder="(555) 123-4567"
               value={formatPhoneNumber(formData.business_phone)}
               onChange={(e) => handleInputChange('business_phone', normalizePhoneNumber(e.target.value))}
+              onKeyDown={(e) => handlePhoneBackspace(e, formData.business_phone, (value) => handleInputChange('business_phone', value))}
             />
           </div>
         </div>
@@ -248,13 +249,14 @@ A: Yes, we can integrate with most scheduling systems, CRMs, and business tools.
 
         <div className="space-y-2">
           <Label htmlFor="transfer_number">Transfer Number (Optional)</Label>
-          <Input
-            id="transfer_number"
-            type="tel"
-            placeholder="(555) 123-4567"
-            value={formatPhoneNumber(formData.transfer_number)}
-            onChange={(e) => handleInputChange('transfer_number', normalizePhoneNumber(e.target.value))}
-          />
+            <Input
+              id="transfer_number"
+              type="tel"
+              placeholder="(555) 123-4567"
+              value={formatPhoneNumber(formData.transfer_number)}
+              onChange={(e) => handleInputChange('transfer_number', normalizePhoneNumber(e.target.value))}
+              onKeyDown={(e) => handlePhoneBackspace(e, formData.transfer_number, (value) => handleInputChange('transfer_number', value))}
+            />
           <p className="text-sm text-muted-foreground">
             Number to transfer calls to when human assistance is needed
           </p>

@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Phone, Loader2 } from 'lucide-react';
-import { formatPhoneNumber, normalizePhoneNumber } from '@/lib/phone-utils';
+import { formatPhoneNumber, normalizePhoneNumber, handlePhoneBackspace } from '@/lib/phone-utils';
 
 export const BlandCallInterface = () => {
   const { toast } = useToast();
@@ -92,6 +92,7 @@ export const BlandCallInterface = () => {
               placeholder="(555) 123-4567"
               value={formatPhoneNumber(formData.phone_number)}
               onChange={(e) => handleInputChange('phone_number', normalizePhoneNumber(e.target.value))}
+              onKeyDown={(e) => handlePhoneBackspace(e, formData.phone_number, (value) => handleInputChange('phone_number', value))}
             />
           </div>
           <div className="space-y-2">

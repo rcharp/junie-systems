@@ -63,7 +63,7 @@ import { FeatureGate } from "@/components/FeatureGate";
 import { useSubscription } from "@/hooks/useSubscription";
 import { BillingSettings } from "@/components/BillingSettings";
 import { CreditCard } from "lucide-react";
-import { formatPhoneNumber, normalizePhoneNumber } from "@/lib/phone-utils";
+import { formatPhoneNumber, normalizePhoneNumber, handlePhoneBackspace } from "@/lib/phone-utils";
 
 // Types
 interface BusinessType {
@@ -2765,6 +2765,19 @@ const Settings = () => {
                               setSmsNumber(normalized);
                             }
                           }}
+                          onKeyDown={(e) => {
+                            handlePhoneBackspace(e, transferNumber, (value) => {
+                              setTransferNumber(value);
+                              if (value.length > 0 && value.length !== 10) {
+                                setValidationErrors((prev) => ({ ...prev, transferNumber: true }));
+                              } else {
+                                setValidationErrors((prev) => ({ ...prev, transferNumber: false }));
+                              }
+                              if (useSameNumberForSms) {
+                                setSmsNumber(value);
+                              }
+                            });
+                          }}
                           required
                           className={
                             validationErrors.transferNumber
@@ -2804,6 +2817,19 @@ const Settings = () => {
                             if (useSameNumberForSms) {
                               setUseSameNumberForSms(false);
                             }
+                          }}
+                          onKeyDown={(e) => {
+                            handlePhoneBackspace(e, smsNumber, (value) => {
+                              setSmsNumber(value);
+                              if (value.length > 0 && value.length !== 10) {
+                                setValidationErrors((prev) => ({ ...prev, smsNumber: true }));
+                              } else {
+                                setValidationErrors((prev) => ({ ...prev, smsNumber: false }));
+                              }
+                              if (useSameNumberForSms) {
+                                setUseSameNumberForSms(false);
+                              }
+                            });
                           }}
                           required
                           disabled={useSameNumberForSms}

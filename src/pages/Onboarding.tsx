@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import Header from "@/components/Header";
+import { formatPhoneNumber, handlePhoneBackspace } from "@/lib/phone-utils";
 
 interface BusinessPrediction {
   place_id: string;
@@ -1166,25 +1167,27 @@ const Onboarding = () => {
                       id="transfer-number"
                       type="tel"
                       placeholder="(555) 123-4567"
-                      value={transferNumber}
+                      value={formatPhoneNumber(transferNumber)}
                       onChange={(e) => {
                         let value = e.target.value.replace(/\D/g, "");
-                        if (value.length > 10) value = value.slice(0, 10);
+                        if (value.length <= 10) {
+                          setTransferNumber(value);
+                          setTransferNumberError(value.length > 0 && value.length !== 10);
 
-                        let formatted = value;
-                        if (value.length >= 6) {
-                          formatted = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
-                        } else if (value.length >= 3) {
-                          formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                          // Update SMS number if "use same number" is checked
+                          if (useSameNumber) {
+                            setSmsNumber(value);
+                          }
                         }
-
-                        setTransferNumber(formatted);
-                        setTransferNumberError(value.length > 0 && value.length !== 10);
-
-                        // Update SMS number if "use same number" is checked
-                        if (useSameNumber) {
-                          setSmsNumber(formatted);
-                        }
+                      }}
+                      onKeyDown={(e) => {
+                        handlePhoneBackspace(e, transferNumber, (value) => {
+                          setTransferNumber(value);
+                          setTransferNumberError(value.length > 0 && value.length !== 10);
+                          if (useSameNumber) {
+                            setSmsNumber(value);
+                          }
+                        });
                       }}
                       className={transferNumberError ? "border-destructive" : ""}
                       autoFocus
@@ -1208,27 +1211,29 @@ const Onboarding = () => {
                       id="sms-number"
                       type="tel"
                       placeholder="(555) 123-4567"
-                      value={smsNumber}
+                      value={formatPhoneNumber(smsNumber)}
                       onChange={(e) => {
                         let value = e.target.value.replace(/\D/g, "");
-                        if (value.length > 10) value = value.slice(0, 10);
+                        if (value.length <= 10) {
+                          setSmsNumber(value);
 
-                        let formatted = value;
-                        if (value.length >= 6) {
-                          formatted = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
-                        } else if (value.length >= 3) {
-                          formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                          // Uncheck "use same number" if manually editing
+                          if (useSameNumber) {
+                            setUseSameNumber(false);
+                          }
+
+                          // Reset opt-in error when they start typing
+                          setSmsOptInError(false);
                         }
-
-                        setSmsNumber(formatted);
-
-                        // Uncheck "use same number" if manually editing
-                        if (useSameNumber) {
-                          setUseSameNumber(false);
-                        }
-
-                        // Reset opt-in error when they start typing
-                        setSmsOptInError(false);
+                      }}
+                      onKeyDown={(e) => {
+                        handlePhoneBackspace(e, smsNumber, (value) => {
+                          setSmsNumber(value);
+                          if (useSameNumber) {
+                            setUseSameNumber(false);
+                          }
+                          setSmsOptInError(false);
+                        });
                       }}
                       disabled={useSameNumber}
                     />

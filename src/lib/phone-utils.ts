@@ -53,3 +53,22 @@ export const isValidPhoneNumber = (phone: string | null | undefined): boolean =>
   const normalized = normalizePhoneNumber(phone);
   return normalized.length === 10;
 };
+
+/**
+ * Handles backspace key for phone number inputs to allow deleting through special characters
+ * @param e - Keyboard event
+ * @param currentValue - Current phone number value
+ * @param onChange - Callback to update the value
+ */
+export const handlePhoneBackspace = (
+  e: React.KeyboardEvent<HTMLInputElement>,
+  currentValue: string,
+  onChange: (value: string) => void
+) => {
+  if (e.key === 'Backspace') {
+    e.preventDefault();
+    const normalized = normalizePhoneNumber(currentValue);
+    const newValue = normalized.slice(0, -1);
+    onChange(newValue);
+  }
+};
