@@ -1200,7 +1200,7 @@ const Onboarding = () => {
                   <div className="space-y-3">
                     <div className="space-y-1">
                       <Label htmlFor="sms-number">
-                        SMS Number
+                        SMS Number <span className="text-muted-foreground">(Optional)</span>
                       </Label>
                       <p className="text-sm text-muted-foreground">
                         In order to receive SMS text messages with important customer information such as appointment reminders, please enter a number to receive texts.
