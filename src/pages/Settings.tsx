@@ -140,6 +140,7 @@ const Settings = () => {
   const [transferNumber, setTransferNumber] = useState("");
   const [smsNumber, setSmsNumber] = useState("");
   const [useSameNumberForSms, setUseSameNumberForSms] = useState(false);
+  const [smsOptIn, setSmsOptIn] = useState(false);
   const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
   const [urgentKeywords, setUrgentKeywords] = useState("");
   const [autoForward, setAutoForward] = useState(false);
@@ -463,6 +464,8 @@ const Settings = () => {
         const smsDigits = loadedSmsNumber.replace(/\D/g, "");
         if (smsDigits.length === 10) {
           setValidationErrors((prev) => ({ ...prev, smsNumber: false }));
+          // Assume opt-in if there's a valid SMS number saved
+          setSmsOptIn(true);
         }
 
         setTwilioPhoneNumber(data.twilio_phone_number || "");
@@ -1172,8 +1175,31 @@ const Settings = () => {
         return;
       }
 
+      // Validate SMS number if provided
+      const smsDigitsOnly = smsNumber?.replace(/\D/g, "") || "";
+      if (smsNumber && smsNumber.trim() && smsDigitsOnly.length !== 10) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "SMS number must be exactly 10 digits",
+        });
+        setValidationErrors((prev) => ({ ...prev, smsNumber: true }));
+        return;
+      }
+
+      // Require SMS opt-in if SMS number is provided
+      if (smsNumber && smsNumber.trim() && smsDigitsOnly.length === 10 && !smsOptIn) {
+        toast({
+          variant: "destructive",
+          title: "SMS Consent Required",
+          description: "You must consent to receive SMS notifications to use this feature",
+        });
+        return;
+      }
+
       updateData = {
         transfer_number: normalizePhoneNumber(transferNumber),
+        sms_number: smsNumber && smsNumber.trim() ? normalizePhoneNumber(smsNumber) : null,
         urgent_keywords: urgentKeywords,
         auto_forward: autoForward,
         common_questions: JSON.stringify(commonQuestionsAnswers.filter((qa) => qa.question.trim() || qa.answer.trim())),
@@ -2795,8 +2821,34 @@ const Settings = () => {
 
                       <div className="space-y-2">
                         <Label htmlFor="smsNumber" className="font-semibold">
-                          SMS Notification Number <span className="text-destructive">*</span>
+                          SMS Notification Number <span className="text-muted-foreground">(Optional)</span>
                         </Label>
+                        <p className="text-sm text-muted-foreground">
+                          In order to receive SMS text messages with important customer information such as appointment
+                          reminders, please enter a number to receive texts.
+                        </p>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="use-same-number"
+                            checked={useSameNumberForSms}
+                            onCheckedChange={(checked) => {
+                              setUseSameNumberForSms(checked as boolean);
+                              if (checked) {
+                                setSmsNumber(transferNumber);
+                                setValidationErrors((prev) => ({ ...prev, smsNumber: false }));
+                              } else {
+                                setSmsNumber("");
+                                setSmsOptIn(false);
+                              }
+                              debouncedAutoSave("Call");
+                            }}
+                          />
+                          <Label htmlFor="use-same-number" className="text-sm font-normal cursor-pointer">
+                            Use the same number as the call transfer number
+                          </Label>
+                        </div>
+
                         <Input
                           id="smsNumber"
                           type="tel"
@@ -2817,6 +2869,13 @@ const Settings = () => {
                             if (useSameNumberForSms) {
                               setUseSameNumberForSms(false);
                             }
+                            
+                            // Uncheck opt-in if number becomes invalid
+                            if (normalized.length !== 10 && smsOptIn) {
+                              setSmsOptIn(false);
+                            }
+                            
+                            debouncedAutoSave("Call");
                           }}
                           onKeyDown={(e) => {
                             handlePhoneBackspace(e, smsNumber, (value) => {
@@ -2829,9 +2888,13 @@ const Settings = () => {
                               if (useSameNumberForSms) {
                                 setUseSameNumberForSms(false);
                               }
+                              // Uncheck opt-in if number becomes invalid
+                              if (value.length !== 10 && smsOptIn) {
+                                setSmsOptIn(false);
+                              }
+                              debouncedAutoSave("Call");
                             });
                           }}
-                          required
                           disabled={useSameNumberForSms}
                           className={
                             validationErrors.smsNumber
@@ -2843,28 +2906,25 @@ const Settings = () => {
                           <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
                         )}
                         
-                        <div className="flex items-center space-x-2 mt-3">
-                          <Checkbox
-                            id="use-same-number"
-                            checked={useSameNumberForSms}
-                            onCheckedChange={(checked) => {
-                              setUseSameNumberForSms(checked as boolean);
-                              if (checked) {
-                                setSmsNumber(transferNumber);
-                                setValidationErrors((prev) => ({ ...prev, smsNumber: false }));
-                              } else {
-                                setSmsNumber("");
-                              }
-                            }}
-                          />
-                          <Label htmlFor="use-same-number" className="text-sm font-normal cursor-pointer">
-                            Use the same number as call transfer number
-                          </Label>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="sms-opt-in"
+                              checked={smsOptIn}
+                              disabled={!smsNumber || smsNumber.replace(/\D/g, "").length !== 10}
+                              onCheckedChange={(checked) => {
+                                setSmsOptIn(checked as boolean);
+                                debouncedAutoSave("Call");
+                              }}
+                            />
+                            <Label
+                              htmlFor="sms-opt-in"
+                              className={`text-sm font-normal ${smsNumber && smsNumber.replace(/\D/g, "").length === 10 ? "cursor-pointer" : "cursor-not-allowed opacity-50"}`}
+                            >
+                              I consent to receive automated SMS text messages regarding appointments, reminders, and important updates. Message frequency varies. Message and data rates may apply. Reply STOP to opt out. <span className="text-red-500">*</span>
+                            </Label>
+                          </div>
                         </div>
-                        
-                        <p className="text-sm text-muted-foreground">
-                          The phone number where SMS notifications and updates will be sent
-                        </p>
                       </div>
                     </div>
                   </FeatureGate>
