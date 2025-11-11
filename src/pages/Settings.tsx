@@ -138,6 +138,8 @@ const Settings = () => {
 
   // Call Settings State
   const [transferNumber, setTransferNumber] = useState("");
+  const [smsNumber, setSmsNumber] = useState("");
+  const [useSameNumberForSms, setUseSameNumberForSms] = useState(false);
   const [twilioPhoneNumber, setTwilioPhoneNumber] = useState("");
   const [urgentKeywords, setUrgentKeywords] = useState("");
   const [autoForward, setAutoForward] = useState(false);
@@ -180,6 +182,7 @@ const Settings = () => {
     businessAddress: false,
     services: false,
     transferNumber: false,
+    smsNumber: false,
   });
 
   // Refs for scrolling to error fields
@@ -446,6 +449,20 @@ const Settings = () => {
         const transferDigits = loadedTransferNumber.replace(/\D/g, "");
         if (transferDigits.length === 10) {
           setValidationErrors((prev) => ({ ...prev, transferNumber: false }));
+        }
+
+        const loadedSmsNumber = data.sms_number || "";
+        setSmsNumber(loadedSmsNumber);
+        
+        // Set useSameNumberForSms if sms_number matches transfer_number
+        if (loadedSmsNumber && loadedTransferNumber && loadedSmsNumber === loadedTransferNumber) {
+          setUseSameNumberForSms(true);
+        }
+
+        // Clear validation error if loaded SMS number is valid
+        const smsDigits = loadedSmsNumber.replace(/\D/g, "");
+        if (smsDigits.length === 10) {
+          setValidationErrors((prev) => ({ ...prev, smsNumber: false }));
         }
 
         setTwilioPhoneNumber(data.twilio_phone_number || "");
@@ -2722,40 +2739,107 @@ const Settings = () => {
                   <Separator />
 
                   <FeatureGate feature="callTransfers" showUpgradeMessage={true}>
-                    <div className="space-y-2">
-                      <Label htmlFor="transferNumber" className="font-semibold">
-                        Call Transfer/SMS Notification Number <span className="text-destructive">*</span>
-                      </Label>
-                      <Input
-                        id="transferNumber"
-                        type="tel"
-                        value={formatPhoneNumber(transferNumber)}
-                        placeholder="(555) 123-4567"
-                        onChange={(e) => {
-                          const normalized = normalizePhoneNumber(e.target.value);
-                          setTransferNumber(normalized);
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="transferNumber" className="font-semibold">
+                          Call Transfer Number <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="transferNumber"
+                          type="tel"
+                          value={formatPhoneNumber(transferNumber)}
+                          placeholder="(555) 123-4567"
+                          onChange={(e) => {
+                            const normalized = normalizePhoneNumber(e.target.value);
+                            setTransferNumber(normalized);
 
-                          // Validate if user has entered something
-                          if (normalized.length > 0 && normalized.length !== 10) {
-                            setValidationErrors((prev) => ({ ...prev, transferNumber: true }));
-                          } else {
-                            setValidationErrors((prev) => ({ ...prev, transferNumber: false }));
+                            // Validate if user has entered something
+                            if (normalized.length > 0 && normalized.length !== 10) {
+                              setValidationErrors((prev) => ({ ...prev, transferNumber: true }));
+                            } else {
+                              setValidationErrors((prev) => ({ ...prev, transferNumber: false }));
+                            }
+                            
+                            // Update SMS number if checkbox is checked
+                            if (useSameNumberForSms) {
+                              setSmsNumber(normalized);
+                            }
+                          }}
+                          required
+                          className={
+                            validationErrors.transferNumber
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                              : ""
                           }
-                        }}
-                        required
-                        className={
-                          validationErrors.transferNumber
-                            ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                            : ""
-                        }
-                      />
-                      {validationErrors.transferNumber && transferNumber.length > 0 && (
-                        <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
-                      )}
-                      <p className="text-sm text-muted-foreground">
-                        The phone number that you want urgent or emergency calls to be forwarded to, as well as SMS
-                        notifications.
-                      </p>
+                        />
+                        {validationErrors.transferNumber && transferNumber.length > 0 && (
+                          <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
+                        )}
+                        <p className="text-sm text-muted-foreground">
+                          The phone number for urgent or emergency call transfers
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="smsNumber" className="font-semibold">
+                          SMS Notification Number <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          id="smsNumber"
+                          type="tel"
+                          value={formatPhoneNumber(smsNumber)}
+                          placeholder="(555) 123-4567"
+                          onChange={(e) => {
+                            const normalized = normalizePhoneNumber(e.target.value);
+                            setSmsNumber(normalized);
+
+                            // Validate if user has entered something
+                            if (normalized.length > 0 && normalized.length !== 10) {
+                              setValidationErrors((prev) => ({ ...prev, smsNumber: true }));
+                            } else {
+                              setValidationErrors((prev) => ({ ...prev, smsNumber: false }));
+                            }
+                            
+                            // Uncheck the checkbox if manually editing
+                            if (useSameNumberForSms) {
+                              setUseSameNumberForSms(false);
+                            }
+                          }}
+                          required
+                          disabled={useSameNumberForSms}
+                          className={
+                            validationErrors.smsNumber
+                              ? "border-red-500 focus:border-red-500 focus:ring-red-500"
+                              : ""
+                          }
+                        />
+                        {validationErrors.smsNumber && smsNumber.length > 0 && (
+                          <p className="text-sm text-red-500">Phone number must be exactly 10 digits</p>
+                        )}
+                        
+                        <div className="flex items-center space-x-2 mt-3">
+                          <Checkbox
+                            id="use-same-number"
+                            checked={useSameNumberForSms}
+                            onCheckedChange={(checked) => {
+                              setUseSameNumberForSms(checked as boolean);
+                              if (checked) {
+                                setSmsNumber(transferNumber);
+                                setValidationErrors((prev) => ({ ...prev, smsNumber: false }));
+                              } else {
+                                setSmsNumber("");
+                              }
+                            }}
+                          />
+                          <Label htmlFor="use-same-number" className="text-sm font-normal cursor-pointer">
+                            Use the same number as call transfer number
+                          </Label>
+                        </div>
+                        
+                        <p className="text-sm text-muted-foreground">
+                          The phone number where SMS notifications and updates will be sent
+                        </p>
+                      </div>
                     </div>
                   </FeatureGate>
 

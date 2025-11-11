@@ -224,6 +224,7 @@ export type Database = {
           record_calls: boolean | null
           services_offered: string | null
           sms_notifications: boolean | null
+          sms_number: string | null
           state: string | null
           street_address: string | null
           transfer_number: string | null
@@ -263,6 +264,7 @@ export type Database = {
           record_calls?: boolean | null
           services_offered?: string | null
           sms_notifications?: boolean | null
+          sms_number?: string | null
           state?: string | null
           street_address?: string | null
           transfer_number?: string | null
@@ -302,6 +304,7 @@ export type Database = {
           record_calls?: boolean | null
           services_offered?: string | null
           sms_notifications?: boolean | null
+          sms_number?: string | null
           state?: string | null
           street_address?: string | null
           transfer_number?: string | null

@@ -665,6 +665,7 @@ const Onboarding = () => {
           business_hours: JSON.stringify(businessHours),
           business_timezone: verificationData.business_timezone || "America/New_York",
           transfer_number: transferNumber.replace(/\D/g, ""),
+          sms_number: smsNumber.replace(/\D/g, ""),
           street_address: streetAddress,
           city: city,
           state: state,
