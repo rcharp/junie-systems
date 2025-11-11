@@ -1207,6 +1207,27 @@ const Onboarding = () => {
                         reminders, please enter a number to receive texts.
                       </p>
                     </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="use-same-number"
+                        checked={useSameNumber}
+                        onCheckedChange={(checked) => {
+                          setUseSameNumber(checked as boolean);
+                          if (checked) {
+                            setSmsNumber(transferNumber);
+                          } else {
+                            setSmsNumber("");
+                          }
+                          // Reset opt-in error when checkbox changes
+                          setSmsOptInError(false);
+                        }}
+                      />
+                      <Label htmlFor="use-same-number" className="text-sm font-normal cursor-pointer">
+                        Use the same number as the call transfer number
+                      </Label>
+                    </div>
+
                     <Input
                       id="sms-number"
                       type="tel"
@@ -1237,53 +1258,32 @@ const Onboarding = () => {
                       }}
                       disabled={useSameNumber}
                     />
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="use-same-number"
-                        checked={useSameNumber}
-                        onCheckedChange={(checked) => {
-                          setUseSameNumber(checked as boolean);
-                          if (checked) {
-                            setSmsNumber(transferNumber);
-                          } else {
-                            setSmsNumber("");
-                          }
-                          // Reset opt-in error when checkbox changes
-                          setSmsOptInError(false);
-                        }}
-                      />
-                      <Label htmlFor="use-same-number" className="text-sm font-normal cursor-pointer">
-                        Use the same number as the call transfer number
-                      </Label>
-                    </div>
-                  </div>
 
-                  {smsNumber && smsNumber.replace(/\D/g, "").length === 10 && (
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="sms-opt-in"
-                          checked={smsOptIn}
-                          onCheckedChange={(checked) => {
-                            setSmsOptIn(checked as boolean);
-                            setSmsOptInError(false);
-                          }}
-                          className={smsOptInError ? "border-destructive" : ""}
-                        />
-                        <Label
-                          htmlFor="sms-opt-in"
-                          className={`text-sm font-normal cursor-pointer ${smsOptInError ? "text-destructive" : ""}`}
-                        >
-                          I agree to receive SMS text notifications <span className="text-red-500">*</span>
-                        </Label>
+                    {smsNumber && smsNumber.replace(/\D/g, "").length === 10 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="sms-opt-in"
+                            checked={smsOptIn}
+                            onCheckedChange={(checked) => {
+                              setSmsOptIn(checked as boolean);
+                              setSmsOptInError(false);
+                            }}
+                            className={smsOptInError ? "border-destructive" : ""}
+                          />
+                          <Label
+                            htmlFor="sms-opt-in"
+                            className={`text-sm font-normal cursor-pointer ${smsOptInError ? "text-destructive" : ""}`}
+                          >
+                            I agree to receive SMS text notifications <span className="text-red-500">*</span>
+                          </Label>
+                        </div>
+                        {smsOptInError && (
+                          <p className="text-sm text-destructive">You must agree to receive SMS notifications</p>
+                        )}
                       </div>
-                      {smsOptInError && (
-                        <p className="text-sm text-destructive">
-                          You must agree to receive SMS notifications to continue
-                        </p>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
 
                   <Button
                     onClick={async () => {
