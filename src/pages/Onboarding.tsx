@@ -63,13 +63,13 @@ const Onboarding = () => {
   // Helper function to parse Google opening hours
   const parseGoogleOpeningHours = (weekdayText: string[]) => {
     const dayMap: { [key: string]: number } = {
-      "Monday": 1,
-      "Tuesday": 2,
-      "Wednesday": 3,
-      "Thursday": 4,
-      "Friday": 5,
-      "Saturday": 6,
-      "Sunday": 0,
+      Monday: 1,
+      Tuesday: 2,
+      Wednesday: 3,
+      Thursday: 4,
+      Friday: 5,
+      Saturday: 6,
+      Sunday: 0,
     };
 
     const dayNameMap: { [key: number]: string } = {
@@ -83,38 +83,38 @@ const Onboarding = () => {
     };
 
     const hours = [];
-    
+
     for (const line of weekdayText) {
       // Format: "Monday: 9:00 AM – 5:00 PM" or "Monday: Closed"
       const match = line.match(/^([A-Za-z]+):\s*(.+)$/);
       if (!match) continue;
-      
+
       const [, dayName, timeInfo] = match;
       const dayId = dayMap[dayName];
       const day = dayNameMap[dayId];
-      
+
       if (!day) continue;
-      
-      if (timeInfo.toLowerCase().includes('closed')) {
+
+      if (timeInfo.toLowerCase().includes("closed")) {
         hours.push({ id: dayId, day, isOpen: false, openTime: "09:00", closeTime: "17:00" });
       } else {
         // Parse time range: "9:00 AM – 5:00 PM"
         const timeMatch = timeInfo.match(/(\d{1,2}):(\d{2})\s*(AM|PM)\s*[–-]\s*(\d{1,2}):(\d{2})\s*(AM|PM)/i);
         if (timeMatch) {
           const [, openHour, openMin, openPeriod, closeHour, closeMin, closePeriod] = timeMatch;
-          
+
           // Convert to 24-hour format
           let openHour24 = parseInt(openHour);
           let closeHour24 = parseInt(closeHour);
-          
-          if (openPeriod.toUpperCase() === 'PM' && openHour24 !== 12) openHour24 += 12;
-          if (openPeriod.toUpperCase() === 'AM' && openHour24 === 12) openHour24 = 0;
-          if (closePeriod.toUpperCase() === 'PM' && closeHour24 !== 12) closeHour24 += 12;
-          if (closePeriod.toUpperCase() === 'AM' && closeHour24 === 12) closeHour24 = 0;
-          
-          const openTime = `${String(openHour24).padStart(2, '0')}:${openMin}`;
-          const closeTime = `${String(closeHour24).padStart(2, '0')}:${closeMin}`;
-          
+
+          if (openPeriod.toUpperCase() === "PM" && openHour24 !== 12) openHour24 += 12;
+          if (openPeriod.toUpperCase() === "AM" && openHour24 === 12) openHour24 = 0;
+          if (closePeriod.toUpperCase() === "PM" && closeHour24 !== 12) closeHour24 += 12;
+          if (closePeriod.toUpperCase() === "AM" && closeHour24 === 12) closeHour24 = 0;
+
+          const openTime = `${String(openHour24).padStart(2, "0")}:${openMin}`;
+          const closeTime = `${String(closeHour24).padStart(2, "0")}:${closeMin}`;
+
           hours.push({ id: dayId, day, isOpen: true, openTime, closeTime });
         } else {
           // Fallback to default if parsing fails
@@ -122,7 +122,7 @@ const Onboarding = () => {
         }
       }
     }
-    
+
     return hours;
   };
 
@@ -212,13 +212,13 @@ const Onboarding = () => {
       if (session) {
         setIsAuthenticated(true);
         setCurrentUserId(session.user.id);
-        
+
         // Don't redirect if user is in the middle of onboarding flow
         if (isOnboardingFlowRef.current) {
           isCheckingAuthRef.current = false;
           return;
         }
-        
+
         // Check if user has already completed setup by checking for business_settings
         const { data: businessSettings } = await supabase
           .from("business_settings")
@@ -254,7 +254,6 @@ const Onboarding = () => {
     // If no match, return the first specific type or 'other'
     return specificTypes[0] || "other";
   };
-
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -327,7 +326,7 @@ const Onboarding = () => {
 
     try {
       setLoading(true);
-      
+
       // Fetch detailed business information
       const { data, error } = await supabase.functions.invoke("get-business-details", {
         body: { placeId: business.place_id },
@@ -337,9 +336,9 @@ const Onboarding = () => {
 
       // Store business data for later enhancement
       sessionStorage.setItem("selectedBusiness", JSON.stringify(data));
-      
+
       let businessData = data;
-      
+
       // Set verification data with basic information (AI enhancement happens during save)
       setVerificationData({
         business_name: businessData.name || businessSearch,
@@ -350,7 +349,7 @@ const Onboarding = () => {
         business_timezone: "America/New_York",
         business_description: "", // Will be generated during final save
       });
-      
+
       // Move to verification step immediately
       setStep(2);
       isSelectingBusinessRef.current = false;
@@ -384,15 +383,15 @@ const Onboarding = () => {
       });
       return;
     }
-    
+
     // Extract data from website (no overlay)
     try {
       setLoading(true);
-      
+
       const { data: extractedData } = await supabase.functions.invoke("extract-business-data", {
         body: { url: websiteUrl },
       });
-      
+
       let businessData: any = {};
       if (extractedData?.success && extractedData?.data) {
         businessData = {
@@ -408,10 +407,10 @@ const Onboarding = () => {
           website: websiteUrl,
         };
       }
-      
+
       // Store for later
       sessionStorage.setItem("selectedBusiness", JSON.stringify(businessData));
-      
+
       // Use Claude to enhance
       let claudeData: any = {};
       try {
@@ -431,7 +430,7 @@ const Onboarding = () => {
       } catch (error) {
         console.error("Error with Claude:", error);
       }
-      
+
       setVerificationData({
         business_name: businessData.name || businessSearch || "My Business",
         business_phone: businessData.phone || "",
@@ -441,7 +440,7 @@ const Onboarding = () => {
         business_timezone: "America/New_York",
         business_description: claudeData.description || "",
       });
-      
+
       setStep(2);
     } catch (error: any) {
       console.error("Error extracting data:", error);
@@ -455,11 +454,10 @@ const Onboarding = () => {
     }
   };
 
-
   const handleGoogleSignup = async () => {
     setLoading(true);
     isOnboardingFlowRef.current = true;
-    
+
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -558,19 +556,22 @@ const Onboarding = () => {
         console.error("No business data available to save");
         throw new Error("No business data available");
       }
-      
+
       setExtractionProgress(30);
-      
+
       let businessData: any = savedBusiness ? JSON.parse(savedBusiness) : {};
       console.log("businessData:", businessData);
-      
+
       // Create user profile
-      const { data: profileData, error: profileError } = await supabase.from("user_profiles").upsert({
-        id: userId,
-        company_name: verificationData.business_name || "My Business",
-        subscription_plan: "free",
-        subscription_status: "active",
-      }, { onConflict: "id" });
+      const { data: profileData, error: profileError } = await supabase.from("user_profiles").upsert(
+        {
+          id: userId,
+          company_name: verificationData.business_name || "My Business",
+          subscription_plan: "free",
+          subscription_status: "active",
+        },
+        { onConflict: "id" },
+      );
 
       if (profileError) {
         console.error("Error creating profile:", profileError);
@@ -586,7 +587,7 @@ const Onboarding = () => {
         { id: 4, day: "thursday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
         { id: 5, day: "friday", isOpen: true, openTime: "09:00", closeTime: "17:00" },
       ];
-      
+
       // Try to parse opening hours from Google Places data
       if (businessData.openingHours && Array.isArray(businessData.openingHours)) {
         try {
@@ -602,7 +603,7 @@ const Onboarding = () => {
       // Generate AI-enhanced description during final save
       let enhancedDescription = verificationData.business_description;
       let enhancedBusinessType = verificationData.business_type;
-      
+
       try {
         const { data: generatedData } = await supabase.functions.invoke("generate-business-description", {
           body: {
@@ -627,13 +628,13 @@ const Onboarding = () => {
       setExtractionProgress(50);
 
       // Parse address components from business_address
-      let streetAddress = '';
-      let city = '';
-      let state = '';
-      let zipCode = '';
-      
+      let streetAddress = "";
+      let city = "";
+      let state = "";
+      let zipCode = "";
+
       if (verificationData.business_address) {
-        const addressParts = verificationData.business_address.split(',').map(p => p.trim());
+        const addressParts = verificationData.business_address.split(",").map((p) => p.trim());
         if (addressParts.length >= 3) {
           streetAddress = addressParts[0];
           city = addressParts[1];
@@ -645,32 +646,36 @@ const Onboarding = () => {
             zipCode = stateZipMatch[2];
           } else {
             // Fallback: try to split by space
-            const parts = stateZipPart.split(' ');
-            state = parts[0] || '';
-            zipCode = parts.slice(1).join(' ') || '';
+            const parts = stateZipPart.split(" ");
+            state = parts[0] || "";
+            zipCode = parts.slice(1).join(" ") || "";
           }
         }
       }
 
       // Save business settings with AI-enhanced data
-      const { data: businessSettingsResult, error: businessError } = await supabase.from("business_settings")
-        .upsert({
-          user_id: userId,
-          business_name: verificationData.business_name,
-          business_type: enhancedBusinessType,
-          business_phone: verificationData.business_phone,
-          business_address: verificationData.business_address,
-          business_website: verificationData.business_website,
-          business_description: enhancedDescription,
-          business_hours: JSON.stringify(businessHours),
-          business_timezone: verificationData.business_timezone || "America/New_York",
-          transfer_number: transferNumber.replace(/\D/g, ""),
-          sms_number: smsNumber && smsNumber.trim() ? smsNumber.replace(/\D/g, "") : null,
-          street_address: streetAddress,
-          city: city,
-          state: state,
-          zip_code: zipCode
-        }, { onConflict: "user_id" })
+      const { data: businessSettingsResult, error: businessError } = await supabase
+        .from("business_settings")
+        .upsert(
+          {
+            user_id: userId,
+            business_name: verificationData.business_name,
+            business_type: enhancedBusinessType,
+            business_phone: verificationData.business_phone,
+            business_address: verificationData.business_address,
+            business_website: verificationData.business_website,
+            business_description: enhancedDescription,
+            business_hours: JSON.stringify(businessHours),
+            business_timezone: verificationData.business_timezone || "America/New_York",
+            transfer_number: transferNumber.replace(/\D/g, ""),
+            sms_number: smsNumber && smsNumber.trim() ? smsNumber.replace(/\D/g, "") : null,
+            street_address: streetAddress,
+            city: city,
+            state: state,
+            zip_code: zipCode,
+          },
+          { onConflict: "user_id" },
+        )
         .select("id")
         .single();
 
@@ -707,7 +712,7 @@ const Onboarding = () => {
             display_order: index,
             is_active: true,
           }));
-          
+
           const { error: insertError } = await supabase.from("services").insert(servicesToInsert);
           if (insertError) {
             console.error("Error inserting services:", insertError);
@@ -719,9 +724,9 @@ const Onboarding = () => {
         // Purchase Twilio number (only if auto-assign is enabled)
         try {
           const { data: autoAssignSetting } = await supabase
-            .from('system_settings')
-            .select('setting_value')
-            .eq('setting_key', 'twilio_auto_assign_enabled')
+            .from("system_settings")
+            .select("setting_value")
+            .eq("setting_key", "twilio_auto_assign_enabled")
             .maybeSingle();
 
           const autoAssignEnabled = autoAssignSetting?.setting_value === true;
@@ -736,7 +741,7 @@ const Onboarding = () => {
             const { data: twilioData, error: twilioError } = await supabase.functions.invoke("purchase-twilio-number", {
               body: { areaCode, businessId: businessSettingsResult.id },
             });
-            
+
             if (twilioError) {
               console.error("Error purchasing Twilio number:", twilioError);
             } else {
@@ -795,7 +800,7 @@ const Onboarding = () => {
 
     setLoading(true);
     isOnboardingFlowRef.current = true;
-    
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -834,7 +839,7 @@ const Onboarding = () => {
     }
   };
 
-  const progressValue = isAuthenticated ? ((step / 3) * 100) : ((step / 4) * 100);
+  const progressValue = isAuthenticated ? (step / 3) * 100 : (step / 4) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-subtle flex flex-col">
@@ -865,12 +870,12 @@ const Onboarding = () => {
         </div>
       )}
 
-
-
       {/* Progress indicator */}
       <div className="container mx-auto px-4 py-2">
         <div className="max-w-2xl mx-auto flex items-center justify-between text-sm text-muted-foreground">
-          <span>Step {Math.min(step, isAuthenticated ? 3 : 4)} of {isAuthenticated ? 3 : 4}</span>
+          <span>
+            Step {Math.min(step, isAuthenticated ? 3 : 4)} of {isAuthenticated ? 3 : 4}
+          </span>
         </div>
       </div>
 
@@ -1052,9 +1057,7 @@ const Onboarding = () => {
             <div className="space-y-6 animate-slide-up" key="step-2">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">Verify Your Business Details</h1>
-                <p className="text-muted-foreground text-lg">
-                  Please review and update your information as needed
-                </p>
+                <p className="text-muted-foreground text-lg">Please review and update your information as needed</p>
               </div>
 
               <Card className="border-2 shadow-elegant">
@@ -1132,11 +1135,7 @@ const Onboarding = () => {
                       <ArrowLeft className="w-4 h-4 mr-2" />
                       Back
                     </Button>
-                    <Button
-                      onClick={() => setStep(3)}
-                      className="flex-1"
-                      size="lg"
-                    >
+                    <Button onClick={() => setStep(3)} className="flex-1" size="lg">
                       Continue
                       <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
@@ -1149,9 +1148,7 @@ const Onboarding = () => {
             <div className="space-y-6 animate-slide-up" key="step-3">
               <div className="text-center space-y-3">
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground">Set your contact number</h1>
-                <p className="text-muted-foreground text-lg">
-                  Where should we reach you?
-                </p>
+                <p className="text-muted-foreground text-lg">Where should we reach you?</p>
               </div>
 
               <Card className="border-2 shadow-elegant">
@@ -1183,7 +1180,7 @@ const Onboarding = () => {
 
                         setTransferNumber(formatted);
                         setTransferNumberError(value.length > 0 && value.length !== 10);
-                        
+
                         // Update SMS number if "use same number" is checked
                         if (useSameNumber) {
                           setSmsNumber(formatted);
@@ -1200,10 +1197,11 @@ const Onboarding = () => {
                   <div className="space-y-3">
                     <div className="space-y-1">
                       <Label htmlFor="sms-number">
-                        SMS Number <span className="text-muted-foreground">(Optional)</span>
+                        SMS Text Message Number <span className="text-muted-foreground">(Optional)</span>
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        In order to receive SMS text messages with important customer information such as appointment reminders, please enter a number to receive texts.
+                        In order to receive SMS text messages with important customer information such as appointment
+                        reminders, please enter a number to receive texts.
                       </p>
                     </div>
                     <Input
@@ -1223,12 +1221,12 @@ const Onboarding = () => {
                         }
 
                         setSmsNumber(formatted);
-                        
+
                         // Uncheck "use same number" if manually editing
                         if (useSameNumber) {
                           setUseSameNumber(false);
                         }
-                        
+
                         // Reset opt-in error when they start typing
                         setSmsOptInError(false);
                       }}
@@ -1267,15 +1265,17 @@ const Onboarding = () => {
                           }}
                           className={smsOptInError ? "border-destructive" : ""}
                         />
-                        <Label 
-                          htmlFor="sms-opt-in" 
+                        <Label
+                          htmlFor="sms-opt-in"
                           className={`text-sm font-normal cursor-pointer ${smsOptInError ? "text-destructive" : ""}`}
                         >
                           I agree to receive SMS text notifications <span className="text-red-500">*</span>
                         </Label>
                       </div>
                       {smsOptInError && (
-                        <p className="text-sm text-destructive">You must agree to receive SMS notifications to continue</p>
+                        <p className="text-sm text-destructive">
+                          You must agree to receive SMS notifications to continue
+                        </p>
                       )}
                     </div>
                   )}
@@ -1284,12 +1284,12 @@ const Onboarding = () => {
                     onClick={async () => {
                       const digits = transferNumber.replace(/\D/g, "");
                       const smsDigits = smsNumber.replace(/\D/g, "");
-                      
+
                       if (digits.length !== 10) {
                         setTransferNumberError(true);
                         return;
                       }
-                      
+
                       // If SMS number is provided, validate it and require opt-in
                       if (smsNumber && smsNumber.trim()) {
                         if (smsDigits.length !== 10) {
@@ -1300,13 +1300,13 @@ const Onboarding = () => {
                           });
                           return;
                         }
-                        
+
                         if (!smsOptIn) {
                           setSmsOptInError(true);
                           return;
                         }
                       }
-                      
+
                       // If user is already authenticated (came via Google OAuth), save business data directly
                       if (isAuthenticated && currentUserId) {
                         await saveBusinessData(currentUserId);
