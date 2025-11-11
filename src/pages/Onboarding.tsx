@@ -665,7 +665,7 @@ const Onboarding = () => {
           business_hours: JSON.stringify(businessHours),
           business_timezone: verificationData.business_timezone || "America/New_York",
           transfer_number: transferNumber.replace(/\D/g, ""),
-          sms_number: smsNumber.replace(/\D/g, ""),
+          sms_number: smsNumber && smsNumber.trim() ? smsNumber.replace(/\D/g, "") : null,
           street_address: streetAddress,
           city: city,
           state: state,
@@ -1157,9 +1157,14 @@ const Onboarding = () => {
               <Card className="border-2 shadow-elegant">
                 <CardContent className="pt-6 space-y-6">
                   <div className="space-y-3">
-                    <Label htmlFor="transfer-number">
-                      Call Transfer Number <span className="text-red-500">*</span>
-                    </Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="transfer-number">
+                        Call Transfer Number <span className="text-red-500">*</span>
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Where should we transfer calls when a caller requests to speak with you immediately?
+                      </p>
+                    </div>
                     <Input
                       id="transfer-number"
                       type="tel"
@@ -1190,15 +1195,17 @@ const Onboarding = () => {
                     {transferNumberError && (
                       <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
                     )}
-                    <p className="text-sm text-muted-foreground">
-                      Where should we transfer calls when a caller requests to speak with you immediately?
-                    </p>
                   </div>
 
                   <div className="space-y-3">
-                    <Label htmlFor="sms-number">
-                      SMS Number <span className="text-red-500">*</span>
-                    </Label>
+                    <div className="space-y-1">
+                      <Label htmlFor="sms-number">
+                        SMS Number
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        In order to receive SMS text messages with important customer information such as appointment reminders, please enter a number to receive texts.
+                      </p>
+                    </div>
                     <Input
                       id="sms-number"
                       type="tel"
@@ -1221,6 +1228,9 @@ const Onboarding = () => {
                         if (useSameNumber) {
                           setUseSameNumber(false);
                         }
+                        
+                        // Reset opt-in error when they start typing
+                        setSmsOptInError(false);
                       }}
                       disabled={useSameNumber}
                     />
@@ -1235,39 +1245,40 @@ const Onboarding = () => {
                           } else {
                             setSmsNumber("");
                           }
+                          // Reset opt-in error when checkbox changes
+                          setSmsOptInError(false);
                         }}
                       />
                       <Label htmlFor="use-same-number" className="text-sm font-normal cursor-pointer">
                         Use the same number as the call transfer number
                       </Label>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Where should we send SMS notifications and updates?
-                    </p>
                   </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="sms-opt-in"
-                        checked={smsOptIn}
-                        onCheckedChange={(checked) => {
-                          setSmsOptIn(checked as boolean);
-                          setSmsOptInError(false);
-                        }}
-                        className={smsOptInError ? "border-destructive" : ""}
-                      />
-                      <Label 
-                        htmlFor="sms-opt-in" 
-                        className={`text-sm font-normal cursor-pointer ${smsOptInError ? "text-destructive" : ""}`}
-                      >
-                        I agree to receive SMS notifications and updates <span className="text-red-500">*</span>
-                      </Label>
+                  {smsNumber && smsNumber.replace(/\D/g, "").length === 10 && (
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="sms-opt-in"
+                          checked={smsOptIn}
+                          onCheckedChange={(checked) => {
+                            setSmsOptIn(checked as boolean);
+                            setSmsOptInError(false);
+                          }}
+                          className={smsOptInError ? "border-destructive" : ""}
+                        />
+                        <Label 
+                          htmlFor="sms-opt-in" 
+                          className={`text-sm font-normal cursor-pointer ${smsOptInError ? "text-destructive" : ""}`}
+                        >
+                          I agree to receive SMS text notifications <span className="text-red-500">*</span>
+                        </Label>
+                      </div>
+                      {smsOptInError && (
+                        <p className="text-sm text-destructive">You must agree to receive SMS notifications to continue</p>
+                      )}
                     </div>
-                    {smsOptInError && (
-                      <p className="text-sm text-destructive">You must agree to receive SMS notifications to continue</p>
-                    )}
-                  </div>
+                  )}
 
                   <Button
                     onClick={async () => {
@@ -1279,18 +1290,21 @@ const Onboarding = () => {
                         return;
                       }
                       
-                      if (smsDigits.length !== 10) {
-                        toast({
-                          title: "Invalid SMS number",
-                          description: "Please enter a valid 10-digit SMS number",
-                          variant: "destructive",
-                        });
-                        return;
-                      }
-                      
-                      if (!smsOptIn) {
-                        setSmsOptInError(true);
-                        return;
+                      // If SMS number is provided, validate it and require opt-in
+                      if (smsNumber && smsNumber.trim()) {
+                        if (smsDigits.length !== 10) {
+                          toast({
+                            title: "Invalid SMS number",
+                            description: "Please enter a valid 10-digit SMS number",
+                            variant: "destructive",
+                          });
+                          return;
+                        }
+                        
+                        if (!smsOptIn) {
+                          setSmsOptInError(true);
+                          return;
+                        }
                       }
                       
                       // If user is already authenticated (came via Google OAuth), save business data directly
@@ -1303,7 +1317,7 @@ const Onboarding = () => {
                     }}
                     className="w-full h-12 text-base"
                     size="lg"
-                    disabled={transferNumberError || !transferNumber || !smsNumber}
+                    disabled={transferNumberError || !transferNumber}
                   >
                     {isAuthenticated ? "Complete Setup" : "Create Account"}
                     <ArrowRight className="ml-2 w-5 h-5" />
