@@ -154,10 +154,6 @@ Deno.serve(async (req) => {
         };
 
         try {
-
-          // Send immediate processing message
-          sendEvent({ status: 'processing', message: 'Checking availability...' });
-
           const supabase = createClient(
             Deno.env.get('SUPABASE_URL')!,
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -210,8 +206,6 @@ Deno.serve(async (req) => {
           const calendarSettings = calendarTokens[0];
           const userTimezone = calendarSettings.timezone || businessSettings.business_timezone;
           
-          sendEvent({ status: 'fetching', message: 'Fetching calendar data...' });
-          
           // Build optimized date range - only query what we need
           let startDate: Date;
           if (parsed.date && parsed.time) {
@@ -247,7 +241,6 @@ Deno.serve(async (req) => {
 
           // Token refresh logic
           if (!freeBusyResponse.ok && freeBusyResponse.status === 401 && refreshToken) {
-            sendEvent({ status: 'refreshing', message: 'Refreshing access token...' });
             const tokenData = await fetch('https://oauth2.googleapis.com/token', {
               method: 'POST',
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -284,8 +277,6 @@ Deno.serve(async (req) => {
 
           // Send immediate success response
           sendEvent({ status: 'success', message: 'Calendar data fetched successfully' });
-
-          sendEvent({ status: 'calculating', message: 'Calculating available slots...' });
 
           const freeBusyData = await freeBusyResponse.json();
           const busyTimes = freeBusyData.calendars[calendarId]?.busy || [];
