@@ -1285,11 +1285,11 @@ const Onboarding = () => {
                           htmlFor="sms-opt-in"
                           className={`text-sm font-normal ${smsNumber && smsNumber.replace(/\D/g, "").length === 10 ? "cursor-pointer" : "cursor-not-allowed opacity-50"} ${smsOptInError ? "text-destructive" : ""}`}
                         >
-                          I agree to receive SMS text notifications <span className="text-red-500">*</span>
+                          I consent to receive automated SMS text messages regarding appointments, reminders, and important updates. Message frequency varies. Message and data rates may apply. Reply STOP to opt out. <span className="text-red-500">*</span>
                         </Label>
                       </div>
                       {smsOptInError && (
-                        <p className="text-sm text-destructive">You must agree to receive SMS notifications</p>
+                        <p className="text-sm text-destructive">You must consent to receive SMS notifications</p>
                       )}
                     </div>
                   </div>
