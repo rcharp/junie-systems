@@ -1245,6 +1245,11 @@ const Onboarding = () => {
 
                           // Reset opt-in error when they start typing
                           setSmsOptInError(false);
+                          
+                          // Uncheck opt-in if number becomes invalid
+                          if (value.length !== 10 && smsOptIn) {
+                            setSmsOptIn(false);
+                          }
                         }
                       }}
                       onKeyDown={(e) => {
@@ -1254,35 +1259,39 @@ const Onboarding = () => {
                             setUseSameNumber(false);
                           }
                           setSmsOptInError(false);
+                          
+                          // Uncheck opt-in if number becomes invalid
+                          if (value.length !== 10 && smsOptIn) {
+                            setSmsOptIn(false);
+                          }
                         });
                       }}
                       disabled={useSameNumber}
                     />
 
-                    {smsNumber && smsNumber.replace(/\D/g, "").length === 10 && (
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox
-                            id="sms-opt-in"
-                            checked={smsOptIn}
-                            onCheckedChange={(checked) => {
-                              setSmsOptIn(checked as boolean);
-                              setSmsOptInError(false);
-                            }}
-                            className={smsOptInError ? "border-destructive" : ""}
-                          />
-                          <Label
-                            htmlFor="sms-opt-in"
-                            className={`text-sm font-normal cursor-pointer ${smsOptInError ? "text-destructive" : ""}`}
-                          >
-                            I agree to receive SMS text notifications <span className="text-red-500">*</span>
-                          </Label>
-                        </div>
-                        {smsOptInError && (
-                          <p className="text-sm text-destructive">You must agree to receive SMS notifications</p>
-                        )}
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="sms-opt-in"
+                          checked={smsOptIn}
+                          disabled={!smsNumber || smsNumber.replace(/\D/g, "").length !== 10}
+                          onCheckedChange={(checked) => {
+                            setSmsOptIn(checked as boolean);
+                            setSmsOptInError(false);
+                          }}
+                          className={smsOptInError ? "border-destructive" : ""}
+                        />
+                        <Label
+                          htmlFor="sms-opt-in"
+                          className={`text-sm font-normal ${smsNumber && smsNumber.replace(/\D/g, "").length === 10 ? "cursor-pointer" : "cursor-not-allowed opacity-50"} ${smsOptInError ? "text-destructive" : ""}`}
+                        >
+                          I agree to receive SMS text notifications <span className="text-red-500">*</span>
+                        </Label>
                       </div>
-                    )}
+                      {smsOptInError && (
+                        <p className="text-sm text-destructive">You must agree to receive SMS notifications</p>
+                      )}
+                    </div>
                   </div>
 
                   <Button
