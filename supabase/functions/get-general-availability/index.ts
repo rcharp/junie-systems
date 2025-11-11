@@ -282,6 +282,9 @@ Deno.serve(async (req) => {
             return;
           }
 
+          // Send immediate success response
+          sendEvent({ status: 'success', message: 'Calendar data fetched successfully' });
+
           sendEvent({ status: 'calculating', message: 'Calculating available slots...' });
 
           const freeBusyData = await freeBusyResponse.json();
