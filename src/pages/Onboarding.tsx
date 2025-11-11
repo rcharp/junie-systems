@@ -1294,53 +1294,57 @@ const Onboarding = () => {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={async () => {
-                      const digits = transferNumber.replace(/\D/g, "");
-                      const smsDigits = smsNumber.replace(/\D/g, "");
-
-                      if (digits.length !== 10) {
-                        setTransferNumberError(true);
-                        return;
-                      }
-
-                      // If SMS number is provided, validate it and require opt-in
-                      if (smsNumber && smsNumber.trim()) {
-                        if (smsDigits.length !== 10) {
-                          toast({
-                            title: "Invalid SMS number",
-                            description: "Please enter a valid 10-digit SMS number",
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-
-                        if (!smsOptIn) {
-                          setSmsOptInError(true);
-                          return;
-                        }
-                      }
-
-                      // If user is already authenticated (came via Google OAuth), save business data directly
-                      if (isAuthenticated && currentUserId) {
-                        await saveBusinessData(currentUserId);
-                      } else {
-                        // Otherwise, move to account creation step
-                        setStep(4);
-                      }
-                    }}
-                    className="w-full h-12 text-base"
-                    size="lg"
-                    disabled={transferNumberError || !transferNumber}
-                  >
-                    {isAuthenticated ? "Complete Setup" : "Create Account"}
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-
-                  <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setStep(2)} className="flex-1">
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setStep(2)} 
+                      className="w-full md:flex-1 order-2 md:order-1"
+                    >
                       <ArrowLeft className="w-4 h-4 mr-2" />
                       Back
+                    </Button>
+                    
+                    <Button
+                      onClick={async () => {
+                        const digits = transferNumber.replace(/\D/g, "");
+                        const smsDigits = smsNumber.replace(/\D/g, "");
+
+                        if (digits.length !== 10) {
+                          setTransferNumberError(true);
+                          return;
+                        }
+
+                        // If SMS number is provided, validate it and require opt-in
+                        if (smsNumber && smsNumber.trim()) {
+                          if (smsDigits.length !== 10) {
+                            toast({
+                              title: "Invalid SMS number",
+                              description: "Please enter a valid 10-digit SMS number",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+
+                          if (!smsOptIn) {
+                            setSmsOptInError(true);
+                            return;
+                          }
+                        }
+
+                        // If user is already authenticated (came via Google OAuth), save business data directly
+                        if (isAuthenticated && currentUserId) {
+                          await saveBusinessData(currentUserId);
+                        } else {
+                          // Otherwise, move to account creation step
+                          setStep(4);
+                        }
+                      }}
+                      className="w-full md:flex-1 h-12 text-base order-1 md:order-2"
+                      size="lg"
+                      disabled={transferNumberError || !transferNumber}
+                    >
+                      {isAuthenticated ? "Complete Setup" : "Create Account"}
+                      <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
                   </div>
                 </CardContent>
