@@ -55,6 +55,10 @@ const Onboarding = () => {
   const [transferNumber, setTransferNumber] = useState("");
   const [transferNumberError, setTransferNumberError] = useState(false);
   const [savingTransfer, setSavingTransfer] = useState(false);
+  const [smsNumber, setSmsNumber] = useState("");
+  const [useSameNumber, setUseSameNumber] = useState(false);
+  const [smsOptIn, setSmsOptIn] = useState(false);
+  const [smsOptInError, setSmsOptInError] = useState(false);
 
   // Helper function to parse Google opening hours
   const parseGoogleOpeningHours = (weekdayText: string[]) => {
@@ -1140,12 +1144,12 @@ const Onboarding = () => {
               </Card>
             </div>
           ) : step === 3 ? (
-            /* Step 3: Call Transfer Setup */
+            /* Step 3: Contact Number Setup */
             <div className="space-y-6 animate-slide-up" key="step-3">
               <div className="text-center space-y-3">
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground">Set your call transfer number</h1>
+                <h1 className="text-3xl md:text-4xl font-bold text-foreground">Set your contact number</h1>
                 <p className="text-muted-foreground text-lg">
-                  Where should we transfer calls when a caller wants to speak to you immediately?
+                  Where should we reach you?
                 </p>
               </div>
 
@@ -1173,6 +1177,11 @@ const Onboarding = () => {
 
                         setTransferNumber(formatted);
                         setTransferNumberError(value.length > 0 && value.length !== 10);
+                        
+                        // Update SMS number if "use same number" is checked
+                        if (useSameNumber) {
+                          setSmsNumber(formatted);
+                        }
                       }}
                       className={transferNumberError ? "border-destructive" : ""}
                       autoFocus
@@ -1181,16 +1190,105 @@ const Onboarding = () => {
                       <p className="text-sm text-destructive">Please enter a valid 10-digit phone number</p>
                     )}
                     <p className="text-sm text-muted-foreground">
-                      Enter the phone number where calls will be transferred when a caller requests to speak with you
-                      immediately.
+                      Where should we transfer calls when a caller requests to speak with you immediately?
                     </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label htmlFor="sms-number">
+                      SMS Number <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="sms-number"
+                      type="tel"
+                      placeholder="(555) 123-4567"
+                      value={smsNumber}
+                      onChange={(e) => {
+                        let value = e.target.value.replace(/\D/g, "");
+                        if (value.length > 10) value = value.slice(0, 10);
+
+                        let formatted = value;
+                        if (value.length >= 6) {
+                          formatted = `(${value.slice(0, 3)}) ${value.slice(3, 6)}-${value.slice(6)}`;
+                        } else if (value.length >= 3) {
+                          formatted = `(${value.slice(0, 3)}) ${value.slice(3)}`;
+                        }
+
+                        setSmsNumber(formatted);
+                        
+                        // Uncheck "use same number" if manually editing
+                        if (useSameNumber) {
+                          setUseSameNumber(false);
+                        }
+                      }}
+                      disabled={useSameNumber}
+                    />
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="use-same-number"
+                        checked={useSameNumber}
+                        onCheckedChange={(checked) => {
+                          setUseSameNumber(checked as boolean);
+                          if (checked) {
+                            setSmsNumber(transferNumber);
+                          } else {
+                            setSmsNumber("");
+                          }
+                        }}
+                      />
+                      <Label htmlFor="use-same-number" className="text-sm font-normal cursor-pointer">
+                        Use the same number as the call transfer number
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Where should we send SMS notifications and updates?
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="sms-opt-in"
+                        checked={smsOptIn}
+                        onCheckedChange={(checked) => {
+                          setSmsOptIn(checked as boolean);
+                          setSmsOptInError(false);
+                        }}
+                        className={smsOptInError ? "border-destructive" : ""}
+                      />
+                      <Label 
+                        htmlFor="sms-opt-in" 
+                        className={`text-sm font-normal cursor-pointer ${smsOptInError ? "text-destructive" : ""}`}
+                      >
+                        I agree to receive SMS notifications and updates <span className="text-red-500">*</span>
+                      </Label>
+                    </div>
+                    {smsOptInError && (
+                      <p className="text-sm text-destructive">You must agree to receive SMS notifications to continue</p>
+                    )}
                   </div>
 
                   <Button
                     onClick={async () => {
                       const digits = transferNumber.replace(/\D/g, "");
+                      const smsDigits = smsNumber.replace(/\D/g, "");
+                      
                       if (digits.length !== 10) {
                         setTransferNumberError(true);
+                        return;
+                      }
+                      
+                      if (smsDigits.length !== 10) {
+                        toast({
+                          title: "Invalid SMS number",
+                          description: "Please enter a valid 10-digit SMS number",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      
+                      if (!smsOptIn) {
+                        setSmsOptInError(true);
                         return;
                       }
                       
@@ -1204,7 +1302,7 @@ const Onboarding = () => {
                     }}
                     className="w-full h-12 text-base"
                     size="lg"
-                    disabled={transferNumberError || !transferNumber}
+                    disabled={transferNumberError || !transferNumber || !smsNumber}
                   >
                     {isAuthenticated ? "Complete Setup" : "Create Account"}
                     <ArrowRight className="ml-2 w-5 h-5" />
