@@ -356,8 +356,8 @@ Deno.serve(async (req) => {
           
           setCache(cacheKey, result);
           
-          // Send final result
-          sendEvent({ status: 'complete', ...result });
+          // Send available slots as separate event
+          sendEvent({ status: 'slots', ...result });
           controller.close();
         } catch (error) {
           console.error('Error in SSE stream:', error);
