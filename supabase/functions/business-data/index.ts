@@ -393,7 +393,10 @@ serve(async (req) => {
 
         // Get current date/time in the business's timezone
         const businessTimezone = businessDataForInit?.business_timezone || 'America/New_York';
-        const now = formatInTimeZone(new Date(), businessTimezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
+        const nowDate = new Date();
+        const currentDateTime = formatInTimeZone(nowDate, businessTimezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
+        const currentDate = formatInTimeZone(nowDate, businessTimezone, "yyyy-MM-dd");
+        const currentTime = formatInTimeZone(nowDate, businessTimezone, "HH:mm");
 
         // Fetch available slots for conversation initiation
         let availableSlots: any[] = [];
@@ -458,7 +461,9 @@ serve(async (req) => {
             transfer_number: addUSCountryCode(businessDataForInit?.transfer_number || ""),
             urgent_keywords: businessDataForInit?.urgent_keywords || "emergency, urgent, asap, immediately",
             auto_forward_urgent: String(businessDataForInit?.auto_forward || false),
-            now: now,
+            current_datetime: currentDateTime,
+            current_date: currentDate,
+            current_time: currentTime,
             callback_timeframe: "within 24 hours",
             pronunciations: "HVAC: H vac, hvac: H vac",
           },
