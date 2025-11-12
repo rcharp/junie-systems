@@ -397,6 +397,7 @@ serve(async (req) => {
         const currentDateTime = formatInTimeZone(nowDate, businessTimezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
         const currentDate = formatInTimeZone(nowDate, businessTimezone, "yyyy-MM-dd");
         const currentTime = formatInTimeZone(nowDate, businessTimezone, "HH:mm");
+        const timezoneOffset = formatInTimeZone(nowDate, businessTimezone, "XXX");
 
         // Fetch available slots for conversation initiation
         let availableSlots: any[] = [];
@@ -456,6 +457,7 @@ serve(async (req) => {
             appointment_booking: String(businessDataForInit?.appointment_booking || false),
             appointment_duration: String(appointmentDuration),
             business_timezone: businessTimezone,
+            business_timezone_offset: timezoneOffset,
             available_slots: JSON.stringify(availableSlots),
             services: servicesFormatted,
             transfer_number: addUSCountryCode(businessDataForInit?.transfer_number || ""),
@@ -709,6 +711,7 @@ serve(async (req) => {
     const currentDateTime = formatInTimeZone(now, businessTimezone, "yyyy-MM-dd'T'HH:mm:ssXXX");
     const currentDate = formatInTimeZone(now, businessTimezone, "yyyy-MM-dd");
     const currentTime = formatInTimeZone(now, businessTimezone, "HH:mm");
+    const timezoneOffset = formatInTimeZone(now, businessTimezone, "XXX");
 
     // Format the response
     const responseData = {
@@ -728,6 +731,7 @@ serve(async (req) => {
         appointment_booking: businessData.appointment_booking || false,
         appointment_duration: appointmentDuration,
         business_timezone: businessTimezone,
+        business_timezone_offset: timezoneOffset,
         business_description: businessData.business_description || "N/A",
         transfer_number: addUSCountryCode(businessData.transfer_number || "N/A"),
         urgent_keywords: businessData.urgent_keywords || "emergency, urgent, urgent_keywords",
