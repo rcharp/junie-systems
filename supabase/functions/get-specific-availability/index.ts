@@ -165,7 +165,54 @@ Deno.serve(async (req) => {
     const appointmentDuration = calendarSettings.appointment_duration || 60;
     const businessNow = toZonedTime(new Date(), userTimezone);
 
-    // Find available slots
+    // If specific time is requested, check if it's available first
+    if (date && time) {
+      const requestedDateTime = fromZonedTime(`${date}T${time}:00`, userTimezone);
+      const requestedEndTime = new Date(requestedDateTime.getTime() + appointmentDuration * 60000);
+      
+      // Check if requested time is in the past
+      if (toZonedTime(requestedDateTime, userTimezone) > businessNow) {
+        // Check if requested time has any conflicts
+        const hasConflict = busyTimes.some((busy: any) => 
+          requestedDateTime < new Date(busy.end) && requestedEndTime > new Date(busy.start)
+        );
+        
+        // Check if requested time is within business hours
+        const dayName = requestedDateTime.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+        const daySettings = availabilityHours[dayName];
+        
+        if (daySettings?.enabled && !hasConflict) {
+          const [startHour, startMinute] = daySettings.start.split(':').map(Number);
+          const [endHour, endMinute] = daySettings.end.split(':').map(Number);
+          
+          const localDateStart = new Date(requestedDateTime.getFullYear(), requestedDateTime.getMonth(), requestedDateTime.getDate(), startHour, startMinute);
+          const localDateEnd = new Date(requestedDateTime.getFullYear(), requestedDateTime.getMonth(), requestedDateTime.getDate(), endHour, endMinute);
+          const utcStartTime = fromZonedTime(localDateStart, userTimezone);
+          const utcEndTime = fromZonedTime(localDateEnd, userTimezone);
+          
+          if (requestedDateTime >= utcStartTime && requestedEndTime <= utcEndTime) {
+            // Requested time is available - return success only
+            const result = {
+              success: true,
+              available: true,
+              timezone: userTimezone,
+              requested_date: date,
+              requested_time: time,
+              message: 'Requested time is available',
+            };
+            
+            setCache(cacheKey, result);
+            
+            return new Response(JSON.stringify(result), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            });
+          }
+        }
+      }
+    }
+
+    // If we reach here, either no specific time was requested or it wasn't available
+    // Find alternative available slots
     const availableSlots = [];
     const MAX_SLOTS = 3;
     
@@ -217,13 +264,15 @@ Deno.serve(async (req) => {
     }
 
     const result = {
-      success: true,
+      success: availableSlots.length > 0,
       available: availableSlots.length > 0,
       timezone: userTimezone,
       requested_date: date,
       requested_time: time,
       available_slots: availableSlots,
-      message: availableSlots.length > 0 ? `Found ${availableSlots.length} available slots` : 'No available slots',
+      message: date && time 
+        ? `Requested time not available. ${availableSlots.length > 0 ? `Found ${availableSlots.length} alternative slots` : 'No alternative slots available'}`
+        : availableSlots.length > 0 ? `Found ${availableSlots.length} available slots` : 'No available slots',
     };
     
     setCache(cacheKey, result);
