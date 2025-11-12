@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
     const endDate = new Date(startDate.getTime() + (24 * 60 * 60 * 1000));
     
     // Decrypt tokens in parallel with building date range
-    const [accessToken, refreshToken] = await Promise.all([
+    let [accessToken, refreshToken] = await Promise.all([
       decryptToken(calendarSettings.encrypted_access_token),
       calendarSettings.encrypted_refresh_token ? decryptToken(calendarSettings.encrypted_refresh_token) : Promise.resolve(null)
     ]);
