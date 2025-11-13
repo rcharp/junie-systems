@@ -75,6 +75,105 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
+  /* Markdown Content Styling */
+  .markdown-content {
+    @apply text-foreground;
+  }
+
+  .markdown-content h1 {
+    @apply text-4xl font-bold mt-8 mb-6 text-foreground;
+  }
+
+  .markdown-content h2 {
+    @apply text-3xl font-bold mt-8 mb-4 text-foreground;
+  }
+
+  .markdown-content h3 {
+    @apply text-2xl font-semibold mt-6 mb-3 text-foreground;
+  }
+
+  .markdown-content h4 {
+    @apply text-xl font-semibold mt-4 mb-2 text-foreground;
+  }
+
+  .markdown-content h5 {
+    @apply text-lg font-semibold mt-4 mb-2 text-foreground;
+  }
+
+  .markdown-content h6 {
+    @apply text-base font-semibold mt-4 mb-2 text-foreground;
+  }
+
+  .markdown-content p {
+    @apply mb-6 leading-relaxed text-foreground;
+  }
+
+  .markdown-content ul,
+  .markdown-content ol {
+    @apply mb-6 ml-6 space-y-2;
+  }
+
+  .markdown-content li {
+    @apply leading-relaxed text-foreground;
+  }
+
+  .markdown-content ul li {
+    @apply list-disc;
+  }
+
+  .markdown-content ol li {
+    @apply list-decimal;
+  }
+
+  .markdown-content blockquote {
+    @apply border-l-4 border-primary pl-4 italic my-6 text-muted-foreground;
+  }
+
+  .markdown-content code {
+    @apply bg-muted px-2 py-1 rounded text-sm font-mono;
+  }
+
+  .markdown-content pre {
+    @apply bg-muted p-4 rounded-lg overflow-x-auto mb-6;
+  }
+
+  .markdown-content pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .markdown-content strong {
+    @apply font-bold text-foreground;
+  }
+
+  .markdown-content em {
+    @apply italic;
+  }
+
+  .markdown-content a {
+    @apply text-primary hover:underline;
+  }
+
+  .markdown-content hr {
+    @apply my-8 border-border;
+  }
+
+  .markdown-content table {
+    @apply w-full border-collapse mb-6;
+  }
+
+  .markdown-content th,
+  .markdown-content td {
+    @apply border border-border px-4 py-2;
+  }
+
+  .markdown-content th {
+    @apply bg-muted font-semibold;
+  }
+
+  .markdown-content img {
+    @apply rounded-lg my-6 max-w-full h-auto;
+  }
+
   .dark {
     --background: 215 25% 6%;
     --foreground: 0 0% 95%;

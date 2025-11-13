@@ -95,7 +95,7 @@ const BlogPost = () => {
                   {format(new Date(post.published_at || post.created_at), "MMMM d, yyyy")}
                 </p>
               </header>
-              <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-p:leading-relaxed prose-p:mb-6 prose-li:mb-2">
+              <div className="markdown-content">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {post.content}
                 </ReactMarkdown>
