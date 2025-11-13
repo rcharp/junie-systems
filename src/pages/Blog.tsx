@@ -21,7 +21,7 @@ interface BlogPost {
   created_at: string;
 }
 
-const POSTS_PER_PAGE = 25;
+const POSTS_PER_PAGE = 10;
 
 const Blog = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
