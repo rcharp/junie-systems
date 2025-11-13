@@ -21,14 +21,14 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get ALL blog posts to fix
+    // Get ALL blog posts
     const { data: posts, error: fetchError } = await supabase
       .from("blog_posts")
       .select("*");
 
     if (fetchError) throw fetchError;
 
-    console.log(`Processing ${posts?.length || 0} posts`);
+    console.log(`Processing ${posts?.length || 0} total posts`);
 
     let fixed = 0;
     let errors = 0;
@@ -40,38 +40,31 @@ serve(async (req) => {
         let cleanExcerpt = post.excerpt;
         let needsUpdate = false;
 
-        // Check for JSON code blocks (```json ... ```)
-        const jsonMatch = cleanContent.match(/```json\s*([\s\S]*?)\s*```/) || 
-                         cleanContent.match(/```\s*({[\s\S]*?})\s*```/);
-        
-        if (jsonMatch) {
-          try {
-            const parsed = JSON.parse(jsonMatch[1]);
-            cleanContent = parsed.content || cleanContent;
-            cleanTitle = parsed.title || cleanTitle;
-            cleanExcerpt = parsed.excerpt || cleanExcerpt;
-            needsUpdate = true;
-          } catch (e) {
-            console.error(`Failed to parse JSON block for post ${post.id}:`, e);
-          }
+        // Pattern 1: Remove ```json ... ``` wrapper
+        if (cleanContent.includes('```json') || cleanContent.includes('```\n{')) {
+          cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          needsUpdate = true;
         }
 
-        // Check if the entire content is JSON wrapped
-        if (cleanContent.trim().startsWith('{') && cleanContent.trim().endsWith('}')) {
+        // Pattern 2: If content is pure JSON object, extract the actual content
+        const trimmedContent = cleanContent.trim();
+        if (trimmedContent.startsWith('{') && trimmedContent.endsWith('}')) {
           try {
-            const parsed = JSON.parse(cleanContent);
-            if (parsed.content) {
+            const parsed = JSON.parse(trimmedContent);
+            if (parsed.content && parsed.title) {
               cleanContent = parsed.content;
-              cleanTitle = parsed.title || cleanTitle;
+              cleanTitle = parsed.title;
               cleanExcerpt = parsed.excerpt || cleanExcerpt;
               needsUpdate = true;
+              console.log(`Extracted JSON content for: ${cleanTitle}`);
             }
           } catch (e) {
-            // Not valid JSON, continue
+            // If JSON parse fails, it might be markdown that happens to start with {
+            // Just continue
           }
         }
 
-        // Check if title or excerpt contains JSON
+        // Pattern 3: Check title and excerpt for JSON
         if (cleanTitle.trim().startsWith('{')) {
           try {
             const parsed = JSON.parse(cleanTitle);
@@ -92,7 +85,13 @@ serve(async (req) => {
           }
         }
 
-        // Only update if we found issues
+        // Also remove any remaining ``` that might be left
+        if (cleanExcerpt && cleanExcerpt.includes('```')) {
+          cleanExcerpt = cleanExcerpt.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          needsUpdate = true;
+        }
+
+        // Update if we found any issues
         if (needsUpdate) {
           const { error: updateError } = await supabase
             .from("blog_posts")
