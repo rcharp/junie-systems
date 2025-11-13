@@ -21,6 +21,9 @@ import PricingPage from "./pages/PricingPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import CreateBlogPost from "./pages/CreateBlogPost";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +51,9 @@ const App = () => (
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/create" element={<CreateBlogPost />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
