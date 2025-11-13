@@ -158,6 +158,9 @@ verify_jwt = false
 [functions.fix-blog-json]
 verify_jwt = false
 
+[functions.fetch-unsplash-image]
+verify_jwt = false
+
 [functions.generate-blog-post]
 verify_jwt = false
 
