@@ -40,20 +40,49 @@ serve(async (req) => {
         let cleanExcerpt = post.excerpt;
         let needsUpdate = false;
 
-        // Check if content is a JSON string
-        const trimmedContent = cleanContent.trim();
-        if (trimmedContent.startsWith('{') && trimmedContent.includes('"content"')) {
-          try {
-            const parsed = JSON.parse(trimmedContent);
-            if (parsed.content) {
-              cleanContent = parsed.content;
-              cleanTitle = parsed.title || cleanTitle;
-              cleanExcerpt = parsed.excerpt || cleanExcerpt;
-              needsUpdate = true;
-              console.log(`✓ Extracted content from JSON for: ${cleanTitle}`);
+        // Strategy: Find where the actual markdown content starts (usually with ##)
+        // and strip everything before it
+        
+        const markdownStart = cleanContent.indexOf('## ');
+        if (markdownStart > 0 && markdownStart < 500) {
+          // There's content before the markdown that we should remove
+          cleanContent = cleanContent.substring(markdownStart);
+          needsUpdate = true;
+          console.log(`✓ Stripped JSON prefix for: ${cleanTitle}`);
+        } else if (cleanContent.startsWith('{')) {
+          // Try to extract from malformed JSON by finding the content field
+          const contentMatch = cleanContent.match(/"content":\s*"(## [^}]+)/);
+          if (contentMatch) {
+            // Extract everything from ## onwards, handling escaped characters
+            const startIndex = cleanContent.indexOf('"content":');
+            if (startIndex !== -1) {
+              const afterContent = cleanContent.substring(startIndex + '"content":'.length).trim();
+              // Remove leading quote
+              const withoutQuote = afterContent.startsWith('"') ? afterContent.substring(1) : afterContent;
+              // Find the markdown content
+              const mdStart = withoutQuote.indexOf('##');
+              if (mdStart !== -1) {
+                // Take everything from ## to the end, removing trailing JSON
+                cleanContent = withoutQuote.substring(mdStart).split('"}')[0];
+                // Unescape newlines
+                cleanContent = cleanContent.replace(/\\n/g, '\n');
+                needsUpdate = true;
+                console.log(`✓ Extracted from malformed JSON for: ${cleanTitle}`);
+              }
             }
-          } catch (e) {
-            console.error(`Failed to parse JSON for post ${post.id}:`, e.message);
+          }
+        }
+
+        // Clean up excerpt too
+        if (cleanExcerpt && cleanExcerpt.includes('{')) {
+          const excerptStart = cleanExcerpt.indexOf('{');
+          if (excerptStart === 0) {
+            // Try to extract
+            const match = cleanExcerpt.match(/"excerpt":\s*"([^"]+)"/);
+            if (match) {
+              cleanExcerpt = match[1];
+              needsUpdate = true;
+            }
           }
         }
 
@@ -63,7 +92,6 @@ serve(async (req) => {
             .from("blog_posts")
             .update({
               content: cleanContent,
-              title: cleanTitle,
               excerpt: cleanExcerpt
             })
             .eq("id", post.id);
