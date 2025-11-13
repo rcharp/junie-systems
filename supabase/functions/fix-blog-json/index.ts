@@ -21,15 +21,14 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Get all blog posts that have JSON in content
+    // Get ALL blog posts to fix
     const { data: posts, error: fetchError } = await supabase
       .from("blog_posts")
-      .select("*")
-      .or('content.like.%```json%,content.like.%"title"%');
+      .select("*");
 
     if (fetchError) throw fetchError;
 
-    console.log(`Found ${posts?.length || 0} posts to fix`);
+    console.log(`Processing ${posts?.length || 0} posts`);
 
     let fixed = 0;
     let errors = 0;
@@ -39,10 +38,11 @@ serve(async (req) => {
         let cleanContent = post.content;
         let cleanTitle = post.title;
         let cleanExcerpt = post.excerpt;
+        let needsUpdate = false;
 
-        // Try to extract JSON and get the actual content
+        // Check for JSON code blocks (```json ... ```)
         const jsonMatch = cleanContent.match(/```json\s*([\s\S]*?)\s*```/) || 
-                         cleanContent.match(/```\s*([\s\S]*?)\s*```/);
+                         cleanContent.match(/```\s*({[\s\S]*?})\s*```/);
         
         if (jsonMatch) {
           try {
@@ -50,39 +50,66 @@ serve(async (req) => {
             cleanContent = parsed.content || cleanContent;
             cleanTitle = parsed.title || cleanTitle;
             cleanExcerpt = parsed.excerpt || cleanExcerpt;
+            needsUpdate = true;
           } catch (e) {
-            console.error(`Failed to parse JSON for post ${post.id}:`, e);
+            console.error(`Failed to parse JSON block for post ${post.id}:`, e);
           }
         }
 
-        // Also check if the entire content is JSON
-        if (cleanContent.trim().startsWith('{')) {
+        // Check if the entire content is JSON wrapped
+        if (cleanContent.trim().startsWith('{') && cleanContent.trim().endsWith('}')) {
           try {
             const parsed = JSON.parse(cleanContent);
-            cleanContent = parsed.content || cleanContent;
-            cleanTitle = parsed.title || cleanTitle;
-            cleanExcerpt = parsed.excerpt || cleanExcerpt;
+            if (parsed.content) {
+              cleanContent = parsed.content;
+              cleanTitle = parsed.title || cleanTitle;
+              cleanExcerpt = parsed.excerpt || cleanExcerpt;
+              needsUpdate = true;
+            }
           } catch (e) {
-            // Not valid JSON, skip
+            // Not valid JSON, continue
           }
         }
 
-        // Update the post
-        const { error: updateError } = await supabase
-          .from("blog_posts")
-          .update({
-            content: cleanContent,
-            title: cleanTitle,
-            excerpt: cleanExcerpt
-          })
-          .eq("id", post.id);
+        // Check if title or excerpt contains JSON
+        if (cleanTitle.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(cleanTitle);
+            cleanTitle = parsed.title || cleanTitle;
+            needsUpdate = true;
+          } catch (e) {
+            // Not valid JSON
+          }
+        }
 
-        if (updateError) {
-          console.error(`Error updating post ${post.id}:`, updateError);
-          errors++;
-        } else {
-          console.log(`Fixed post: ${cleanTitle}`);
-          fixed++;
+        if (cleanExcerpt && cleanExcerpt.trim().startsWith('{')) {
+          try {
+            const parsed = JSON.parse(cleanExcerpt);
+            cleanExcerpt = parsed.excerpt || cleanExcerpt;
+            needsUpdate = true;
+          } catch (e) {
+            // Not valid JSON
+          }
+        }
+
+        // Only update if we found issues
+        if (needsUpdate) {
+          const { error: updateError } = await supabase
+            .from("blog_posts")
+            .update({
+              content: cleanContent,
+              title: cleanTitle,
+              excerpt: cleanExcerpt
+            })
+            .eq("id", post.id);
+
+          if (updateError) {
+            console.error(`Error updating post ${post.id}:`, updateError);
+            errors++;
+          } else {
+            console.log(`Fixed post: ${cleanTitle}`);
+            fixed++;
+          }
         }
       } catch (e) {
         console.error(`Error processing post ${post.id}:`, e);
