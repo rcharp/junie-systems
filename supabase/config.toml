@@ -155,6 +155,9 @@ verify_jwt = false
 [functions.update-blog-dates]
 verify_jwt = false
 
+[functions.fix-blog-json]
+verify_jwt = false
+
 [functions.generate-blog-post]
 verify_jwt = false
 

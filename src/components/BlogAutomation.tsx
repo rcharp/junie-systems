@@ -119,6 +119,26 @@ const BlogAutomation = () => {
     }
   };
 
+  const fixBlogJson = async () => {
+    setGenerating(true);
+    setProgress("Fixing blog posts with JSON formatting issues...");
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('fix-blog-json');
+
+      if (error) throw error;
+
+      toast.success("Blog posts fixed successfully!");
+      setProgress(data.message || "Complete!");
+    } catch (error) {
+      console.error("Error fixing posts:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to fix posts");
+      setProgress("Fix failed. Check console for details.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   const regenerateAllPosts = async () => {
     if (!confirm("This will delete all existing posts and regenerate them with proper markdown. Continue?")) {
       return;
@@ -230,6 +250,28 @@ const BlogAutomation = () => {
               </>
             ) : (
               "Update Post Dates"
+            )}
+          </Button>
+        </div>
+
+        <div className="space-y-2 pt-4 border-t">
+          <h3 className="font-semibold">Fix JSON Formatting</h3>
+          <p className="text-sm text-muted-foreground">
+            Clean up blog posts that have JSON in them instead of markdown
+          </p>
+          <Button 
+            onClick={fixBlogJson} 
+            disabled={generating}
+            variant="outline"
+            className="w-full"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Fixing...
+              </>
+            ) : (
+              "Fix JSON in Blog Posts"
             )}
           </Button>
         </div>
