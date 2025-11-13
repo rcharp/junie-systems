@@ -128,14 +128,20 @@ const BlogAutomation = () => {
     let totalFixed = 0;
     
     try {
-      // Step 1: Fix JSON formatting
-      setProgress("Step 1/3: Fixing JSON formatting issues...");
+      // Step 1: Extract content from JSON
+      setProgress("Step 1/4: Extracting content from JSON objects...");
+      const { data: extractData, error: extractError } = await supabase.functions.invoke('extract-blog-content');
+      if (extractError) throw extractError;
+      setProgress(`Step 1/4: ${extractData.message || 'Content extracted'}`);
+
+      // Step 2: Fix any remaining JSON formatting
+      setProgress("Step 2/4: Fixing JSON formatting issues...");
       const { data: fixData, error: fixError } = await supabase.functions.invoke('fix-blog-json');
       if (fixError) throw fixError;
-      setProgress(`Step 1/3: ${fixData.message || 'JSON formatting fixed'}`);
+      setProgress(`Step 2/4: ${fixData.message || 'JSON formatting fixed'}`);
 
-      // Step 2: Spread out dates
-      setProgress("Step 2/3: Spreading out post dates over the past year...");
+      // Step 3: Spread out dates
+      setProgress("Step 3/4: Spreading out post dates over the past year...");
       const { data: posts, error: fetchError } = await supabase
         .from('blog_posts')
         .select('id, title')
@@ -169,11 +175,11 @@ const BlogAutomation = () => {
             totalFixed++;
           }
         }
-        setProgress(`Step 2/3: Updated ${totalFixed} post dates`);
+        setProgress(`Step 3/4: Updated ${totalFixed} post dates`);
       }
 
-      // Step 3: Fetch Unsplash hero images for all posts
-      setProgress("Step 3/3: Fetching Unsplash hero images for all posts...");
+      // Step 4: Fetch Unsplash hero images for all posts
+      setProgress("Step 4/4: Fetching Unsplash hero images for all posts...");
       const { data: allPosts, error: allPostsError } = await supabase
         .from('blog_posts')
         .select('id, title')
@@ -185,7 +191,7 @@ const BlogAutomation = () => {
       if (allPosts && allPosts.length > 0) {
         for (let i = 0; i < allPosts.length; i++) {
           const post = allPosts[i];
-          setProgress(`Step 3/3: Fetching images... (${i + 1}/${allPosts.length})`);
+          setProgress(`Step 4/4: Fetching images... (${i + 1}/${allPosts.length})`);
           
           try {
             // Extract keywords from title for image search
@@ -217,7 +223,7 @@ const BlogAutomation = () => {
       }
 
       toast.success("All blog issues fixed successfully!");
-      setProgress(`Complete! Fixed JSON formatting, updated ${totalFixed} post dates, and fetched ${imageUpdateCount} Unsplash hero images.`);
+      setProgress(`Complete! Extracted JSON content, fixed formatting, updated ${totalFixed} post dates, and fetched ${imageUpdateCount} Unsplash hero images.`);
     } catch (error) {
       console.error("Error fixing blog issues:", error);
       toast.error(error instanceof Error ? error.message : "Failed to fix blog issues");

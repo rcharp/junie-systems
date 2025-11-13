@@ -161,6 +161,9 @@ verify_jwt = false
 [functions.fetch-unsplash-image]
 verify_jwt = false
 
+[functions.extract-blog-content]
+verify_jwt = false
+
 [functions.generate-blog-post]
 verify_jwt = false
 
