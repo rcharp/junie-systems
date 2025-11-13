@@ -78,6 +78,9 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
             <a href="#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
               How It Works
             </a>
+            <Link to="/blog" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+              Blog
+            </Link>
           </nav>
         )}
         
