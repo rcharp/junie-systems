@@ -151,3 +151,9 @@ verify_jwt = false
 
 [functions.twilio-transfer-status]
 verify_jwt = false
+
+[functions.generate-blog-post]
+verify_jwt = false
+
+[functions.generate-batch-blog-posts]
+verify_jwt = false

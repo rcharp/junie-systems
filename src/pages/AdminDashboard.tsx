@@ -19,6 +19,7 @@ import { ClientToolMonitor } from '@/components/ClientToolMonitor';
 import { CallInitiationFailuresMonitor } from '@/components/CallInitiationFailuresMonitor';
 import { SystemTestRunner } from '@/components/SystemTestRunner';
 import { AppointmentSyncQueue } from '@/components/AppointmentSyncQueue';
+import BlogAutomation from '@/components/BlogAutomation';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -423,6 +424,9 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="settings" className="space-y-6 sm:space-y-8">
+            {/* Blog Automation */}
+            <BlogAutomation />
+
             {/* Admin Settings */}
             <AdminSettings />
 

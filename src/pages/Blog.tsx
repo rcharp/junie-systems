@@ -22,7 +22,7 @@ interface BlogPost {
 const Blog = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     fetchPosts();
@@ -55,7 +55,7 @@ const Blog = () => {
                 Latest updates, insights, and news
               </p>
             </div>
-            {user && (
+            {isAdmin && (
               <Link to="/blog/create">
                 <Button>Create Post</Button>
               </Link>
