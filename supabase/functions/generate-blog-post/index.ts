@@ -132,21 +132,35 @@ Format your response as this exact JSON structure:
 
     console.log("AI response received, parsing content...");
 
-    // Parse the JSON response
+    // Parse the JSON response and extract the actual content
     let blogData;
     try {
       // Extract JSON from markdown code blocks if present
       const jsonMatch = aiContent.match(/```json\s*([\s\S]*?)\s*```/) || 
-                       aiContent.match(/```\s*([\s\S]*?)\s*```/);
+                       aiContent.match(/```\s*({[\s\S]*?})\s*```/);
       const jsonStr = jsonMatch ? jsonMatch[1] : aiContent;
-      blogData = JSON.parse(jsonStr);
+      const parsed = JSON.parse(jsonStr);
+      
+      // Ensure we have the proper structure
+      if (parsed.title && parsed.content) {
+        blogData = parsed;
+      } else {
+        throw new Error("Invalid blog data structure");
+      }
+      
+      console.log("Successfully parsed blog data:", {
+        titleLength: blogData.title.length,
+        contentLength: blogData.content.length,
+        hasExcerpt: !!blogData.excerpt
+      });
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", parseError);
-      // Fallback: use the content as-is
+      console.log("Raw AI content:", aiContent.substring(0, 500));
+      // Fallback: use the content as-is with proper markdown
       blogData = {
         title: randomTopic,
-        excerpt: aiContent.substring(0, 160),
-        content: aiContent
+        excerpt: "Explore this topic in detail.",
+        content: aiContent.startsWith('#') ? aiContent : `## ${randomTopic}\n\n${aiContent}`
       };
     }
 
