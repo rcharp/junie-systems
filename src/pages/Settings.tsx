@@ -35,7 +35,6 @@ import {
   Settings as SettingsIcon,
   LogOut,
   AlertTriangle,
-  FileText,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -65,7 +64,6 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { BillingSettings } from "@/components/BillingSettings";
 import { CreditCard } from "lucide-react";
 import { formatPhoneNumber, normalizePhoneNumber, handlePhoneBackspace } from "@/lib/phone-utils";
-import BlogAutomation from "@/components/BlogAutomation";
 
 // Types
 interface BusinessType {
@@ -1815,7 +1813,7 @@ const Settings = () => {
               setActiveTab(value);
             }}
           >
-            <TabsList className="grid w-full grid-cols-6 mb-6 p-1 h-auto">
+            <TabsList className="grid w-full grid-cols-5 mb-6 p-1 h-auto">
               <TabsTrigger value="account" className="flex items-center gap-2 py-3.5">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:inline">Account</span>
@@ -1839,12 +1837,6 @@ const Settings = () => {
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Notifications</span>
               </TabsTrigger>
-              {isAdmin && (
-                <TabsTrigger value="blog" className="flex items-center gap-2 py-3.5">
-                  <FileText className="w-4 h-4" />
-                  <span className="hidden sm:inline">Blog</span>
-                </TabsTrigger>
-              )}
             </TabsList>
 
             {/* Account (User Profile + Billing) */}
@@ -3112,13 +3104,6 @@ const Settings = () => {
             <TabsContent value="notifications" className="space-y-6">
               <NotificationSettings />
             </TabsContent>
-
-            {/* Blog Management (Admin Only) */}
-            {isAdmin && (
-              <TabsContent value="blog" className="space-y-6">
-                <BlogAutomation />
-              </TabsContent>
-            )}
           </Tabs>
         </div>
       </main>

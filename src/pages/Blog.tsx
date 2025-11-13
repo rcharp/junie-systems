@@ -8,6 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface BlogPost {
   id: string;
@@ -20,21 +21,40 @@ interface BlogPost {
   created_at: string;
 }
 
+const POSTS_PER_PAGE = 25;
+
 const Blog = () => {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
   const { isAdmin } = useAuth();
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [currentPage]);
 
   const fetchPosts = async () => {
+    setLoading(true);
+    
+    // Get total count
+    const { count } = await supabase
+      .from("blog_posts")
+      .select("*", { count: 'exact', head: true })
+      .eq("published", true);
+    
+    setTotalPosts(count || 0);
+
+    // Get paginated posts
+    const from = (currentPage - 1) * POSTS_PER_PAGE;
+    const to = from + POSTS_PER_PAGE - 1;
+
     const { data, error } = await supabase
       .from("blog_posts")
       .select("id, title, slug, excerpt, content, hero_image, published_at, created_at")
       .eq("published", true)
-      .order("published_at", { ascending: false });
+      .order("published_at", { ascending: false })
+      .range(from, to);
 
     if (error) {
       console.error("Error fetching blog posts:", error);
@@ -42,6 +62,18 @@ const Blog = () => {
       setPosts(data || []);
     }
     setLoading(false);
+  };
+
+  const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -115,6 +147,33 @@ const Blog = () => {
                   </Card>
                 </Link>
               ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!loading && posts.length > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-12">
+              <Button
+                variant="outline"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                className="flex items-center gap-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-2"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
           )}
         </div>
