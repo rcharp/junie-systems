@@ -119,6 +119,46 @@ const BlogAutomation = () => {
     }
   };
 
+  const regenerateAllPosts = async () => {
+    if (!confirm("This will delete all existing posts and regenerate them with proper markdown. Continue?")) {
+      return;
+    }
+
+    setGenerating(true);
+    setProgress("Deleting existing posts...");
+    
+    try {
+      // Delete all existing posts
+      const { error: deleteError } = await supabase
+        .from('blog_posts')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+
+      if (deleteError) throw deleteError;
+
+      setProgress("Generating 50 new blog posts with markdown...");
+
+      const { data, error } = await supabase.functions.invoke('generate-batch-blog-posts', {
+        body: { count: 50 }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        toast.success("Posts regenerated successfully!");
+        setProgress(`Complete! Generated ${data.generated} posts with proper markdown.`);
+      } else {
+        throw new Error(data.error || "Failed to generate posts");
+      }
+    } catch (error) {
+      console.error("Error regenerating posts:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to regenerate posts");
+      setProgress("Regeneration failed. Check console for details.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -190,6 +230,28 @@ const BlogAutomation = () => {
               </>
             ) : (
               "Update Post Dates"
+            )}
+          </Button>
+        </div>
+
+        <div className="space-y-2 pt-4 border-t">
+          <h3 className="font-semibold">Regenerate All Posts</h3>
+          <p className="text-sm text-muted-foreground">
+            Delete all existing posts and generate 50 new ones with proper markdown formatting
+          </p>
+          <Button 
+            onClick={regenerateAllPosts} 
+            disabled={generating}
+            variant="destructive"
+            className="w-full"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Regenerating...
+              </>
+            ) : (
+              "Regenerate All Posts (Delete & Recreate)"
             )}
           </Button>
         </div>
