@@ -356,9 +356,10 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="w-full grid grid-cols-5 mb-4 sm:mb-6">
+          <TabsList className="w-full grid grid-cols-6 mb-4 sm:mb-6">
             <TabsTrigger value="users" className="text-xs sm:text-sm">User Stats</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
+            <TabsTrigger value="blog" className="text-xs sm:text-sm">Blog</TabsTrigger>
             <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
             <TabsTrigger value="tests" className="text-xs sm:text-sm">Tests</TabsTrigger>
             <TabsTrigger value="todos" className="text-xs sm:text-sm">Todos</TabsTrigger>
@@ -424,9 +425,6 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="settings" className="space-y-6 sm:space-y-8">
-            {/* Blog Automation */}
-            <BlogAutomation />
-
             {/* Admin Settings */}
             <AdminSettings />
 
@@ -476,6 +474,10 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="blog" className="space-y-6 sm:space-y-8">
+            <BlogAutomation />
           </TabsContent>
           
           <TabsContent value="api" className="space-y-6">
