@@ -84,29 +84,31 @@ const Blog = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-8">
+            <div className="grid gap-8">
               {posts.map((post) => (
                 <Link key={post.id} to={`/blog/${post.slug}`}>
-                  <Card className="hover:shadow-lg transition-shadow overflow-hidden">
+                  <Card className="hover:shadow-lg transition-all duration-300 overflow-hidden border-border">
                     {post.hero_image && (
-                      <div className="w-full h-64 overflow-hidden">
+                      <div className="w-full h-72 overflow-hidden">
                         <img 
                           src={post.hero_image} 
                           alt={post.title}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                         />
                       </div>
                     )}
-                    <CardHeader>
-                      <CardTitle className="text-2xl">{post.title}</CardTitle>
-                      <CardDescription>
+                    <CardHeader className="space-y-3">
+                      <CardTitle className="text-2xl hover:text-primary transition-colors">
+                        {post.title}
+                      </CardTitle>
+                      <CardDescription className="text-base">
                         {formatDistanceToNow(new Date(post.published_at || post.created_at), {
                           addSuffix: true,
                         })}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-muted-foreground line-clamp-3">
+                      <p className="text-muted-foreground line-clamp-3 text-base leading-relaxed">
                         {post.excerpt || post.content.substring(0, 200) + "..."}
                       </p>
                     </CardContent>

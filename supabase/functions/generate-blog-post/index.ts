@@ -71,21 +71,29 @@ serve(async (req) => {
     const prompt = `Write a comprehensive, SEO-optimized blog post about: "${randomTopic}"
 
 Requirements:
-- Minimum 200 words (aim for 400-600 words)
+- Minimum 400 words (aim for 500-700 words)
 - Include an engaging title (max 60 characters for SEO)
 - Write a compelling excerpt/meta description (max 160 characters)
-- Use clear headings and structure
+- Use proper markdown formatting:
+  * Use ## for main headings
+  * Use ### for subheadings
+  * Use **bold** for emphasis
+  * Use proper paragraph spacing (blank lines between paragraphs)
+  * Use bullet points with - or * where appropriate
+  * Use > for blockquotes if needed
 - Include practical examples and insights
 - Focus on value for business owners and decision-makers
 - Naturally incorporate relevant keywords
 - Write in a professional yet conversational tone
 - End with a clear takeaway or call to thought
 
-Format your response as JSON with these exact fields:
+IMPORTANT: Return ONLY valid JSON. Do not include any markdown code blocks or extra text.
+
+Format your response as this exact JSON structure:
 {
   "title": "SEO-friendly title here",
   "excerpt": "Compelling meta description here",
-  "content": "Full article content here with paragraphs separated by \\n\\n"
+  "content": "Full article content in markdown format with ## headings, **bold text**, and proper paragraph spacing"
 }`;
 
     console.log("Generating blog post with AI for topic:", randomTopic);

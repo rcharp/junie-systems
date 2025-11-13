@@ -7,6 +7,8 @@ import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface BlogPost {
   id: string;
@@ -78,7 +80,7 @@ const BlogPost = () => {
           ) : (
             <article>
               {post.hero_image && (
-                <div className="w-full h-96 mb-8 rounded-lg overflow-hidden">
+                <div className="w-full h-96 mb-12 rounded-lg overflow-hidden shadow-lg">
                   <img 
                     src={post.hero_image} 
                     alt={post.title}
@@ -86,17 +88,17 @@ const BlogPost = () => {
                   />
                 </div>
               )}
-              <header className="mb-8">
-                <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
-                <p className="text-muted-foreground">
+              <header className="mb-12">
+                <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">{post.title}</h1>
+                <p className="text-muted-foreground text-lg">
                   Published on{" "}
                   {format(new Date(post.published_at || post.created_at), "MMMM d, yyyy")}
                 </p>
               </header>
-              <div className="prose prose-lg max-w-none dark:prose-invert">
-                {post.content.split("\n").map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
+              <div className="prose prose-lg max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl prose-p:leading-relaxed prose-p:mb-6 prose-li:mb-2">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.content}
+                </ReactMarkdown>
               </div>
             </article>
           )}
