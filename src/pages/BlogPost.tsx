@@ -13,6 +13,7 @@ interface BlogPost {
   title: string;
   slug: string;
   content: string;
+  hero_image: string | null;
   published_at: string | null;
   created_at: string;
 }
@@ -32,7 +33,7 @@ const BlogPost = () => {
   const fetchPost = async () => {
     const { data, error } = await supabase
       .from("blog_posts")
-      .select("id, title, slug, content, published_at, created_at")
+      .select("id, title, slug, content, hero_image, published_at, created_at")
       .eq("slug", slug)
       .eq("published", true)
       .single();
@@ -76,6 +77,15 @@ const BlogPost = () => {
             </div>
           ) : (
             <article>
+              {post.hero_image && (
+                <div className="w-full h-96 mb-8 rounded-lg overflow-hidden">
+                  <img 
+                    src={post.hero_image} 
+                    alt={post.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
               <header className="mb-8">
                 <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
                 <p className="text-muted-foreground">

@@ -175,6 +175,40 @@ Format your response as JSON with these exact fields:
 
     const authorId = adminUsers[0].user_id;
 
+    // Generate hero image using Lovable AI
+    console.log('Generating hero image for blog post...');
+    let heroImageDataUrl = null;
+    try {
+      const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image-preview",
+          messages: [
+            {
+              role: "user",
+              content: `Generate a professional, modern hero image for a blog post titled "${blogData.title}". The image should be suitable for a business blog about AI and automation. Style: clean, professional, tech-focused, modern, high quality.`
+            }
+          ],
+          modalities: ["image", "text"]
+        })
+      });
+
+      if (imageResponse.ok) {
+        const imageData = await imageResponse.json();
+        heroImageDataUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+        console.log('Hero image generated successfully');
+      } else {
+        console.error('Failed to generate hero image:', await imageResponse.text());
+      }
+    } catch (imageError) {
+      console.error('Error generating hero image:', imageError);
+      // Continue without hero image
+    }
+
     // Insert the blog post
     const { data: newPost, error: insertError } = await supabase
       .from("blog_posts")
@@ -183,6 +217,7 @@ Format your response as JSON with these exact fields:
         slug: finalSlug,
         excerpt: blogData.excerpt,
         content: blogData.content,
+        hero_image: heroImageDataUrl,
         published: true,
         published_at: new Date().toISOString(),
         author_id: authorId,

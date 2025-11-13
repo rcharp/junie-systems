@@ -157,6 +157,7 @@ export type Database = {
           content: string
           created_at: string
           excerpt: string | null
+          hero_image: string | null
           id: string
           published: boolean
           published_at: string | null
@@ -169,6 +170,7 @@ export type Database = {
           content: string
           created_at?: string
           excerpt?: string | null
+          hero_image?: string | null
           id?: string
           published?: boolean
           published_at?: string | null
@@ -181,6 +183,7 @@ export type Database = {
           content?: string
           created_at?: string
           excerpt?: string | null
+          hero_image?: string | null
           id?: string
           published?: boolean
           published_at?: string | null

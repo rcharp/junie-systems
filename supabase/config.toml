@@ -152,6 +152,9 @@ verify_jwt = false
 [functions.twilio-transfer-status]
 verify_jwt = false
 
+[functions.update-blog-dates]
+verify_jwt = false
+
 [functions.generate-blog-post]
 verify_jwt = false
 

@@ -61,6 +61,64 @@ const BlogAutomation = () => {
     }
   };
 
+  const spreadOutDates = async () => {
+    setGenerating(true);
+    setProgress("Updating blog post dates...");
+    
+    try {
+      // Get all published posts
+      const { data: posts, error: fetchError } = await supabase
+        .from('blog_posts')
+        .select('id, title')
+        .eq('published', true)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      if (!posts || posts.length === 0) {
+        toast.info("No blog posts found");
+        return;
+      }
+
+      // Calculate dates spread over the past year
+      const now = new Date();
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(now.getFullYear() - 1);
+
+      const totalPosts = posts.length;
+      const daysBetweenPosts = Math.floor(365 / totalPosts);
+
+      // Update each post
+      let successCount = 0;
+      for (let i = 0; i < posts.length; i++) {
+        const daysToAdd = i * daysBetweenPosts;
+        const publishDate = new Date(oneYearAgo);
+        publishDate.setDate(publishDate.getDate() + daysToAdd);
+
+        const { error: updateError } = await supabase
+          .from('blog_posts')
+          .update({
+            published_at: publishDate.toISOString(),
+            created_at: publishDate.toISOString()
+          })
+          .eq('id', posts[i].id);
+
+        if (!updateError) {
+          successCount++;
+        }
+      }
+
+      toast.success(`Updated ${successCount} blog post dates`);
+      setProgress(`Complete! Updated ${successCount} out of ${totalPosts} posts.`);
+    } catch (error) {
+      console.error("Error updating dates:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to update dates");
+      setProgress("Update failed. Check console for details.");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -110,6 +168,28 @@ const BlogAutomation = () => {
               </>
             ) : (
               "Generate Single Post"
+            )}
+          </Button>
+        </div>
+
+        <div className="space-y-2 pt-4 border-t">
+          <h3 className="font-semibold">Spread Out Dates</h3>
+          <p className="text-sm text-muted-foreground">
+            Distribute blog post dates evenly over the past year for better SEO
+          </p>
+          <Button 
+            onClick={spreadOutDates} 
+            disabled={generating}
+            variant="outline"
+            className="w-full"
+          >
+            {generating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Update Post Dates"
             )}
           </Button>
         </div>

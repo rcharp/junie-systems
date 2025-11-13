@@ -15,6 +15,7 @@ interface BlogPost {
   slug: string;
   excerpt: string | null;
   content: string;
+  hero_image: string | null;
   published_at: string | null;
   created_at: string;
 }
@@ -31,7 +32,7 @@ const Blog = () => {
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from("blog_posts")
-      .select("id, title, slug, excerpt, content, published_at, created_at")
+      .select("id, title, slug, excerpt, content, hero_image, published_at, created_at")
       .eq("published", true)
       .order("published_at", { ascending: false });
 
@@ -83,10 +84,19 @@ const Blog = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {posts.map((post) => (
                 <Link key={post.id} to={`/blog/${post.slug}`}>
-                  <Card className="hover:shadow-lg transition-shadow">
+                  <Card className="hover:shadow-lg transition-shadow overflow-hidden">
+                    {post.hero_image && (
+                      <div className="w-full h-64 overflow-hidden">
+                        <img 
+                          src={post.hero_image} 
+                          alt={post.title}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    )}
                     <CardHeader>
                       <CardTitle className="text-2xl">{post.title}</CardTitle>
                       <CardDescription>
