@@ -47,7 +47,7 @@ const Blog = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 container mx-auto px-4 py-16">
+      <main className="flex-1 container mx-auto px-4 pt-32 pb-16">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-12">
             <div>
