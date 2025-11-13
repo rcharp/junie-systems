@@ -424,9 +424,6 @@ const AdminDashboard = () => {
           </TabsContent>
           
           <TabsContent value="settings" className="space-y-6 sm:space-y-8">
-            {/* Blog Automation */}
-            <BlogAutomation />
-
             {/* Admin Settings */}
             <AdminSettings />
 
