@@ -172,24 +172,52 @@ const BlogAutomation = () => {
         setProgress(`Step 2/3: Updated ${totalFixed} post dates`);
       }
 
-      // Step 3: Check for missing hero images and regenerate
-      setProgress("Step 3/3: Checking for missing hero images...");
-      const { data: postsWithoutImages, error: imageCheckError } = await supabase
+      // Step 3: Fetch Unsplash hero images for all posts
+      setProgress("Step 3/3: Fetching Unsplash hero images for all posts...");
+      const { data: allPosts, error: allPostsError } = await supabase
         .from('blog_posts')
-        .select('id, title, hero_image')
-        .eq('published', true)
-        .is('hero_image', null);
+        .select('id, title')
+        .eq('published', true);
 
-      if (imageCheckError) throw imageCheckError;
+      if (allPostsError) throw allPostsError;
 
-      if (postsWithoutImages && postsWithoutImages.length > 0) {
-        setProgress(`Step 3/3: Regenerating ${postsWithoutImages.length} missing hero images...`);
-        // For now, just log - hero image regeneration would require calling the AI again
-        console.log(`Found ${postsWithoutImages.length} posts without hero images`);
+      let imageUpdateCount = 0;
+      if (allPosts && allPosts.length > 0) {
+        for (let i = 0; i < allPosts.length; i++) {
+          const post = allPosts[i];
+          setProgress(`Step 3/3: Fetching images... (${i + 1}/${allPosts.length})`);
+          
+          try {
+            // Extract keywords from title for image search
+            const searchQuery = post.title
+              .replace(/[^\w\s]/gi, '')
+              .split(' ')
+              .slice(0, 3)
+              .join(' ');
+
+            const { data: imageData, error: imageError } = await supabase.functions.invoke(
+              'fetch-unsplash-image',
+              { body: { query: searchQuery } }
+            );
+
+            if (!imageError && imageData?.imageUrl) {
+              const { error: updateError } = await supabase
+                .from('blog_posts')
+                .update({ hero_image: imageData.imageUrl })
+                .eq('id', post.id);
+
+              if (!updateError) {
+                imageUpdateCount++;
+              }
+            }
+          } catch (err) {
+            console.error(`Failed to fetch image for post ${post.id}:`, err);
+          }
+        }
       }
 
       toast.success("All blog issues fixed successfully!");
-      setProgress(`Complete! Fixed JSON formatting, updated ${totalFixed} post dates, and checked hero images.`);
+      setProgress(`Complete! Fixed JSON formatting, updated ${totalFixed} post dates, and fetched ${imageUpdateCount} Unsplash hero images.`);
     } catch (error) {
       console.error("Error fixing blog issues:", error);
       toast.error(error instanceof Error ? error.message : "Failed to fix blog issues");
