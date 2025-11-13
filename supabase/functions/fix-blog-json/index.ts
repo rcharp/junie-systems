@@ -40,13 +40,40 @@ serve(async (req) => {
         let cleanExcerpt = post.excerpt;
         let needsUpdate = false;
 
-        // Pattern 1: Remove ```json ... ``` wrapper
-        if (cleanContent.includes('```json') || cleanContent.includes('```\n{')) {
-          cleanContent = cleanContent.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-          needsUpdate = true;
+        // Pattern 1: Extract from ```json ... ``` wrapper
+        const jsonBlockMatch = cleanContent.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonBlockMatch) {
+          try {
+            const parsed = JSON.parse(jsonBlockMatch[1]);
+            if (parsed.content) {
+              cleanContent = parsed.content;
+              cleanTitle = parsed.title || cleanTitle;
+              cleanExcerpt = parsed.excerpt || cleanExcerpt;
+              needsUpdate = true;
+              console.log(`Extracted from JSON block: ${cleanTitle}`);
+            }
+          } catch (e) {
+            console.error(`Failed to parse JSON block for post ${post.id}:`, e.message);
+          }
         }
 
-        // Pattern 2: If content is pure JSON object, extract the actual content
+        // Pattern 2: Check excerpt for ```json wrapper
+        if (cleanExcerpt && cleanExcerpt.includes('```json')) {
+          const excerptMatch = cleanExcerpt.match(/```json\s*([\s\S]*?)\s*```/);
+          if (excerptMatch) {
+            try {
+              const parsed = JSON.parse(excerptMatch[1]);
+              cleanExcerpt = parsed.excerpt || parsed.content || cleanExcerpt;
+              needsUpdate = true;
+            } catch (e) {
+              // Just remove the wrapper
+              cleanExcerpt = cleanExcerpt.replace(/```json\s*/g, '').replace(/```/g, '');
+              needsUpdate = true;
+            }
+          }
+        }
+
+        // Pattern 3: If entire content is JSON (no wrapper)
         const trimmedContent = cleanContent.trim();
         if (trimmedContent.startsWith('{') && trimmedContent.endsWith('}')) {
           try {
@@ -56,39 +83,11 @@ serve(async (req) => {
               cleanTitle = parsed.title;
               cleanExcerpt = parsed.excerpt || cleanExcerpt;
               needsUpdate = true;
-              console.log(`Extracted JSON content for: ${cleanTitle}`);
+              console.log(`Extracted from raw JSON: ${cleanTitle}`);
             }
           } catch (e) {
-            // If JSON parse fails, it might be markdown that happens to start with {
-            // Just continue
+            // Not JSON, just markdown
           }
-        }
-
-        // Pattern 3: Check title and excerpt for JSON
-        if (cleanTitle.trim().startsWith('{')) {
-          try {
-            const parsed = JSON.parse(cleanTitle);
-            cleanTitle = parsed.title || cleanTitle;
-            needsUpdate = true;
-          } catch (e) {
-            // Not valid JSON
-          }
-        }
-
-        if (cleanExcerpt && cleanExcerpt.trim().startsWith('{')) {
-          try {
-            const parsed = JSON.parse(cleanExcerpt);
-            cleanExcerpt = parsed.excerpt || cleanExcerpt;
-            needsUpdate = true;
-          } catch (e) {
-            // Not valid JSON
-          }
-        }
-
-        // Also remove any remaining ``` that might be left
-        if (cleanExcerpt && cleanExcerpt.includes('```')) {
-          cleanExcerpt = cleanExcerpt.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-          needsUpdate = true;
         }
 
         // Update if we found any issues
@@ -106,7 +105,7 @@ serve(async (req) => {
             console.error(`Error updating post ${post.id}:`, updateError);
             errors++;
           } else {
-            console.log(`Fixed post: ${cleanTitle}`);
+            console.log(`✓ Fixed: ${cleanTitle}`);
             fixed++;
           }
         }
