@@ -53,7 +53,34 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
   return (
     <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
       <div className="container mx-auto px-4 py-3 sm:py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          {/* Mobile hamburger menu - left side near logo */}
+          {!isOnboarding && (
+            <div className="md:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48 bg-background">
+                  <DropdownMenuItem asChild>
+                    <a href="#features" className="w-full cursor-pointer">Features</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#pricing" className="w-full cursor-pointer">Pricing</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href="#how-it-works" className="w-full cursor-pointer">How It Works</a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/blog" className="w-full cursor-pointer">Blog</Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+          
           <Link to="/" className="flex items-center">
             <img 
               src="/lovable-uploads/junie-logo.png" 
@@ -72,49 +99,22 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
           )}
         </div>
         
+        {/* Desktop nav - center */}
         {!isOnboarding && (
-          <>
-            {/* Desktop nav */}
-            <nav className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
-                Features
-              </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
-                Pricing
-              </a>
-              <a href="#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
-                How It Works
-              </a>
-              <Link to="/blog" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
-                Blog
-              </Link>
-            </nav>
-            
-            {/* Mobile hamburger menu */}
-            <div className="md:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 bg-background">
-                  <DropdownMenuItem asChild>
-                    <a href="#features" className="w-full cursor-pointer">Features</a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href="#pricing" className="w-full cursor-pointer">Pricing</a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href="#how-it-works" className="w-full cursor-pointer">How It Works</a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/blog" className="w-full cursor-pointer">Blog</Link>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </>
+          <nav className="hidden md:flex items-center space-x-8">
+            <a href="#features" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+              Features
+            </a>
+            <a href="#pricing" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+              Pricing
+            </a>
+            <a href="#how-it-works" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+              How It Works
+            </a>
+            <Link to="/blog" className="text-muted-foreground hover:text-muted-foreground/80 transition-colors font-medium">
+              Blog
+            </Link>
+          </nav>
         )}
         
         <div className="flex items-center space-x-2 sm:space-x-4">
