@@ -7,7 +7,7 @@ const SmsPolicy = () => {
       <Header />
       <main className="container mx-auto px-4 py-24 max-w-4xl">
         <h1 className="text-4xl font-bold mb-8">SMS Policy - Missed Call Text Back</h1>
-        <p className="text-muted-foreground mb-8">Last updated: January 6, 2025</p>
+        <p className="text-muted-foreground mb-8">Last updated: January 6, 2026</p>
         
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-8">
           <section>
@@ -108,7 +108,9 @@ const SmsPolicy = () => {
               If you have questions about this SMS Policy or our Missed Call Text Back service, please contact us at:
             </p>
             <p className="text-muted-foreground mt-2">
-              Email: <a href="mailto:support@getjunie.com" className="text-primary hover:underline">support@getjunie.com</a>
+              Email: <a href="mailto:admin@getjunie.com" className="text-primary hover:underline">admin@getjunie.com</a>
+              <br />
+              Location: Palmetto, FL
             </p>
           </section>
         </div>
