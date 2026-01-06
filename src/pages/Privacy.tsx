@@ -75,7 +75,7 @@ const Privacy = () => {
                 <li>Message frequency varies based on your activity and preferences</li>
                 <li>Standard message and data rates may apply</li>
                 <li>You can opt out of SMS messages at any time by replying STOP to any message</li>
-                <li>For help, reply HELP or contact us at support@junie.ai</li>
+                <li>For help, reply HELP or contact us at <a href="mailto:support@getjunie.com" className="text-primary hover:underline">support@getjunie.com</a></li>
               </ul>
             </section>
 
@@ -121,8 +121,9 @@ const Privacy = () => {
               <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Contact Us</h2>
               <p>If you have any questions about this Privacy Policy, please contact us at:</p>
               <p className="font-medium">
-                Email: admin@getjunie.com
+                Email: <a href="mailto:support@getjunie.com" className="text-primary hover:underline">support@getjunie.com</a>
                 <br />
+                Location: Miami, FL
               </p>
             </section>
           </div>
