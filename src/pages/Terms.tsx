@@ -100,8 +100,8 @@ const Terms = () => {
                 For questions about these Terms of Service, please contact us at:
               </p>
               <p className="font-medium">
-                Email: legal@junie.ai<br />
-                Address: [Your Business Address]
+                Email: <a href="mailto:support@getjunie.com" className="text-primary hover:underline">support@getjunie.com</a><br />
+                Location: Miami, FL
               </p>
             </section>
           </div>
