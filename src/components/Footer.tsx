@@ -20,11 +20,11 @@ const Footer = () => {
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:support@getjunie.com" className="hover:text-white transition-colors">support@getjunie.com</a>
+                <a href="mailto:admin@getjunie.com" className="hover:text-white transition-colors">admin@getjunie.com</a>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4" />
-                <span>Miami, FL</span>
+                <span>Palmetto, FL</span>
               </div>
             </div>
           </div>
@@ -42,7 +42,7 @@ const Footer = () => {
             <h4 className="text-lg font-medium text-primary-foreground/90">Company</h4>
             <ul className="space-y-2 text-primary-foreground/80">
               <li><a href="/blog" className="hover:text-white transition-colors">Blog</a></li>
-              <li><a href="mailto:support@getjunie.com" className="hover:text-white transition-colors">Contact</a></li>
+              <li><a href="mailto:admin@getjunie.com" className="hover:text-white transition-colors">Contact</a></li>
             </ul>
           </div>
           
@@ -58,7 +58,7 @@ const Footer = () => {
         
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center">
           <p className="text-primary-foreground/60">
-            © 2025 Junie. All rights reserved. Built with ❤️ for small businesses.
+            © 2026 Junie. All rights reserved. Built with ❤️ for small businesses.
           </p>
         </div>
       </div>
