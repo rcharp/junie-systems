@@ -17,6 +17,7 @@ import SetupGuide from "./pages/SetupGuide";
 import AdminDashboard from "./pages/AdminDashboard";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import SmsPolicy from "./pages/SmsPolicy";
 import PricingPage from "./pages/PricingPage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -48,6 +49,7 @@ const App = () => (
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            <Route path="/sms-policy" element={<SmsPolicy />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
