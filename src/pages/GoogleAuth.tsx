@@ -42,8 +42,9 @@ const GoogleAuth = () => {
         setStatus('success');
         
         // Send success message to parent window and close popup
+        // Use window.location.origin for secure postMessage
         if (window.opener) {
-          window.opener.postMessage({ type: 'google-calendar-connected' }, '*');
+          window.opener.postMessage({ type: 'google-calendar-connected' }, window.location.origin);
           window.close();
         } else {
           // Fallback for non-popup case
@@ -59,8 +60,9 @@ const GoogleAuth = () => {
         setStatus('error');
         
         // Send error message to parent window and close popup
+        // Use window.location.origin for secure postMessage
         if (window.opener) {
-          window.opener.postMessage({ type: 'google-calendar-error', error: errorMessage }, '*');
+          window.opener.postMessage({ type: 'google-calendar-error', error: errorMessage }, window.location.origin);
           window.close();
         }
       }

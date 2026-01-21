@@ -1,11 +1,98 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-elevenlabs-signature',
 };
+
+// Zod schemas for webhook payload validation
+const dataCollectionResultSchema = z.object({
+  data_collection_id: z.string().optional(),
+  json_schema: z.any().optional(),
+  rationale: z.string().optional(),
+  value: z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
+}).passthrough();
+
+const analysisSchema = z.object({
+  call_successful: z.string().optional(),
+  call_summary_title: z.string().optional(),
+  data_collection_results: z.record(dataCollectionResultSchema).optional(),
+  evaluation_criteria_results: z.record(z.any()).optional(),
+  transcript_summary: z.string().optional(),
+}).passthrough();
+
+const transcriptEntrySchema = z.object({
+  role: z.enum(['agent', 'user']).optional(),
+  message: z.string().optional(),
+  speaker: z.string().optional(),
+  text: z.string().optional(),
+}).passthrough();
+
+const webhookDataSchema = z.object({
+  data: z.object({
+    agent_id: z.string().optional(),
+    analysis: analysisSchema.optional(),
+    transcript: z.array(transcriptEntrySchema).optional(),
+  }).optional(),
+  webhook_id: z.string().optional(),
+  event_type: z.string().optional(),
+  type: z.string().optional(),
+  transcript: z.union([z.array(transcriptEntrySchema), z.string()]).optional(),
+  fullTranscript: z.string().optional(),
+  message: z.string().optional(),
+}).passthrough();
+
+const callInitiationFailureSchema = z.object({
+  type: z.literal('call_initiation_failure'),
+  data: z.object({
+    failure_reason: z.string().optional(),
+    conversation_id: z.string().optional(),
+    metadata: z.object({
+      type: z.enum(['twilio', 'sip']).optional(),
+      body: z.record(z.any()).optional(),
+    }).optional(),
+  }).optional(),
+}).passthrough();
+
+// HMAC signature verification for webhook security
+async function verifyWebhookSignature(body: string, signature: string | null, secret: string): Promise<boolean> {
+  if (!signature || !secret) {
+    return false;
+  }
+
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+
+    const signatureBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
+    const computedSignature = Array.from(new Uint8Array(signatureBytes))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
+    // Constant-time comparison to prevent timing attacks
+    if (signature.length !== computedSignature.length) {
+      return false;
+    }
+
+    let result = 0;
+    for (let i = 0; i < signature.length; i++) {
+      result |= signature.charCodeAt(i) ^ computedSignature.charCodeAt(i);
+    }
+    return result === 0;
+  } catch (error) {
+    console.error('Signature verification error:', error);
+    return false;
+  }
+}
 
 serve(async (req) => {
   console.log('=== WEBHOOK FUNCTION CALLED ===');
@@ -25,21 +112,70 @@ serve(async (req) => {
     console.log('=== WEBHOOK RECEIVED ===');
     console.log('Method:', req.method);
     console.log('URL:', req.url);
-    console.log('Headers:', Object.fromEntries(req.headers.entries()));
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const ELEVENLABS_WEBHOOK_SECRET = Deno.env.get('ELEVENLABS_WEBHOOK_SECRET');
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const rawBody = await req.text();
     console.log('Raw body received:', rawBody.substring(0, 500));
     
-    // Parse the webhook data first to check event type
+    // Verify webhook signature if secret is configured
+    const signature = req.headers.get('x-elevenlabs-signature');
+    const userAgent = req.headers.get('user-agent') || '';
+    const isTestCall = userAgent.includes('PostmanRuntime') || 
+                       userAgent.includes('curl') || 
+                       userAgent.includes('HTTPie') ||
+                       userAgent.includes('Insomnia') ||
+                       req.headers.get('x-test-call') === 'true';
+
+    // Only require signature verification for non-test calls when secret is configured
+    if (ELEVENLABS_WEBHOOK_SECRET && !isTestCall) {
+      const isValidSignature = await verifyWebhookSignature(rawBody, signature, ELEVENLABS_WEBHOOK_SECRET);
+      if (!isValidSignature) {
+        console.error('Invalid webhook signature - rejecting request');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized - invalid signature' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      console.log('✅ Webhook signature verified');
+    } else if (!ELEVENLABS_WEBHOOK_SECRET && !isTestCall) {
+      console.warn('⚠️ ELEVENLABS_WEBHOOK_SECRET not configured - webhook signature verification disabled');
+    }
+    
+    // Parse and validate the webhook data
     let webhookData;
     try {
-      webhookData = JSON.parse(rawBody);
-      console.log('Webhook event type:', webhookData.event_type || 'unknown');
+      const parsed = JSON.parse(rawBody);
+      
+      // Check if this is a call initiation failure
+      if (parsed.type === 'call_initiation_failure') {
+        const validationResult = callInitiationFailureSchema.safeParse(parsed);
+        if (!validationResult.success) {
+          console.error('Invalid call initiation failure payload:', validationResult.error.issues);
+          return new Response(
+            JSON.stringify({ error: 'Invalid request format', details: validationResult.error.issues }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        webhookData = validationResult.data;
+      } else {
+        // Validate regular webhook data
+        const validationResult = webhookDataSchema.safeParse(parsed);
+        if (!validationResult.success) {
+          console.error('Invalid webhook payload:', validationResult.error.issues);
+          return new Response(
+            JSON.stringify({ error: 'Invalid request format', details: validationResult.error.issues }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        webhookData = validationResult.data;
+      }
+      
+      console.log('Webhook event type:', webhookData.event_type || webhookData.type || 'unknown');
     } catch (e) {
       console.log('Could not parse as JSON, treating as raw data');
       webhookData = { raw: rawBody };

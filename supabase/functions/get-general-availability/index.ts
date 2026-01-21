@@ -1,11 +1,18 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { toZonedTime, fromZonedTime, format } from 'https://esm.sh/date-fns-tz@3.2.0';
 import { decryptToken, encryptToken } from '../_shared/encryption.ts';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Zod schema for request validation
+const requestSchema = z.object({
+  business_id: z.string().uuid({ message: 'Invalid business_id format' }),
+  natural_language: z.string().min(1, 'Natural language query is required').max(500, 'Query too long'),
+});
 
 // 5-minute cache for availability results
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -136,14 +143,30 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { business_id, natural_language } = await req.json();
-
-    if (!business_id || !natural_language) {
+    // Parse and validate input
+    let rawData;
+    try {
+      rawData = await req.json();
+    } catch (e) {
       return new Response(
-        JSON.stringify({ error: 'business_id and natural_language are required' }),
+        JSON.stringify({ error: 'Invalid JSON request body' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    const validationResult = requestSchema.safeParse(rawData);
+    if (!validationResult.success) {
+      console.error('Validation failed:', validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request data',
+          details: validationResult.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { business_id, natural_language } = validationResult.data;
 
     // Create SSE stream
     const encoder = new TextEncoder();
