@@ -1,11 +1,21 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import { toZonedTime, fromZonedTime, format } from 'https://esm.sh/date-fns-tz@3.2.0';
 import { decryptToken, encryptToken } from '../_shared/encryption.ts';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Zod schema for request validation
+const requestSchema = z.object({
+  business_id: z.string().uuid({ message: 'Invalid business_id format' }),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
+  time: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be in HH:MM format').optional(),
+}).refine(data => data.date || data.time, {
+  message: 'At least date or time is required',
+});
 
 // 5-minute cache
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -34,14 +44,30 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { business_id, date, time } = await req.json();
-
-    if (!business_id || (!date && !time)) {
+    // Parse and validate input
+    let rawData;
+    try {
+      rawData = await req.json();
+    } catch (e) {
       return new Response(
-        JSON.stringify({ error: 'business_id and at least date or time are required' }),
+        JSON.stringify({ error: 'Invalid JSON request body' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
+
+    const validationResult = requestSchema.safeParse(rawData);
+    if (!validationResult.success) {
+      console.error('Validation failed:', validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Invalid request data',
+          details: validationResult.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    const { business_id, date, time } = validationResult.data;
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,

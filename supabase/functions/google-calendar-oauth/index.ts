@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
 import { encryptToken } from '../_shared/encryption.ts'
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,6 +11,12 @@ const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const googleClientId = Deno.env.get('GOOGLE_CALENDAR_CLIENT_ID')!
 const googleClientSecret = Deno.env.get('GOOGLE_CALENDAR_CLIENT_SECRET')!
+
+// Zod schema for OAuth callback validation
+const oauthCallbackSchema = z.object({
+  code: z.string().min(1, 'Authorization code is required'),
+  state: z.string().uuid({ message: 'Invalid state parameter format' }),
+})
 
 // Helper function to get timezone offset
 function getTimezoneOffset(timezone: string): string {
@@ -89,12 +96,31 @@ Deno.serve(async (req) => {
     }
 
     if (req.method === 'POST') {
-      const { code, state } = await req.json()
-      console.log('POST request - code:', code ? 'present' : 'missing', 'state:', state)
-      
-      if (!code || !state) {
-        throw new Error('Missing authorization code or state parameter')
+      // Parse and validate input
+      let rawData
+      try {
+        rawData = await req.json()
+      } catch (e) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid JSON request body' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
       }
+
+      const validationResult = oauthCallbackSchema.safeParse(rawData)
+      if (!validationResult.success) {
+        console.error('Validation failed:', validationResult.error.issues)
+        return new Response(
+          JSON.stringify({ 
+            error: 'Invalid request data',
+            details: validationResult.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const { code, state } = validationResult.data
+      console.log('POST request - code: present, state:', state)
       
       // Validate state parameter corresponds to a real user by querying user_profiles
       const { data: userProfile, error: userError } = await supabase

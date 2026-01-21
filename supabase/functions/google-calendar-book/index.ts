@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0';
 import { decryptToken } from '../_shared/encryption.ts';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -9,18 +10,24 @@ const corsHeaders = {
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-interface AppointmentData {
-  userId: string;
-  businessId?: string;
-  customerName: string;
-  customerPhone: string;
-  appointmentDateTime: string;
-  serviceAddress: string;
-  customerEmail?: string;
-  serviceType?: string;
-  additionalNotes?: string;
-  issueDetails?: string;
-}
+// Zod schema for appointment data validation
+const appointmentDataSchema = z.object({
+  userId: z.string().uuid({ message: 'Invalid user ID format' }),
+  businessId: z.string().uuid({ message: 'Invalid business ID format' }).optional(),
+  customerName: z.string().min(1, 'Customer name is required').max(255, 'Customer name too long'),
+  customerPhone: z.string().regex(/^[\d\s\-+()]{7,20}$/, 'Invalid phone number format'),
+  appointmentDateTime: z.string().refine((val) => {
+    const date = new Date(val);
+    return !isNaN(date.getTime()) && date > new Date();
+  }, { message: 'Invalid or past appointment date/time' }),
+  serviceAddress: z.string().min(5, 'Service address is required').max(500, 'Service address too long'),
+  customerEmail: z.string().email('Invalid email format').max(255).optional().nullable(),
+  serviceType: z.string().max(100, 'Service type too long').optional().nullable(),
+  additionalNotes: z.string().max(2000, 'Additional notes too long').optional().nullable(),
+  issueDetails: z.string().max(2000, 'Issue details too long').optional().nullable(),
+});
+
+type AppointmentData = z.infer<typeof appointmentDataSchema>;
 
 Deno.serve(async (req) => {
   console.log('google-calendar-book function called');
@@ -31,17 +38,33 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const appointmentData: AppointmentData = await req.json();
-
-    console.log('Received appointment data:', JSON.stringify(appointmentData, null, 2));
-
-    // Validate required fields
-    const requiredFields = ['userId', 'customerName', 'customerPhone', 'appointmentDateTime', 'serviceAddress'];
-    const missingFields = requiredFields.filter(field => !appointmentData[field as keyof AppointmentData]);
     
-    if (missingFields.length > 0) {
-      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+    // Parse and validate input
+    let rawData;
+    try {
+      rawData = await req.json();
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid JSON request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
+
+    const validationResult = appointmentDataSchema.safeParse(rawData);
+    if (!validationResult.success) {
+      console.error('Validation failed:', validationResult.error.issues);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Invalid request data',
+          details: validationResult.error.issues.map(i => ({ field: i.path.join('.'), message: i.message }))
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const appointmentData = validationResult.data;
+    console.log('Validated appointment data:', JSON.stringify(appointmentData, null, 2));
 
     // Get business_id if not provided
     let businessId = appointmentData.businessId;
