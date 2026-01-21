@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -136,7 +136,17 @@ const Pricing = () => {
       period: "/month",
       description: "Perfect for businesses that want to capture every missed call opportunity.",
       features: [
-        "Automatic missed-call-text-back"
+        { text: "Automatic missed-call-text-back", included: true },
+        { text: "Full AI Receptionist", included: false },
+        { text: "Unlimited minutes", included: false },
+        { text: "Message taking with custom questions", included: false },
+        { text: "Smart spam detection", included: false },
+        { text: "Call transcription", included: false },
+        { text: "Real-time notifications", included: false },
+        { text: "Appointment scheduling", included: false },
+        { text: "Call transfers", included: false },
+        { text: "Advanced analytics", included: false },
+        { text: "Priority support", included: false }
       ],
       popular: false,
       ctaText: "Get Started"
@@ -147,16 +157,16 @@ const Pricing = () => {
       period: "/month",
       description: "Full-featured AI receptionist for businesses ready to automate their phone operations.",
       features: [
-        "Full AI Receptionist",
-        "Unlimited minutes",
-        "Message taking with custom questions",
-        "Smart spam detection",
-        "Call transcription",
-        "Real-time notifications",
-        "Appointment scheduling",
-        "Call transfers",
-        "Advanced analytics",
-        "Priority support"
+        { text: "Full AI Receptionist", included: true },
+        { text: "Unlimited minutes", included: true },
+        { text: "Message taking with custom questions", included: true },
+        { text: "Smart spam detection", included: true },
+        { text: "Call transcription", included: true },
+        { text: "Real-time notifications", included: true },
+        { text: "Appointment scheduling", included: true },
+        { text: "Call transfers", included: true },
+        { text: "Advanced analytics", included: true },
+        { text: "Priority support", included: true }
       ],
       popular: true,
       ctaText: "Get Started"
@@ -210,8 +220,14 @@ const Pricing = () => {
                 <ul className="space-y-2 sm:space-y-3 flex-1">
                   {plan.features.map((feature, featureIndex) => (
                     <li key={featureIndex} className="flex items-start gap-2 sm:gap-3">
-                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-xs sm:text-sm">{feature}</span>
+                      {feature.included ? (
+                        <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <X className="w-4 h-4 sm:w-5 sm:h-5 text-destructive mt-0.5 flex-shrink-0" />
+                      )}
+                      <span className={`text-xs sm:text-sm ${!feature.included ? 'text-muted-foreground/50 line-through' : ''}`}>
+                        {feature.text}
+                      </span>
                     </li>
                   ))}
                 </ul>
