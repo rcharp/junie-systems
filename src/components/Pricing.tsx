@@ -132,52 +132,34 @@ const Pricing = () => {
   const plans = [
     {
       name: "Starter",
-      price: "$49",
+      price: "$499",
       period: "/month",
-      description: "Ideal for entrepreneurs and small businesses who want professional call handling without the overhead.",
+      description: "Perfect for businesses that want to capture every missed call opportunity.",
       features: [
-        "Unlimited minutes",
-        "Message taking with custom questions", 
-        "Smart spam detection",
-        "Call transcription",
-        "Real-time notifications"
+        "Automatic missed-call-text-back"
       ],
       popular: false,
-      ctaText: "Get Started for Free"
+      ctaText: "Get Started"
     },
     {
       name: "Growth", 
-      price: "$149",
+      price: "$1,999",
       period: "/month",
-      description: "Designed for expanding businesses that need advanced features and seamless integrations.",
+      description: "Full-featured AI receptionist for businesses ready to automate their phone operations.",
       features: [
-        "Everything in Starter",
+        "Full AI Receptionist",
+        "Unlimited minutes",
+        "Message taking with custom questions",
+        "Smart spam detection",
+        "Call transcription",
+        "Real-time notifications",
         "Appointment scheduling",
         "Call transfers",
-        "Send texts during call",
         "Advanced analytics",
         "Priority support"
       ],
       popular: true,
-      ctaText: "Get Started for Free"
-    },
-    {
-      name: "Enterprise",
-      price: "$299", 
-      period: "/month",
-      description: "Perfect for more complex businesses that require additional agent training to handle their calls.",
-      features: [
-        "Everything in Growth",
-        "Live transfers (Coming Soon)",
-        "Training files & custom knowledge",
-        "Multiple phone numbers",
-        "CRM integrations",
-        "Team collaboration tools",
-        "White-label options",
-        "Dedicated success manager"
-      ],
-      popular: false,
-      ctaText: "Get Started for Free"
+      ctaText: "Get Started"
     }
   ];
 
@@ -195,7 +177,7 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto px-4 sm:px-0">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto px-4 sm:px-0">
           {plans.map((plan, index) => (
             <Card 
               key={index} 
