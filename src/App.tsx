@@ -58,6 +58,17 @@ const App = () => (
             <Route path="/blog/create" element={<CreateBlogPost />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/landing/:industry" element={<IndustryLanding />} />
+            {/* Direct business type routes */}
+            <Route path="/plumbing" element={<IndustryLanding />} />
+            <Route path="/hvac" element={<IndustryLanding />} />
+            <Route path="/roofing" element={<IndustryLanding />} />
+            <Route path="/electric" element={<IndustryLanding />} />
+            <Route path="/cleaning" element={<IndustryLanding />} />
+            <Route path="/landscaping" element={<IndustryLanding />} />
+            <Route path="/pest-control" element={<IndustryLanding />} />
+            <Route path="/garage-door" element={<IndustryLanding />} />
+            <Route path="/pool-spa" element={<IndustryLanding />} />
+            <Route path="/handyman" element={<IndustryLanding />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
