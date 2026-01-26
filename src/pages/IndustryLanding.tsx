@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -357,9 +357,13 @@ const defaultContent = {
 };
 
 const IndustryLanding = () => {
-  const { industry } = useParams<{ industry: string }>();
+  const { industry: paramIndustry } = useParams<{ industry: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+
+  // Detect industry from URL param or from pathname (e.g., /plumbing → "plumbing")
+  const industry = paramIndustry || location.pathname.replace('/', '');
 
   const content = industry && industryContent[industry] 
     ? industryContent[industry] 
