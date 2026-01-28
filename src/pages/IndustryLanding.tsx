@@ -37,7 +37,7 @@ const industryContent: Record<string, {
     label: "Plumbing",
     headline: "Answer Every Call, Book More Jobs, Grow Your Plumbing Business",
     subheadline: "Junie answers every call 24/7, books appointments, and captures leads while you're fixing pipes—not fielding phone calls.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-plumbing.png",
     painPoints: [
       "Missing emergency calls while on a job site",
       "Losing leads to competitors who answer faster",
@@ -66,7 +66,7 @@ const industryContent: Record<string, {
     label: "HVAC",
     headline: "Capture 60% More After-Hours HVAC Calls Automatically",
     subheadline: "When AC units fail in summer heat, customers call immediately. Junie ensures you never miss a high-value emergency service call.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-hvac.png",
     painPoints: [
       "Peak season call overload overwhelming your team",
       "Missing after-hours AC emergency calls",
@@ -95,7 +95,7 @@ const industryContent: Record<string, {
     label: "Roofing",
     headline: "Be the First Roofer to Respond and Win More Jobs",
     subheadline: "Storm damage calls can't wait. Junie captures every roofing lead, schedules inspections, and keeps your crews busy.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-roofing.png",
     painPoints: [
       "Missing storm damage calls while on job sites",
       "Leads going cold because of delayed follow-up",
@@ -124,7 +124,7 @@ const industryContent: Record<string, {
     label: "Electrical",
     headline: "Book 30% More Service Calls Without Hiring Staff",
     subheadline: "Electrical emergencies are urgent. Junie answers every call, books service appointments, and keeps your schedule full.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-electric.png",
     painPoints: [
       "Missing urgent calls while working on panels",
       "Difficulty managing residential and commercial inquiries",
@@ -153,7 +153,7 @@ const industryContent: Record<string, {
     label: "Cleaning",
     headline: "Double Your Recurring Clients With Instant Response",
     subheadline: "Professional cleaning businesses thrive on consistent bookings. Junie handles inquiries, quotes, and scheduling so you can focus on delivering spotless results.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-cleaning.png",
     painPoints: [
       "Missing calls while cleaning client homes",
       "Difficulty managing recurring appointment schedules",
@@ -182,7 +182,7 @@ const industryContent: Record<string, {
     label: "Landscaping",
     headline: "Book 40% More Lawn Care Contracts This Season",
     subheadline: "From spring cleanups to fall leaf removal, Junie captures every landscaping inquiry and books estimates while you're outdoors working.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-landscaping.png",
     painPoints: [
       "Missing calls while mowing or on job sites",
       "Seasonal rush overwhelming your phone",
@@ -211,7 +211,7 @@ const industryContent: Record<string, {
     label: "Pest Control",
     headline: "Respond to Every Pest Emergency Before Your Competitors",
     subheadline: "When pests invade, customers need immediate help. Junie answers every call, schedules treatments, and captures leads before competitors.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-pest-control.png",
     painPoints: [
       "Missing urgent pest calls during treatments",
       "Seasonal infestations overwhelming your phone",
@@ -240,7 +240,7 @@ const industryContent: Record<string, {
     label: "Garage Door",
     headline: "Capture Every Emergency Repair Call, 24/7",
     subheadline: "Broken garage doors are emergencies. Junie captures every call, books repair appointments, and keeps your technicians busy.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-garage-door.png",
     painPoints: [
       "Missing emergency calls during installations",
       "Customers stuck with non-functioning doors calling competitors",
@@ -269,7 +269,7 @@ const industryContent: Record<string, {
     label: "Pool & Spa",
     headline: "Fill Your Summer Schedule With Zero Missed Calls",
     subheadline: "Pool emergencies and maintenance requests come at all hours. Junie answers every call and keeps your service schedule full.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-pool-spa.png",
     painPoints: [
       "Missing calls while servicing pools",
       "Summer season overwhelming your phone",
@@ -298,7 +298,7 @@ const industryContent: Record<string, {
     label: "Handyman",
     headline: "Turn Every Inquiry Into a Booked Job Automatically",
     subheadline: "From small fixes to big projects, homeowners call when they need help. Junie captures every inquiry and books your calendar solid.",
-    heroImage: "/lovable-uploads/junie-hero-phone.png",
+    heroImage: "/lovable-uploads/hero-handyman.png",
     painPoints: [
       "Missing calls while on job sites",
       "Variety of job types making scheduling complex",
