@@ -965,7 +965,45 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      blog_posts_public: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          excerpt: string | null
+          hero_image: string | null
+          id: string | null
+          published: boolean | null
+          published_at: string | null
+          slug: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          hero_image?: string | null
+          id?: string | null
+          published?: boolean | null
+          published_at?: string | null
+          slug?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          excerpt?: string | null
+          hero_image?: string | null
+          id?: string | null
+          published?: boolean | null
+          published_at?: string | null
+          slug?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       authorize_admin_customer_data_access: {
