@@ -7,7 +7,6 @@ import Features from "@/components/Features";
 import WhyJunie from "@/components/WhyJunie";
 import HowItWorks from "@/components/HowItWorks";
 import FAQ from "@/components/FAQ";
-import JunieDemo from "@/components/JunieDemo";
 
 import Pricing from "@/components/Pricing";
 import EmailCapture from "@/components/EmailCapture";
@@ -91,7 +90,6 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
-        <JunieDemo />
         <Benefits />
         <WhyJunie />
         <section id="how-it-works">
