@@ -19,14 +19,13 @@ const Hero = () => {
           <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
             <div className="space-y-4 sm:space-y-6">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Website Design & 
-                <span className="bg-gradient-hero bg-clip-text text-transparent"> Marketing Systems</span>
-                <br />For Contractors
+                Websites & Automations
+                <span className="bg-gradient-hero bg-clip-text text-transparent"> That Actually Work</span>
+                <br />For Home Service Pros
               </h1>
 
               <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                Cut the BS. Marketing isn't rocket science. We give you the tools to win — 
-                you just need to commit to using them. No magic solutions, just systems that work.
+                Stop losing leads to voicemail. We build websites that capture customers and automations that follow up for you — so you can focus on the job.
               </p>
             </div>
 
