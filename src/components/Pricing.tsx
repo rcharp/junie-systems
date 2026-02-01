@@ -1,193 +1,83 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { useSubscription } from '@/hooks/useSubscription';
-import { toast } from 'sonner';
-import { useState } from 'react';
+import { Check, ArrowRight } from "lucide-react";
 
 const Pricing = () => {
-  const navigate = useNavigate();
-  const { user } = useAuth();
-  const { subscriptionPlan, isLoading } = useSubscription();
-  const [loading, setLoading] = useState<string | null>(null);
-
-  const planHierarchy: Record<string, number> = {
-    'free': 0,
-    'starter': 1,
-    'growth': 2,
-    'enterprise': 3
-  };
-
-  const getButtonConfig = (planName: string) => {
-    // Disable Enterprise plan temporarily
-    if (planName === 'Enterprise') {
-      return { text: "Coming Soon", disabled: true };
-    }
-
-    // Explicit check: only show upgrade/downgrade if user exists
-    const isUserLoggedIn = !!user;
-    
-    if (!isUserLoggedIn) {
-      return { text: "Get Started for Free", disabled: false };
-    }
-
-    // If user is logged in but subscription is still loading, show loading state
-    if (isLoading) {
-      return { text: "Loading...", disabled: true };
-    }
-
-    const currentPlanTier = planHierarchy[subscriptionPlan];
-    const targetPlanTier = planHierarchy[planName.toLowerCase()];
-
-    if (currentPlanTier === targetPlanTier) {
-      return { text: "Current Plan", disabled: true };
-    } else if (targetPlanTier > currentPlanTier) {
-      return { text: "Upgrade", disabled: false };
-    } else {
-      return { text: "Downgrade", disabled: false };
-    }
-  };
-  
-  const handleGetStarted = async (plan: string) => {
-    // If user not logged in, redirect to signup
-    if (!user) {
-      navigate(`/signup?plan=${plan.toLowerCase()}`);
-      return;
-    }
-
-    // For all plans, use direct Stripe links
-    if (plan.toLowerCase() === 'starter') {
-      setLoading(plan);
-      try {
-        window.top!.location.href = 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000';
-      } catch (e) {
-        window.location.href = 'https://buy.stripe.com/eVqeVcdE78XU0T08ft8g000';
-      }
-      return;
-    }
-
-    if (plan.toLowerCase() === 'growth') {
-      setLoading(plan);
-      try {
-        window.top!.location.href = 'https://buy.stripe.com/7sY9AScA32zw7ho8ft8g001';
-      } catch (e) {
-        window.location.href = 'https://buy.stripe.com/7sY9AScA32zw7ho8ft8g001';
-      }
-      return;
-    }
-
-    if (plan.toLowerCase() === 'enterprise') {
-      setLoading(plan);
-      try {
-        window.top!.location.href = 'https://buy.stripe.com/28E8wOfMf4HEgRYfHV8g002';
-      } catch (e) {
-        window.location.href = 'https://buy.stripe.com/28E8wOfMf4HEgRYfHV8g002';
-      }
-      return;
-    }
-
-    // Fallback for any other plans
-    setLoading(plan);
-    try {
-      console.log('Creating checkout session for plan:', plan);
-      
-      const { data, error } = await supabase.functions.invoke('stripe-create-checkout', {
-        body: { plan: plan.toLowerCase() },
-      });
-
-      console.log('Checkout response:', { data, error });
-
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw new Error(error.message || 'Failed to create checkout session');
-      }
-
-      if (!data || !data.url) {
-        throw new Error('No checkout URL returned');
-      }
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      console.log('Redirecting to Stripe checkout:', data.url);
-      
-      try {
-        window.top!.location.href = data.url;
-      } catch (e) {
-        window.location.href = data.url;
-      }
-      
-    } catch (error: any) {
-      console.error('Error creating checkout session:', error);
-      toast.error(error.message || 'Failed to start checkout. Please try again.');
-      setLoading(null);
-    }
+  const handleBookCall = () => {
+    window.open("https://calendly.com/your-link", "_blank");
   };
   
   const plans = [
     {
       name: "Starter",
-      price: "$499",
+      price: "$497",
       period: "/month",
-      description: "Perfect for businesses that want to capture every missed call opportunity.",
+      description: "Perfect for contractors just getting started with online marketing.",
       features: [
-        { text: "Automatic missed-call-text-back", included: true },
-        { text: "Full AI Receptionist", included: false },
-        { text: "Unlimited minutes", included: false },
-        { text: "Message taking with custom questions", included: false },
-        { text: "Smart spam detection", included: false },
-        { text: "Call transcription", included: false },
-        { text: "Real-time notifications", included: false },
-        { text: "Appointment scheduling", included: false },
-        { text: "Call transfers", included: false },
-        { text: "Advanced analytics", included: false },
-        { text: "Priority support", included: false }
+        "Professional contractor website",
+        "Mobile-optimized design",
+        "Missed call text-back automation",
+        "Basic Google Business optimization",
+        "Monthly performance report",
+        "Email support"
       ],
       popular: false,
       ctaText: "Get Started"
     },
     {
       name: "Growth", 
-      price: "$1,999",
+      price: "$997",
       period: "/month",
-      description: "Full-featured AI receptionist for businesses ready to automate their phone operations.",
+      description: "For contractors ready to dominate their local market.",
       features: [
-        { text: "Full AI Receptionist", included: true },
-        { text: "Unlimited minutes", included: true },
-        { text: "Message taking with custom questions", included: true },
-        { text: "Smart spam detection", included: true },
-        { text: "Call transcription", included: true },
-        { text: "Real-time notifications", included: true },
-        { text: "Appointment scheduling", included: true },
-        { text: "Call transfers", included: true },
-        { text: "Advanced analytics", included: true },
-        { text: "Priority support", included: true }
+        "Everything in Starter, plus:",
+        "5-Star review funnel system",
+        "One-click marketing campaigns",
+        "GoHighLevel CRM setup",
+        "Automated follow-up sequences",
+        "Local SEO optimization",
+        "Priority support",
+        "Monthly strategy call"
       ],
       popular: true,
       ctaText: "Get Started"
+    },
+    {
+      name: "Scale", 
+      price: "$1,997",
+      period: "/month",
+      description: "Full-service marketing for contractors ready to scale.",
+      features: [
+        "Everything in Growth, plus:",
+        "Custom landing pages",
+        "Paid ads management",
+        "Advanced automation workflows",
+        "Reputation management",
+        "Dedicated account manager",
+        "Weekly strategy calls",
+        "Custom integrations"
+      ],
+      popular: false,
+      ctaText: "Book a Call"
     }
   ];
 
   return (
     <section id="pricing" className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="text-center space-y-4 mb-12 sm:mb-16 px-4 sm:px-0">
-          <Badge variant="outline" className="text-primary">Simple, transparent pricing</Badge>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-muted-foreground leading-tight">
-            Get your AI answering service 
-            <span className="bg-gradient-hero bg-clip-text text-transparent"> today</span>
+        <div className="text-center space-y-4 mb-12 sm:mb-16">
+          <Badge variant="outline" className="text-primary">Simple Pricing</Badge>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
+            Invest in your 
+            <span className="bg-gradient-hero bg-clip-text text-transparent"> growth</span>
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Free for the first 30 minutes. No credit card required to start. Cancel anytime.
+            No hidden fees. No long-term contracts. Just results.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto px-4 sm:px-0">
+        <div className="grid md:grid-cols-3 gap-6 sm:gap-8 max-w-6xl mx-auto">
           {plans.map((plan, index) => (
             <Card 
               key={index} 
@@ -201,44 +91,38 @@ const Pricing = () => {
                 </div>
               )}
               
-              <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6 pt-4 sm:pt-6">
+              <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6 pt-6 sm:pt-8">
                 <div className="space-y-2">
-                  <h3 className="text-base sm:text-lg font-semibold uppercase tracking-wide text-muted-foreground">
+                  <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-foreground">
                     {plan.name}
                   </h3>
                   <div className="flex items-baseline justify-center">
-                    <span className="text-3xl sm:text-4xl font-medium text-muted-foreground">{plan.price}</span>
+                    <span className="text-4xl sm:text-5xl font-bold text-foreground">{plan.price}</span>
                     <span className="text-muted-foreground ml-1">{plan.period}</span>
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     {plan.description}
                   </p>
                 </div>
               </CardHeader>
               
-              <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6 flex flex-col flex-1">
-                <ul className="space-y-2 sm:space-y-3 flex-1">
+              <CardContent className="space-y-6 px-4 sm:px-6 pb-6 sm:pb-8 flex flex-col flex-1">
+                <ul className="space-y-3 flex-1">
                   {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-start gap-2 sm:gap-3">
-                      {feature.included ? (
-                        <Check className="w-4 h-4 sm:w-5 sm:h-5 text-primary mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <X className="w-4 h-4 sm:w-5 sm:h-5 text-destructive mt-0.5 flex-shrink-0" />
-                      )}
-                      <span className={`text-xs sm:text-sm ${!feature.included ? 'text-muted-foreground/50 line-through' : ''}`}>
-                        {feature.text}
-                      </span>
+                    <li key={featureIndex} className="flex items-start gap-3">
+                      <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-foreground">{feature}</span>
                     </li>
                   ))}
                 </ul>
                 
                 <Button 
-                  className="w-full bg-primary hover:bg-primary/90 text-sm sm:text-base mt-auto"
-                  size="lg"
-                  disabled={getButtonConfig(plan.name).disabled || loading === plan.name}
-                  onClick={() => !getButtonConfig(plan.name).disabled && handleGetStarted(plan.name)}
+                  className="w-full h-12"
+                  variant={plan.popular ? "hero" : "default"}
+                  onClick={handleBookCall}
                 >
-                  {loading === plan.name ? 'Loading...' : getButtonConfig(plan.name).text}
+                  {plan.ctaText}
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
@@ -247,16 +131,13 @@ const Pricing = () => {
 
         <div className="text-center mt-12 space-y-4">
           <p className="text-muted-foreground">
-            Start your 7-day free trial today • No credit card required
+            Not sure which plan is right for you? <span className="text-primary font-medium cursor-pointer hover:underline" onClick={handleBookCall}>Book a free strategy call</span>
           </p>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-            <span>✓ Full access during trial</span>
-            <span>✓ 3-day grace period after trial</span>
+            <span>✓ No setup fees</span>
             <span>✓ Cancel anytime</span>
+            <span>✓ 30-day money-back guarantee</span>
           </div>
-          <p className="text-xs text-muted-foreground/60 mt-2">
-            Test with unlimited calls for 7 days. Need more time? Enjoy a 3-day grace period before billing starts.
-          </p>
         </div>
       </div>
     </section>
