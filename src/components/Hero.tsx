@@ -51,13 +51,13 @@ const Hero = () => {
           <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
             <div className="space-y-4 sm:space-y-6">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                Websites & Automations
-                <span className="bg-gradient-hero bg-clip-text text-transparent"> That Actually Work</span>
-                <br />For Home Service Pros
+                Close More Jobs.
+                <span className="bg-gradient-hero bg-clip-text text-transparent"> Grow Your Business.</span>
+                <br />Work Less.
               </h1>
 
               <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0">
-                Stop losing leads to voicemail. We build websites that capture customers and automations that follow up for you — so you can focus on the job.
+                We build the websites and automation systems that help home service pros capture more leads, follow up faster, and turn more calls into booked jobs.
               </p>
             </div>
 
