@@ -21,7 +21,7 @@ const Footer = () => {
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:hello@juniesystems.com" className="hover:text-white transition-colors">hello@juniesystems.com</a>
+                <a href="mailto:ricky@getjunie.com" className="hover:text-white transition-colors">ricky@getjunie.com</a>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4" />
