@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Menu, Phone, ArrowRight } from "lucide-react";
+import { Menu, ArrowRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,12 +49,12 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
           
           <Link to="/" className="flex items-center gap-2">
             <img 
-              src="/lovable-uploads/junie-logo.png" 
-              alt="Junie Marketing Systems Logo" 
+              src="/favicon.png" 
+              alt="Junie Systems Logo" 
               className="h-8 w-8 sm:h-10 sm:w-10"
             />
             <span className="hidden sm:block text-lg font-bold text-foreground">
-              Junie Marketing
+              Junie Systems
             </span>
           </Link>
         </div>
@@ -76,17 +76,6 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
         </nav>
         
         <div className="flex items-center space-x-2 sm:space-x-4">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="hidden sm:flex"
-            asChild
-          >
-            <a href="tel:+1234567890">
-              <Phone className="w-4 h-4 mr-2" />
-              (123) 456-7890
-            </a>
-          </Button>
           <Button 
             variant="hero" 
             size="sm" 
