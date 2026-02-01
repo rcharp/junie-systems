@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -9,23 +9,19 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img 
-                src="/lovable-uploads/junie-logo.png" 
-                alt="Junie Marketing Systems Logo" 
+                src="/favicon.png" 
+                alt="Junie Systems Logo" 
                 className="w-10 h-10"
               />
-              <span className="text-xl font-bold text-primary-foreground">Junie Marketing</span>
+              <span className="text-xl font-bold text-primary-foreground">Junie Systems</span>
             </div>
             <p className="text-primary-foreground/80 leading-relaxed">
               Website design & marketing systems for contractors. Simple tools that actually work.
             </p>
             <div className="space-y-2 text-sm">
               <div className="flex items-center space-x-2">
-                <Phone className="w-4 h-4" />
-                <a href="tel:+1234567890" className="hover:text-white transition-colors">(123) 456-7890</a>
-              </div>
-              <div className="flex items-center space-x-2">
                 <Mail className="w-4 h-4" />
-                <a href="mailto:hello@juniemarketing.com" className="hover:text-white transition-colors">hello@juniemarketing.com</a>
+                <a href="mailto:hello@juniesystems.com" className="hover:text-white transition-colors">hello@juniesystems.com</a>
               </div>
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4" />
@@ -69,7 +65,7 @@ const Footer = () => {
         
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 text-center">
           <p className="text-primary-foreground/60">
-            © {new Date().getFullYear()} Junie Marketing Systems. All rights reserved. Built for contractors who want to grow.
+            © {new Date().getFullYear()} Junie Systems. All rights reserved. Built for contractors who want to grow.
           </p>
         </div>
       </div>
