@@ -48,8 +48,8 @@ const Testimonials = () => {
         <div className="text-center space-y-4 mb-12 sm:mb-16">
           <Badge variant="outline" className="text-primary">Testimonials</Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
-            The proof is in the 
-            <span className="bg-gradient-hero bg-clip-text text-transparent"> pudding</span>
+            Real results from
+            <span className="bg-gradient-hero bg-clip-text text-transparent"> real contractors</span>
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Let's see what our clients have to say about working with us.
