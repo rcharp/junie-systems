@@ -43,7 +43,7 @@ const Hero = () => {
   };
 
   const handleBookCall = () => {
-    window.open("https://calendly.com/your-link", "_blank");
+    window.open("https://calendly.com/admin-getjunie/30min", "_blank");
   };
 
   return (

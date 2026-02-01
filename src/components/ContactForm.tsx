@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowRight, Phone, Mail, MapPin } from "lucide-react";
+import { ArrowRight, Mail, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
 const ContactForm = () => {
@@ -31,7 +31,7 @@ const ContactForm = () => {
   };
 
   const handleBookCall = () => {
-    window.open("https://calendly.com/your-link", "_blank");
+    window.open("https://calendly.com/admin-getjunie/30min", "_blank");
   };
 
   return (
@@ -62,20 +62,10 @@ const ContactForm = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-xl bg-gradient-hero text-white">
-                  <Phone className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-medium text-foreground">(123) 456-7890</p>
-                  <p className="text-sm text-muted-foreground">Call or text anytime</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-gradient-hero text-white">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">hello@juniemarketing.com</p>
+                  <p className="font-medium text-foreground">ricky@getjunie.com</p>
                   <p className="text-sm text-muted-foreground">We reply within 24 hours</p>
                 </div>
               </div>

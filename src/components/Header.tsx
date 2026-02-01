@@ -14,8 +14,7 @@ interface HeaderProps {
 
 const Header = ({ showAuthButtons = true }: HeaderProps) => {
   const handleBookCall = () => {
-    // Replace with your actual booking link
-    window.open("https://calendly.com/your-link", "_blank");
+    window.open("https://calendly.com/admin-getjunie/30min", "_blank");
   };
 
   return (
