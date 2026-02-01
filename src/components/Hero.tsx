@@ -1,8 +1,40 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import heroContractor from "@/assets/hero-contractor.jpg";
+import heroPlumber from "@/assets/hero-plumber.jpg";
+import heroHvac from "@/assets/hero-hvac.jpg";
+import heroRoofer from "@/assets/hero-roofer.jpg";
+import heroElectrician from "@/assets/hero-electrician.jpg";
+import heroLandscaper from "@/assets/hero-landscaper.jpg";
+
+const heroImages = [
+  { src: heroContractor, alt: "General contractor at construction site" },
+  { src: heroPlumber, alt: "Professional plumber at work" },
+  { src: heroHvac, alt: "HVAC technician installing AC unit" },
+  { src: heroRoofer, alt: "Roofers installing shingles" },
+  { src: heroElectrician, alt: "Electrician working on electrical panel" },
+  { src: heroLandscaper, alt: "Landscaper trimming hedges" },
+];
 
 const Hero = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % heroImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const goToPrevious = () => {
+    setCurrentIndex((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+  };
+
+  const goToNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % heroImages.length);
+  };
+
   const handleBookCall = () => {
     window.open("https://calendly.com/your-link", "_blank");
   };
@@ -84,15 +116,55 @@ const Hero = () => {
             </div>
           </div>
 
-          {/* Right Column - Hero Image */}
+          {/* Right Column - Hero Image Carousel */}
           <div className="flex justify-center lg:justify-end mt-8 lg:mt-0">
-            <div className="relative max-w-md lg:max-w-lg xl:max-w-xl">
-              <img
-                src={heroContractor}
-                alt="Professional contractor at a construction site"
-                className="w-full h-auto rounded-2xl shadow-elegant object-cover"
-              />
-              <div className="absolute inset-0 from-primary/20 to-transparent rounded-2xl" />
+            <div className="relative max-w-md lg:max-w-lg xl:max-w-xl w-full">
+              {/* Carousel Container */}
+              <div className="relative overflow-hidden rounded-2xl shadow-elegant aspect-[4/3]">
+                {heroImages.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image.src}
+                    alt={image.alt}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                      index === currentIndex ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                ))}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-2xl" />
+              </div>
+
+              {/* Navigation Arrows */}
+              <button
+                onClick={goToPrevious}
+                className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-all"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-5 h-5 text-foreground" />
+              </button>
+              <button
+                onClick={goToNext}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background shadow-md transition-all"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-5 h-5 text-foreground" />
+              </button>
+
+              {/* Dots Indicator */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                {heroImages.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentIndex 
+                        ? "bg-primary w-6" 
+                        : "bg-background/60 hover:bg-background/80"
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>
