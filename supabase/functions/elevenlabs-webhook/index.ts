@@ -186,7 +186,7 @@ serve(async (req) => {
       console.log('🔴 CALL INITIATION FAILURE DETECTED');
       console.log('Failure data:', JSON.stringify(webhookData, null, 2));
       
-      const failureData = webhookData.data;
+      const failureData = webhookData.data as Record<string, any>;
       
       // Extract phone number from metadata based on provider type
       let phoneNumber = 'unknown';
@@ -934,7 +934,7 @@ Return ONLY the issue details as plain text, or return "null" if no specific iss
 }
 
 // Helper function to find target user ID and incoming call phone number
-async function findTargetUserId(analysisData: any, webhookData: any, supabase: any): Promise<{ userId: string | null; callerId: string | null }> {
+async function findTargetUserId(analysisData: any, webhookData: any, supabase: any): Promise<{ userId: string | null; callerId: string | null; businessId: string | null }> {
   const conversationId = webhookData.data?.conversation_id;
   
   // ElevenLabs sends call_id in different locations depending on the webhook type
@@ -1075,7 +1075,18 @@ function formatAdditionalNotes(notes: string | null): string | null {
 
 // Helper function to extract caller information from transcript and webhook data
 function extractCallerInfo(transcript: string, analysisData?: any) {
-  const info = {
+  const info: {
+    caller_name: string;
+    phone_number: string;
+    email: string | null;
+    message: string;
+    urgency_level: string;
+    best_time_to_call: string | null;
+    call_type: string;
+    appointmentDateTime: string | null;
+    service_type: string | null;
+    additional_notes: string | null;
+  } = {
     caller_name: "A potential customer",
     phone_number: "", 
     email: null,

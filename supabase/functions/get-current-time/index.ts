@@ -148,13 +148,14 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const errorSupabase = createClient(supabaseUrl, supabaseServiceKey);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     errorSupabase.from('client_tool_events').insert({
       call_sid: 'error_' + Date.now(),
       tool_name: 'get_current_time',
       tool_call_id: `get_current_time_error_${Date.now()}`,
       parameters: { error_context: 'Failed to parse request or process' },
-      result: error.message,
+      result: errorMessage,
       is_error: true
     }).then(({ error: logError }) => {
       if (logError) console.error('Failed to log error:', logError);
@@ -162,7 +163,7 @@ serve(async (req) => {
     });
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

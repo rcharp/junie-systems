@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const cacheKey = getCacheKey(businessSettings.user_id, date, time);
+    const cacheKey = getCacheKey(businessSettings.user_id || '', date || '', time || '');
     const cached = getFromCache(cacheKey);
     if (cached) {
       return new Response(JSON.stringify(cached), {
@@ -306,10 +306,10 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in get-specific-availability:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

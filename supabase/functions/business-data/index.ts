@@ -280,7 +280,7 @@ serve(async (req) => {
         const { data: calendarSettings } = await supabase
           .from("google_calendar_settings")
           .select("*")
-          .eq("user_id", businessDataForInit.user_id)
+          .eq("user_id", businessDataForInit!.user_id)
           .single();
         
         // Get appointment duration from calendar settings
@@ -403,9 +403,9 @@ serve(async (req) => {
         let availableSlots: any[] = [];
         if (calendarSettings && calendarSettings.is_connected) {
           try {
-            console.log("Fetching calendar availability for conversation init - user_id:", businessDataForInit.user_id);
+            console.log("Fetching calendar availability for conversation init - user_id:", businessDataForInit!.user_id);
             const availabilityResponse = await supabase.functions.invoke("google-calendar-availability", {
-              body: { user_id: businessDataForInit.user_id, limit: 3 },
+              body: { user_id: businessDataForInit!.user_id, limit: 3 },
             });
 
             if (availabilityResponse.data && !availabilityResponse.error && availabilityResponse.data.available) {

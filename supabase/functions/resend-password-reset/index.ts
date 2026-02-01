@@ -46,7 +46,8 @@ serve(async (req: Request) => {
     console.log(`Password reset request for: ${email}`);
 
     // Send email in background without blocking the response
-    EdgeRuntime.waitUntil((async () => {
+    // @ts-ignore - EdgeRuntime is available in Deno Deploy
+    (globalThis as any).EdgeRuntime?.waitUntil((async () => {
       try {
         // Generate password reset link using Supabase Auth Admin API
         const { data, error: resetError } = await supabase.auth.admin.generateLink({
