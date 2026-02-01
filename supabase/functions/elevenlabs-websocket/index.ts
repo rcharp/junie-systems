@@ -340,10 +340,10 @@ serve(async (req) => {
                   is_error: !result.success
                 }));
 
-              } catch (error) {
+              } catch (error: unknown) {
                 console.error("[II] Error calling twilio-transfer function:", error);
                 
-                const errorMessage = `Transfer failed: ${error.message}`;
+                const errorMessage = `Transfer failed: ${error instanceof Error ? error.message : 'Unknown error'}`;
 
                 // Update the event with the error and duration
                 const durationMs = Date.now() - toolCallStartTime;

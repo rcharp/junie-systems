@@ -148,10 +148,10 @@ Return only the issue description as plain text (no JSON, no formatting).`;
         // Add delay to avoid rate limits (100ms between requests)
         await new Promise(resolve => setTimeout(resolve, 100));
 
-      } catch (error) {
+      } catch (error: unknown) {
         console.error(`Error processing appointment ${appointment.id}:`, error);
         errorCount++;
-        errors.push(`${appointment.id}: ${error.message}`);
+        errors.push(`${appointment.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
 
@@ -178,12 +178,12 @@ Return only the issue description as plain text (no JSON, no formatting).`;
       }
     );
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in backfill-issue-details:', error);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.toString()
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: error instanceof Error ? error.toString() : String(error)
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

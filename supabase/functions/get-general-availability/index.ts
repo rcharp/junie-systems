@@ -382,9 +382,9 @@ Deno.serve(async (req) => {
           // Send available slots as separate event
           sendEvent({ status: 'slots', ...result });
           controller.close();
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Error in SSE stream:', error);
-          sendEvent({ status: 'error', error: error.message });
+          sendEvent({ status: 'error', error: error instanceof Error ? error.message : 'Unknown error' });
           controller.close();
         }
       }
@@ -398,10 +398,10 @@ Deno.serve(async (req) => {
         'Connection': 'keep-alive',
       }
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in get-general-availability:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      JSON.stringify({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }

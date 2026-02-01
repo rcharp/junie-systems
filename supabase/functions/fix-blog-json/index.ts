@@ -52,8 +52,8 @@ serve(async (req) => {
               needsUpdate = true;
               console.log(`Extracted from JSON block: ${cleanTitle}`);
             }
-          } catch (e) {
-            console.error(`Failed to parse JSON block for post ${post.id}:`, e.message);
+          } catch (e: unknown) {
+            console.error(`Failed to parse JSON block for post ${post.id}:`, e instanceof Error ? e.message : 'Unknown error');
           }
         }
 
