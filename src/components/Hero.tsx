@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Phone, Star } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
+import heroContractor from "@/assets/hero-contractor.jpg";
 
 const Hero = () => {
   const handleBookCall = () => {
-    // Replace with your actual booking link (Calendly, Cal.com, etc.)
     window.open("https://calendly.com/your-link", "_blank");
   };
 
@@ -47,7 +47,7 @@ const Hero = () => {
               </div>
             </div>
 
-            {/* CTA Buttons */}
+            {/* CTA Button */}
             <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto lg:mx-0">
               <Button
                 onClick={handleBookCall}
@@ -57,17 +57,6 @@ const Hero = () => {
               >
                 Book A Call
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="h-14 text-base"
-                asChild
-              >
-                <a href="tel:+1234567890">
-                  <Phone className="w-5 h-5 mr-2" />
-                  (123) 456-7890
-                </a>
               </Button>
             </div>
 
@@ -100,9 +89,9 @@ const Hero = () => {
           <div className="flex justify-center lg:justify-end mt-8 lg:mt-0">
             <div className="relative max-w-md lg:max-w-lg xl:max-w-xl">
               <img
-                src="/lovable-uploads/junie-hero-phone.png"
-                alt="Marketing dashboard showing contractor website and lead management"
-                className="w-full h-auto rounded-2xl shadow-elegant"
+                src={heroContractor}
+                alt="Professional contractor at a construction site"
+                className="w-full h-auto rounded-2xl shadow-elegant object-cover"
               />
               <div className="absolute inset-0 from-primary/20 to-transparent rounded-2xl" />
             </div>
