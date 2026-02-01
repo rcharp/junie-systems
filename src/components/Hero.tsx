@@ -7,6 +7,11 @@ import heroHvac from "@/assets/hero-hvac.jpg";
 import heroRoofer from "@/assets/hero-roofer.jpg";
 import heroElectrician from "@/assets/hero-electrician.jpg";
 import heroLandscaper from "@/assets/hero-landscaper.jpg";
+import headshot1 from "@/assets/headshot-1.jpg";
+import headshot2 from "@/assets/headshot-2.jpg";
+import headshot3 from "@/assets/headshot-3.jpg";
+import headshot4 from "@/assets/headshot-4.jpg";
+import headshot5 from "@/assets/headshot-5.jpg";
 
 const heroImages = [
   { src: heroContractor, alt: "General contractor at construction site" },
@@ -16,6 +21,8 @@ const heroImages = [
   { src: heroElectrician, alt: "Electrician working on electrical panel" },
   { src: heroLandscaper, alt: "Landscaper trimming hedges" },
 ];
+
+const headshots = [headshot1, headshot2, headshot3, headshot4, headshot5];
 
 const Hero = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -65,13 +72,13 @@ const Hero = () => {
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div 
-                      key={i} 
-                      className="w-8 h-8 rounded-full bg-gradient-hero border-2 border-background flex items-center justify-center text-primary-foreground text-xs font-bold"
-                    >
-                      {String.fromCharCode(64 + i)}
-                    </div>
+                  {headshots.map((src, i) => (
+                    <img 
+                      key={i}
+                      src={src}
+                      alt={`Happy customer ${i + 1}`}
+                      className="w-8 h-8 rounded-full border-2 border-background object-cover"
+                    />
                   ))}
                 </div>
                 <span className="text-muted-foreground">100+ contractors served</span>
