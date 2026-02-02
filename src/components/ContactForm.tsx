@@ -65,7 +65,7 @@ const ContactForm = () => {
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">ricky@getjunie.com</p>
+                  <p className="font-medium text-foreground">hello@getjunie.com</p>
                   <p className="text-sm text-muted-foreground">We reply within 24 hours</p>
                 </div>
               </div>
