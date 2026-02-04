@@ -100,7 +100,7 @@ const Terms = () => {
                 For questions about these Terms of Service, please contact us at:
               </p>
               <p className="font-medium">
-                Email: <a href="mailto:admin@getjunie.com" className="text-primary hover:underline">admin@getjunie.com</a><br />
+                Email: <a href="mailto:admin@juniesystems.com" className="text-primary hover:underline">admin@juniesystems.com</a><br />
                 Location: Palmetto, FL
               </p>
             </section>
