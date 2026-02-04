@@ -7,7 +7,8 @@ import {
   Clock, 
   TrendingUp,
   Zap,
-  Brain
+  Brain,
+  Search
 } from "lucide-react";
 
 const Features = () => {
@@ -53,6 +54,12 @@ const Features = () => {
       title: "Instant Setup",
       description: "Get started in minutes with our simple setup wizard. No technical expertise required.",
       badge: "Easy Setup"
+    },
+    {
+      icon: <Search className="w-8 h-8" />,
+      title: "SEO Optimization",
+      description: "Boost your online visibility with AI-generated, SEO-optimized content that helps customers find you.",
+      badge: "Growth"
     }
   ];
 
