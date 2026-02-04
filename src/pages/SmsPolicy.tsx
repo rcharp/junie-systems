@@ -108,7 +108,7 @@ const SmsPolicy = () => {
               If you have questions about this SMS Policy or our Missed Call Text Back service, please contact us at:
             </p>
             <p className="text-muted-foreground mt-2">
-              Email: <a href="mailto:admin@getjunie.com" className="text-primary hover:underline">admin@getjunie.com</a>
+              Email: <a href="mailto:admin@juniesystems.com" className="text-primary hover:underline">admin@juniesystems.com</a>
               <br />
               Location: Palmetto, FL
             </p>

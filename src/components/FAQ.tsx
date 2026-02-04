@@ -89,7 +89,7 @@ const FAQ = () => {
         <div className="text-center mt-12">
           <p className="text-muted-foreground">
             Still have questions?{" "}
-            <a href="mailto:admin@getjunie.com" className="text-primary hover:underline font-medium">
+            <a href="mailto:admin@juniesystems.com" className="text-primary hover:underline font-medium">
               Contact our support team
             </a>
           </p>
