@@ -52,7 +52,7 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
               alt="Junie Systems Logo" 
               className="h-8 w-8 sm:h-10 sm:w-10"
             />
-            <span className="hidden sm:block text-xl font-bold text-foreground">
+            <span className="hidden sm:block text-2xl font-bold text-foreground">
               Junie Systems
             </span>
           </Link>
