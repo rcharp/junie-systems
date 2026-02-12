@@ -11,6 +11,12 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate the request
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     const { placeId } = await req.json();
 
     if (!placeId) {

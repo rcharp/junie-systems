@@ -26,6 +26,15 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Validate phone number format to prevent injection
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
+    if (!phoneRegex.test(transferTo)) {
+      return new Response(
+        '<?xml version="1.0" encoding="UTF-8"?><Response><Say>Invalid transfer number</Say><Hangup/></Response>',
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/xml' } }
+      )
+    }
+
     // Generate TwiML to dial the transfer number
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
