@@ -5,7 +5,7 @@ import { Check, ArrowRight } from "lucide-react";
 
 const Pricing = () => {
   const handleBookCall = () => {
-    window.open("https://calendly.com/admin-juniesystems/30min", "_blank");
+    window.open("https://buy.stripe.com/7sYeVc1VpeiedFMbrF8g003", "_blank");
   };
   
   const features = [
