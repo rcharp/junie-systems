@@ -26,6 +26,7 @@ import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import CreateBlogPost from "./pages/CreateBlogPost";
 import IndustryLanding from "./pages/IndustryLanding";
+import OnboardingForm from "./pages/OnboardingForm";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +41,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Onboarding />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/onboarding" element={<OnboardingForm />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/call/:callId" element={<CallDetails />} />
             <Route path="/settings" element={<Settings />} />
