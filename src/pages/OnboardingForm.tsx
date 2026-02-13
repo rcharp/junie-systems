@@ -16,7 +16,7 @@ const OnboardingForm = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
-      <main className="flex-1 px-4 py-12">
+      <main className="flex-1 px-4 pt-28 pb-12">
         <div className="w-full max-w-3xl mx-auto">
           <h1 className="text-3xl font-bold text-center text-foreground mb-8">Let's get you onboarded</h1>
           <iframe
