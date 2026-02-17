@@ -211,6 +211,21 @@ const DemoPage = () => {
             </a>
           </div>
         </section>
+
+        {/* Disclaimer */}
+        <div className="bg-background py-8 px-4 border-t border-border">
+          <div className="max-w-3xl mx-auto text-center space-y-4">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Copyright © 2026 Junie Systems · hello@getjunie.com · Palmetto, FL
+            </p>
+            <p className="text-xs text-muted-foreground/70 leading-relaxed">
+              <strong className="text-muted-foreground">Earnings Disclaimer:</strong> Results may vary and testimonials are not claimed to represent typical results. All testimonials are real. These results are meant as a showcase of what the best, most motivated clients have achieved and should not be taken as average or typical results. You should perform your own due diligence and use your own best judgment prior to making any investment decision pertaining to your business. By virtue of visiting this site or interacting with any portion of this site, you agree that you're fully responsible for the investments you make and any outcomes that may result.
+            </p>
+            <p className="text-xs text-muted-foreground/70 leading-relaxed">
+              This site is not a part of the YouTube, Google, Bing, or Facebook website; Google Inc, Microsoft Inc, or Meta Inc. Additionally, this site is NOT endorsed by YouTube, Google, Bing, or Facebook in any way. FACEBOOK is a trademark of META Inc. YOUTUBE is a trademark of GOOGLE Inc. BING is a trademark of MICROSOFT Inc.
+            </p>
+          </div>
+        </div>
       </main>
     </div>
   );
