@@ -101,16 +101,14 @@ const DemoPage = () => {
               <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-primary" /> Zero obligation</span>
             </div>
 
-            {/* Embedded Calendar */}
-            <div className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden mt-6">
-              <iframe
-                src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
-                style={{ width: "100%", border: "none", overflow: "hidden", minHeight: "700px" }}
-                scrolling="no"
-                id="fBlaNQM6Ay3RD1FiID1Z_1771301671900"
-                title="Junie Systems Demo Calendar"
-              />
-            </div>
+            <iframe
+              src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
+              style={{ width: "100%", border: "none", overflow: "hidden", minHeight: "700px" }}
+              scrolling="no"
+              id="fBlaNQM6Ay3RD1FiID1Z_1771301671900"
+              title="Junie Systems Demo Calendar"
+              className="mt-6"
+            />
           </div>
         </section>
 
