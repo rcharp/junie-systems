@@ -27,6 +27,7 @@ import BlogPost from "./pages/BlogPost";
 import CreateBlogPost from "./pages/CreateBlogPost";
 import IndustryLanding from "./pages/IndustryLanding";
 import OnboardingForm from "./pages/OnboardingForm";
+import DemoPage from "./pages/DemoPage";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/garage-door" element={<IndustryLanding />} />
             <Route path="/pool-spa" element={<IndustryLanding />} />
             <Route path="/handyman" element={<IndustryLanding />} />
+            <Route path="/demo" element={<DemoPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
