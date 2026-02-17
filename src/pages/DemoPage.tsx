@@ -1,6 +1,4 @@
 import { useEffect } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { Check, Star, Clock, Zap, Shield, TrendingUp } from "lucide-react";
 
 const DemoPage = () => {
@@ -16,10 +14,9 @@ const DemoPage = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <Header />
       <main className="flex-1">
         {/* Progress Bar */}
-        <div className="w-full bg-muted pt-20">
+        <div className="w-full bg-muted">
           <div className="max-w-2xl mx-auto px-4 py-4">
             <div className="flex items-center justify-center gap-3 mb-2">
               <span className="text-sm font-semibold text-primary uppercase tracking-wide">
@@ -32,7 +29,7 @@ const DemoPage = () => {
           </div>
         </div>
 
-        {/* Step 1: The Hook */}
+        {/* Step 1: The Hook + VSL */}
         <section className="bg-background py-16 px-4">
           <div className="max-w-3xl mx-auto text-center space-y-6">
             <div className="inline-block px-4 py-1.5 bg-primary/10 rounded-full">
@@ -46,6 +43,14 @@ const DemoPage = () => {
             <p className="text-xl md:text-2xl text-muted-foreground font-medium">
               We build your website, automate your follow-ups, and fill your calendar — so you can focus on the work.
             </p>
+
+            {/* VSL Placeholder */}
+            <div className="w-full aspect-video bg-card border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 my-8">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-primary border-b-[12px] border-b-transparent ml-1" />
+              </div>
+              <p className="text-muted-foreground font-medium">Video coming soon</p>
+            </div>
 
             <div className="border-t border-border my-8" />
 
@@ -207,7 +212,6 @@ const DemoPage = () => {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 };
