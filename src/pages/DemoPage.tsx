@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Check, Star, Clock, Zap, Shield, TrendingUp } from "lucide-react";
+import { Check, Star, Clock, Shield, ArrowDown } from "lucide-react";
 
 const DemoPage = () => {
   useEffect(() => {
@@ -17,172 +17,92 @@ const DemoPage = () => {
       <main className="flex-1">
         {/* Progress Bar */}
         <div className="w-full bg-muted">
-          <div className="max-w-2xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-center gap-3 mb-2">
-              <span className="text-sm font-semibold text-primary uppercase tracking-wide">
-                50% Complete
+          <div className="max-w-2xl mx-auto px-4 py-3">
+            <div className="flex items-center justify-center gap-3 mb-1.5">
+              <span className="text-xs font-semibold text-primary uppercase tracking-wide">
+                Step 1 of 2
               </span>
             </div>
-            <div className="w-full h-3 bg-border rounded-full overflow-hidden">
-              <div className="h-full w-1/2 bg-primary rounded-full transition-all duration-500" />
+            <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+              <div className="h-full w-1/2 bg-primary rounded-full" />
             </div>
           </div>
         </div>
 
-        {/* Step 1: The Hook + VSL */}
-        <section className="bg-background py-16 px-4">
+        {/* Step 1: Hook + VSL + Value Props — single flowing section */}
+        <section className="bg-background py-12 md:py-16 px-4">
           <div className="max-w-3xl mx-auto text-center space-y-6">
-            <div className="inline-block px-4 py-1.5 bg-primary/10 rounded-full">
-              <span className="text-sm font-bold text-primary tracking-wide">STEP #1</span>
-            </div>
-
-            <h1 className="text-4xl md:text-5xl font-extrabold text-foreground leading-tight">
-              Attention Home Service <span className="text-primary">Business Owners</span>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-foreground leading-tight">
+              Your Website & Marketing — <span className="text-primary">Done For You</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-muted-foreground font-medium">
-              We build your website, automate your follow-ups, and fill your calendar — so you can focus on the work.
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+              Watch the short video, then pick a time to chat. That's it.
             </p>
 
             {/* VSL Placeholder */}
-            <div className="w-full aspect-video bg-card border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3 my-8">
+            <div className="w-full aspect-video bg-card border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-3">
               <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
                 <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-primary border-b-[12px] border-b-transparent ml-1" />
               </div>
               <p className="text-muted-foreground font-medium">Video coming soon</p>
             </div>
 
-            <div className="border-t border-border my-8" />
-
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                Here's What You're Getting:
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                Everything a contractor needs to dominate their local market — done for you.
+            {/* Compact social proof */}
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+              <div className="flex gap-0.5">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 text-primary fill-primary" />
+                ))}
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Trusted by contractors across the U.S.
               </p>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4 text-left max-w-2xl mx-auto">
+            {/* What's included — tight list */}
+            <div className="grid sm:grid-cols-2 gap-3 text-left max-w-xl mx-auto pt-4">
               {[
-                "Custom multi-page website (10–20 pages)",
-                "Instant missed-call text-back system",
-                "Automated lead follow-up sequences",
-                "5-star review generation on autopilot",
-                "Local SEO-optimized content & pages",
-                "Mobile-first, lightning-fast design",
+                "Custom contractor website",
+                "Missed-call text-back",
+                "Automated lead follow-up",
+                "5-star review system",
+                "SEO-optimized pages",
+                "No contracts — cancel anytime",
               ].map((item) => (
-                <div key={item} className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border">
-                  <Check className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                  <span className="text-foreground font-medium text-sm">{item}</span>
+                <div key={item} className="flex items-center gap-2.5">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-foreground text-sm font-medium">{item}</span>
                 </div>
               ))}
             </div>
 
-            <div className="pt-6">
-              <p className="text-lg font-bold text-foreground">
-                All for just <span className="text-primary text-2xl">$297/month</span>
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">No contracts. No setup fees. Cancel anytime.</p>
-            </div>
-          </div>
-        </section>
-
-        {/* Social Proof Strip */}
-        <section className="bg-muted py-10 px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="grid sm:grid-cols-3 gap-6 text-center">
-              <div className="space-y-2">
-                <div className="flex justify-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-primary fill-primary" />
-                  ))}
-                </div>
-                <p className="text-foreground font-semibold">"Our leads tripled in the first month."</p>
-                <p className="text-sm text-muted-foreground">— Mike R., Roofing Contractor</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-primary fill-primary" />
-                  ))}
-                </div>
-                <p className="text-foreground font-semibold">"I stopped losing jobs to missed calls overnight."</p>
-                <p className="text-sm text-muted-foreground">— Sarah T., HVAC Business Owner</p>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-center gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-primary fill-primary" />
-                  ))}
-                </div>
-                <p className="text-foreground font-semibold">"Best investment I've made for my plumbing company."</p>
-                <p className="text-sm text-muted-foreground">— Carlos D., Plumbing Pro</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Why It Works */}
-        <section className="bg-background py-16 px-4">
-          <div className="max-w-3xl mx-auto text-center space-y-10">
-            <h2 className="text-3xl font-bold text-foreground">
-              Why Contractors Choose Junie
-            </h2>
-            <div className="grid sm:grid-cols-3 gap-8">
-              <div className="space-y-3">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto">
-                  <Zap className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-bold text-foreground">Done For You</h3>
-                <p className="text-sm text-muted-foreground">We handle everything — website, automations, reviews. You just show up and do the work you're great at.</p>
-              </div>
-              <div className="space-y-3">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto">
-                  <TrendingUp className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-bold text-foreground">More Jobs, Less Effort</h3>
-                <p className="text-sm text-muted-foreground">Automated follow-ups and instant text-back mean you never lose a lead to a missed call again.</p>
-              </div>
-              <div className="space-y-3">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto">
-                  <Shield className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-bold text-foreground">No Risk</h3>
-                <p className="text-sm text-muted-foreground">Month-to-month. No contracts, no hidden fees. If we don't deliver, you walk — simple as that.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Step 2: Book a Call */}
-        <section className="bg-muted py-16 px-4">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <div className="inline-block px-4 py-1.5 bg-primary/10 rounded-full">
-              <span className="text-sm font-bold text-primary tracking-wide">STEP #2</span>
-            </div>
-
-            <h2 className="text-3xl md:text-4xl font-extrabold text-foreground">
-              Book Your Free <span className="text-primary">Strategy Call</span>
-            </h2>
-
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              Pick a time below and we'll walk you through exactly how Junie can grow your business — no pressure, no pitch. Just a real conversation.
+            <p className="text-foreground font-bold pt-2">
+              All for <span className="text-primary text-xl">$297/mo</span>
+              <span className="text-muted-foreground font-normal text-sm ml-2">· No setup fees</span>
             </p>
 
-            <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
-                <span>30 minutes</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-primary" />
-                <span>Zero obligation</span>
-              </div>
+            {/* Arrow pointing down to calendar */}
+            <div className="flex justify-center pt-4">
+              <ArrowDown className="w-6 h-6 text-primary animate-bounce" />
+            </div>
+          </div>
+        </section>
+
+        {/* Step 2: Book — immediately follows */}
+        <section className="bg-muted py-12 md:py-16 px-4" id="book">
+          <div className="max-w-3xl mx-auto text-center space-y-4">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-foreground">
+              Now Pick a Time — <span className="text-primary">It's Free</span>
+            </h2>
+
+            <div className="flex items-center justify-center gap-5 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-primary" /> 30 min</span>
+              <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-primary" /> Zero obligation</span>
             </div>
 
             {/* Embedded Calendar */}
-            <div className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden mt-8">
+            <div className="bg-card rounded-2xl border border-border shadow-lg overflow-hidden mt-6">
               <iframe
                 src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
                 style={{ width: "100%", border: "none", overflow: "hidden", minHeight: "700px" }}
@@ -194,29 +114,11 @@ const DemoPage = () => {
           </div>
         </section>
 
-        {/* Final CTA / Urgency */}
-        <section className="bg-primary py-12 px-4">
-          <div className="max-w-2xl mx-auto text-center space-y-4">
-            <h3 className="text-2xl md:text-3xl font-bold text-primary-foreground">
-              Still on the fence?
-            </h3>
-            <p className="text-primary-foreground/80 text-lg">
-              Every day without a proper system is another missed call, another lost job, another 5-star review that never happened. Book the call — it's free and you'll walk away with a clear plan either way.
-            </p>
-            <a
-              href="#fBlaNQM6Ay3RD1FiID1Z_1771301671900"
-              className="inline-block mt-4 px-8 py-3 bg-background text-primary font-bold rounded-full hover:opacity-90 transition-opacity"
-            >
-              ↑ Grab Your Spot Now
-            </a>
-          </div>
-        </section>
-
         {/* Disclaimer */}
-        <div className="bg-background py-8 px-4 border-t border-border">
-          <div className="max-w-3xl mx-auto text-center space-y-4">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Copyright © 2026 Junie Systems · hello@getjunie.com · Palmetto, FL
+        <div className="bg-background py-6 px-4 border-t border-border">
+          <div className="max-w-3xl mx-auto text-center space-y-3">
+            <p className="text-xs text-muted-foreground">
+              © 2026 Junie Systems · hello@getjunie.com · Palmetto, FL
             </p>
             <p className="text-xs text-muted-foreground/70 leading-relaxed">
               <strong className="text-muted-foreground">Earnings Disclaimer:</strong> Results may vary and testimonials are not claimed to represent typical results. All testimonials are real. These results are meant as a showcase of what the best, most motivated clients have achieved and should not be taken as average or typical results. You should perform your own due diligence and use your own best judgment prior to making any investment decision pertaining to your business. By virtue of visiting this site or interacting with any portion of this site, you agree that you're fully responsible for the investments you make and any outcomes that may result.
