@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Menu, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,9 +14,7 @@ interface HeaderProps {
 }
 
 const Header = ({ showAuthButtons = true }: HeaderProps) => {
-  const handleBookCall = () => {
-    window.open("https://calendly.com/admin-juniesystems/30min", "_blank");
-  };
+  const navigate = useNavigate();
 
   return (
     <header className="fixed top-0 w-full z-50 bg-background/95 backdrop-blur-sm border-b border-border">
@@ -79,7 +78,7 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
             variant="hero" 
             size="sm" 
             className="sm:text-base"
-            onClick={handleBookCall}
+            onClick={() => navigate("/book")}
           >
             <span className="hidden sm:inline">Book A Call</span>
             <span className="sm:hidden">Book Call</span>
