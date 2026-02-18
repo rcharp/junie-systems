@@ -18,7 +18,7 @@ const BookPage = () => {
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       <div ref={headerRef} className="text-center py-8 px-4 shrink-0">
         <h1 className="text-3xl md:text-4xl font-extrabold text-foreground">
-          Book a Free 30-Minute Call
+          Schedule a Demo Call
         </h1>
         <p className="text-muted-foreground text-lg mt-2">
           Pick a time that works for you — no obligation, no pressure.
