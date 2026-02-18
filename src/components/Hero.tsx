@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import heroContractor from "@/assets/hero-contractor.jpg";
@@ -25,6 +26,7 @@ const heroImages = [
 const headshots = [headshot1, headshot2, headshot3, headshot4, headshot5];
 
 const Hero = () => {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -40,10 +42,6 @@ const Hero = () => {
 
   const goToNext = () => {
     setCurrentIndex((prev) => (prev + 1) % heroImages.length);
-  };
-
-  const handleBookCall = () => {
-    window.open("https://calendly.com/admin-juniesystems/30min", "_blank");
   };
 
   return (
@@ -88,7 +86,7 @@ const Hero = () => {
             {/* CTA Button */}
             <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto lg:mx-0">
               <Button
-                onClick={handleBookCall}
+                onClick={() => navigate("/book")}
                 variant="hero"
                 size="lg"
                 className="group min-w-[180px] h-14 text-base"
