@@ -3,12 +3,12 @@ import { useEffect } from "react";
 const BookPage = () => {
   useEffect(() => {
     const script = document.createElement("script");
-    script.src = "https://api.juniesystems.com/js/form_embed.js";
+    script.src = "https://assets.calendly.com/assets/external/widget.js";
     script.type = "text/javascript";
     script.async = true;
-    document.body.appendChild(script);
+    document.head.appendChild(script);
     return () => {
-      document.body.removeChild(script);
+      document.head.removeChild(script);
     };
   }, []);
 
@@ -23,15 +23,11 @@ const BookPage = () => {
         </p>
       </div>
 
-      <div className="w-full max-w-3xl">
-        <iframe
-          src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
-          style={{ width: "100%", border: "none", overflow: "hidden", minHeight: "700px" }}
-          scrolling="no"
-          id="fBlaNQM6Ay3RD1FiID1Z_1771431462226"
-          title="Book a Call"
-        />
-      </div>
+      <div
+        className="calendly-inline-widget w-full max-w-3xl"
+        data-url="https://calendly.com/rickycharpentier/30min"
+        style={{ minWidth: "320px", height: "700px" }}
+      />
     </div>
   );
 };
