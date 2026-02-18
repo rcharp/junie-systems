@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const BookPage = () => {
+  const headerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://assets.calendly.com/assets/external/widget.js";
@@ -13,20 +15,20 @@ const BookPage = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-start py-16 px-4">
-      <div className="w-full max-w-3xl text-center space-y-3 mb-10">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      <div ref={headerRef} className="text-center py-8 px-4 shrink-0">
         <h1 className="text-3xl md:text-4xl font-extrabold text-foreground">
           Book a Free 30-Minute Call
         </h1>
-        <p className="text-muted-foreground text-lg">
+        <p className="text-muted-foreground text-lg mt-2">
           Pick a time that works for you — no obligation, no pressure.
         </p>
       </div>
 
       <div
-        className="calendly-inline-widget w-full max-w-3xl"
+        className="calendly-inline-widget flex-1 w-full"
         data-url="https://calendly.com/rickycharpentier/30min"
-        style={{ minWidth: "320px", height: "700px" }}
+        style={{ minWidth: "320px" }}
       />
     </div>
   );
