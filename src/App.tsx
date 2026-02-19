@@ -29,6 +29,7 @@ import IndustryLanding from "./pages/IndustryLanding";
 import OnboardingForm from "./pages/OnboardingForm";
 import DemoPage from "./pages/DemoPage";
 import BookPage from "./pages/BookPage";
+import AdsPage from "./pages/AdsPage";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
             <Route path="/handyman" element={<IndustryLanding />} />
             <Route path="/demo" element={<DemoPage />} />
             <Route path="/book" element={<BookPage />} />
+            <Route path="/ads" element={<AdsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
