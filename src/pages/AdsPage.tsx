@@ -98,7 +98,7 @@ const AdCard = ({ lines, theme, adId }: AdCardProps) => {
           width: DISPLAY_SIZE,
           height: DISPLAY_SIZE,
           backgroundColor: cfg.bg,
-          padding: "36px 32px 28px",
+          padding: "22px 22px 18px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
@@ -110,42 +110,42 @@ const AdCard = ({ lines, theme, adId }: AdCardProps) => {
       >
         {/* Top label */}
         <div>
-          <div style={{ color: cfg.forLabel, fontSize: 13, fontWeight: 700, letterSpacing: "0.2em", marginBottom: 4 }}>
+          <div style={{ color: cfg.forLabel, fontSize: 10, fontWeight: 700, letterSpacing: "0.2em", marginBottom: 2 }}>
             FOR
           </div>
-          <div style={{ color: cfg.contractors, fontSize: 40, fontWeight: 900, lineHeight: 1, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+          <div style={{ color: cfg.contractors, fontSize: 26, fontWeight: 900, lineHeight: 1, letterSpacing: "0.02em", textTransform: "uppercase" }}>
             CONTRACTORS
           </div>
         </div>
 
         {/* Main headline */}
-        <div style={{ flex: 1, display: "flex", alignItems: "center" }}>
-          <div style={{ color: cfg.headline, fontSize: lines.length > 3 ? 54 : 64, fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.01em", textTransform: "uppercase" }}>
+        <div style={{ flex: 1, display: "flex", alignItems: "center", paddingTop: 6, paddingBottom: 6 }}>
+          <div style={{ color: cfg.headline, fontSize: lines.length > 3 ? 36 : 44, fontWeight: 900, lineHeight: 0.95, letterSpacing: "-0.01em", textTransform: "uppercase" }}>
             {lines.map((line, i) => <div key={i}>{line}</div>)}
           </div>
         </div>
 
         {/* Body + CTA */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <p style={{ color: cfg.body, fontSize: 13, lineHeight: 1.5, fontWeight: 600, margin: 0 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <p style={{ color: cfg.body, fontSize: 10, lineHeight: 1.45, fontWeight: 600, margin: 0 }}>
             Get a free website + marketing automation that follows up with leads and gets you 5-star Google reviews — $297/mo
           </p>
           <div
             style={{
               backgroundColor: cfg.btnBg,
               color: cfg.btnText,
-              padding: "14px 20px",
+              padding: "10px 16px",
               textAlign: "center",
               fontWeight: 900,
-              fontSize: 15,
+              fontSize: 12,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
-              borderRadius: 6,
+              borderRadius: 5,
             }}
           >
             GET MY FREE WEBSITE →
           </div>
-          <p style={{ color: cfg.fine, fontSize: 10, textAlign: "center", letterSpacing: "0.15em", textTransform: "uppercase", margin: 0 }}>
+          <p style={{ color: cfg.fine, fontSize: 8, textAlign: "center", letterSpacing: "0.15em", textTransform: "uppercase", margin: 0 }}>
             NO CONTRACTS · SET UP IN DAYS
           </p>
         </div>
