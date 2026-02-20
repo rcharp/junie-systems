@@ -31,18 +31,25 @@ const DemoPage = () => {
               </p>
             </div>
 
-            {/* Two-column layout */}
-            <div className="grid md:grid-cols-2 gap-8 items-center">
+            {/* Step headers row — aligned across both columns */}
+            <div className="grid md:grid-cols-2 gap-8 mb-4">
+              <div className="text-center">
+                <p className="text-2xl md:text-3xl font-extrabold text-foreground">
+                  Step 1: <span className="text-primary">Watch this short video</span>
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl md:text-3xl font-extrabold text-foreground">
+                  Step 2: <span className="text-primary">Pick a time for your FREE website redesign</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Two-column layout with vertical divider */}
+            <div className="flex gap-0 items-stretch">
 
               {/* LEFT: Video + value props */}
-              <div className="flex flex-col justify-center space-y-6">
-
-                {/* Step 1 label */}
-                <div className="text-center">
-                  <p className="text-3xl md:text-4xl font-extrabold text-foreground">
-                    Step 1: <span className="text-primary">Watch this short video</span>
-                  </p>
-                </div>
+              <div className="flex flex-col justify-center space-y-6 flex-1 pr-8">
 
                 {/* Loom embed */}
                 <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg">
@@ -104,20 +111,18 @@ const DemoPage = () => {
                 </div>
               </div>
 
+              {/* Vertical divider — hidden on mobile */}
+              <div className="hidden md:block w-px bg-border self-stretch shrink-0" />
+
               {/* RIGHT: Booking calendar */}
-              <div className="flex flex-col justify-center space-y-4" id="book">
-                <div className="text-center space-y-2">
-                  <p className="text-3xl md:text-4xl font-extrabold text-foreground">
-                    Step 2: <span className="text-primary">Pick a time to get your FREE website redesign</span>
-                  </p>
-                  <div className="flex items-center justify-center gap-5 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <Clock className="w-4 h-4 text-primary" /> 30 min
-                    </span>
-                    <span className="flex items-center gap-1.5">
-                      <Shield className="w-4 h-4 text-primary" /> Zero obligation
-                    </span>
-                  </div>
+              <div className="flex flex-col justify-center space-y-4 flex-1 pl-8" id="book">
+                <div className="flex items-center justify-center gap-5 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-primary" /> 30 min
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <Shield className="w-4 h-4 text-primary" /> Zero obligation
+                  </span>
                 </div>
 
                 <iframe
