@@ -54,7 +54,7 @@ const DemoPage = () => {
                 {/* Loom embed */}
                 <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-lg">
                   <iframe
-                    src="https://www.loom.com/embed/878d5f101fff46ccadd63d3250388e3c?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true"
+                    src="https://www.loom.com/embed/878d5f101fff46ccadd63d3250388e3c?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true&autoplay=0"
                     frameBorder="0"
                     allowFullScreen
                     className="w-full h-full"
