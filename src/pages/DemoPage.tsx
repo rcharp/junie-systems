@@ -146,15 +146,13 @@ const DemoPage = () => {
           </div>
 
           {/* Calendar embed */}
-          <div className="max-w-3xl mx-auto rounded-2xl border border-border overflow-hidden shadow-lg">
-            <iframe
-              src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
-              style={{ width: "100%", border: "none", overflow: "hidden", minHeight: "680px" }}
-              scrolling="no"
-              id="fBlaNQM6Ay3RD1FiID1Z_1771301671900"
-              title="Junie Systems Demo Calendar"
-            />
-          </div>
+          <iframe
+            src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
+            style={{ width: "100%", border: "none", overflow: "hidden", minHeight: "680px" }}
+            scrolling="no"
+            id="fBlaNQM6Ay3RD1FiID1Z_1771301671900"
+            title="Junie Systems Demo Calendar"
+          />
 
           <div className="text-center mt-6 space-y-1">
             <p className="text-sm text-muted-foreground font-medium">
