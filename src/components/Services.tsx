@@ -4,7 +4,8 @@ import {
   Globe, 
   Star, 
   MessageSquare, 
-  Zap
+  Zap,
+  RefreshCw
 } from "lucide-react";
 
 const Services = () => {
@@ -47,14 +48,26 @@ const Services = () => {
     },
     {
       icon: <Star className="w-10 h-10" />,
-      title: "Review Generation",
-      subtitle: "Build your reputation on autopilot",
-      description: "Happy customers mean more business. We make it effortless to collect 5-star reviews and build the online reputation your work deserves.",
+      title: "5-Star Google Review Automation",
+      subtitle: "Build your Google reputation on autopilot",
+      description: "After every job, we automatically ask your happy customers to leave a 5-star review on Google — so your business climbs the rankings without you lifting a finger.",
       features: [
-        "Automated review requests",
-        "One-click for customers to leave reviews",
-        "Directs happy customers to Google",
-        "Protects against negative public reviews"
+        "Automated review requests after each job",
+        "One-tap link makes it easy for customers",
+        "Sends them straight to your Google listing",
+        "Filters out unhappy customers before they go public"
+      ]
+    },
+    {
+      icon: <RefreshCw className="w-10 h-10" />,
+      title: "Database Reactivation",
+      subtitle: "Turn old leads into new revenue",
+      description: "You've got past customers and old leads sitting in your contacts doing nothing. We reach back out to them with friendly, automated messages that bring them back and get them booking again.",
+      features: [
+        "Automatically re-engages past customers",
+        "Sends personalized texts and emails on your behalf",
+        "Warms up cold leads with a nurture sequence",
+        "Turns forgotten contacts into paying jobs"
       ]
     }
   ];
