@@ -62,11 +62,11 @@ const Services = () => {
       icon: <RefreshCw className="w-10 h-10" />,
       title: "Automated Repeat Business",
       subtitle: "Turn past customers into repeat revenue",
-      description: "You've got past customers and old leads sitting in your contacts doing nothing. We reach back out to them with friendly, automated messages that bring them back and get them booking again.",
+      description: "You've got past customers and old leads sitting in your contacts doing nothing. We reach back out to them with friendly, automated messages that bring them back, get them booking again, and ask for 5-star Google reviews.",
       features: [
         "Automatically re-engages past customers",
         "Sends personalized texts and emails on your behalf",
-        "Warms up cold leads with a nurture sequence",
+        "Requests 5-star Google reviews from happy customers",
         "Turns forgotten contacts into paying jobs"
       ]
     }
