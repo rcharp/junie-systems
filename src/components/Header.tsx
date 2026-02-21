@@ -78,7 +78,7 @@ const Header = ({ showAuthButtons = true }: HeaderProps) => {
             variant="hero" 
             size="sm" 
             className="sm:text-base"
-            onClick={() => navigate("/book")}
+            onClick={() => navigate("/demo")}
           >
             <span className="hidden sm:inline">Book A Call</span>
             <span className="sm:hidden">Book Call</span>

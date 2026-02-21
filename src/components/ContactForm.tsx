@@ -31,7 +31,7 @@ const ContactForm = () => {
   };
 
   const handleBookCall = () => {
-    window.open("https://calendly.com/admin-juniesystems/30min", "_blank");
+    window.location.href = "/demo";
   };
 
   return (
