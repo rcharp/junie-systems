@@ -60,8 +60,8 @@ const Services = () => {
     },
     {
       icon: <RefreshCw className="w-10 h-10" />,
-      title: "Database Reactivation",
-      subtitle: "Turn old leads into new revenue",
+      title: "Automated Repeat Business",
+      subtitle: "Turn past customers into repeat revenue",
       description: "You've got past customers and old leads sitting in your contacts doing nothing. We reach back out to them with friendly, automated messages that bring them back and get them booking again.",
       features: [
         "Automatically re-engages past customers",
