@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowRight, X } from "lucide-react";
 
 const allFeatures = [
-  "Website design overview",
+  "Complete website redesigned for conversion",
   "Chat widget auto-response automation",
   "Quote form auto-response automation",
   "Missed Call Text Back",
