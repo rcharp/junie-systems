@@ -148,7 +148,7 @@ const DemoPage = () => {
           {/* Calendar embed */}
           <iframe
             src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
-            style={{ width: "50%", margin: "0 auto", display: "block", border: "none", overflow: "hidden", minHeight: "680px" }}
+            style={{ width: "60%", margin: "0 auto", display: "block", border: "none", overflow: "hidden", minHeight: "680px" }}
             scrolling="no"
             id="fBlaNQM6Ay3RD1FiID1Z_1771301671900"
             title="Junie Systems Demo Calendar"
