@@ -87,7 +87,7 @@ const Services = () => {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 sm:gap-8 max-w-5xl mx-auto">
-          {services.map((service, index) => (
+          {services.slice(0, 4).map((service, index) => (
             <Card key={index} className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 border-border/50">
               <CardContent className="pt-6 sm:pt-8 pb-6 px-4 sm:px-6">
                 <div className="flex flex-col space-y-4">
@@ -117,6 +117,37 @@ const Services = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className="flex justify-center mt-6 sm:mt-8 max-w-5xl mx-auto">
+          <Card className="group hover:shadow-elegant transition-all duration-300 hover:-translate-y-2 border-border/50 w-full md:w-[calc(50%-1rem)]">
+            <CardContent className="pt-6 sm:pt-8 pb-6 px-4 sm:px-6">
+              <div className="flex flex-col space-y-4">
+                <div className="p-3 sm:p-4 rounded-xl bg-gradient-hero text-white w-fit group-hover:shadow-glow transition-all duration-300">
+                  {services[4].icon}
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl sm:text-2xl font-bold text-foreground">
+                    {services[4].title}
+                  </h3>
+                  <p className="text-sm font-medium text-primary">
+                    {services[4].subtitle}
+                  </p>
+                </div>
+                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                  {services[4].description}
+                </p>
+                <ul className="space-y-2 pt-2">
+                  {services[4].features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <span className="text-primary font-bold">✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>
