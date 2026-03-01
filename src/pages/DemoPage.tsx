@@ -90,17 +90,30 @@ const DemoPage = () => {
           </div>
         </section>
 
-        {/* ── What's Included Strip ── */}
-        <section className="bg-muted/40 border-y border-border py-8 px-4">
+        {/* ── Pricing Strips ── */}
+        <section className="bg-muted/40 border-y border-border py-8 px-4 space-y-8">
           <div className="max-w-4xl mx-auto">
             <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">
-              Everything included at{" "}
+              Website Redesign —{" "}
+              <span className="text-primary text-base font-extrabold">$97/mo</span>
+            </p>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm">
+                <Check className="w-4 h-4 text-primary shrink-0" />
+                <span className="text-foreground text-sm font-medium">Complete website redesign (included)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">
+              Complete Marketing System —{" "}
               <span className="text-primary text-base font-extrabold">$297/mo</span>
               <span className="font-normal ml-2">— no setup fees, no contracts</span>
             </p>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
               {[
-                "Complete website redesigned for conversion",
+                "Complete website redesign (included)",
                 "Chat widget auto-response automation",
                 "Quote form auto-response automation",
                 "Missed Call Text Back",
