@@ -77,7 +77,7 @@ const DemoPage = () => {
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold text-lg px-8 py-4 rounded-full shadow-lg hover:opacity-90 transition-all hover:scale-105"
             >
               <Calendar className="w-5 h-5" />
-              Book Your FREE Strategy Call →
+              Get My Website →
             </button>
             <p className="text-sm text-muted-foreground">
               30 minutes · Zero obligation · Totally free
