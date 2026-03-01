@@ -9,7 +9,7 @@ const allFeatures = [
   "Quote form auto-response automation",
   "Missed Call Text Back",
   "Google 5-star review automation",
-  "Database reactivation/nurture sequence",
+  "Past customers into repeat clients automation",
 ];
 
 const Pricing = () => {
