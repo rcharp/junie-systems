@@ -100,12 +100,12 @@ const DemoPage = () => {
             </p>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
               {[
-                "Custom contractor website",
-                "Missed-call text-back",
-                "Automated lead follow-up",
-                "5-star review system",
-                "SEO-optimized pages",
-                "Cancel anytime",
+                "Complete website redesigned for conversion",
+                "Chat widget auto-response automation",
+                "Quote form auto-response automation",
+                "Missed Call Text Back",
+                "Google 5-star review automation",
+                "Database reactivation/nurture sequence",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm">
                   <Check className="w-4 h-4 text-primary shrink-0" />
