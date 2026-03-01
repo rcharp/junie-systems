@@ -125,7 +125,7 @@ const DemoPage = () => {
                 "Quote form auto-response automation",
                 "Missed Call Text Back",
                 "Google 5-star review automation",
-                "Database reactivation/nurture sequence",
+                "Past customers into repeat clients automation",
               ].map((item) => (
                 <div key={item} className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm">
                   <Check className="w-4 h-4 text-primary shrink-0" />
