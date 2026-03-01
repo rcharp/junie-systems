@@ -98,10 +98,17 @@ const DemoPage = () => {
               <span className="text-primary text-base font-extrabold">$97/mo</span>
             </p>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-              <div className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm">
-                <Check className="w-4 h-4 text-primary shrink-0" />
-                <span className="text-foreground text-sm font-medium">Complete website redesign (included)</span>
-              </div>
+              {[
+                "Complete website redesign (included)",
+                "Hosting included",
+                "Ongoing maintenance",
+                "Security & updates",
+              ].map((item) => (
+                <div key={item} className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm">
+                  <Check className="w-4 h-4 text-primary shrink-0" />
+                  <span className="text-foreground text-sm font-medium">{item}</span>
+                </div>
+              ))}
             </div>
           </div>
 
