@@ -20,11 +20,9 @@ const DemoPage = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <main className="flex-1">
-
         {/* ── HERO: Video Section ── */}
         <section className="bg-background pt-12 pb-10 px-4">
           <div className="max-w-4xl mx-auto text-center space-y-5">
-
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold px-4 py-1.5 rounded-full">
               <Play className="w-3.5 h-3.5 fill-primary" />
@@ -33,12 +31,11 @@ const DemoPage = () => {
 
             {/* Headline */}
             <h1 className="text-4xl md:text-6xl font-extrabold text-foreground leading-tight">
-              Get a Website That Actually{" "}
-              <span className="text-primary">Wins You Jobs</span>
+              Get a Website That Actually <span className="text-primary">Wins You Jobs</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-              See exactly how we build contractor websites that generate real leads —
-              then grab a free strategy call to get yours.
+              See exactly how we build contractor websites that generate real leads — then grab a free strategy call to
+              get yours.
             </p>
 
             {/* Social proof row */}
@@ -48,9 +45,7 @@ const DemoPage = () => {
                   <Star key={i} className="w-4 h-4 text-primary fill-primary" />
                 ))}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">
-                Trusted by contractors across the U.S.
-              </p>
+              <p className="text-sm text-muted-foreground font-medium">Trusted by contractors across the U.S.</p>
             </div>
           </div>
 
@@ -69,9 +64,7 @@ const DemoPage = () => {
 
           {/* CTA after video */}
           <div className="max-w-4xl mx-auto mt-8 text-center space-y-4">
-            <p className="text-foreground font-semibold text-lg">
-              👆 Watched the video? Here's your next step.
-            </p>
+            <p className="text-foreground font-semibold text-lg">👆 Watched the video? Here's your next step.</p>
             <button
               onClick={scrollToBook}
               className="inline-flex items-center gap-2 bg-primary text-primary-foreground font-bold text-lg px-8 py-4 rounded-full shadow-lg hover:opacity-90 transition-all hover:scale-105"
@@ -79,9 +72,7 @@ const DemoPage = () => {
               <Calendar className="w-5 h-5" />
               Get My Website →
             </button>
-            <p className="text-sm text-muted-foreground">
-              30 minutes · Zero obligation · Totally free
-            </p>
+            <p className="text-sm text-muted-foreground">30 minutes · Zero obligation · Totally free</p>
 
             {/* Animated scroll nudge */}
             <div className="flex flex-col items-center gap-1 pt-2">
@@ -94,8 +85,7 @@ const DemoPage = () => {
         <section className="bg-muted/40 border-y border-border py-8 px-4 space-y-8">
           <div className="max-w-4xl mx-auto">
             <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">
-              Website Redesign —{" "}
-              <span className="text-primary text-base font-extrabold">$97/mo</span>
+              Website Redesign — <span className="text-primary text-base font-extrabold">$97/mo</span>
             </p>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
               {[
@@ -104,7 +94,10 @@ const DemoPage = () => {
                 "Ongoing maintenance",
                 "Security & updates",
               ].map((item) => (
-                <div key={item} className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm">
+                <div
+                  key={item}
+                  className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm"
+                >
                   <Check className="w-4 h-4 text-primary shrink-0" />
                   <span className="text-foreground text-sm font-medium">{item}</span>
                 </div>
@@ -114,20 +107,22 @@ const DemoPage = () => {
 
           <div className="max-w-4xl mx-auto">
             <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-6">
-              Complete Marketing System —{" "}
-              <span className="text-primary text-base font-extrabold">$297/mo</span>
+              Complete Marketing System — <span className="text-primary text-base font-extrabold">$297/mo</span>
               <span className="font-normal ml-2">— no setup fees, no contracts</span>
             </p>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
               {[
-                "Complete website redesign (included)",
+                "Professional website redesign (FREE)",
                 "Chat widget auto-response automation",
                 "Quote form auto-response automation",
-                "Missed Call Text Back",
+                "Missed Call Text Back automation",
                 "Google 5-star review automation",
-                "Past customers into repeat clients automation",
+                "Turn past customers into repeat clients automation",
               ].map((item) => (
-                <div key={item} className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm">
+                <div
+                  key={item}
+                  className="flex items-center gap-2 bg-background rounded-lg px-4 py-3 border border-border shadow-sm"
+                >
                   <Check className="w-4 h-4 text-primary shrink-0" />
                   <span className="text-foreground text-sm font-medium">{item}</span>
                 </div>
@@ -139,18 +134,17 @@ const DemoPage = () => {
         {/* ── CALENDAR: Booking Section ── */}
         <section className="bg-background py-14 px-4" id="book">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-8">
-
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold px-4 py-1.5 rounded-full">
               <Calendar className="w-3.5 h-3.5" />
               Step 2 of 2
             </div>
 
             <h2 className="text-3xl md:text-5xl font-extrabold text-foreground leading-tight">
-              Pick a Time for Your{" "}
-              <span className="text-primary">FREE Website Redesign Call</span>
+              Pick a Time for Your <span className="text-primary">FREE Website Redesign Call</span>
             </h2>
             <p className="text-muted-foreground text-lg">
-              We'll review your current online presence, show you what's costing you jobs, and build a custom plan — on the house.
+              We'll review your current online presence, show you what's costing you jobs, and build a custom plan — on
+              the house.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-5 text-sm text-muted-foreground pt-1">
@@ -169,19 +163,23 @@ const DemoPage = () => {
           {/* Calendar embed */}
           <iframe
             src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
-            style={{ width: "100%", maxWidth: "720px", margin: "0 auto", display: "block", border: "none", overflow: "hidden", minHeight: "680px" }}
+            style={{
+              width: "100%",
+              maxWidth: "720px",
+              margin: "0 auto",
+              display: "block",
+              border: "none",
+              overflow: "hidden",
+              minHeight: "680px",
+            }}
             scrolling="no"
             id="fBlaNQM6Ay3RD1FiID1Z_1771301671900"
             title="Junie Systems Demo Calendar"
           />
 
           <div className="text-center mt-6 space-y-1">
-            <p className="text-sm text-muted-foreground font-medium">
-              🔒 Your info is private. We'll never spam you.
-            </p>
-            <p className="text-xs text-muted-foreground/70">
-              Spots fill up fast — claim yours before they're gone.
-            </p>
+            <p className="text-sm text-muted-foreground font-medium">🔒 Your info is private. We'll never spam you.</p>
+            <p className="text-xs text-muted-foreground/70">Spots fill up fast — claim yours before they're gone.</p>
           </div>
         </section>
 
@@ -192,10 +190,19 @@ const DemoPage = () => {
               © 2026 Junie Systems · ricky@juniesystems.com · Palmetto, FL
             </p>
             <p className="text-xs text-muted-foreground/70 leading-relaxed">
-              <strong className="text-muted-foreground">Earnings Disclaimer:</strong> Results may vary and testimonials are not claimed to represent typical results. All testimonials are real. These results are meant as a showcase of what the best, most motivated clients have achieved and should not be taken as average or typical results. You should perform your own due diligence and use your own best judgment prior to making any investment decision pertaining to your business. By virtue of visiting this site or interacting with any portion of this site, you agree that you're fully responsible for the investments you make and any outcomes that may result.
+              <strong className="text-muted-foreground">Earnings Disclaimer:</strong> Results may vary and testimonials
+              are not claimed to represent typical results. All testimonials are real. These results are meant as a
+              showcase of what the best, most motivated clients have achieved and should not be taken as average or
+              typical results. You should perform your own due diligence and use your own best judgment prior to making
+              any investment decision pertaining to your business. By virtue of visiting this site or interacting with
+              any portion of this site, you agree that you're fully responsible for the investments you make and any
+              outcomes that may result.
             </p>
             <p className="text-xs text-muted-foreground/70 leading-relaxed">
-              This site is not a part of the YouTube, Google, Bing, or Facebook website; Google Inc, Microsoft Inc, or Meta Inc. Additionally, this site is NOT endorsed by YouTube, Google, Bing, or Facebook in any way. FACEBOOK is a trademark of META Inc. YOUTUBE is a trademark of GOOGLE Inc. BING is a trademark of MICROSOFT Inc.
+              This site is not a part of the YouTube, Google, Bing, or Facebook website; Google Inc, Microsoft Inc, or
+              Meta Inc. Additionally, this site is NOT endorsed by YouTube, Google, Bing, or Facebook in any way.
+              FACEBOOK is a trademark of META Inc. YOUTUBE is a trademark of GOOGLE Inc. BING is a trademark of
+              MICROSOFT Inc.
             </p>
           </div>
         </div>
