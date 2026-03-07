@@ -132,7 +132,6 @@ const TrialPage = () => {
               <span>✓ Cancel anytime</span>
               <span>✓ 30-day money-back guarantee</span>
             </div>
-            </div>
           </div>
         </div>
       </main>
