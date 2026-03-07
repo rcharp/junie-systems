@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, X } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
@@ -27,15 +27,63 @@ const TrialPage = () => {
           <div className="text-center space-y-4 mb-12">
             <Badge variant="outline" className="text-primary">Start Your Free Trial</Badge>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
-              Grow your business with the
-              <span className="bg-gradient-hero bg-clip-text text-transparent"> Complete Marketing System.</span>
+              Choose the plan that fits
+              <span className="bg-gradient-hero bg-clip-text text-transparent"> your business.</span>
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
               No hidden fees. No long-term contracts. Just results.
             </p>
           </div>
 
-          <div className="max-w-md mx-auto">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Website Redesign $97 */}
+            <Card className="relative group hover:shadow-elegant transition-all duration-300">
+              <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6 pt-8 sm:pt-10">
+                <div className="space-y-2">
+                  <h2 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-foreground">
+                    Website Redesign
+                  </h2>
+                  <div className="flex items-baseline justify-center">
+                    <span className="text-5xl sm:text-6xl font-bold text-foreground">$97</span>
+                    <span className="text-muted-foreground ml-1">/month</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    A professional website to establish your online presence.
+                  </p>
+                </div>
+              </CardHeader>
+
+              <CardContent className="space-y-6 px-4 sm:px-6 pb-6 sm:pb-8">
+                <ul className="space-y-4">
+                  {features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      {i === 0 ? (
+                        <>
+                          <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-base text-foreground">{feature}</span>
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-5 h-5 text-muted-foreground/40 mt-0.5 flex-shrink-0" />
+                          <span className="text-base text-muted-foreground/50 line-through">{feature}</span>
+                        </>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+
+                <Button
+                  className="w-full h-12"
+                  variant="outline"
+                  onClick={() => window.open("https://buy.stripe.com/8x200ifMfb6259geDR8g006", "_blank")}
+                >
+                  Get Started
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Complete Marketing System $297 */}
             <Card className="relative border-primary shadow-lg">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <Badge className="bg-primary text-primary-foreground">Best Value</Badge>
@@ -76,13 +124,14 @@ const TrialPage = () => {
                 </Button>
               </CardContent>
             </Card>
+          </div>
 
-            <div className="text-center mt-8">
-              <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-                <span>✓ No setup fees</span>
-                <span>✓ Cancel anytime</span>
-                <span>✓ 30-day money-back guarantee</span>
-              </div>
+          <div className="text-center mt-12">
+            <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+              <span>✓ No setup fees</span>
+              <span>✓ Cancel anytime</span>
+              <span>✓ 30-day money-back guarantee</span>
+            </div>
             </div>
           </div>
         </div>
