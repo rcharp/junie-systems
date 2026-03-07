@@ -16,7 +16,7 @@ const features = [
 
 const TrialPage = () => {
   const handleGetStarted = () => {
-    window.open("https://buy.stripe.com/7sYeVc1VpeiedFMbrF8g003", "_blank");
+    window.open("https://buy.stripe.com/9B65kCgQj3DAatA67l8g005", "_blank");
   };
 
   return (
