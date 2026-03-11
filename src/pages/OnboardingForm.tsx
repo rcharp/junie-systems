@@ -99,6 +99,7 @@ const OnboardingForm = () => {
       // Build form data for submission
       const payload = {
         ...form,
+        contact_id: contactId,
         logoFileName: logoFile?.name || null,
       };
 
