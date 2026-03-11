@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/yvDlEJb1YBBk2JhD3map/webhook-trigger/xFLzVnlDlOr0jLAfGJhr";
+const WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/yvDlEJb1YBBk2JhD3map/webhook-trigger/81b1a9e9-b523-4859-b3c0-1e0980dd2b11";
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
