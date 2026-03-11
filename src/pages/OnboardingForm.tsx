@@ -146,6 +146,7 @@ const OnboardingForm = () => {
         facebook_link: form.facebookLink,
         discounts: form.discounts,
         need_logo: form.needLogo,
+        website_link: form.websiteLink,
         contact_id: contactId,
         logo_url: logoUrl,
       };
