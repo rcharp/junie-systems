@@ -209,12 +209,20 @@ const OnboardingForm = () => {
                   {errors.businessName && <p className="text-sm text-destructive">{errors.businessName}</p>}
                 </div>
 
-                {/* Business Address */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="businessAddress">Business Address <span className="text-destructive">*</span></Label>
-                  <Input id="businessAddress" placeholder="123 Main St, Palmetto, FL 34221" value={form.businessAddress} onChange={(e) => updateField("businessAddress", e.target.value)} />
-                  {errors.businessAddress && <p className="text-sm text-destructive">{errors.businessAddress}</p>}
-                </div>
+                {/* Business Address - Address, City, State, Zip */}
+                <AddressInput
+                  value={{ street: form.street, city: form.city, state: form.state, zip: form.zip }}
+                  onChange={(address) => {
+                    updateField("street", address.street);
+                    updateField("city", address.city);
+                    updateField("state", address.state);
+                    updateField("zip", address.zip);
+                  }}
+                  label="Business Address *"
+                  required={true}
+                  showValidation={Object.keys(errors).length > 0}
+                  className="space-y-1.5"
+                />
 
                 {/* Tax ID / EIN */}
                 <div className="space-y-1.5">
