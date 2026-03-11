@@ -214,7 +214,7 @@ const OnboardingForm = () => {
                   specialThings: "Licensed & insured, 5-star rated on Google, same-day service available",
                   instagramLink: "https://instagram.com/smithsplumbing",
                   facebookLink: "https://facebook.com/smithsplumbing",
-                  websiteLink: "https://smithsplumbing.com",
+                  
                   discounts: "10% off for returning customers, $50 off water heater installation",
                   needLogo: "no",
                   agreeTerms: true,
