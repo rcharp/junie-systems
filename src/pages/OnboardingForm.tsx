@@ -108,6 +108,26 @@ const OnboardingForm = () => {
 
     setLoading(true);
     try {
+      let logoUrl: string | null = null;
+
+      // Upload logo to storage if provided
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('onboarding-logos')
+          .upload(fileName, logoFile);
+
+        if (uploadError) {
+          console.error('Logo upload error:', uploadError);
+        } else {
+          const { data: urlData } = supabase.storage
+            .from('onboarding-logos')
+            .getPublicUrl(fileName);
+          logoUrl = urlData.publicUrl;
+        }
+      }
+
       const fullAddress = `${form.street}, ${form.city}, ${form.state} ${form.zip}`;
       const payload = {
         full_name: form.fullName,
@@ -129,6 +149,7 @@ const OnboardingForm = () => {
         discounts: form.discounts,
         need_logo: form.needLogo,
         contact_id: contactId,
+        logo_url: logoUrl,
         logo_file_name: logoFile?.name || null,
       };
 
