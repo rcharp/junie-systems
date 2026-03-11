@@ -81,7 +81,10 @@ const OnboardingForm = () => {
     if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
     if (!form.businessPhone.trim()) newErrors.businessPhone = "Business phone is required";
     if (!form.businessName.trim()) newErrors.businessName = "Business name is required";
-    if (!form.businessAddress.trim()) newErrors.businessAddress = "Business address is required";
+    if (!form.street.trim()) newErrors.street = "Street address is required";
+    if (!form.city.trim()) newErrors.city = "City is required";
+    if (!form.state) newErrors.state = "State is required";
+    if (!form.zip.trim()) newErrors.zip = "ZIP code is required";
     if (!form.taxId.trim()) newErrors.taxId = "Tax ID / EIN is required";
     if (!form.serviceAreas.trim()) newErrors.serviceAreas = "Service areas are required";
     if (!form.servicesOffered.trim()) newErrors.servicesOffered = "Services offered are required";
