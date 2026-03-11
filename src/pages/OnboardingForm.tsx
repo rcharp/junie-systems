@@ -41,6 +41,7 @@ const OnboardingForm = () => {
     instagramLink: "",
     facebookLink: "",
     discounts: "",
+    websiteLink: "",
     needLogo: "no",
     agreeTerms: false,
   });
