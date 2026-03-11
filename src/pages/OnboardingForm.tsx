@@ -191,6 +191,40 @@ const OnboardingForm = () => {
             </div>
           </div>
 
+          {/* TODO: Remove before production */}
+          <div className="flex justify-center mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-dashed border-destructive text-destructive"
+              onClick={() => {
+                setForm({
+                  fullName: "John Smith",
+                  businessPhone: "(555) 123-4567",
+                  businessName: "Smith's Plumbing LLC",
+                  street: "123 Main Street",
+                  city: "Tampa",
+                  state: "FL",
+                  zip: "33601",
+                  taxId: "12-3456789",
+                  serviceAreas: "Tampa, St. Petersburg, Clearwater, Brandon, Riverview",
+                  servicesOffered: "Residential plumbing, drain cleaning, water heater installation, pipe repair",
+                  businessHours: "Mon-Fri 8am-6pm, Sat 9am-2pm, Sun Closed",
+                  aboutUs: "Family-owned plumbing business serving the Tampa Bay area for over 15 years.",
+                  specialThings: "Licensed & insured, 5-star rated on Google, same-day service available",
+                  instagramLink: "https://instagram.com/smithsplumbing",
+                  facebookLink: "https://facebook.com/smithsplumbing",
+                  
+                  discounts: "10% off for returning customers, $50 off water heater installation",
+                  needLogo: "no",
+                  agreeTerms: true,
+                });
+              }}
+            >
+              🧪 Fill with Test Data
+            </Button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-8">
             <Card>
               <CardContent className="pt-6 space-y-5">
