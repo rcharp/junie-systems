@@ -349,6 +349,15 @@ const OnboardingForm = () => {
                     </div>
                   </RadioGroup>
                 </div>
+
+                {/* Photos Section */}
+                <div className="space-y-3 rounded-xl bg-primary p-6 text-primary-foreground">
+                  <h3 className="text-center font-bold text-lg">PHOTOS: 📷</h3>
+                  <ol className="list-decimal list-inside space-y-2 text-sm font-semibold">
+                    <li>Send 25-60 of your best photos to →<a href="mailto:ricky@juniesystems.com" className="underline">ricky@juniesystems.com</a>←</li>
+                    <li>Please include a nice picture of yourself and/or your team (customers want to know who they will be working with)</li>
+                  </ol>
+                </div>
               </CardContent>
             </Card>
 
