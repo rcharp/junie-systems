@@ -233,7 +233,7 @@ const OnboardingForm = () => {
 
                 {/* Service Areas */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="serviceAreas">Service Areas <span className="text-destructive">*</span></Label>
+                  <Label htmlFor="serviceAreas">Service Areas <span className="text-destructive">*</span> <span className="text-sm font-normal text-muted-foreground">(please include no more than 10)</span></Label>
                   <Textarea id="serviceAreas" placeholder="e.g. Palmetto, Bradenton, Sarasota, Tampa Bay area..." value={form.serviceAreas} onChange={(e) => updateField("serviceAreas", e.target.value)} />
                   {errors.serviceAreas && <p className="text-sm text-destructive">{errors.serviceAreas}</p>}
                 </div>
