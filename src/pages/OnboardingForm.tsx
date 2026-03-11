@@ -209,6 +209,40 @@ const OnboardingForm = () => {
             </div>
           </div>
 
+          {/* TEST ONLY - Remove before production */}
+          <div className="mb-6 text-center">
+            <Button
+              type="button"
+              variant="outline"
+              className="border-dashed border-destructive text-destructive"
+              onClick={() => {
+                setForm({
+                  fullName: "John Smith",
+                  businessPhone: "(555) 123-4567",
+                  businessName: "Smith's Plumbing LLC",
+                  street: "123 Main Street",
+                  city: "Bradenton",
+                  state: "FL",
+                  zip: "34205",
+                  taxId: "12-3456789",
+                  serviceAreas: "Bradenton, Sarasota, Palmetto, Lakewood Ranch, Parrish",
+                  servicesOffered: "Residential plumbing, drain cleaning, water heater installation, pipe repair, bathroom remodeling",
+                  businessHours: "Mon-Fri 8am-6pm, Sat 9am-2pm, Sun Closed",
+                  aboutUs: "Family-owned plumbing business serving the Bradenton area for over 15 years.",
+                  specialThings: "Licensed & insured, 5-star rated on Google, same-day service available",
+                  instagramLink: "https://instagram.com/smithsplumbing",
+                  facebookLink: "https://facebook.com/smithsplumbing",
+                  discounts: "10% off for returning customers, $50 off water heater installation",
+                  websiteLink: "https://smithsplumbing.com",
+                  needLogo: "no",
+                  agreeTerms: true,
+                });
+              }}
+            >
+              🧪 Fill with Test Data
+            </Button>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-8">
             <Card>
               <CardContent className="pt-6 space-y-5">
