@@ -288,6 +288,12 @@ const OnboardingForm = () => {
                   <Textarea id="specialThings" placeholder="e.g. 15 years in business, fully licensed & insured, family-owned, 5-star rated..." value={form.specialThings} onChange={(e) => updateField("specialThings", e.target.value)} />
                 </div>
 
+                {/* Website Link */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="websiteLink">Link to Your Current Website <span className="text-sm font-normal text-muted-foreground">(if you have one)</span></Label>
+                  <Input id="websiteLink" placeholder="https://yourbusiness.com" value={form.websiteLink} onChange={(e) => updateField("websiteLink", e.target.value)} />
+                </div>
+
                 {/* Instagram */}
                 <div className="space-y-1.5">
                   <Label htmlFor="instagramLink">Instagram Link <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
