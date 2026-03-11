@@ -103,11 +103,16 @@ const OnboardingForm = () => {
 
     setLoading(true);
     try {
+      const fullAddress = `${form.street}, ${form.city}, ${form.state} ${form.zip}`;
       const payload = {
         full_name: form.fullName,
         business_phone: form.businessPhone,
         business_name: form.businessName,
-        business_address: form.businessAddress,
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        zip: form.zip,
+        full_address: fullAddress,
         tax_id: form.taxId,
         service_areas: form.serviceAreas,
         services_offered: form.servicesOffered,
