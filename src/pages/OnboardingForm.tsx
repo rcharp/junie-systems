@@ -13,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 
 const OnboardingForm = () => {
+  const [searchParams] = useSearchParams();
+  const contactId = searchParams.get("contact_id");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
