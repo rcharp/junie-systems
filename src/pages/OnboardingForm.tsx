@@ -197,7 +197,7 @@ const OnboardingForm = () => {
 
                 {/* Business Cell Phone */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="businessPhone">Business Cell Phone <span className="text-destructive">*</span></Label>
+                  <Label htmlFor="businessPhone">Business Cell Phone <span className="text-destructive">*</span> <span className="text-sm font-normal text-muted-foreground">(where you want to want to receive notifications)</span></Label>
                   <Input id="businessPhone" type="tel" placeholder="(555) 123-4567" value={form.businessPhone} onChange={(e) => updateField("businessPhone", e.target.value)} />
                   {errors.businessPhone && <p className="text-sm text-destructive">{errors.businessPhone}</p>}
                 </div>
@@ -233,7 +233,7 @@ const OnboardingForm = () => {
 
                 {/* Service Areas */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="serviceAreas">Service Areas <span className="text-destructive">*</span></Label>
+                  <Label htmlFor="serviceAreas">Service Areas <span className="text-destructive">*</span> <span className="text-sm font-normal text-muted-foreground">(please include no more than 10)</span></Label>
                   <Textarea id="serviceAreas" placeholder="e.g. Palmetto, Bradenton, Sarasota, Tampa Bay area..." value={form.serviceAreas} onChange={(e) => updateField("serviceAreas", e.target.value)} />
                   {errors.serviceAreas && <p className="text-sm text-destructive">{errors.serviceAreas}</p>}
                 </div>
@@ -278,7 +278,7 @@ const OnboardingForm = () => {
 
                 {/* Discounts */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="discounts">Discounts for Return Customers <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
+                  <Label htmlFor="discounts">Discounts for Return Customers <span className="text-sm font-normal text-muted-foreground">(we will use these to try to get repeat customers)</span></Label>
                   <Textarea id="discounts" placeholder="e.g. $500 off your next service, 15% off your next maintenance request..." value={form.discounts} onChange={(e) => updateField("discounts", e.target.value)} />
                 </div>
 
