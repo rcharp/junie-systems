@@ -7,9 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { AddressInput } from "@/components/AddressAutocomplete";
 import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 
 const OnboardingForm = () => {
@@ -26,7 +27,10 @@ const OnboardingForm = () => {
     fullName: "",
     businessPhone: "",
     businessName: "",
-    businessAddress: "",
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
     taxId: "",
     serviceAreas: "",
     servicesOffered: "",
@@ -77,7 +81,10 @@ const OnboardingForm = () => {
     if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
     if (!form.businessPhone.trim()) newErrors.businessPhone = "Business phone is required";
     if (!form.businessName.trim()) newErrors.businessName = "Business name is required";
-    if (!form.businessAddress.trim()) newErrors.businessAddress = "Business address is required";
+    if (!form.street.trim()) newErrors.street = "Street address is required";
+    if (!form.city.trim()) newErrors.city = "City is required";
+    if (!form.state) newErrors.state = "State is required";
+    if (!form.zip.trim()) newErrors.zip = "ZIP code is required";
     if (!form.taxId.trim()) newErrors.taxId = "Tax ID / EIN is required";
     if (!form.serviceAreas.trim()) newErrors.serviceAreas = "Service areas are required";
     if (!form.servicesOffered.trim()) newErrors.servicesOffered = "Services offered are required";
@@ -96,11 +103,16 @@ const OnboardingForm = () => {
 
     setLoading(true);
     try {
+      const fullAddress = `${form.street}, ${form.city}, ${form.state} ${form.zip}`;
       const payload = {
         full_name: form.fullName,
         business_phone: form.businessPhone,
         business_name: form.businessName,
-        business_address: form.businessAddress,
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        zip: form.zip,
+        full_address: fullAddress,
         tax_id: form.taxId,
         service_areas: form.serviceAreas,
         services_offered: form.servicesOffered,
@@ -197,12 +209,20 @@ const OnboardingForm = () => {
                   {errors.businessName && <p className="text-sm text-destructive">{errors.businessName}</p>}
                 </div>
 
-                {/* Business Address */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="businessAddress">Business Address <span className="text-destructive">*</span></Label>
-                  <Input id="businessAddress" placeholder="123 Main St, Palmetto, FL 34221" value={form.businessAddress} onChange={(e) => updateField("businessAddress", e.target.value)} />
-                  {errors.businessAddress && <p className="text-sm text-destructive">{errors.businessAddress}</p>}
-                </div>
+                {/* Business Address - Address, City, State, Zip */}
+                <AddressInput
+                  value={{ street: form.street, city: form.city, state: form.state, zip: form.zip }}
+                  onChange={(address) => {
+                    updateField("street", address.street);
+                    updateField("city", address.city);
+                    updateField("state", address.state);
+                    updateField("zip", address.zip);
+                  }}
+                  label="Business Address *"
+                  required={true}
+                  showValidation={Object.keys(errors).length > 0}
+                  className="space-y-1.5"
+                />
 
                 {/* Tax ID / EIN */}
                 <div className="space-y-1.5">
