@@ -96,15 +96,35 @@ const OnboardingForm = () => {
 
     setLoading(true);
     try {
-      // Build form data for submission
       const payload = {
-        ...form,
+        full_name: form.fullName,
+        business_phone: form.businessPhone,
+        business_name: form.businessName,
+        business_address: form.businessAddress,
+        tax_id: form.taxId,
+        service_areas: form.serviceAreas,
+        services_offered: form.servicesOffered,
+        business_hours: form.businessHours,
+        about_us: form.aboutUs,
+        special_things: form.specialThings,
+        instagram_link: form.instagramLink,
+        facebook_link: form.facebookLink,
+        discounts: form.discounts,
+        need_logo: form.needLogo,
         contact_id: contactId,
-        logoFileName: logoFile?.name || null,
+        logo_file_name: logoFile?.name || null,
       };
 
-      // For now, log the submission (can be connected to an edge function or email later)
-      console.log("Onboarding form submitted:", payload);
+      const response = await fetch(
+        "https://services.leadconnectorhq.com/hooks/yvDlEJb1YBBk2JhD3map/webhook-trigger/xFLzVnlDlOr0jLAfGJhr",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) throw new Error("Submission failed");
 
       setSubmitted(true);
       toast({ title: "Form submitted!", description: "We'll be in touch shortly." });
