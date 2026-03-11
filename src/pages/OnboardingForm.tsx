@@ -153,16 +153,13 @@ const OnboardingForm = () => {
         logo_file_name: logoFile?.name || null,
       };
 
-      const response = await fetch(
-        "https://services.leadconnectorhq.com/hooks/yvDlEJb1YBBk2JhD3map/webhook-trigger/xFLzVnlDlOr0jLAfGJhr",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      );
+      const { data, error } = await supabase.functions.invoke("submit-onboarding-form", {
+        body: payload,
+      });
 
-      if (!response.ok) throw new Error("Submission failed");
+      if (error || !data?.success) {
+        throw new Error(error?.message || data?.error || "Submission failed");
+      }
 
       setSubmitted(true);
       toast({ title: "Form submitted!", description: "We'll be in touch shortly." });
