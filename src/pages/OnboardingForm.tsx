@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 
 const OnboardingForm = () => {
+  const [searchParams] = useSearchParams();
+  const contactId = searchParams.get("contact_id");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
@@ -96,6 +99,7 @@ const OnboardingForm = () => {
       // Build form data for submission
       const payload = {
         ...form,
+        contact_id: contactId,
         logoFileName: logoFile?.name || null,
       };
 
