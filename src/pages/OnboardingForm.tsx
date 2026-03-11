@@ -140,8 +140,18 @@ const OnboardingForm = () => {
       <Header />
       <main className="flex-1 px-4 pt-28 pb-12">
         <div className="w-full max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold text-center text-foreground mb-2">Let's get you onboarded</h1>
-          <p className="text-center text-muted-foreground mb-8">Fill out the form below so we can build your perfect website.</p>
+          <div className="text-center mb-10">
+            <img src="/lovable-uploads/junie-logo.png" alt="Junie" className="h-14 mx-auto mb-6" />
+            <h1 className="text-3xl font-bold text-foreground mb-3">Client Onboarding Questionnaire</h1>
+            <p className="text-muted-foreground max-w-xl mx-auto mb-4">
+              Fill out the form below so we can get started building your website. The more details you provide, the better we can tailor everything to your business.
+            </p>
+            <div className="inline-block bg-primary/10 border border-primary/20 rounded-xl px-5 py-3">
+              <p className="text-sm font-semibold text-primary">
+                ⚠️ It's very important that you complete this form — we can't begin building your site until we have this information!
+              </p>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Required Section */}
