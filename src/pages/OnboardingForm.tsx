@@ -41,6 +41,7 @@ const OnboardingForm = () => {
     instagramLink: "",
     facebookLink: "",
     discounts: "",
+    websiteLink: "",
     needLogo: "no",
     agreeTerms: false,
   });
@@ -145,6 +146,7 @@ const OnboardingForm = () => {
         facebook_link: form.facebookLink,
         discounts: form.discounts,
         need_logo: form.needLogo,
+        website_link: form.websiteLink,
         contact_id: contactId,
         logo_url: logoUrl,
       };
@@ -286,6 +288,12 @@ const OnboardingForm = () => {
                   <Textarea id="specialThings" placeholder="e.g. 15 years in business, fully licensed & insured, family-owned, 5-star rated..." value={form.specialThings} onChange={(e) => updateField("specialThings", e.target.value)} />
                 </div>
 
+                {/* Website Link */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="websiteLink">Link to Your Current Website <span className="text-sm font-normal text-muted-foreground">(if you have one)</span></Label>
+                  <Input id="websiteLink" placeholder="https://yourbusiness.com" value={form.websiteLink} onChange={(e) => updateField("websiteLink", e.target.value)} />
+                </div>
+
                 {/* Instagram */}
                 <div className="space-y-1.5">
                   <Label htmlFor="instagramLink">Instagram Link <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
@@ -340,6 +348,15 @@ const OnboardingForm = () => {
                       <Label htmlFor="needLogoNo" className="font-normal mb-0 cursor-pointer">No</Label>
                     </div>
                   </RadioGroup>
+                </div>
+
+                {/* Photos Section */}
+                <div className="space-y-3 rounded-xl bg-primary p-6 text-primary-foreground">
+                  <h3 className="text-center font-bold text-lg">PHOTOS: 📷</h3>
+                  <ol className="list-decimal list-inside space-y-2 text-sm font-semibold">
+                    <li>Send 25-60 of your best photos to →<a href="mailto:ricky@juniesystems.com" className="underline">ricky@juniesystems.com</a>←</li>
+                    <li>Please include a nice picture of yourself and/or your team (customers want to know who they will be working with)</li>
+                  </ol>
                 </div>
               </CardContent>
             </Card>
