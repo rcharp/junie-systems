@@ -197,7 +197,7 @@ const OnboardingForm = () => {
 
                 {/* Business Cell Phone */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="businessPhone">Business Cell Phone <span className="text-destructive">*</span></Label>
+                  <Label htmlFor="businessPhone">Business Cell Phone <span className="text-destructive">*</span> <span className="text-sm font-normal text-muted-foreground">(where you want to want to receive notifications)</span></Label>
                   <Input id="businessPhone" type="tel" placeholder="(555) 123-4567" value={form.businessPhone} onChange={(e) => updateField("businessPhone", e.target.value)} />
                   {errors.businessPhone && <p className="text-sm text-destructive">{errors.businessPhone}</p>}
                 </div>
