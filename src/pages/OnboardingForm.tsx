@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ const OnboardingForm = () => {
     instagramLink: "",
     facebookLink: "",
     discounts: "",
-    websiteLink: "",
     needLogo: "no",
     agreeTerms: false,
   });
@@ -99,33 +97,16 @@ const OnboardingForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) {
-      toast({ title: "Please fix the errors", description: "Some required fields are missing.", variant: "destructive" });
+      toast({
+        title: "Please fix the errors",
+        description: "Some required fields are missing.",
+        variant: "destructive",
+      });
       return;
     }
 
     setLoading(true);
     try {
-      let logoUrl: string | null = null;
-
-      // Upload logo to storage if provided
-      if (logoFile) {
-        const fileExt = logoFile.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('onboarding-logos')
-          .upload(fileName, logoFile);
-
-        if (uploadError) {
-          throw new Error(`Logo upload failed: ${uploadError.message}`);
-        }
-
-        const { data: urlData } = supabase.storage
-          .from('onboarding-logos')
-          .getPublicUrl(uploadData.path);
-
-        logoUrl = urlData.publicUrl;
-      }
-
       const fullAddress = `${form.street}, ${form.city}, ${form.state} ${form.zip}`;
       const payload = {
         full_name: form.fullName,
@@ -146,18 +127,17 @@ const OnboardingForm = () => {
         facebook_link: form.facebookLink,
         discounts: form.discounts,
         need_logo: form.needLogo,
-        website_link: form.websiteLink,
         contact_id: contactId,
-        logo_url: logoUrl,
+        logo_file_name: logoFile?.name || null,
       };
 
       const response = await fetch(
-        "https://services.leadconnectorhq.com/hooks/yvDlEJb1YBBk2JhD3map/webhook-trigger/81b1a9e9-b523-4859-b3c0-1e0980dd2b11",
+        "https://services.leadconnectorhq.com/hooks/yvDlEJb1YBBk2JhD3map/webhook-trigger/xFLzVnlDlOr0jLAfGJhr",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        }
+        },
       );
 
       if (!response.ok) throw new Error("Submission failed");
@@ -172,9 +152,9 @@ const OnboardingForm = () => {
   };
 
   if (submitted) {
-  return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <Header showNav={false} />
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header showNav={false} />
         <main className="flex-1 px-4 pt-28 pb-12 flex items-center justify-center">
           <Card className="max-w-lg w-full text-center">
             <CardContent className="pt-10 pb-10 space-y-4">
@@ -200,47 +180,15 @@ const OnboardingForm = () => {
             <img src="/lovable-uploads/junie-logo.png" alt="Junie" className="h-14 mx-auto mb-6" />
             <h1 className="text-3xl font-bold text-foreground mb-3">Client Onboarding Questionnaire</h1>
             <p className="text-muted-foreground max-w-xl mx-auto mb-4">
-              Fill out the form below so we can get started building your website. The more details you provide, the better we can tailor everything to your business.
+              Fill out the form below so we can get started building your website. The more details you provide, the
+              better we can tailor everything to your business.
             </p>
             <div className="inline-block bg-primary/10 border border-primary/20 rounded-xl px-5 py-3">
               <p className="text-sm font-semibold text-primary">
-                ⚠️ It's very important that you complete this form — we can't begin building your site until we have this information!
+                ⚠️ It's very important that you complete this form — we can't begin building your site until we have
+                this information!
               </p>
             </div>
-          </div>
-
-          {/* TEST ONLY - Remove before production */}
-          <div className="mb-6 text-center">
-            <Button
-              type="button"
-              variant="outline"
-              className="border-dashed border-destructive text-destructive"
-              onClick={() => {
-                setForm({
-                  fullName: "John Smith",
-                  businessPhone: "(555) 123-4567",
-                  businessName: "Smith's Plumbing LLC",
-                  street: "123 Main Street",
-                  city: "Bradenton",
-                  state: "FL",
-                  zip: "34205",
-                  taxId: "12-3456789",
-                  serviceAreas: "Bradenton, Sarasota, Palmetto, Lakewood Ranch, Parrish",
-                  servicesOffered: "Residential plumbing, drain cleaning, water heater installation, pipe repair, bathroom remodeling",
-                  businessHours: "Mon-Fri 8am-6pm, Sat 9am-2pm, Sun Closed",
-                  aboutUs: "Family-owned plumbing business serving the Bradenton area for over 15 years.",
-                  specialThings: "Licensed & insured, 5-star rated on Google, same-day service available",
-                  instagramLink: "https://instagram.com/smithsplumbing",
-                  facebookLink: "https://facebook.com/smithsplumbing",
-                  discounts: "10% off for returning customers, $50 off water heater installation",
-                  websiteLink: "https://smithsplumbing.com",
-                  needLogo: "no",
-                  agreeTerms: true,
-                });
-              }}
-            >
-              🧪 Fill with Test Data
-            </Button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
@@ -248,22 +196,47 @@ const OnboardingForm = () => {
               <CardContent className="pt-6 space-y-5">
                 {/* Full Name */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
-                  <Input id="fullName" placeholder="John Smith" value={form.fullName} onChange={(e) => updateField("fullName", e.target.value)} />
+                  <Label htmlFor="fullName">
+                    Full Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="fullName"
+                    placeholder="John Smith"
+                    value={form.fullName}
+                    onChange={(e) => updateField("fullName", e.target.value)}
+                  />
                   {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
                 </div>
 
                 {/* Business Cell Phone */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="businessPhone">Business Cell Phone <span className="text-destructive">*</span> <span className="text-sm font-normal text-muted-foreground">(where you want to want to receive notifications)</span></Label>
-                  <Input id="businessPhone" type="tel" placeholder="(555) 123-4567" value={form.businessPhone} onChange={(e) => updateField("businessPhone", e.target.value)} />
+                  <Label htmlFor="businessPhone">
+                    Business Cell Phone <span className="text-destructive">*</span>{" "}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      (or where you want to want to receive text notifications)
+                    </span>
+                  </Label>
+                  <Input
+                    id="businessPhone"
+                    type="tel"
+                    placeholder="(555) 123-4567"
+                    value={form.businessPhone}
+                    onChange={(e) => updateField("businessPhone", e.target.value)}
+                  />
                   {errors.businessPhone && <p className="text-sm text-destructive">{errors.businessPhone}</p>}
                 </div>
 
                 {/* Official Business Name */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="businessName">Official Business Name <span className="text-destructive">*</span></Label>
-                  <Input id="businessName" placeholder="Smith's Plumbing LLC" value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} />
+                  <Label htmlFor="businessName">
+                    Official Business Name <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="businessName"
+                    placeholder="Smith's Plumbing LLC"
+                    value={form.businessName}
+                    onChange={(e) => updateField("businessName", e.target.value)}
+                  />
                   {errors.businessName && <p className="text-sm text-destructive">{errors.businessName}</p>}
                 </div>
 
@@ -284,75 +257,147 @@ const OnboardingForm = () => {
 
                 {/* Tax ID / EIN */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="taxId">Business Tax ID or EIN <span className="text-destructive">*</span></Label>
-                  <Input id="taxId" placeholder="XX-XXXXXXX" value={form.taxId} onChange={(e) => updateField("taxId", e.target.value)} />
+                  <Label htmlFor="taxId">
+                    Business Tax ID or EIN <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="taxId"
+                    placeholder="XX-XXXXXXX"
+                    value={form.taxId}
+                    onChange={(e) => updateField("taxId", e.target.value)}
+                  />
                   {errors.taxId && <p className="text-sm text-destructive">{errors.taxId}</p>}
                 </div>
 
                 {/* Service Areas */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="serviceAreas">Service Areas <span className="text-destructive">*</span> <span className="text-sm font-normal text-muted-foreground">(please include no more than 10)</span></Label>
-                  <Textarea id="serviceAreas" placeholder="e.g. Palmetto, Bradenton, Sarasota, Tampa Bay area..." value={form.serviceAreas} onChange={(e) => updateField("serviceAreas", e.target.value)} />
+                  <Label htmlFor="serviceAreas">
+                    Service Areas <span className="text-destructive">*</span>{" "}
+                    <span className="text-sm font-normal text-muted-foreground">(please include no more than 10)</span>
+                  </Label>
+                  <Textarea
+                    id="serviceAreas"
+                    placeholder="e.g. Palmetto, Bradenton, Sarasota, Tampa Bay area..."
+                    value={form.serviceAreas}
+                    onChange={(e) => updateField("serviceAreas", e.target.value)}
+                  />
                   {errors.serviceAreas && <p className="text-sm text-destructive">{errors.serviceAreas}</p>}
                 </div>
 
                 {/* Services Offered */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="servicesOffered">Services Offered <span className="text-destructive">*</span></Label>
-                  <Textarea id="servicesOffered" placeholder="e.g. Residential plumbing, drain cleaning, water heater installation..." value={form.servicesOffered} onChange={(e) => updateField("servicesOffered", e.target.value)} />
+                  <Label htmlFor="servicesOffered">
+                    Services Offered <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="servicesOffered"
+                    placeholder="e.g. Residential plumbing, drain cleaning, water heater installation..."
+                    value={form.servicesOffered}
+                    onChange={(e) => updateField("servicesOffered", e.target.value)}
+                  />
                   {errors.servicesOffered && <p className="text-sm text-destructive">{errors.servicesOffered}</p>}
                 </div>
 
                 {/* Business Hours */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="businessHours">Business Hours of Operation <span className="text-destructive">*</span></Label>
-                  <Textarea id="businessHours" placeholder="e.g. Mon-Fri 8am-6pm, Sat 9am-2pm, Sun Closed" value={form.businessHours} onChange={(e) => updateField("businessHours", e.target.value)} />
+                  <Label htmlFor="businessHours">
+                    Business Hours of Operation <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="businessHours"
+                    placeholder="e.g. Mon-Fri 8am-6pm, Sat 9am-2pm, Sun Closed"
+                    value={form.businessHours}
+                    onChange={(e) => updateField("businessHours", e.target.value)}
+                  />
                   {errors.businessHours && <p className="text-sm text-destructive">{errors.businessHours}</p>}
                 </div>
 
                 {/* About Us */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="aboutUs">About Us <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
-                  <Textarea id="aboutUs" placeholder="Tell us about your business story, mission, and values..." value={form.aboutUs} onChange={(e) => updateField("aboutUs", e.target.value)} />
+                  <Label htmlFor="aboutUs">
+                    About Us <span className="text-sm font-normal text-muted-foreground">(Optional)</span>
+                  </Label>
+                  <Textarea
+                    id="aboutUs"
+                    placeholder="Tell us about your business story, mission, and values..."
+                    value={form.aboutUs}
+                    onChange={(e) => updateField("aboutUs", e.target.value)}
+                  />
                 </div>
 
                 {/* Special Things */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="specialThings">What Makes Your Business Special? <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
-                  <Textarea id="specialThings" placeholder="e.g. 15 years in business, fully licensed & insured, family-owned, 5-star rated..." value={form.specialThings} onChange={(e) => updateField("specialThings", e.target.value)} />
-                </div>
-
-                {/* Website Link */}
-                <div className="space-y-1.5">
-                  <Label htmlFor="websiteLink">Link to Your Current Website <span className="text-sm font-normal text-muted-foreground">(if you have one)</span></Label>
-                  <Input id="websiteLink" placeholder="https://yourbusiness.com" value={form.websiteLink} onChange={(e) => updateField("websiteLink", e.target.value)} />
+                  <Label htmlFor="specialThings">
+                    What Makes Your Business Special?{" "}
+                    <span className="text-sm font-normal text-muted-foreground">(Optional)</span>
+                  </Label>
+                  <Textarea
+                    id="specialThings"
+                    placeholder="e.g. 15 years in business, fully licensed & insured, family-owned, 5-star rated..."
+                    value={form.specialThings}
+                    onChange={(e) => updateField("specialThings", e.target.value)}
+                  />
                 </div>
 
                 {/* Instagram */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="instagramLink">Instagram Link <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
-                  <Input id="instagramLink" placeholder="https://instagram.com/yourbusiness" value={form.instagramLink} onChange={(e) => updateField("instagramLink", e.target.value)} />
+                  <Label htmlFor="instagramLink">
+                    Instagram Link <span className="text-sm font-normal text-muted-foreground">(Optional)</span>
+                  </Label>
+                  <Input
+                    id="instagramLink"
+                    placeholder="https://instagram.com/yourbusiness"
+                    value={form.instagramLink}
+                    onChange={(e) => updateField("instagramLink", e.target.value)}
+                  />
                 </div>
 
                 {/* Facebook */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="facebookLink">Facebook Link <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
-                  <Input id="facebookLink" placeholder="https://facebook.com/yourbusiness" value={form.facebookLink} onChange={(e) => updateField("facebookLink", e.target.value)} />
+                  <Label htmlFor="facebookLink">
+                    Facebook Link <span className="text-sm font-normal text-muted-foreground">(Optional)</span>
+                  </Label>
+                  <Input
+                    id="facebookLink"
+                    placeholder="https://facebook.com/yourbusiness"
+                    value={form.facebookLink}
+                    onChange={(e) => updateField("facebookLink", e.target.value)}
+                  />
                 </div>
 
                 {/* Discounts */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="discounts">Discounts for Return Customers <span className="text-sm font-normal text-muted-foreground">(we will use these to try to get repeat customers)</span></Label>
-                  <Textarea id="discounts" placeholder="e.g. $500 off your next service, 15% off your next maintenance request..." value={form.discounts} onChange={(e) => updateField("discounts", e.target.value)} />
+                  <Label htmlFor="discounts">
+                    Discounts for Return Customers{" "}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      (we will use these to try to get repeat customers)
+                    </span>
+                  </Label>
+                  <Textarea
+                    id="discounts"
+                    placeholder="e.g. $500 off your next service, 15% off your next maintenance request..."
+                    value={form.discounts}
+                    onChange={(e) => updateField("discounts", e.target.value)}
+                  />
                 </div>
 
                 {/* Logo Upload */}
                 <div className="space-y-3">
-                  <Label>Upload Your Logo <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
+                  <Label>
+                    Upload Your Logo <span className="text-sm font-normal text-muted-foreground">(Optional)</span>
+                  </Label>
                   {logoPreview ? (
                     <div className="relative inline-block">
-                      <img src={logoPreview} alt="Logo preview" className="h-24 w-auto rounded-lg border border-border object-contain bg-muted p-2" />
-                      <button type="button" onClick={removeLogo} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:opacity-80 transition-opacity">
+                      <img
+                        src={logoPreview}
+                        alt="Logo preview"
+                        className="h-24 w-auto rounded-lg border border-border object-contain bg-muted p-2"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeLogo}
+                        className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:opacity-80 transition-opacity"
+                      >
                         <X className="w-3 h-3" />
                       </button>
                     </div>
@@ -366,31 +411,36 @@ const OnboardingForm = () => {
                       <p className="text-xs text-muted-foreground/70 mt-1">PNG, JPG, or SVG (max 10MB)</p>
                     </div>
                   )}
-                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleLogoChange}
+                  />
                 </div>
 
                 {/* Need Logo */}
                 <div className="space-y-2">
                   <Label>Do you need us to make you a logo?</Label>
-                  <RadioGroup value={form.needLogo} onValueChange={(val) => updateField("needLogo", val)} className="flex gap-6">
+                  <RadioGroup
+                    value={form.needLogo}
+                    onValueChange={(val) => updateField("needLogo", val)}
+                    className="flex gap-6"
+                  >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="yes" id="needLogoYes" />
-                      <Label htmlFor="needLogoYes" className="font-normal mb-0 cursor-pointer">Yes</Label>
+                      <Label htmlFor="needLogoYes" className="font-normal mb-0 cursor-pointer">
+                        Yes
+                      </Label>
                     </div>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="no" id="needLogoNo" />
-                      <Label htmlFor="needLogoNo" className="font-normal mb-0 cursor-pointer">No</Label>
+                      <Label htmlFor="needLogoNo" className="font-normal mb-0 cursor-pointer">
+                        No
+                      </Label>
                     </div>
                   </RadioGroup>
-                </div>
-
-                {/* Photos Section */}
-                <div className="space-y-3 rounded-xl bg-primary p-6 text-primary-foreground">
-                  <h3 className="text-center font-bold text-lg">PHOTOS: 📷</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-sm font-semibold">
-                    <li>Send 25-60 of your best photos to →<a href="mailto:ricky@juniesystems.com" className="underline">ricky@juniesystems.com</a>←</li>
-                    <li>Please include a nice picture of yourself and/or your team (customers want to know who they will be working with)</li>
-                  </ol>
                 </div>
               </CardContent>
             </Card>
@@ -406,7 +456,8 @@ const OnboardingForm = () => {
                     className="mt-0.5"
                   />
                   <Label htmlFor="agreeTerms" className="font-normal mb-0 cursor-pointer leading-relaxed text-sm">
-                    I agree to the terms & conditions provided by the company. By providing my phone number, I agree to receive text messages from the business. <span className="text-destructive">*</span>
+                    I agree to the terms & conditions provided by the company. By providing my phone number, I agree to
+                    receive text messages from the business. <span className="text-destructive">*</span>
                   </Label>
                 </div>
                 {errors.agreeTerms && <p className="text-sm text-destructive">{errors.agreeTerms}</p>}
