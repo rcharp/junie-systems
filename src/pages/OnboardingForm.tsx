@@ -148,9 +148,9 @@ const OnboardingForm = () => {
   };
 
   if (submitted) {
-    return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <Header />
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <Header showNav={false} />
         <main className="flex-1 px-4 pt-28 pb-12 flex items-center justify-center">
           <Card className="max-w-lg w-full text-center">
             <CardContent className="pt-10 pb-10 space-y-4">
