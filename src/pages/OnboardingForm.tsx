@@ -1,41 +1,315 @@
-import { useEffect } from "react";
+import { useState, useRef } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useToast } from "@/hooks/use-toast";
+import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 
 const OnboardingForm = () => {
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://api.juniesystems.com/js/form_embed.js";
-    script.async = true;
-    document.body.appendChild(script);
-    return () => {
-      document.body.removeChild(script);
-    };
-  }, []);
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const [form, setForm] = useState({
+    fullName: "",
+    businessPhone: "",
+    businessName: "",
+    businessAddress: "",
+    taxId: "",
+    serviceAreas: "",
+    servicesOffered: "",
+    businessHours: "",
+    aboutUs: "",
+    specialThings: "",
+    instagramLink: "",
+    facebookLink: "",
+    discounts: "",
+    needLogo: "no",
+    agreeTerms: false,
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const updateField = (field: string, value: string | boolean) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  };
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Logo must be under 10MB.", variant: "destructive" });
+      return;
+    }
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removeLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
+    if (!form.businessPhone.trim()) newErrors.businessPhone = "Business phone is required";
+    if (!form.businessName.trim()) newErrors.businessName = "Business name is required";
+    if (!form.businessAddress.trim()) newErrors.businessAddress = "Business address is required";
+    if (!form.taxId.trim()) newErrors.taxId = "Tax ID / EIN is required";
+    if (!form.serviceAreas.trim()) newErrors.serviceAreas = "Service areas are required";
+    if (!form.servicesOffered.trim()) newErrors.servicesOffered = "Services offered are required";
+    if (!form.businessHours.trim()) newErrors.businessHours = "Business hours are required";
+    if (!form.agreeTerms) newErrors.agreeTerms = "You must agree to the terms";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) {
+      toast({ title: "Please fix the errors", description: "Some required fields are missing.", variant: "destructive" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Build form data for submission
+      const payload = {
+        ...form,
+        logoFileName: logoFile?.name || null,
+      };
+
+      // For now, log the submission (can be connected to an edge function or email later)
+      console.log("Onboarding form submitted:", payload);
+
+      setSubmitted(true);
+      toast({ title: "Form submitted!", description: "We'll be in touch shortly." });
+    } catch (error: any) {
+      toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <Header />
+        <main className="flex-1 px-4 pt-28 pb-12 flex items-center justify-center">
+          <Card className="max-w-lg w-full text-center">
+            <CardContent className="pt-10 pb-10 space-y-4">
+              <CheckCircle2 className="w-16 h-16 text-primary mx-auto" />
+              <h2 className="text-2xl font-bold text-foreground">You're all set!</h2>
+              <p className="text-muted-foreground">
+                Thank you for submitting your information. Our team will review everything and reach out to you soon.
+              </p>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <Header />
       <main className="flex-1 px-4 pt-28 pb-12">
         <div className="w-full max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold text-center text-foreground mb-8">Let's get you onboarded</h1>
-          <iframe
-            src="https://api.juniesystems.com/widget/form/74rsnHfNTZJgeMRsJjqG"
-            style={{ width: "100%", height: "2564px", border: "none", borderRadius: "4px" }}
-            id="inline-74rsnHfNTZJgeMRsJjqG"
-            data-layout="{'id':'INLINE'}"
-            data-trigger-type="alwaysShow"
-            data-trigger-value=""
-            data-activation-type="alwaysActivated"
-            data-activation-value=""
-            data-deactivation-type="neverDeactivate"
-            data-deactivation-value=""
-            data-form-name="1. ⭐Client Website Content Questionnaire👑✅"
-            data-height="2564"
-            data-layout-iframe-id="inline-74rsnHfNTZJgeMRsJjqG"
-            data-form-id="74rsnHfNTZJgeMRsJjqG"
-            title="1. ⭐Client Website Content Questionnaire👑✅"
-          />
+          <h1 className="text-3xl font-bold text-center text-foreground mb-2">Let's get you onboarded</h1>
+          <p className="text-center text-muted-foreground mb-8">Fill out the form below so we can build your perfect website.</p>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Required Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">Business Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {/* Full Name */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
+                  <Input id="fullName" placeholder="John Smith" value={form.fullName} onChange={(e) => updateField("fullName", e.target.value)} />
+                  {errors.fullName && <p className="text-sm text-destructive">{errors.fullName}</p>}
+                </div>
+
+                {/* Business Cell Phone */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="businessPhone">Business Cell Phone <span className="text-destructive">*</span></Label>
+                  <Input id="businessPhone" type="tel" placeholder="(555) 123-4567" value={form.businessPhone} onChange={(e) => updateField("businessPhone", e.target.value)} />
+                  {errors.businessPhone && <p className="text-sm text-destructive">{errors.businessPhone}</p>}
+                </div>
+
+                {/* Official Business Name */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="businessName">Official Business Name <span className="text-destructive">*</span></Label>
+                  <Input id="businessName" placeholder="Smith's Plumbing LLC" value={form.businessName} onChange={(e) => updateField("businessName", e.target.value)} />
+                  {errors.businessName && <p className="text-sm text-destructive">{errors.businessName}</p>}
+                </div>
+
+                {/* Business Address */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="businessAddress">Business Address <span className="text-destructive">*</span></Label>
+                  <Input id="businessAddress" placeholder="123 Main St, Palmetto, FL 34221" value={form.businessAddress} onChange={(e) => updateField("businessAddress", e.target.value)} />
+                  {errors.businessAddress && <p className="text-sm text-destructive">{errors.businessAddress}</p>}
+                </div>
+
+                {/* Tax ID / EIN */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="taxId">Business Tax ID or EIN <span className="text-destructive">*</span></Label>
+                  <Input id="taxId" placeholder="XX-XXXXXXX" value={form.taxId} onChange={(e) => updateField("taxId", e.target.value)} />
+                  {errors.taxId && <p className="text-sm text-destructive">{errors.taxId}</p>}
+                </div>
+
+                {/* Service Areas */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="serviceAreas">Service Areas <span className="text-destructive">*</span></Label>
+                  <Textarea id="serviceAreas" placeholder="e.g. Palmetto, Bradenton, Sarasota, Tampa Bay area..." value={form.serviceAreas} onChange={(e) => updateField("serviceAreas", e.target.value)} />
+                  {errors.serviceAreas && <p className="text-sm text-destructive">{errors.serviceAreas}</p>}
+                </div>
+
+                {/* Services Offered */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="servicesOffered">Services Offered <span className="text-destructive">*</span></Label>
+                  <Textarea id="servicesOffered" placeholder="e.g. Residential plumbing, drain cleaning, water heater installation..." value={form.servicesOffered} onChange={(e) => updateField("servicesOffered", e.target.value)} />
+                  {errors.servicesOffered && <p className="text-sm text-destructive">{errors.servicesOffered}</p>}
+                </div>
+
+                {/* Business Hours */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="businessHours">Business Hours of Operation <span className="text-destructive">*</span></Label>
+                  <Textarea id="businessHours" placeholder="e.g. Mon-Fri 8am-6pm, Sat 9am-2pm, Sun Closed" value={form.businessHours} onChange={(e) => updateField("businessHours", e.target.value)} />
+                  {errors.businessHours && <p className="text-sm text-destructive">{errors.businessHours}</p>}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Optional Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">Additional Details <span className="text-sm font-normal text-muted-foreground">(Optional)</span></CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="aboutUs">About Us</Label>
+                  <Textarea id="aboutUs" placeholder="Tell us about your business story, mission, and values..." value={form.aboutUs} onChange={(e) => updateField("aboutUs", e.target.value)} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="specialThings">What Makes Your Business Special?</Label>
+                  <Textarea id="specialThings" placeholder="e.g. 15 years in business, fully licensed & insured, family-owned, 5-star rated..." value={form.specialThings} onChange={(e) => updateField("specialThings", e.target.value)} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="instagramLink">Instagram Link</Label>
+                  <Input id="instagramLink" placeholder="https://instagram.com/yourbusiness" value={form.instagramLink} onChange={(e) => updateField("instagramLink", e.target.value)} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="facebookLink">Facebook Link</Label>
+                  <Input id="facebookLink" placeholder="https://facebook.com/yourbusiness" value={form.facebookLink} onChange={(e) => updateField("facebookLink", e.target.value)} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="discounts">Discounts for Return Customers</Label>
+                  <Textarea id="discounts" placeholder="e.g. $500 off your next service, 15% off your next maintenance request..." value={form.discounts} onChange={(e) => updateField("discounts", e.target.value)} />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Logo Upload */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">Logo</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="space-y-3">
+                  <Label>Upload Your Logo</Label>
+                  {logoPreview ? (
+                    <div className="relative inline-block">
+                      <img src={logoPreview} alt="Logo preview" className="h-24 w-auto rounded-lg border border-border object-contain bg-muted p-2" />
+                      <button type="button" onClick={removeLogo} className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:opacity-80 transition-opacity">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 hover:bg-muted/50 transition-all"
+                    >
+                      <Upload className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                      <p className="text-sm text-muted-foreground">Click to upload your logo</p>
+                      <p className="text-xs text-muted-foreground/70 mt-1">PNG, JPG, or SVG (max 10MB)</p>
+                    </div>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Do you need us to make you a logo?</Label>
+                  <RadioGroup value={form.needLogo} onValueChange={(val) => updateField("needLogo", val)} className="flex gap-6">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="yes" id="needLogoYes" />
+                      <Label htmlFor="needLogoYes" className="font-normal mb-0 cursor-pointer">Yes</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="no" id="needLogoNo" />
+                      <Label htmlFor="needLogoNo" className="font-normal mb-0 cursor-pointer">No</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Terms & Submit */}
+            <Card>
+              <CardContent className="pt-6 space-y-5">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="agreeTerms"
+                    checked={form.agreeTerms}
+                    onCheckedChange={(checked) => updateField("agreeTerms", !!checked)}
+                    className="mt-0.5"
+                  />
+                  <Label htmlFor="agreeTerms" className="font-normal mb-0 cursor-pointer leading-relaxed text-sm">
+                    I agree to the terms & conditions provided by the company. By providing my phone number, I agree to receive text messages from the business. <span className="text-destructive">*</span>
+                  </Label>
+                </div>
+                {errors.agreeTerms && <p className="text-sm text-destructive">{errors.agreeTerms}</p>}
+
+                <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          </form>
         </div>
       </main>
       <Footer />
