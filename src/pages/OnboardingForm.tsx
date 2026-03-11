@@ -174,12 +174,8 @@ const OnboardingForm = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Required Section */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Business Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
+              <CardContent className="pt-6 space-y-5">
                 {/* Full Name */}
                 <div className="space-y-1.5">
                   <Label htmlFor="fullName">Full Name <span className="text-destructive">*</span></Label>
@@ -235,50 +231,40 @@ const OnboardingForm = () => {
                   <Textarea id="businessHours" placeholder="e.g. Mon-Fri 8am-6pm, Sat 9am-2pm, Sun Closed" value={form.businessHours} onChange={(e) => updateField("businessHours", e.target.value)} />
                   {errors.businessHours && <p className="text-sm text-destructive">{errors.businessHours}</p>}
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Optional Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Additional Details <span className="text-sm font-normal text-muted-foreground">(Optional)</span></CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
+                {/* About Us */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="aboutUs">About Us</Label>
+                  <Label htmlFor="aboutUs">About Us <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
                   <Textarea id="aboutUs" placeholder="Tell us about your business story, mission, and values..." value={form.aboutUs} onChange={(e) => updateField("aboutUs", e.target.value)} />
                 </div>
 
+                {/* Special Things */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="specialThings">What Makes Your Business Special?</Label>
+                  <Label htmlFor="specialThings">What Makes Your Business Special? <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
                   <Textarea id="specialThings" placeholder="e.g. 15 years in business, fully licensed & insured, family-owned, 5-star rated..." value={form.specialThings} onChange={(e) => updateField("specialThings", e.target.value)} />
                 </div>
 
+                {/* Instagram */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="instagramLink">Instagram Link</Label>
+                  <Label htmlFor="instagramLink">Instagram Link <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
                   <Input id="instagramLink" placeholder="https://instagram.com/yourbusiness" value={form.instagramLink} onChange={(e) => updateField("instagramLink", e.target.value)} />
                 </div>
 
+                {/* Facebook */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="facebookLink">Facebook Link</Label>
+                  <Label htmlFor="facebookLink">Facebook Link <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
                   <Input id="facebookLink" placeholder="https://facebook.com/yourbusiness" value={form.facebookLink} onChange={(e) => updateField("facebookLink", e.target.value)} />
                 </div>
 
+                {/* Discounts */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="discounts">Discounts for Return Customers</Label>
+                  <Label htmlFor="discounts">Discounts for Return Customers <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
                   <Textarea id="discounts" placeholder="e.g. $500 off your next service, 15% off your next maintenance request..." value={form.discounts} onChange={(e) => updateField("discounts", e.target.value)} />
                 </div>
-              </CardContent>
-            </Card>
 
-            {/* Logo Upload */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl">Logo</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-5">
+                {/* Logo Upload */}
                 <div className="space-y-3">
-                  <Label>Upload Your Logo</Label>
+                  <Label>Upload Your Logo <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
                   {logoPreview ? (
                     <div className="relative inline-block">
                       <img src={logoPreview} alt="Logo preview" className="h-24 w-auto rounded-lg border border-border object-contain bg-muted p-2" />
@@ -299,6 +285,7 @@ const OnboardingForm = () => {
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
                 </div>
 
+                {/* Need Logo */}
                 <div className="space-y-2">
                   <Label>Do you need us to make you a logo?</Label>
                   <RadioGroup value={form.needLogo} onValueChange={(val) => updateField("needLogo", val)} className="flex gap-6">
