@@ -163,8 +163,10 @@ const OnboardingForm = () => {
 
       setSubmitted(true);
       toast({ title: "Form submitted!", description: "We'll be in touch shortly." });
-    } catch (error: any) {
-      toast({ title: "Error", description: "Something went wrong. Please try again.", variant: "destructive" });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+      console.error("Onboarding submit error:", message);
+      toast({ title: "Error", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
