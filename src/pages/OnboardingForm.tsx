@@ -278,7 +278,7 @@ const OnboardingForm = () => {
 
                 {/* Discounts */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="discounts">Discounts for Return Customers <span className="text-sm font-normal text-muted-foreground">(Optional)</span></Label>
+                  <Label htmlFor="discounts">Discounts for Return Customers <span className="text-sm font-normal text-muted-foreground">(we will use these to try to get repeat customers)</span></Label>
                   <Textarea id="discounts" placeholder="e.g. $500 off your next service, 15% off your next maintenance request..." value={form.discounts} onChange={(e) => updateField("discounts", e.target.value)} />
                 </div>
 
