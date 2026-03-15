@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Check, Star, Clock, Shield, ChevronDown, ArrowDown, Play, Calendar } from "lucide-react";
+import junieLogo from "@/assets/junie-logo-main.png";
 
 const DemoPage = () => {
   useEffect(() => {
