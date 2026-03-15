@@ -24,6 +24,11 @@ const DemoPage = () => {
         {/* ── HERO: Video Section ── */}
         <section className="bg-background pt-12 pb-10 px-4">
           <div className="max-w-4xl mx-auto text-center space-y-5">
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <img src={junieLogo} alt="Junie Systems" className="h-20 w-20" />
+            </div>
+            
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold px-4 py-1.5 rounded-full">
               <Play className="w-3.5 h-3.5 fill-primary" />
