@@ -44,11 +44,7 @@ const ReviewPage = () => {
       if (error) throw error;
 
       toast({ title: "Thank you!", description: "Your feedback has been submitted." });
-      setName("");
-      setPhone("");
-      setMessage("");
-      setSelectedRating(null);
-      setShowFeedback(false);
+      navigate("/");
     } catch {
       toast({ title: "Error", description: "Failed to submit feedback. Please try again.", variant: "destructive" });
     } finally {
