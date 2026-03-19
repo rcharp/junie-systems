@@ -61,7 +61,7 @@ const ReviewPage = () => {
       <div className="w-full max-w-md overflow-hidden relative">
         <div
           className="flex transition-transform duration-400 ease-in-out"
-          style={{ transform: showFeedback ? "translateX(-50%)" : "translateX(0)" }}
+          style={{ transform: showFeedback ? "translateX(-100%)" : "translateX(0)" }}
         >
           {/* Panel 1: Star ratings */}
           <div className="w-full min-w-full text-center space-y-8 px-1">
