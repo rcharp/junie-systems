@@ -81,6 +81,7 @@ const App = () => (
             <Route path="/ads" element={<AdsPage />} />
             <Route path="/trial" element={<TrialPage />} />
             <Route path="/review" element={<ReviewPage />} />
+            <Route path="/start" element={<StartPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
