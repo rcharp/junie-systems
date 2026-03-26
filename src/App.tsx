@@ -33,6 +33,7 @@ import AdsPage from "./pages/AdsPage";
 import TrialPage from "./pages/TrialPage";
 import ReviewPage from "./pages/ReviewPage";
 import StartPage from "./pages/StartPage";
+import GrowPage from "./pages/GrowPage";
 
 const queryClient = new QueryClient();
 
