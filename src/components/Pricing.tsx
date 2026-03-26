@@ -13,9 +13,6 @@ const allFeatures = [
 ];
 
 const Pricing = () => {
-  const handleWebsiteOnly = () => {
-    window.open("https://buy.stripe.com/aFa4gy7fJ2zwfNU1R58g004", "_blank");
-  };
 
   const handleComplete = () => {
     window.open("https://buy.stripe.com/7sYeVc1VpeiedFMbrF8g003", "_blank");
