@@ -175,7 +175,7 @@ const GrowPage = () => {
             </div>
 
             <h2 className="text-3xl md:text-5xl font-extrabold leading-tight">
-              Pick a Time for Your <span className="text-primary">FREE Website Redesign Call</span>
+              Pick a Time for Your <span className="text-primary">FREE Smart Website Demo Call</span>
             </h2>
             <p className="text-gray-400 text-lg">
               We'll review your current online presence, show you what's costing you jobs, and build a custom plan — on the house.
