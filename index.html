@@ -48,15 +48,25 @@
 
     // GHL Calendar Booking → fires "Schedule" when someone books
     window.addEventListener('message', function(e) {
-      if (e.data && (
-        e.data.type === 'appointment_booked' ||
-        e.data.event === 'booked' ||
-        (typeof e.data === 'string' && e.data.includes('booked'))
-      )) {
-        var eventId = 'ghl-' + Date.now();
-        fbq('track', 'Schedule', {}, { eventID: eventId });
+      var d = e.data;
+      if (!d) return;
+      console.log('[GHL msg]', JSON.stringify(d));
+      var booked =
+        d === 'booked' ||
+        d === 'appointment_booked' ||
+        (typeof d === 'object' && (
+          d.event === 'booked' ||
+          d.event === 'appointment_booked' ||
+          d.type === 'appointment_booked' ||
+          d.type === 'BOOKING_FORM_SUBMITTED' ||
+          d.type === 'BOOKING_COMPLETED' ||
+          d.action === 'APPOINTMENT_BOOKED' ||
+          d.eventType === 'BOOKING_COMPLETED' ||
+          (d.data && d.data.event === 'booked')
+        ));
+      if (booked) {
+        fbq('track', 'Schedule', {}, { eventID: 'ghl-' + Date.now() });
         fbq('track', 'Lead', {}, { eventID: 'lead-' + Date.now() });
-        window._lastCalBookingId = eventId;
       }
     });
 
