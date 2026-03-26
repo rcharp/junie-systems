@@ -1,51 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Star, Clock, Shield, ArrowDown, Play, Calendar, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
 import junieLogo from "@/assets/junie-logo-main.png";
-import ugc1 from "@/assets/ugc-thumb-1.jpg";
-import ugc2 from "@/assets/ugc-thumb-2.jpg";
-import ugc3 from "@/assets/ugc-thumb-3.jpg";
-import ugc4 from "@/assets/ugc-thumb-4.jpg";
-import ugc5 from "@/assets/ugc-thumb-5.jpg";
-import ugc6 from "@/assets/ugc-thumb-6.jpg";
-
-const videoTestimonials = [
-  {
-    name: "Ronald W.",
-    trade: "General Contractor",
-    quote: "He is amazing. My company has grown so much since working with them. I can see the results already — more calls, more jobs.",
-    thumbnail: ugc1,
-  },
-  {
-    name: "Phil F.",
-    trade: "Roofing Contractor",
-    quote: "Phones are ringing nonstop! The SEO work is unbelievable. If you're on the fence, just look at what they can do. Exceeded every expectation.",
-    thumbnail: ugc2,
-  },
-  {
-    name: "Jose V.",
-    trade: "Electrician",
-    quote: "If you need a professional website that actually brings in work, give them a call. Super professional and knows exactly what contractors need.",
-    thumbnail: ugc3,
-  },
-  {
-    name: "Karen T.",
-    trade: "Landscaping",
-    quote: "I was about to give up on marketing. They turned everything around for me. The website is amazing and I didn't have to do a thing.",
-    thumbnail: ugc4,
-  },
-  {
-    name: "Colby R.",
-    trade: "HVAC Technician",
-    quote: "Started a month ago and already seeing results. More reviews coming in, our online reputation has skyrocketed. Best decision I made.",
-    thumbnail: ugc5,
-  },
-  {
-    name: "Maria S.",
-    trade: "Cleaning Service",
-    quote: "The biggest value is the review automation. I used to forget to ask for reviews. Now it's completely on autopilot and the 5-stars keep rolling in!",
-    thumbnail: ugc6,
-  },
-];
 
 const googleReviews = [
   { name: "James Mitchell", date: "Mar 2026", text: "Junie Systems is a game-changer for anyone serious about growth. They don't just build websites — they build systems that actually drive leads. Their team is sharp and focuses on ROI." },
