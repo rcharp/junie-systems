@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, Star, Clock, Shield, ArrowDown, Play, Calendar, ChevronLeft, ChevronRight, Volume2, VolumeX } from "lucide-react";
+import { Check, Star, Clock, Shield, ArrowDown, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import junieLogo from "@/assets/junie-logo-main.png";
 
 const googleReviews = [
