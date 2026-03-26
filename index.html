@@ -46,27 +46,14 @@
     fbq('init', '873764708820175');
     fbq('track', 'PageView');
 
-    // GHL Calendar Booking → fires "Schedule" when someone books
+    // GHL Calendar Booking → fires "Schedule" + "Lead" on booking
     window.addEventListener('message', function(e) {
       var d = e.data;
-      if (!d) return;
-      console.log('[GHL msg]', JSON.stringify(d));
-      var booked =
-        d === 'booked' ||
-        d === 'appointment_booked' ||
-        (typeof d === 'object' && (
-          d.event === 'booked' ||
-          d.event === 'appointment_booked' ||
-          d.type === 'appointment_booked' ||
-          d.type === 'BOOKING_FORM_SUBMITTED' ||
-          d.type === 'BOOKING_COMPLETED' ||
-          d.action === 'APPOINTMENT_BOOKED' ||
-          d.eventType === 'BOOKING_COMPLETED' ||
-          (d.data && d.data.event === 'booked')
-        ));
-      if (booked) {
+      if (!d || !Array.isArray(d)) return;
+      if (d[0] === 'msgsndr-booking-complete') {
         fbq('track', 'Schedule', {}, { eventID: 'ghl-' + Date.now() });
         fbq('track', 'Lead', {}, { eventID: 'lead-' + Date.now() });
+        console.log('[Pixel] Schedule + Lead fired');
       }
     });
 
