@@ -148,7 +148,7 @@ const GrowPage = () => {
               Real contractors sharing real results. No scripts, no fluff.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
               <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                 <video
                   controls
@@ -156,6 +156,15 @@ const GrowPage = () => {
                   className="w-full aspect-[9/16]"
                 >
                   <source src="/videos/testimonial.mp4" type="video/mp4" />
+                </video>
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <video
+                  controls
+                  preload="metadata"
+                  className="w-full aspect-[9/16]"
+                >
+                  <source src="/videos/testimonial-3.mp4" type="video/mp4" />
                 </video>
               </div>
               <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
