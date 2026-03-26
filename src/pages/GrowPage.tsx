@@ -148,7 +148,7 @@ const GrowPage = () => {
               Real contractors sharing real results. No scripts, no fluff.
             </p>
 
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {[
                 "/videos/testimonial-travis.mp4",
                 "/videos/testimonial-easton.mp4",
@@ -156,7 +156,7 @@ const GrowPage = () => {
                 "/videos/testimonial-2.mp4",
                 "/videos/testimonial.mp4",
               ].map((src, i) => (
-                <div key={i} className={`rounded-2xl overflow-hidden border border-white/10 shadow-2xl ${i === 4 ? "col-span-2 md:col-span-1 max-w-[50%] md:max-w-full mx-auto" : ""}`}>
+                <div key={i} className={`rounded-2xl overflow-hidden border border-white/10 shadow-2xl ${i >= 3 ? "col-span-1" : ""}`}>
                   <video controls preload="metadata" className="w-full aspect-[9/16]">
                     <source src={src} type="video/mp4" />
                   </video>
