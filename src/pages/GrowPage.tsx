@@ -152,55 +152,26 @@ const GrowPage = () => {
           </div>
         </section>
 
-        {/* ── VIDEO TESTIMONIALS ── */}
+        {/* ── VIDEO TESTIMONIAL ── */}
         <section className="py-16 px-4 bg-[hsl(220,25%,8%)]">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-black text-center mb-4">
               Hear It Straight From <span className="text-primary">Our Clients</span>
             </h2>
-            <p className="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
+            <p className="text-center text-gray-400 mb-10 max-w-2xl mx-auto">
               Real contractors sharing real results. No scripts, no fluff.
             </p>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {videoTestimonials.map((t, i) => (
-                <div key={i} className="group relative rounded-xl overflow-hidden border border-white/10 bg-white/5 hover:border-primary/40 transition-all">
-                  {/* Thumbnail with play overlay */}
-                  <div className="relative aspect-[4/5] overflow-hidden">
-                    <img
-                      src={t.thumbnail}
-                      alt={`${t.name} testimonial`}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      width={640}
-                      height={800}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-14 h-14 rounded-full bg-primary/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                        <Play className="w-6 h-6 text-primary-foreground fill-primary-foreground ml-0.5" />
-                      </div>
-                    </div>
-                    {/* Sound badge */}
-                    <div className="absolute top-3 right-3 bg-black/60 rounded-full p-2">
-                      <Volume2 className="w-4 h-4 text-white/70" />
-                    </div>
-                  </div>
-                  {/* Info */}
-                  <div className="p-4 space-y-2">
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, j) => (
-                        <Star key={j} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-300 leading-relaxed italic">"{t.quote}"</p>
-                    <div className="pt-1">
-                      <p className="font-semibold text-white text-sm">{t.name}</p>
-                      <p className="text-xs text-gray-500">{t.trade}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+              <video
+                controls
+                preload="metadata"
+                className="w-full aspect-video"
+                poster=""
+              >
+                <source src="/videos/testimonial.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </section>
