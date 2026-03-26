@@ -35,7 +35,7 @@
   <meta property="og:description" content="We build the websites and automation systems that help home service pros capture more leads, follow up faster, and turn more calls into booked jobs.">
   <meta name="twitter:description" content="We build the websites and automation systems that help home service pros capture more leads, follow up faster, and turn more calls into booked jobs.">
 
-  <!-- Meta Pixel + CAPI -->
+  <!-- Meta Pixel -->
   <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function()
     {n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -45,8 +45,6 @@
     (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '873764708820175');
     fbq('track', 'PageView');
-
-    // GHL Calendar Booking → fires "Schedule" + "Lead" on booking
     window.addEventListener('message', function(e) {
       var d = e.data;
       if (!d || !Array.isArray(d)) return;
@@ -56,19 +54,12 @@
         console.log('[Pixel] Schedule + Lead fired');
       }
     });
-
-    // "Get My Website" button click → fires InitiateCheckout
-    document.addEventListener('click', function(e) {
-      if (e.target && e.target.textContent &&
-          e.target.textContent.includes('Get My Website')) {
-        fbq('track', 'InitiateCheckout');
-      }
-    });
   </script>
+  <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=873764708820175&ev=PageView&noscript=1"/></noscript>
   </head>
 
   <body class="font-poppins">
-    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=873764708820175&ev=PageView&noscript=1"/></noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
