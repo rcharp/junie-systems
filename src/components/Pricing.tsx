@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight, X } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 
 const allFeatures = [
   "Complete website redesigned for conversion",
