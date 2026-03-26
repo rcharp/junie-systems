@@ -35,54 +35,7 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Website Redesign */}
-          <Card className="relative group hover:shadow-elegant transition-all duration-300">
-            <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6 pt-8 sm:pt-10">
-              <div className="space-y-2">
-                <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-foreground">
-                  Website Redesign
-                </h3>
-                <div className="flex items-baseline justify-center">
-                  <span className="text-5xl sm:text-6xl font-bold text-foreground">$97</span>
-                  <span className="text-muted-foreground ml-1">/month</span>
-                </div>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  A professional website to establish your online presence.
-                </p>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-6 px-4 sm:px-6 pb-6 sm:pb-8">
-              <ul className="space-y-4">
-                {allFeatures.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    {i === 0 ? (
-                      <>
-                        <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-base text-foreground">{feature}</span>
-                      </>
-                    ) : (
-                      <>
-                        <X className="w-5 h-5 text-muted-foreground/40 mt-0.5 flex-shrink-0" />
-                        <span className="text-base text-muted-foreground/50 line-through">{feature}</span>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-
-              <Button
-                className="w-full h-12"
-                variant="outline"
-                onClick={handleWebsiteOnly}
-              >
-                Get Started
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </CardContent>
-          </Card>
-
+        <div className="max-w-lg mx-auto">
           {/* Complete Marketing System */}
           <Card className="relative group hover:shadow-elegant transition-all duration-300 border-primary shadow-lg">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
