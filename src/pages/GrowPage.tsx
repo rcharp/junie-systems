@@ -148,34 +148,20 @@ const GrowPage = () => {
               Real contractors sharing real results. No scripts, no fluff.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <video
-                  controls
-                  preload="metadata"
-                  className="w-full aspect-[9/16]"
-                >
-                  <source src="/videos/testimonial-travis.mp4" type="video/mp4" />
-                </video>
-              </div>
-              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <video
-                  controls
-                  preload="metadata"
-                  className="w-full aspect-[9/16]"
-                >
-                  <source src="/videos/testimonial-3.mp4" type="video/mp4" />
-                </video>
-              </div>
-              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <video
-                  controls
-                  preload="metadata"
-                  className="w-full aspect-[9/16]"
-                >
-                  <source src="/videos/testimonial-2.mp4" type="video/mp4" />
-                </video>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
+              {[
+                "/videos/testimonial-travis.mp4",
+                "/videos/testimonial-easton.mp4",
+                "/videos/testimonial-3.mp4",
+                "/videos/testimonial-2.mp4",
+                "/videos/testimonial.mp4",
+              ].map((src, i) => (
+                <div key={i} className={`rounded-2xl overflow-hidden border border-white/10 shadow-2xl ${i === 4 ? "col-span-2 md:col-span-1 max-w-[50%] md:max-w-full mx-auto" : ""}`}>
+                  <video controls preload="metadata" className="w-full aspect-[9/16]">
+                    <source src={src} type="video/mp4" />
+                  </video>
+                </div>
+              ))}
             </div>
           </div>
         </section>
