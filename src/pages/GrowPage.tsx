@@ -114,21 +114,7 @@ const GrowPage = () => {
         </section>
 
         {/* ── Pricing Strips ── */}
-        <section className="border-y border-white/10 py-8 px-4 space-y-8 bg-[hsl(220,25%,10%)]">
-          <div className="max-w-4xl mx-auto">
-            <p className="text-center text-sm font-semibold text-gray-400 uppercase tracking-widest mb-6">
-              Website Redesign — <span className="text-primary text-base font-extrabold">$97/mo</span>
-            </p>
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {["Complete website redesign (included)", "Hosting included", "Ongoing maintenance", "Security & updates"].map((item) => (
-                <div key={item} className="flex items-center gap-2 bg-white/5 rounded-lg px-4 py-3 border border-white/10">
-                  <Check className="w-4 h-4 text-primary shrink-0" />
-                  <span className="text-gray-200 text-sm font-medium">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
+        <section className="border-y border-white/10 py-8 px-4 bg-[hsl(220,25%,10%)]">
           <div className="max-w-4xl mx-auto">
             <p className="text-center text-sm font-semibold text-gray-400 uppercase tracking-widest mb-6">
               Complete Marketing System — <span className="text-primary text-base font-extrabold">$297/mo</span>
