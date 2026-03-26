@@ -155,7 +155,7 @@ const GrowPage = () => {
                   preload="metadata"
                   className="w-full aspect-[9/16]"
                 >
-                  <source src="/videos/testimonial.mp4" type="video/mp4" />
+                  <source src="/videos/testimonial-travis.mp4" type="video/mp4" />
                 </video>
               </div>
               <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
