@@ -148,16 +148,25 @@ const GrowPage = () => {
               Real contractors sharing real results. No scripts, no fluff.
             </p>
 
-            <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-              <video
-                controls
-                preload="metadata"
-                className="w-full aspect-video"
-                poster=""
-              >
-                <source src="/videos/testimonial.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <video
+                  controls
+                  preload="metadata"
+                  className="w-full aspect-[9/16]"
+                >
+                  <source src="/videos/testimonial.mp4" type="video/mp4" />
+                </video>
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <video
+                  controls
+                  preload="metadata"
+                  className="w-full aspect-[9/16]"
+                >
+                  <source src="/videos/testimonial-2.mp4" type="video/mp4" />
+                </video>
+              </div>
             </div>
           </div>
         </section>
