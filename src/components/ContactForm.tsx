@@ -31,7 +31,7 @@ const ContactForm = () => {
   };
 
   const handleBookCall = () => {
-    window.location.href = "/demo";
+    window.location.href = "/grow";
   };
 
   return (
