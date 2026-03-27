@@ -44,7 +44,7 @@ const ContactForm = () => {
             <span className="bg-gradient-hero bg-clip-text text-transparent"> your business?</span>
           </h2>
           <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Book a call or send us a message. We'll get back to you within 24 hours.
+            Get started for free or send us a message. We'll get back to you within 24 hours.
           </p>
         </div>
 

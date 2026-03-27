@@ -86,12 +86,12 @@ const Hero = () => {
             {/* CTA Button */}
             <div className="flex flex-col sm:flex-row gap-4 max-w-lg mx-auto lg:mx-0">
               <Button
-                onClick={() => navigate("/book")}
+                onClick={() => navigate("/grow")}
                 variant="hero"
                 size="lg"
                 className="group min-w-[180px] h-14 text-base"
               >
-                Book A Call
+                Get Started For Free
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
