@@ -150,14 +150,14 @@ const GrowPage = () => {
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
               {[
-                "/videos/testimonial-travis.mp4",
-                "/videos/testimonial-easton.mp4",
-                "/videos/testimonial-3.mp4",
-                "/videos/testimonial-2.mp4",
-                "/videos/testimonial.mp4",
-              ].map((src, i) => (
-                <div key={i} className={`rounded-2xl overflow-hidden border border-white/10 shadow-2xl ${i >= 3 ? "col-span-1" : ""}`}>
-                  <video controls preload="auto" playsInline className="w-full aspect-[9/16] bg-black">
+                { src: "/videos/testimonial-travis.mp4", poster: "/videos/testimonial-travis.jpg" },
+                { src: "/videos/testimonial-easton.mp4", poster: "/videos/testimonial-easton.jpg" },
+                { src: "/videos/testimonial-3.mp4", poster: "/videos/testimonial-3.jpg" },
+                { src: "/videos/testimonial-2.mp4", poster: "/videos/testimonial-2.jpg" },
+                { src: "/videos/testimonial.mp4", poster: "/videos/testimonial.jpg" },
+              ].map(({ src, poster }, i) => (
+                <div key={src} className={`rounded-2xl overflow-hidden border border-white/10 shadow-2xl ${i >= 3 ? "col-span-1" : ""}`}>
+                  <video controls preload="none" playsInline poster={poster} className="w-full aspect-[9/16] bg-black object-cover">
                     <source src={src} type="video/mp4" />
                   </video>
                 </div>
