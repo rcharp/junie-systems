@@ -157,7 +157,7 @@ const GrowPage = () => {
                 "/videos/testimonial.mp4",
               ].map((src, i) => (
                 <div key={i} className={`rounded-2xl overflow-hidden border border-white/10 shadow-2xl ${i >= 3 ? "col-span-1" : ""}`}>
-                  <video controls preload="metadata" className="w-full aspect-[9/16]">
+                  <video controls preload="auto" playsInline className="w-full aspect-[9/16] bg-black">
                     <source src={src} type="video/mp4" />
                   </video>
                 </div>
