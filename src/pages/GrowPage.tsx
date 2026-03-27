@@ -87,7 +87,7 @@ const GrowPage = () => {
           <div className="max-w-4xl mx-auto mt-10">
             <div className="w-full aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10">
               <iframe
-                src="https://www.loom.com/embed/6f02553859a34f2caadf027269c72717?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true&autoplay=0"
+                src="https://www.loom.com/embed/c0c5dba8e65d4f3eb5025c193cc5aa07?hide_owner=true&hide_share=true&hide_title=true&hideEmbedTopBar=true&autoplay=0"
                 frameBorder="0"
                 allowFullScreen
                 className="w-full h-full"
