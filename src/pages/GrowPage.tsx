@@ -75,7 +75,7 @@ const GrowPage = () => {
               onClick={scrollToBook}
               className="inline-flex items-center gap-2 bg-[hsl(60,100%,50%)] hover:bg-[hsl(60,100%,45%)] text-black font-bold text-lg px-10 py-4 rounded-lg shadow-lg transition-all hover:scale-105 w-full max-w-md mx-auto justify-center"
             >
-              Book Your Free Demo Call
+              Get Started For Free
             </button>
 
             <p className="text-sm text-gray-500 max-w-xl mx-auto">
