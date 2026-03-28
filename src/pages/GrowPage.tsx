@@ -26,16 +26,8 @@ const GrowPage = () => {
     script.async = true;
     document.body.appendChild(script);
 
-    const handleMessage = (e: MessageEvent) => {
-      if (e.data.event === "calendly.event_scheduled") {
-        (window as any).fbq?.("track", "Schedule", {}, { eventID: "cal-" + Date.now() });
-      }
-    };
-    window.addEventListener("message", handleMessage);
-
     return () => {
       document.body.removeChild(script);
-      window.removeEventListener("message", handleMessage);
     };
   }, []);
 
