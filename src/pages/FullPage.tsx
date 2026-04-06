@@ -52,6 +52,8 @@ const FullPage = () => {
           </CardContent>
         </Card>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

@@ -49,6 +49,8 @@ const PresencePage = () => {
           </CardContent>
         </Card>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };

@@ -51,6 +51,8 @@ const GrowthPage = () => {
           </CardContent>
         </Card>
       </div>
+      </div>
+      <Footer />
     </div>
   );
 };
