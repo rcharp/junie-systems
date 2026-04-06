@@ -27,7 +27,7 @@ const PresencePage = () => {
           </div>
           <CardHeader className="text-center pb-4 px-6 pt-10">
             <div className="space-y-2">
-              <h3 className="text-xl font-bold uppercase tracking-wide text-foreground">Online Presence</h3>
+              <h3 className="text-xl font-bold uppercase tracking-wide text-foreground">Junie Presence</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Get your business online with a conversion-optimized website and automated responses.
               </p>
