@@ -29,7 +29,7 @@ const GrowthPage = () => {
           </div>
           <CardHeader className="text-center pb-4 px-6 pt-10">
             <div className="space-y-2">
-              <h3 className="text-xl font-bold uppercase tracking-wide text-foreground">Growth Plan</h3>
+              <h3 className="text-xl font-bold uppercase tracking-wide text-foreground">Junie Growth</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Everything in Presence plus missed call text back and review automation.
               </p>
