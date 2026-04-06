@@ -10,7 +10,6 @@ const features = [
   "Chat widget auto-response automation",
   "Quote form auto-response automation",
   "Missed Call Text Back",
-  "Google 5-star review automation",
 ];
 
 const GrowthPage = () => {
