@@ -30,6 +30,10 @@ const GrowthPage = () => {
           <CardHeader className="text-center pb-4 px-6 pt-10">
             <div className="space-y-2">
               <h3 className="text-xl font-bold uppercase tracking-wide text-foreground">Junie Growth</h3>
+              <div className="flex items-baseline justify-center">
+                <span className="text-6xl font-bold text-foreground">$197</span>
+                <span className="text-muted-foreground ml-1">/month</span>
+              </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Everything in Presence plus missed call text back and review automation.
               </p>
