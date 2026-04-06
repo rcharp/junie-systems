@@ -34,6 +34,9 @@ import TrialPage from "./pages/TrialPage";
 import ReviewPage from "./pages/ReviewPage";
 import StartPage from "./pages/StartPage";
 import GrowPage from "./pages/GrowPage";
+import PresencePage from "./pages/PresencePage";
+import GrowthPage from "./pages/GrowthPage";
+import FullPage from "./pages/FullPage";
 
 const queryClient = new QueryClient();
 
