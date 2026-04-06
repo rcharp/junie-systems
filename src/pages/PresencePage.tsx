@@ -8,7 +8,7 @@ import { Check, ArrowRight } from "lucide-react";
 const features = [
   "Complete website redesigned for conversion",
   "Google My Business setup & optimization",
-  "Google 5-star review automation",
+  "QR code for Google reviews",
 ];
 
 const PresencePage = () => {
