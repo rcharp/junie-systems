@@ -34,6 +34,9 @@ import TrialPage from "./pages/TrialPage";
 import ReviewPage from "./pages/ReviewPage";
 import StartPage from "./pages/StartPage";
 import GrowPage from "./pages/GrowPage";
+import PresencePage from "./pages/PresencePage";
+import GrowthPage from "./pages/GrowthPage";
+import FullPage from "./pages/FullPage";
 
 const queryClient = new QueryClient();
 
@@ -83,6 +86,9 @@ const App = () => (
             <Route path="/trial" element={<TrialPage />} />
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/start" element={<StartPage />} />
+            <Route path="/presence" element={<PresencePage />} />
+            <Route path="/growth" element={<GrowthPage />} />
+            <Route path="/full" element={<FullPage />} />
             <Route path="/grow" element={<GrowPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
