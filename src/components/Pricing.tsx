@@ -3,6 +3,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
 
+const presenceFeatures = [
+  "Complete website redesigned for conversion",
+  "Google My Business setup & optimization",
+  "QR code for Google reviews",
+];
+
 const allFeatures = [
   "Complete website redesigned for conversion",
   "Chat widget auto-response automation",
@@ -13,6 +19,10 @@ const allFeatures = [
 ];
 
 const Pricing = () => {
+
+  const handlePresence = () => {
+    window.open("https://api.juniesystems.com/payment-link/69d31ba9c6a0e600f4d07b2f", "_blank");
+  };
 
   const handleComplete = () => {
     window.open("https://buy.stripe.com/7sYeVc1VpeiedFMbrF8g003", "_blank");
@@ -32,7 +42,45 @@ const Pricing = () => {
           </p>
         </div>
 
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Junie Presence */}
+          <Card className="relative group hover:shadow-elegant transition-all duration-300 border-border">
+            <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6 pt-8 sm:pt-10">
+              <div className="space-y-2">
+                <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-foreground">
+                  Junie Presence
+                </h3>
+                <div className="flex items-baseline justify-center">
+                  <span className="text-5xl sm:text-6xl font-bold text-foreground">$97</span>
+                  <span className="text-muted-foreground ml-1">/month</span>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Get your business online with a conversion-optimized website.
+                </p>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-6 px-4 sm:px-6 pb-6 sm:pb-8">
+              <ul className="space-y-4">
+                {presenceFeatures.map((feature, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-base text-foreground">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                className="w-full h-12"
+                variant="outline"
+                onClick={handlePresence}
+              >
+                Get Started
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Complete Marketing System */}
           <Card className="relative group hover:shadow-elegant transition-all duration-300 border-primary shadow-lg">
             <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -42,7 +90,7 @@ const Pricing = () => {
             <CardHeader className="text-center pb-4 sm:pb-6 px-4 sm:px-6 pt-8 sm:pt-10">
               <div className="space-y-2">
                 <h3 className="text-lg sm:text-xl font-bold uppercase tracking-wide text-foreground">
-                  Complete Marketing System
+                  Junie Full System
                 </h3>
                 <div className="flex items-baseline justify-center">
                   <span className="text-5xl sm:text-6xl font-bold text-foreground">$297</span>
