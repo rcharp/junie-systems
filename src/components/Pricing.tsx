@@ -126,7 +126,7 @@ const Pricing = () => {
 
         <div className="text-center mt-12 space-y-4">
           <p className="text-muted-foreground">
-            Not sure if this is right for you? <span className="text-primary font-medium cursor-pointer hover:underline" onClick={handleComplete}>Get started for free</span>
+            Not sure if this is right for you? <span className="text-primary font-medium cursor-pointer hover:underline" onClick={handleComplete}>Get my marketing system</span>
           </p>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
             <span>✓ No setup fees</span>
