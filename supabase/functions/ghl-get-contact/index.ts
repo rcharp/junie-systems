@@ -38,18 +38,47 @@ Deno.serve(async (req) => {
     const { contactId } = await req.json();
     if (!contactId) return jsonRes({ error: 'contactId is required' }, 400);
 
-    const res = await fetch(`${GHL_API}/contacts/${contactId}`, {
-      headers: {
-        Authorization: `Bearer ${PIT}`,
-        Version: GHL_VERSION,
-        Accept: 'application/json',
-      },
-    });
+    const ghHeaders = {
+      Authorization: `Bearer ${PIT}`,
+      Version: GHL_VERSION,
+      Accept: 'application/json',
+    };
+
+    const res = await fetch(`${GHL_API}/contacts/${contactId}`, { headers: ghHeaders });
     const text = await res.text();
     let data: any; try { data = JSON.parse(text); } catch { data = { raw: text }; }
     if (!res.ok) return jsonRes({ error: 'GHL fetch failed', status: res.status, details: data }, 500);
 
     const c = data.contact || data;
+    const locationId = c.locationId;
+
+    // Build map of custom field id -> field name by fetching location custom fields
+    const customFieldMap: Record<string, string> = {};
+    if (locationId) {
+      const cfRes = await fetch(`${GHL_API}/locations/${locationId}/customFields`, { headers: ghHeaders });
+      if (cfRes.ok) {
+        const cfData = await cfRes.json();
+        const fields = cfData.customFields || cfData.fields || [];
+        for (const f of fields) {
+          if (f.id) customFieldMap[f.id] = (f.name || f.fieldKey || '').toString();
+        }
+      }
+    }
+
+    // Find EIN value from contact's customFields array
+    const customFields: any[] = c.customFields || c.customField || [];
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const einKeywords = ['taxid', 'ein', 'businesstaxid', 'businesstaxidorein'];
+    let einValue = '';
+    for (const cf of customFields) {
+      const fieldName = customFieldMap[cf.id] || cf.name || cf.fieldKey || '';
+      const n = norm(fieldName);
+      if (einKeywords.some((k) => n.includes(k))) {
+        einValue = (cf.value || cf.fieldValue || '').toString();
+        if (einValue) break;
+      }
+    }
+
     return jsonRes({
       contact: {
         firstName: c.firstName || c.firstNameLowerCase || '',
@@ -64,6 +93,7 @@ Deno.serve(async (req) => {
         country: c.country || 'US',
         website: c.website || '',
         timezone: c.timezone || 'America/New_York',
+        einNumber: einValue,
       },
     });
   } catch (e) {

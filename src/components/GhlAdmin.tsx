@@ -118,6 +118,7 @@ export const GhlAdmin = () => {
         country: c.country || f.country,
         website: c.website || f.website,
         timezone: c.timezone || f.timezone,
+        einNumber: c.einNumber || f.einNumber,
       }));
       toast({ title: 'Contact loaded', description: 'Form populated from GHL contact' });
     } catch (e: any) {
