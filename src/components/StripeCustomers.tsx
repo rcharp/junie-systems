@@ -10,6 +10,7 @@ import { RefreshCw, Users } from 'lucide-react';
 
 export const StripeCustomers = () => {
   const [customers, setCustomers] = useState<any[]>([]);
+  const [businesses, setBusinesses] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -22,8 +23,19 @@ export const StripeCustomers = () => {
       const { data, error } = await supabase.functions.invoke('stripe-list-customers');
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
-      setCustomers(data.customers || []);
+      const list = data.customers || [];
+      setCustomers(list);
       toast({ title: 'Loaded', description: `${data.total} customers` });
+
+      // Lookup GHL business names by email in background
+      const emails = list.map((c: any) => c.email).filter(Boolean);
+      if (emails.length) {
+        supabase.functions.invoke('ghl-lookup-contacts-by-email', { body: { emails } })
+          .then(({ data: gd }) => {
+            if (gd?.businesses) setBusinesses(gd.businesses);
+          })
+          .catch(() => {});
+      }
     } catch (e: any) {
       toast({ title: 'Fetch failed', description: e.message, variant: 'destructive' });
     } finally {
@@ -35,7 +47,7 @@ export const StripeCustomers = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" /> Junie Customers (Stripe)</CardTitle>
+          <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" /> Junie Customers</CardTitle>
           <CardDescription>Pulled live from Stripe. Shows plan and active status.</CardDescription>
         </div>
         <Button onClick={fetchStripe} disabled={loading} size="sm" variant="outline">
@@ -78,6 +90,7 @@ export const StripeCustomers = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Business</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
@@ -87,6 +100,7 @@ export const StripeCustomers = () => {
               {customers.map((c) => (
                 <TableRow key={c.customerId}>
                   <TableCell>{c.name || '—'}</TableCell>
+                  <TableCell>{businesses[(c.email || '').toLowerCase()] || '—'}</TableCell>
                   <TableCell>{c.email}</TableCell>
                   <TableCell>
                     {c.plan}
