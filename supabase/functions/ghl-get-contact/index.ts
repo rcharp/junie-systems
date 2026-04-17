@@ -65,25 +65,42 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Find EIN value from contact's customFields array
+    // Match contact customFields by normalized field name
     const customFields: any[] = c.customFields || c.customField || [];
     const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const einKeywords = ['taxid', 'ein', 'businesstaxid', 'businesstaxidorein'];
-    let einValue = '';
-    for (const cf of customFields) {
-      const fieldName = customFieldMap[cf.id] || cf.name || cf.fieldKey || '';
-      const n = norm(fieldName);
-      if (einKeywords.some((k) => n.includes(k))) {
-        einValue = (cf.value || cf.fieldValue || '').toString();
-        if (einValue) break;
+
+    const findField = (keywords: string[], excludeKeywords: string[] = []) => {
+      for (const cf of customFields) {
+        const fieldName = customFieldMap[cf.id] || cf.name || cf.fieldKey || '';
+        const n = norm(fieldName);
+        if (excludeKeywords.some((k) => n.includes(k))) continue;
+        if (keywords.some((k) => n.includes(k))) {
+          const v = (cf.value || cf.fieldValue || '').toString();
+          if (v) return v;
+        }
       }
-    }
+      return '';
+    };
+
+    const einValue = findField(['taxid', 'ein', 'businesstaxid', 'businesstaxidorein']);
+    const facebookLink = findField(['facebook']);
+    const instagramLink = findField(['instagram']);
+    const businessNameFull = findField(['businessnamefull', 'businessfullname', 'companynamefull', 'fulllegalname', 'legalbusinessname']);
+    const businessNameShort = findField(['businessname', 'companyname'], ['full', 'legal']);
+    const reviewSurveyLink = findField(['negativefeedback', 'reviewsurvey', 'surveylink', 'feedbacklink', 'negativereview']);
+
+    const stripSuffix = (s: string) =>
+      s.replace(/[\s,]+(llc|l\.l\.c\.|inc|inc\.|incorporated|corp|corp\.|corporation|co|co\.|company|ltd|ltd\.|limited|pllc|p\.l\.l\.c\.|pc|p\.c\.|lp|l\.p\.|llp|l\.l\.p\.)\.?$/i, '').trim();
+
+    const rawName = c.companyName || c.businessName || businessNameFull || businessNameShort || '';
+    const fullName = businessNameFull || rawName;
+    const shortName = businessNameShort || stripSuffix(rawName);
 
     return jsonRes({
       contact: {
         firstName: c.firstName || c.firstNameLowerCase || '',
         lastName: c.lastName || c.lastNameLowerCase || '',
-        name: c.companyName || c.businessName || (c.firstName && c.lastName ? `${c.firstName} ${c.lastName}` : ''),
+        name: shortName || (c.firstName && c.lastName ? `${c.firstName} ${c.lastName}` : ''),
         email: c.email || '',
         phone: c.phone || '',
         address: c.address1 || c.address || '',
@@ -94,6 +111,13 @@ Deno.serve(async (req) => {
         website: c.website || '',
         timezone: c.timezone || 'America/New_York',
         einNumber: einValue,
+        customValues: {
+          company_facebook_link: facebookLink,
+          company_instagram_link: instagramLink,
+          company_name: shortName,
+          company_name_full: fullName,
+          review_survey_link: reviewSurveyLink,
+        },
       },
     });
   } catch (e) {
