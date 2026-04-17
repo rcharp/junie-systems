@@ -62,7 +62,6 @@ Deno.serve(async (req) => {
             interval: price?.recurring?.interval || null,
             status: sub.status,
             isActive,
-            currentPeriodEnd: sub.current_period_end,
           };
         }
       }
@@ -78,6 +77,7 @@ Deno.serve(async (req) => {
     return jsonRes({ customers: list, total: list.length });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error';
+    console.error('stripe-list-customers error:', msg, e);
     return jsonRes({ error: msg }, 500);
   }
 });
