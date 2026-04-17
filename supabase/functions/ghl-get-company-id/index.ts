@@ -29,43 +29,55 @@ Deno.serve(async (req) => {
     const PIT = Deno.env.get('GHL_PIT_TOKEN');
     if (!PIT) return jsonRes({ error: 'GHL_PIT_TOKEN not configured' }, 500);
 
-    // Try /users/me first
     const attempts: any[] = [];
-    const meRes = await fetch(`${GHL_API}/users/me`, {
-      headers: {
-        Authorization: `Bearer ${PIT}`,
-        Version: GHL_VERSION,
-        Accept: 'application/json',
-      },
-    });
-    const meData = await meRes.json().catch(() => ({}));
-    attempts.push({ endpoint: '/users/me', status: meRes.status, data: meData });
 
-    let companyId =
-      meData?.companyId ||
-      meData?.user?.companyId ||
-      meData?.company?.id ||
-      meData?.companyID;
-
-    // Fallback: /oauth/installedLocations or /companies/me
-    if (!companyId) {
-      const compRes = await fetch(`${GHL_API}/companies/me`, {
+    const tryEndpoint = async (path: string) => {
+      const res = await fetch(`${GHL_API}${path}`, {
         headers: {
           Authorization: `Bearer ${PIT}`,
           Version: GHL_VERSION,
           Accept: 'application/json',
         },
       });
-      const compData = await compRes.json().catch(() => ({}));
-      attempts.push({ endpoint: '/companies/me', status: compRes.status, data: compData });
-      companyId = compData?.id || compData?.company?.id || compData?.companyId;
+      const data = await res.json().catch(() => ({}));
+      attempts.push({ endpoint: path, status: res.status, data });
+      return data;
+    };
+
+    const findCompanyId = (obj: any): string | undefined => {
+      if (!obj || typeof obj !== 'object') return undefined;
+      for (const key of ['companyId', 'companyID', 'company_id']) {
+        if (typeof obj[key] === 'string') return obj[key];
+      }
+      for (const v of Object.values(obj)) {
+        if (v && typeof v === 'object') {
+          const found = findCompanyId(v);
+          if (found) return found;
+        }
+      }
+      return undefined;
+    };
+
+    let companyId: string | undefined;
+
+    const meData = await tryEndpoint('/users/me');
+    companyId = findCompanyId(meData);
+
+    if (!companyId) {
+      const locData = await tryEndpoint('/locations/search?limit=1');
+      companyId = findCompanyId(locData);
     }
 
     if (!companyId) {
-      return jsonRes({ error: 'Could not determine companyId from PIT token', attempts }, 404);
+      const oauthData = await tryEndpoint('/oauth/installedLocations?limit=1');
+      companyId = findCompanyId(oauthData);
     }
 
-    return jsonRes({ success: true, companyId, raw: meData });
+    if (!companyId) {
+      return jsonRes({ error: 'Could not determine companyId from PIT token. See attempts for raw responses.', attempts }, 404);
+    }
+
+    return jsonRes({ success: true, companyId, attempts });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error';
     return jsonRes({ error: msg }, 500);
