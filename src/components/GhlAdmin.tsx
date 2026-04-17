@@ -227,10 +227,36 @@ export const GhlAdmin = () => {
                 className="font-mono text-xs"
               />
             </div>
-            <Button onClick={handleCreate} disabled={creating}>
-              {creating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-              Create Sub-account
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleCreate} disabled={creating}>
+                {creating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                Create Sub-account
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() =>
+                  setCreateForm((f) => ({
+                    ...f,
+                    name: 'Test Plumbing Co',
+                    email: `test+${Date.now()}@example.com`,
+                    phone: '+15555550123',
+                    firstName: 'Test',
+                    lastName: 'User',
+                    address: '123 Main St',
+                    city: 'Richmond',
+                    state: 'VA',
+                    postalCode: '23220',
+                    country: 'US',
+                    website: 'https://example.com',
+                    timezone: 'America/New_York',
+                    einNumber: '12-3456789',
+                  }))
+                }
+              >
+                Fill Test Data
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </TabsContent>
