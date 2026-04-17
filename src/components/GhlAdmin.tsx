@@ -9,8 +9,29 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { RefreshCw, Plus, Save, Users, Search } from 'lucide-react';
+
+const US_STATES: { code: string; name: string }[] = [
+  { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
+  { code: 'AR', name: 'Arkansas' }, { code: 'CA', name: 'California' }, { code: 'CO', name: 'Colorado' },
+  { code: 'CT', name: 'Connecticut' }, { code: 'DE', name: 'Delaware' }, { code: 'FL', name: 'Florida' },
+  { code: 'GA', name: 'Georgia' }, { code: 'HI', name: 'Hawaii' }, { code: 'ID', name: 'Idaho' },
+  { code: 'IL', name: 'Illinois' }, { code: 'IN', name: 'Indiana' }, { code: 'IA', name: 'Iowa' },
+  { code: 'KS', name: 'Kansas' }, { code: 'KY', name: 'Kentucky' }, { code: 'LA', name: 'Louisiana' },
+  { code: 'ME', name: 'Maine' }, { code: 'MD', name: 'Maryland' }, { code: 'MA', name: 'Massachusetts' },
+  { code: 'MI', name: 'Michigan' }, { code: 'MN', name: 'Minnesota' }, { code: 'MS', name: 'Mississippi' },
+  { code: 'MO', name: 'Missouri' }, { code: 'MT', name: 'Montana' }, { code: 'NE', name: 'Nebraska' },
+  { code: 'NV', name: 'Nevada' }, { code: 'NH', name: 'New Hampshire' }, { code: 'NJ', name: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico' }, { code: 'NY', name: 'New York' }, { code: 'NC', name: 'North Carolina' },
+  { code: 'ND', name: 'North Dakota' }, { code: 'OH', name: 'Ohio' }, { code: 'OK', name: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon' }, { code: 'PA', name: 'Pennsylvania' }, { code: 'RI', name: 'Rhode Island' },
+  { code: 'SC', name: 'South Carolina' }, { code: 'SD', name: 'South Dakota' }, { code: 'TN', name: 'Tennessee' },
+  { code: 'TX', name: 'Texas' }, { code: 'UT', name: 'Utah' }, { code: 'VT', name: 'Vermont' },
+  { code: 'VA', name: 'Virginia' }, { code: 'WA', name: 'Washington' }, { code: 'WV', name: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin' }, { code: 'WY', name: 'Wyoming' }, { code: 'DC', name: 'District of Columbia' },
+];
 
 type CreateForm = {
   companyId: string;
@@ -183,7 +204,17 @@ export const GhlAdmin = () => {
               <Field label="Timezone" value={createForm.timezone} onChange={(v) => setCreateForm({ ...createForm, timezone: v })} />
               <Field label="Address" value={createForm.address} onChange={(v) => setCreateForm({ ...createForm, address: v })} />
               <Field label="City" value={createForm.city} onChange={(v) => setCreateForm({ ...createForm, city: v })} />
-              <Field label="State" value={createForm.state} onChange={(v) => setCreateForm({ ...createForm, state: v })} />
+              <div>
+                <Label>State</Label>
+                <Select value={createForm.state} onValueChange={(v) => setCreateForm({ ...createForm, state: v })}>
+                  <SelectTrigger><SelectValue placeholder="Select a state" /></SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {US_STATES.map((s) => (
+                      <SelectItem key={s.code} value={s.code}>{s.name} ({s.code})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <Field label="Postal Code" value={createForm.postalCode} onChange={(v) => setCreateForm({ ...createForm, postalCode: v })} />
               <Field label="Country" value={createForm.country} onChange={(v) => setCreateForm({ ...createForm, country: v })} />
               <Field label="Snapshot ID (override)" value={createForm.snapshotId} onChange={(v) => setCreateForm({ ...createForm, snapshotId: v })} placeholder="Defaults to GHL_SNAPSHOT_ID secret" />
