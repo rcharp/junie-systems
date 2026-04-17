@@ -32,8 +32,9 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
     if (!isAdmin) return jsonRes({ error: 'Forbidden' }, 403);
 
-    const PIT = Deno.env.get('GHL_LOCATION_PIT_TOKEN') || Deno.env.get('GHL_PIT_TOKEN');
+    const PIT = Deno.env.get('GHL_PIT_TOKEN') || Deno.env.get('GHL_LOCATION_PIT_TOKEN');
     if (!PIT) return jsonRes({ error: 'GHL token not configured' }, 500);
+    const COMPANY_ID = Deno.env.get('GHL_AGENCY_COMPANY_ID');
 
     const { emails } = await req.json();
     if (!Array.isArray(emails)) return jsonRes({ error: 'emails array required' }, 400);
@@ -42,22 +43,34 @@ Deno.serve(async (req) => {
       Authorization: `Bearer ${PIT}`,
       Version: GHL_VERSION,
       Accept: 'application/json',
+      'Content-Type': 'application/json',
     };
 
+    // 1) Get all locations (subaccounts) for the agency
+    let locations: any[] = [];
+    if (COMPANY_ID) {
+      const locRes = await fetch(`${GHL_API}/locations/search?companyId=${COMPANY_ID}&limit=500`, { headers: ghHeaders });
+      const locText = await locRes.text();
+      if (locRes.ok) {
+        try { locations = JSON.parse(locText).locations || []; } catch {}
+      } else {
+        console.log('locations/search failed', locRes.status, locText.slice(0, 300));
+      }
+    }
+    console.log('Found locations:', locations.length);
+
+    // Each subaccount/location IS one customer's business — match by location.email
     const results: Record<string, string> = {};
-    await Promise.all(emails.map(async (email: string) => {
-      if (!email) return;
-      try {
-        const url = `${GHL_API}/contacts/?query=${encodeURIComponent(email)}&limit=1`;
-        const r = await fetch(url, { headers: ghHeaders });
-        if (!r.ok) return;
-        const d = await r.json();
-        const contact = (d.contacts && d.contacts[0]) || null;
-        if (contact) {
-          results[email.toLowerCase()] = contact.companyName || contact.businessName || '';
-        }
-      } catch {}
-    }));
+    const wanted = new Set(emails.map((e: string) => (e || '').toLowerCase()).filter(Boolean));
+
+    for (const loc of locations) {
+      const locEmail = (loc.email || loc.business?.email || '').toLowerCase();
+      const bizName = loc.business?.name || loc.name || '';
+      if (locEmail && wanted.has(locEmail) && bizName) {
+        results[locEmail] = bizName;
+      }
+    }
+    console.log('Resolved by location email:', Object.keys(results).length, 'of', wanted.size);
 
     return jsonRes({ businesses: results });
   } catch (e) {
