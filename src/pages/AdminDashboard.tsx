@@ -479,6 +479,10 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="ghl" className="space-y-6 sm:space-y-8">
+            <GhlAdmin />
+          </TabsContent>
+
           <TabsContent value="blog" className="space-y-6 sm:space-y-8">
             <BlogAutomation />
           </TabsContent>
