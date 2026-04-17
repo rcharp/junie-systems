@@ -83,50 +83,38 @@ Deno.serve(async (req) => {
 
     const locationId = createData?.id || createData?.location?.id || createData?._id;
 
-    // Update location with business info (EIN, etc.) — not accepted on create
+    // Create a Business record on the new location (this is where EIN lives)
     let businessUpdateResult: any = null;
     if (locationId && einNumber) {
-      const updatePayload = {
-        companyId,
+      const businessPayload = {
         name,
+        locationId,
         phone,
+        email,
+        website,
         address,
         city,
         state,
         country,
         postalCode,
-        website,
-        timezone,
-        email,
-        business: {
-          name,
-          email,
-          phone,
-          website,
-          address,
-          city,
-          state,
-          country,
-          postalCode,
-          einNumber,
-          registrationIdType: 'ein',
-          regionOfOperation: 'USA',
-        },
+        einNumber,
+        registrationIdType: 'ein',
+        regionOfOperation: 'USA',
       };
-      console.log('GHL update location payload:', JSON.stringify(updatePayload));
-      const updateRes = await fetch(`${GHL_API}/locations/${locationId}`, {
-        method: 'PUT',
+      console.log('GHL create business payload:', JSON.stringify(businessPayload));
+      const bizRes = await fetch(`${GHL_API}/businesses/`, {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${PIT}`,
           Version: GHL_VERSION,
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify(businessPayload),
       });
-      const updateData = await updateRes.json().catch(() => ({}));
-      console.log('GHL update location response:', updateRes.status, JSON.stringify(updateData));
-      businessUpdateResult = { ok: updateRes.ok, status: updateRes.status, data: updateData };
+      const bizData = await bizRes.json().catch(() => ({}));
+      console.log('GHL create business response:', bizRes.status, JSON.stringify(bizData));
+      businessUpdateResult = { ok: bizRes.ok, status: bizRes.status, data: bizData };
     }
 
     // Optionally set custom values
