@@ -29,34 +29,49 @@ Deno.serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: '2024-06-20' });
 
-    // Fetch all active + non-active subscriptions, expanded with customer + product
     const customers: Record<string, any> = {};
+    const productNames = new Map<string, string>();
     let startingAfter: string | undefined;
 
-    for (let i = 0; i < 10; i++) { // up to 1000 subs
+    const getProductName = async (productRef: string | Stripe.Product | null | undefined) => {
+      if (!productRef) return 'Unknown';
+      if (typeof productRef !== 'string') return productRef.name || 'Unknown';
+      if (productNames.has(productRef)) return productNames.get(productRef)!;
+
+      try {
+        const product = await stripe.products.retrieve(productRef);
+        const name = product.name || 'Unknown';
+        productNames.set(productRef, name);
+        return name;
+      } catch {
+        return 'Unknown';
+      }
+    };
+
+    for (let i = 0; i < 10; i++) {
       const subs = await stripe.subscriptions.list({
         status: 'all',
         limit: 100,
         starting_after: startingAfter,
-        expand: ['data.customer', 'data.items.data.price.product'],
+        expand: ['data.customer'],
       });
 
       for (const sub of subs.data) {
         const cust = sub.customer as Stripe.Customer;
         if (!cust || cust.deleted) continue;
+
         const item = sub.items.data[0];
         const price = item?.price;
-        const product = price?.product as Stripe.Product | undefined;
-
+        const plan = await getProductName(price?.product);
         const existing = customers[cust.id];
         const isActive = sub.status === 'active' || sub.status === 'trialing';
-        // Prefer active sub if multiple
+
         if (!existing || (isActive && !existing.isActive)) {
           customers[cust.id] = {
             customerId: cust.id,
             name: cust.name || '',
             email: cust.email || '',
-            plan: product?.name || 'Unknown',
+            plan,
             amount: price?.unit_amount ? price.unit_amount / 100 : null,
             currency: price?.currency || 'usd',
             interval: price?.recurring?.interval || null,
