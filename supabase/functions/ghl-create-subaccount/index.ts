@@ -39,11 +39,13 @@ Deno.serve(async (req) => {
       firstName, lastName,
       snapshotId,
       customValues,
+      einNumber,
     } = body;
 
     const companyId = bodyCompanyId || Deno.env.get('GHL_AGENCY_COMPANY_ID');
     if (!companyId) return jsonRes({ error: 'companyId is required (set GHL_AGENCY_COMPANY_ID secret or pass companyId)' }, 400);
     if (!name) return jsonRes({ error: 'name is required' }, 400);
+    if (!einNumber) return jsonRes({ error: 'einNumber (Business Tax ID/EIN) is required' }, 400);
 
     // Create sub-account (location)
     const createPayload: any = {
@@ -58,6 +60,19 @@ Deno.serve(async (req) => {
       website,
       timezone,
       email,
+      business: {
+        name,
+        email,
+        phone,
+        website,
+        address,
+        city,
+        state,
+        country,
+        postalCode,
+        einNumber,
+        registrationIdType: 'ein',
+      },
       prospectInfo: (firstName || lastName || email) ? { firstName, lastName, email } : undefined,
     };
     if (snapshotId || SNAPSHOT_ID) createPayload.snapshotId = snapshotId || SNAPSHOT_ID;

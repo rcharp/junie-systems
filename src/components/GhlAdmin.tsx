@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ type CreateForm = {
   country: string;
   website: string;
   timezone: string;
+  einNumber: string;
   snapshotId: string;
   customValuesJson: string;
 };
@@ -65,9 +66,12 @@ const emptyCreate: CreateForm = {
   country: 'US',
   website: '',
   timezone: 'America/New_York',
+  einNumber: '',
   snapshotId: '',
-  customValuesJson: '{\n  "business_description": ""\n}',
+  customValuesJson: '',
 };
+
+const CUSTOM_VALUES_PLACEHOLDER = '{\n  "business_description": "Family-owned plumbing company serving the Richmond area"\n}';
 
 export const GhlAdmin = () => {
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
@@ -83,26 +87,24 @@ export const GhlAdmin = () => {
 
   const [stripeCustomers, setStripeCustomers] = useState<any[]>([]);
   const [stripeLoading, setStripeLoading] = useState(false);
-  const [fetchingCompanyId, setFetchingCompanyId] = useState(false);
 
-  const handleFetchCompanyId = async () => {
-    setFetchingCompanyId(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ghl-get-company-id');
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error + (data.attempts ? ' — ' + JSON.stringify(data.attempts).slice(0, 300) : ''));
-      setCreateForm((f) => ({ ...f, companyId: data.companyId }));
-      toast({ title: 'Company ID fetched', description: data.companyId });
-    } catch (e: any) {
-      toast({ title: 'Fetch failed', description: e.message, variant: 'destructive' });
-    } finally {
-      setFetchingCompanyId(false);
-    }
-  };
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke('ghl-get-company-id');
+        if (data?.companyId) setCreateForm((f) => ({ ...f, companyId: data.companyId }));
+      } catch {}
+    })();
+  }, []);
 
   const handleCreate = async () => {
-    if (!createForm.companyId || !createForm.name) {
-      toast({ title: 'Missing fields', description: 'Company ID and Business Name are required', variant: 'destructive' });
+    const required: (keyof CreateForm)[] = [
+      'companyId', 'name', 'email', 'phone', 'firstName', 'lastName',
+      'address', 'city', 'state', 'postalCode', 'country', 'timezone', 'einNumber',
+    ];
+    const missing = required.filter((k) => !createForm[k]?.toString().trim());
+    if (missing.length) {
+      toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
       return;
     }
     setCreating(true);
@@ -185,27 +187,22 @@ export const GhlAdmin = () => {
             <CardDescription>Creates a new location in your GHL agency and imports a snapshot.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Field label="Agency Company ID *" value={createForm.companyId} onChange={(v) => setCreateForm({ ...createForm, companyId: v })} placeholder="Click Fetch to auto-fill" />
-              </div>
-              <Button type="button" variant="outline" onClick={handleFetchCompanyId} disabled={fetchingCompanyId}>
-                {fetchingCompanyId ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
-                Fetch My Company ID
-              </Button>
+            <div>
+              <Label>Agency Company ID</Label>
+              <Input value={createForm.companyId} disabled readOnly placeholder="Auto-filled from secret..." className="bg-muted" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Business Name *" value={createForm.name} onChange={(v) => setCreateForm({ ...createForm, name: v })} />
-              <Field label="First Name" value={createForm.firstName} onChange={(v) => setCreateForm({ ...createForm, firstName: v })} />
-              <Field label="Last Name" value={createForm.lastName} onChange={(v) => setCreateForm({ ...createForm, lastName: v })} />
-              <Field label="Email" value={createForm.email} onChange={(v) => setCreateForm({ ...createForm, email: v })} />
-              <Field label="Phone" value={createForm.phone} onChange={(v) => setCreateForm({ ...createForm, phone: v })} />
+              <Field label="Business Name *" value={createForm.name} onChange={(v) => setCreateForm({ ...createForm, name: v })} required />
+              <Field label="First Name *" value={createForm.firstName} onChange={(v) => setCreateForm({ ...createForm, firstName: v })} required />
+              <Field label="Last Name *" value={createForm.lastName} onChange={(v) => setCreateForm({ ...createForm, lastName: v })} required />
+              <Field label="Email *" value={createForm.email} onChange={(v) => setCreateForm({ ...createForm, email: v })} required />
+              <Field label="Phone *" value={createForm.phone} onChange={(v) => setCreateForm({ ...createForm, phone: v })} required />
               <Field label="Website" value={createForm.website} onChange={(v) => setCreateForm({ ...createForm, website: v })} />
-              <Field label="Timezone" value={createForm.timezone} onChange={(v) => setCreateForm({ ...createForm, timezone: v })} />
-              <Field label="Address" value={createForm.address} onChange={(v) => setCreateForm({ ...createForm, address: v })} />
-              <Field label="City" value={createForm.city} onChange={(v) => setCreateForm({ ...createForm, city: v })} />
+              <Field label="Timezone *" value={createForm.timezone} onChange={(v) => setCreateForm({ ...createForm, timezone: v })} required />
+              <Field label="Address *" value={createForm.address} onChange={(v) => setCreateForm({ ...createForm, address: v })} required />
+              <Field label="City *" value={createForm.city} onChange={(v) => setCreateForm({ ...createForm, city: v })} required />
               <div>
-                <Label>State</Label>
+                <Label>State *</Label>
                 <Select value={createForm.state} onValueChange={(v) => setCreateForm({ ...createForm, state: v })}>
                   <SelectTrigger><SelectValue placeholder="Select a state" /></SelectTrigger>
                   <SelectContent className="max-h-72">
@@ -215,13 +212,20 @@ export const GhlAdmin = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <Field label="Postal Code" value={createForm.postalCode} onChange={(v) => setCreateForm({ ...createForm, postalCode: v })} />
-              <Field label="Country" value={createForm.country} onChange={(v) => setCreateForm({ ...createForm, country: v })} />
+              <Field label="Postal Code *" value={createForm.postalCode} onChange={(v) => setCreateForm({ ...createForm, postalCode: v })} required />
+              <Field label="Country *" value={createForm.country} onChange={(v) => setCreateForm({ ...createForm, country: v })} required />
+              <Field label="Business Tax ID / EIN *" value={createForm.einNumber} onChange={(v) => setCreateForm({ ...createForm, einNumber: v })} required placeholder="12-3456789" />
               <Field label="Snapshot ID (override)" value={createForm.snapshotId} onChange={(v) => setCreateForm({ ...createForm, snapshotId: v })} placeholder="Defaults to GHL_SNAPSHOT_ID secret" />
             </div>
             <div>
-              <Label>Custom Values (JSON)</Label>
-              <Textarea rows={5} value={createForm.customValuesJson} onChange={(e) => setCreateForm({ ...createForm, customValuesJson: e.target.value })} className="font-mono text-xs" />
+              <Label>Custom Values (JSON, optional)</Label>
+              <Textarea
+                rows={5}
+                value={createForm.customValuesJson}
+                onChange={(e) => setCreateForm({ ...createForm, customValuesJson: e.target.value })}
+                placeholder={CUSTOM_VALUES_PLACEHOLDER}
+                className="font-mono text-xs"
+              />
             </div>
             <Button onClick={handleCreate} disabled={creating}>
               {creating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
@@ -260,9 +264,9 @@ export const GhlAdmin = () => {
   );
 };
 
-const Field = ({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) => (
+const Field = ({ label, value, onChange, placeholder, required }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean }) => (
   <div>
     <Label className="capitalize">{label}</Label>
-    <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+    <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />
   </div>
 );
