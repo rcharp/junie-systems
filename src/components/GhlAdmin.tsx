@@ -136,10 +136,9 @@ export const GhlAdmin = () => {
 
   return (
     <Tabs defaultValue="create" className="w-full">
-      <TabsList className="grid grid-cols-3 mb-4">
+      <TabsList className="grid grid-cols-2 mb-4">
         <TabsTrigger value="create">Create Sub-account</TabsTrigger>
         <TabsTrigger value="update">Update Sub-account</TabsTrigger>
-        <TabsTrigger value="stripe">Stripe Customers</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">
@@ -202,55 +201,6 @@ export const GhlAdmin = () => {
         </Card>
       </TabsContent>
 
-      <TabsContent value="stripe">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2"><Users className="w-5 h-5" /> Junie Customers (Stripe)</CardTitle>
-              <CardDescription>Pulled live from Stripe. Shows plan and active status.</CardDescription>
-            </div>
-            <Button onClick={fetchStripe} disabled={stripeLoading} size="sm" variant="outline">
-              {stripeLoading ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
-              Refresh
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {stripeCustomers.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Click Refresh to load customers</p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {stripeCustomers.map((c) => (
-                    <TableRow key={c.customerId}>
-                      <TableCell>{c.name || '—'}</TableCell>
-                      <TableCell>{c.email}</TableCell>
-                      <TableCell>
-                        {c.plan}
-                        {c.amount != null && (
-                          <span className="text-xs text-muted-foreground ml-2">
-                            ${c.amount}/{c.interval || 'mo'}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={c.isActive ? 'default' : 'secondary'}>{c.status}</Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </TabsContent>
     </Tabs>
   );
 };
