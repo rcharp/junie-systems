@@ -60,20 +60,6 @@ Deno.serve(async (req) => {
       website,
       timezone,
       email,
-      business: {
-        name,
-        email,
-        phone,
-        website,
-        address,
-        city,
-        state,
-        country,
-        postalCode,
-        einNumber,
-        registrationIdType: 'ein',
-        regionOfOperation: 'USA',
-      },
       prospectInfo: (firstName || lastName || email) ? { firstName, lastName, email } : undefined,
     };
     if (snapshotId || SNAPSHOT_ID) createPayload.snapshotId = snapshotId || SNAPSHOT_ID;
