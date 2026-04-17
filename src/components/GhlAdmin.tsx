@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { RefreshCw, Plus, Save, Users } from 'lucide-react';
+import { RefreshCw, Plus, Save, Users, Search } from 'lucide-react';
 
 type CreateForm = {
   companyId: string;
@@ -62,6 +62,22 @@ export const GhlAdmin = () => {
 
   const [stripeCustomers, setStripeCustomers] = useState<any[]>([]);
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [fetchingCompanyId, setFetchingCompanyId] = useState(false);
+
+  const handleFetchCompanyId = async () => {
+    setFetchingCompanyId(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-get-company-id');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error + (data.attempts ? ' — ' + JSON.stringify(data.attempts).slice(0, 300) : ''));
+      setCreateForm((f) => ({ ...f, companyId: data.companyId }));
+      toast({ title: 'Company ID fetched', description: data.companyId });
+    } catch (e: any) {
+      toast({ title: 'Fetch failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setFetchingCompanyId(false);
+    }
+  };
 
   const handleCreate = async () => {
     if (!createForm.companyId || !createForm.name) {
@@ -148,8 +164,16 @@ export const GhlAdmin = () => {
             <CardDescription>Creates a new location in your GHL agency and imports a snapshot.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex items-end gap-2">
+              <div className="flex-1">
+                <Field label="Agency Company ID *" value={createForm.companyId} onChange={(v) => setCreateForm({ ...createForm, companyId: v })} placeholder="Click Fetch to auto-fill" />
+              </div>
+              <Button type="button" variant="outline" onClick={handleFetchCompanyId} disabled={fetchingCompanyId}>
+                {fetchingCompanyId ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+                Fetch My Company ID
+              </Button>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Agency Company ID *" value={createForm.companyId} onChange={(v) => setCreateForm({ ...createForm, companyId: v })} placeholder="From GHL Agency Settings" />
               <Field label="Business Name *" value={createForm.name} onChange={(v) => setCreateForm({ ...createForm, name: v })} />
               <Field label="First Name" value={createForm.firstName} onChange={(v) => setCreateForm({ ...createForm, firstName: v })} />
               <Field label="Last Name" value={createForm.lastName} onChange={(v) => setCreateForm({ ...createForm, lastName: v })} />
