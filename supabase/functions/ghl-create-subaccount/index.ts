@@ -56,10 +56,8 @@ Deno.serve(async (req) => {
       postalCode,
       website,
       timezone,
-      firstName,
-      lastName,
       email,
-      prospectInfo: email ? { firstName, lastName, email } : undefined,
+      prospectInfo: (firstName || lastName || email) ? { firstName, lastName, email } : undefined,
     };
     if (snapshotId || SNAPSHOT_ID) createPayload.snapshotId = snapshotId || SNAPSHOT_ID;
 
