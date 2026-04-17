@@ -40,6 +40,26 @@ export const StripeCustomers = () => {
         </Button>
       </CardHeader>
       <CardContent>
+        {customers.length > 0 && (() => {
+          const mrr = customers.reduce((sum, c) => {
+            if (!c.isActive || c.amount == null) return sum;
+            const monthly =
+              c.interval === 'year' ? c.amount / 12 :
+              c.interval === 'week' ? c.amount * 4.345 :
+              c.interval === 'day' ? c.amount * 30 :
+              c.amount;
+            return sum + monthly;
+          }, 0);
+          return (
+            <div className="mb-6 p-4 sm:p-6 rounded-lg bg-muted/40 border text-center">
+              <p className="text-xs sm:text-sm uppercase tracking-wide text-muted-foreground mb-1">Total MRR</p>
+              <p className="text-4xl sm:text-5xl font-bold tabular-nums">
+                ${mrr.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                <span className="text-base sm:text-lg font-normal text-muted-foreground ml-1">/mo</span>
+              </p>
+            </div>
+          );
+        })()}
         {customers.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Click Refresh to load customers</p>
         ) : (
