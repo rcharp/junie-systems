@@ -50,13 +50,20 @@ export const StripeCustomers = () => {
               c.amount;
             return sum + monthly;
           }, 0);
+          const activeCount = customers.filter((c) => c.isActive).length;
           return (
-            <div className="mb-6 p-4 sm:p-6 rounded-lg bg-muted/40 border text-center">
-              <p className="text-xs sm:text-sm uppercase tracking-wide text-muted-foreground mb-1">Total MRR</p>
-              <p className="text-4xl sm:text-5xl font-bold tabular-nums">
-                ${mrr.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                <span className="text-base sm:text-lg font-normal text-muted-foreground ml-1">/mo</span>
-              </p>
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 sm:p-6 rounded-lg bg-muted/40 border text-center">
+                <p className="text-xs sm:text-sm uppercase tracking-wide text-muted-foreground mb-1">Total MRR</p>
+                <p className="text-4xl sm:text-5xl font-bold tabular-nums">
+                  ${mrr.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  <span className="text-base sm:text-lg font-normal text-muted-foreground ml-1">/mo</span>
+                </p>
+              </div>
+              <div className="p-4 sm:p-6 rounded-lg bg-muted/40 border text-center">
+                <p className="text-xs sm:text-sm uppercase tracking-wide text-muted-foreground mb-1">Active Customers</p>
+                <p className="text-4xl sm:text-5xl font-bold tabular-nums">{activeCount}</p>
+              </div>
             </div>
           );
         })()}
