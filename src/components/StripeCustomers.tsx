@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,10 @@ import { RefreshCw, Users } from 'lucide-react';
 export const StripeCustomers = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchStripe();
+  }, []);
 
   const fetchStripe = async () => {
     setLoading(true);
