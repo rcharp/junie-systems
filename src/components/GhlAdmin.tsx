@@ -88,6 +88,45 @@ export const GhlAdmin = () => {
   const [stripeCustomers, setStripeCustomers] = useState<any[]>([]);
   const [stripeLoading, setStripeLoading] = useState(false);
 
+  const [contactId, setContactId] = useState('');
+  const [loadingContact, setLoadingContact] = useState(false);
+
+  const handlePopulateFromContact = async () => {
+    if (!contactId.trim()) {
+      toast({ title: 'Missing Contact ID', variant: 'destructive' });
+      return;
+    }
+    setLoadingContact(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-get-contact', {
+        body: { contactId: contactId.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      const c = data.contact || {};
+      setCreateForm((f) => ({
+        ...f,
+        name: c.name || f.name,
+        email: c.email || f.email,
+        phone: c.phone || f.phone,
+        firstName: c.firstName || f.firstName,
+        lastName: c.lastName || f.lastName,
+        address: c.address || f.address,
+        city: c.city || f.city,
+        state: c.state || f.state,
+        postalCode: c.postalCode || f.postalCode,
+        country: c.country || f.country,
+        website: c.website || f.website,
+        timezone: c.timezone || f.timezone,
+      }));
+      toast({ title: 'Contact loaded', description: 'Form populated from GHL contact' });
+    } catch (e: any) {
+      toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
+    } finally {
+      setLoadingContact(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -187,9 +226,24 @@ export const GhlAdmin = () => {
             <CardDescription>Creates a new location in your GHL agency and imports a snapshot.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label>Agency Company ID</Label>
-              <Input value={createForm.companyId} disabled readOnly placeholder="Auto-filled from secret..." className="bg-muted" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Agency Company ID</Label>
+                <Input value={createForm.companyId} disabled readOnly placeholder="Auto-filled from secret..." className="bg-muted" />
+              </div>
+              <div>
+                <Label>Populate from GHL Contact</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={contactId}
+                    onChange={(e) => setContactId(e.target.value)}
+                    placeholder="Contact ID"
+                  />
+                  <Button type="button" variant="outline" onClick={handlePopulateFromContact} disabled={loadingContact}>
+                    {loadingContact ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Populate'}
+                  </Button>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Business Name *" value={createForm.name} onChange={(v) => setCreateForm({ ...createForm, name: v })} required />
