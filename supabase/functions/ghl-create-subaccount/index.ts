@@ -112,7 +112,85 @@ Deno.serve(async (req) => {
       }
     }
 
-    return jsonRes({ success: true, locationId, location: createData });
+    // Create an Admin user on the new sub-account with scoped permissions
+    let userResult: any = null;
+    if (locationId && email) {
+      const userPermissions = {
+        campaignsEnabled: false,
+        campaignsReadOnly: false,
+        contactsEnabled: true,
+        workflowsEnabled: false,
+        workflowsReadOnly: false,
+        triggersEnabled: false,
+        funnelsEnabled: false,
+        websitesEnabled: false,
+        opportunitiesEnabled: true,
+        dashboardStatsEnabled: true,
+        bulkRequestsEnabled: true,
+        appointmentsEnabled: false,
+        reviewsEnabled: true,
+        onlineListingsEnabled: true,
+        phoneCallEnabled: false,
+        conversationsEnabled: true,
+        assignedDataOnly: false,
+        adwordsReportingEnabled: false,
+        membershipEnabled: false,
+        facebookAdsReportingEnabled: true,
+        attributionsReportingEnabled: false,
+        settingsEnabled: false,
+        tagsEnabled: true,
+        leadValueEnabled: true,
+        marketingEnabled: false,
+        agentReportingEnabled: false,
+        botService: false,
+        socialPlanner: true,
+        bloggingEnabled: false,
+        invoiceEnabled: false,
+        affiliateManagerEnabled: false,
+        contentAiEnabled: false,
+        refundsEnabled: false,
+        recordPaymentEnabled: false,
+        cancelSubscriptionEnabled: false,
+        paymentsEnabled: false,
+        communitiesEnabled: false,
+        exportPaymentsEnabled: false,
+        adManager: false,
+        prospectingEnabled: false,
+        mediaStorageEnabled: true,
+        chatWithAi: false,
+        sas: false,
+      };
+
+      const [uFirst, ...uRest] = (name || email).split(' ');
+      const userPayload: any = {
+        companyId,
+        firstName: firstName || uFirst || 'Account',
+        lastName: lastName || uRest.join(' ') || 'Owner',
+        email,
+        phone,
+        type: 'account',
+        role: 'admin',
+        locationIds: [locationId],
+        permissions: userPermissions,
+      };
+
+      console.log('GHL create user payload:', JSON.stringify(userPayload));
+      const userRes = await fetch(`${GHL_API}/users/`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${PIT}`,
+          Version: GHL_VERSION,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(userPayload),
+      });
+      const userData = await userRes.json();
+      console.log('GHL create user response:', userRes.status, JSON.stringify(userData));
+      userResult = { ok: userRes.ok, status: userRes.status, data: userData };
+    }
+
+    return jsonRes({ success: true, locationId, location: createData, user: userResult });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error';
     return jsonRes({ error: msg }, 500);
