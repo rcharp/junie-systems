@@ -365,56 +365,7 @@ const AdminDashboard = () => {
           </TabsList>
 
           <TabsContent value="users" className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.totalUsers}</div>
-                  <p className="text-xs text-muted-foreground">Registered users on platform</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium">Total Calls</CardTitle>
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.totalCalls}</div>
-                  <p className="text-xs text-muted-foreground">Calls handled by AI</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium">Appointments</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.totalAppointments}</div>
-                  <p className="text-xs text-muted-foreground">Appointments booked</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium">Active Users</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.activeUsers}</div>
-                  <p className="text-xs text-muted-foreground">Active in last 30 days</p>
-                </CardContent>
-              </Card>
-            </div>
-
             <StripeCustomers />
-
-            <AdminUsersList users={users} onRefresh={fetchStats} />
           </TabsContent>
 
           <TabsContent value="ghl" className="space-y-6 sm:space-y-8">
