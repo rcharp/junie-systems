@@ -59,34 +59,18 @@ Deno.serve(async (req) => {
     }
     console.log('Found locations:', locations.length);
 
-    // Build email -> business name map by querying each location's contacts
+    // Each subaccount/location IS one customer's business — match by location.email
     const results: Record<string, string> = {};
-    const remaining = new Set(emails.map((e: string) => (e || '').toLowerCase()).filter(Boolean));
+    const wanted = new Set(emails.map((e: string) => (e || '').toLowerCase()).filter(Boolean));
 
     for (const loc of locations) {
-      if (!remaining.size) break;
-      const locId = loc._id || loc.id;
-      if (!locId) continue;
-      // Use search endpoint with each remaining email
-      await Promise.all(Array.from(remaining).map(async (email) => {
-        try {
-          const url = `${GHL_API}/contacts/?locationId=${encodeURIComponent(locId)}&query=${encodeURIComponent(email)}&limit=5`;
-          const r = await fetch(url, { headers: ghHeaders });
-          if (!r.ok) return;
-          const d = await r.json();
-          const list: any[] = d.contacts || [];
-          const match = list.find((c) => (c.email || '').toLowerCase() === email);
-          if (match) {
-            const biz = match.companyName || match.businessName || loc.name || '';
-            if (biz) {
-              results[email] = biz;
-              remaining.delete(email);
-            }
-          }
-        } catch {}
-      }));
+      const locEmail = (loc.email || loc.business?.email || '').toLowerCase();
+      const bizName = loc.business?.name || loc.name || '';
+      if (locEmail && wanted.has(locEmail) && bizName) {
+        results[locEmail] = bizName;
+      }
     }
-    console.log('Resolved', Object.keys(results).length, 'of', emails.length);
+    console.log('Resolved by location email:', Object.keys(results).length, 'of', wanted.size);
 
     return jsonRes({ businesses: results });
   } catch (e) {
