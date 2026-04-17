@@ -91,7 +91,6 @@ export const StripeCustomers = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Business</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -101,7 +100,6 @@ export const StripeCustomers = () => {
                 <TableRow key={c.customerId}>
                   <TableCell>{c.name || '—'}</TableCell>
                   <TableCell>{businesses[(c.email || '').toLowerCase()] || '—'}</TableCell>
-                  <TableCell>{c.email}</TableCell>
                   <TableCell>
                     {c.plan}
                     {c.amount != null && (
