@@ -91,7 +91,7 @@ export const StripeCustomers = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Business</TableHead>
-                <TableHead>Plan</TableHead>
+                <TableHead>Price</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -101,12 +101,7 @@ export const StripeCustomers = () => {
                   <TableCell>{c.name || '—'}</TableCell>
                   <TableCell>{businesses[(c.email || '').toLowerCase()] || '—'}</TableCell>
                   <TableCell>
-                    {c.plan}
-                    {c.amount != null && (
-                      <span className="text-xs text-muted-foreground ml-2">
-                        ${c.amount}/{c.interval || 'mo'}
-                      </span>
-                    )}
+                    {c.amount != null ? `$${c.amount}/${c.interval || 'mo'}` : '—'}
                   </TableCell>
                   <TableCell>
                     <Badge variant={c.isActive ? 'default' : 'secondary'}>{c.status}</Badge>
