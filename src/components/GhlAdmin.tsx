@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ type CreateForm = {
   country: string;
   website: string;
   timezone: string;
+  einNumber: string;
   snapshotId: string;
   customValuesJson: string;
 };
@@ -65,9 +66,12 @@ const emptyCreate: CreateForm = {
   country: 'US',
   website: '',
   timezone: 'America/New_York',
+  einNumber: '',
   snapshotId: '',
-  customValuesJson: '{\n  "business_description": ""\n}',
+  customValuesJson: '',
 };
+
+const CUSTOM_VALUES_PLACEHOLDER = '{\n  "business_description": "Family-owned plumbing company serving the Richmond area"\n}';
 
 export const GhlAdmin = () => {
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
@@ -83,26 +87,24 @@ export const GhlAdmin = () => {
 
   const [stripeCustomers, setStripeCustomers] = useState<any[]>([]);
   const [stripeLoading, setStripeLoading] = useState(false);
-  const [fetchingCompanyId, setFetchingCompanyId] = useState(false);
 
-  const handleFetchCompanyId = async () => {
-    setFetchingCompanyId(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ghl-get-company-id');
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error + (data.attempts ? ' — ' + JSON.stringify(data.attempts).slice(0, 300) : ''));
-      setCreateForm((f) => ({ ...f, companyId: data.companyId }));
-      toast({ title: 'Company ID fetched', description: data.companyId });
-    } catch (e: any) {
-      toast({ title: 'Fetch failed', description: e.message, variant: 'destructive' });
-    } finally {
-      setFetchingCompanyId(false);
-    }
-  };
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke('ghl-get-company-id');
+        if (data?.companyId) setCreateForm((f) => ({ ...f, companyId: data.companyId }));
+      } catch {}
+    })();
+  }, []);
 
   const handleCreate = async () => {
-    if (!createForm.companyId || !createForm.name) {
-      toast({ title: 'Missing fields', description: 'Company ID and Business Name are required', variant: 'destructive' });
+    const required: (keyof CreateForm)[] = [
+      'companyId', 'name', 'email', 'phone', 'firstName', 'lastName',
+      'address', 'city', 'state', 'postalCode', 'country', 'timezone', 'einNumber',
+    ];
+    const missing = required.filter((k) => !createForm[k]?.toString().trim());
+    if (missing.length) {
+      toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
       return;
     }
     setCreating(true);
