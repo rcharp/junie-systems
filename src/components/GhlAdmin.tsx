@@ -264,9 +264,9 @@ export const GhlAdmin = () => {
   );
 };
 
-const Field = ({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string }) => (
+const Field = ({ label, value, onChange, placeholder, required }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean }) => (
   <div>
     <Label className="capitalize">{label}</Label>
-    <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} />
+    <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />
   </div>
 );
