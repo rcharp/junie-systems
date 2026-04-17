@@ -44,19 +44,37 @@ Deno.serve(async (req) => {
       Accept: 'application/json',
     };
 
+    const locationId = Deno.env.get('GHL_LOCATION_ID') || '';
+
     const results: Record<string, string> = {};
+    const debug: any[] = [];
     await Promise.all(emails.map(async (email: string) => {
       if (!email) return;
       try {
-        const url = `${GHL_API}/contacts/?query=${encodeURIComponent(email)}&limit=1`;
+        const params = new URLSearchParams({ query: email, limit: '5' });
+        if (locationId) params.set('locationId', locationId);
+        const url = `${GHL_API}/contacts/?${params.toString()}`;
         const r = await fetch(url, { headers: ghHeaders });
-        if (!r.ok) return;
-        const d = await r.json();
-        const contact = (d.contacts && d.contacts[0]) || null;
-        if (contact) {
-          results[email.toLowerCase()] = contact.companyName || contact.businessName || '';
+        const text = await r.text();
+        if (!r.ok) {
+          console.log('GHL search failed', email, r.status, text.slice(0, 300));
+          debug.push({ email, status: r.status, error: text.slice(0, 200) });
+          return;
         }
-      } catch {}
+        let d: any;
+        try { d = JSON.parse(text); } catch { return; }
+        const list: any[] = d.contacts || [];
+        const match = list.find((c) => (c.email || '').toLowerCase() === email.toLowerCase()) || list[0];
+        if (match) {
+          const biz = match.companyName || match.businessName || '';
+          console.log('GHL match', email, '->', biz);
+          if (biz) results[email.toLowerCase()] = biz;
+        } else {
+          console.log('GHL no match for', email, 'returned', list.length);
+        }
+      } catch (err) {
+        console.log('lookup error', email, String(err));
+      }
     }));
 
     return jsonRes({ businesses: results });
