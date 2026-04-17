@@ -96,11 +96,8 @@ const Login = () => {
           localStorage.removeItem("rememberedEmail");
         }
         
-        // Redirect to dashboard
         isRedirectingRef.current = true;
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1000);
+        setTimeout(() => { redirectAfterAuth(data.user.id); }, 1000);
       }
     } catch (error: any) {
       toast({
