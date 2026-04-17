@@ -83,6 +83,52 @@ Deno.serve(async (req) => {
 
     const locationId = createData?.id || createData?.location?.id || createData?._id;
 
+    // Update location with business info (EIN, etc.) — not accepted on create
+    let businessUpdateResult: any = null;
+    if (locationId && einNumber) {
+      const updatePayload = {
+        companyId,
+        name,
+        phone,
+        address,
+        city,
+        state,
+        country,
+        postalCode,
+        website,
+        timezone,
+        email,
+        business: {
+          name,
+          email,
+          phone,
+          website,
+          address,
+          city,
+          state,
+          country,
+          postalCode,
+          einNumber,
+          registrationIdType: 'ein',
+          regionOfOperation: 'USA',
+        },
+      };
+      console.log('GHL update location payload:', JSON.stringify(updatePayload));
+      const updateRes = await fetch(`${GHL_API}/locations/${locationId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${PIT}`,
+          Version: GHL_VERSION,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(updatePayload),
+      });
+      const updateData = await updateRes.json().catch(() => ({}));
+      console.log('GHL update location response:', updateRes.status, JSON.stringify(updateData));
+      businessUpdateResult = { ok: updateRes.ok, status: updateRes.status, data: updateData };
+    }
+
     // Optionally set custom values
     if (locationId && customValues && typeof customValues === 'object') {
       for (const [key, value] of Object.entries(customValues)) {
