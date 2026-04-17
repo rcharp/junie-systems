@@ -412,6 +412,8 @@ const AdminDashboard = () => {
               </Card>
             </div>
 
+            <StripeCustomers />
+
             <AdminUsersList users={users} onRefresh={fetchStats} />
           </TabsContent>
 
