@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const {
-      companyId,
+      companyId: bodyCompanyId,
       name, email, phone,
       address, city, state, country = 'US', postalCode,
       website, timezone = 'America/New_York',
@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
       customValues,
     } = body;
 
-    if (!companyId) return jsonRes({ error: 'companyId is required (your GHL Agency Company ID)' }, 400);
+    const companyId = bodyCompanyId || Deno.env.get('GHL_AGENCY_COMPANY_ID');
+    if (!companyId) return jsonRes({ error: 'companyId is required (set GHL_AGENCY_COMPANY_ID secret or pass companyId)' }, 400);
     if (!name) return jsonRes({ error: 'name is required' }, 400);
 
     // Create sub-account (location)
