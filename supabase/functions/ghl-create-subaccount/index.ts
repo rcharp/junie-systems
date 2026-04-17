@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
     const companyId = bodyCompanyId || Deno.env.get('GHL_AGENCY_COMPANY_ID');
     if (!companyId) return jsonRes({ error: 'companyId is required (set GHL_AGENCY_COMPANY_ID secret or pass companyId)' }, 400);
     if (!name) return jsonRes({ error: 'name is required' }, 400);
-    if (!einNumber) return jsonRes({ error: 'einNumber (Business Tax ID/EIN) is required' }, 400);
+    
 
     // Create sub-account (location)
     const createPayload: any = {
