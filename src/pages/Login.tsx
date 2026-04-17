@@ -23,37 +23,30 @@ const Login = () => {
   const navigate = useNavigate();
   const isRedirectingRef = useRef(false);
 
+  const redirectAfterAuth = async (userId: string) => {
+    const { data } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+    navigate(data ? '/admin' : '/dashboard');
+  };
+
   useEffect(() => {
-    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Don't update state if we're already redirecting
-        if (isRedirectingRef.current) {
-          return;
-        }
-        
+        if (isRedirectingRef.current) return;
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Redirect authenticated users to dashboard
         if (session?.user) {
           isRedirectingRef.current = true;
-          setTimeout(() => {
-            navigate("/dashboard");
-          }, 0);
+          setTimeout(() => { redirectAfterAuth(session.user.id); }, 0);
         }
       }
     );
 
-    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
-      // Redirect if already authenticated
       if (session?.user) {
         isRedirectingRef.current = true;
-        navigate("/dashboard");
+        redirectAfterAuth(session.user.id);
       }
     });
 
