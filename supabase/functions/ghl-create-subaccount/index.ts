@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       userResult = { ok: userRes.ok, status: userRes.status, data: userData };
     }
 
-    return jsonRes({ success: true, locationId, location: createData, user: userResult });
+    return jsonRes({ success: true, locationId, location: createData, user: userResult, businessUpdate: businessUpdateResult });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error';
     return jsonRes({ error: msg }, 500);
