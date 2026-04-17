@@ -62,7 +62,6 @@ Deno.serve(async (req) => {
             interval: price?.recurring?.interval || null,
             status: sub.status,
             isActive,
-            currentPeriodEnd: sub.current_period_end,
           };
         }
       }
