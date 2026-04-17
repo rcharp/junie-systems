@@ -32,8 +32,9 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
     if (!isAdmin) return jsonRes({ error: 'Forbidden' }, 403);
 
-    const PIT = Deno.env.get('GHL_LOCATION_PIT_TOKEN') || Deno.env.get('GHL_PIT_TOKEN');
+    const PIT = Deno.env.get('GHL_PIT_TOKEN') || Deno.env.get('GHL_LOCATION_PIT_TOKEN');
     if (!PIT) return jsonRes({ error: 'GHL token not configured' }, 500);
+    const COMPANY_ID = Deno.env.get('GHL_AGENCY_COMPANY_ID');
 
     const { emails } = await req.json();
     if (!Array.isArray(emails)) return jsonRes({ error: 'emails array required' }, 400);
@@ -42,40 +43,50 @@ Deno.serve(async (req) => {
       Authorization: `Bearer ${PIT}`,
       Version: GHL_VERSION,
       Accept: 'application/json',
+      'Content-Type': 'application/json',
     };
 
-    const locationId = Deno.env.get('GHL_LOCATION_ID') || '';
-
-    const results: Record<string, string> = {};
-    const debug: any[] = [];
-    await Promise.all(emails.map(async (email: string) => {
-      if (!email) return;
-      try {
-        const params = new URLSearchParams({ query: email, limit: '5' });
-        if (locationId) params.set('locationId', locationId);
-        const url = `${GHL_API}/contacts/?${params.toString()}`;
-        const r = await fetch(url, { headers: ghHeaders });
-        const text = await r.text();
-        if (!r.ok) {
-          console.log('GHL search failed', email, r.status, text.slice(0, 300));
-          debug.push({ email, status: r.status, error: text.slice(0, 200) });
-          return;
-        }
-        let d: any;
-        try { d = JSON.parse(text); } catch { return; }
-        const list: any[] = d.contacts || [];
-        const match = list.find((c) => (c.email || '').toLowerCase() === email.toLowerCase()) || list[0];
-        if (match) {
-          const biz = match.companyName || match.businessName || '';
-          console.log('GHL match', email, '->', biz);
-          if (biz) results[email.toLowerCase()] = biz;
-        } else {
-          console.log('GHL no match for', email, 'returned', list.length);
-        }
-      } catch (err) {
-        console.log('lookup error', email, String(err));
+    // 1) Get all locations (subaccounts) for the agency
+    let locations: any[] = [];
+    if (COMPANY_ID) {
+      const locRes = await fetch(`${GHL_API}/locations/search?companyId=${COMPANY_ID}&limit=500`, { headers: ghHeaders });
+      const locText = await locRes.text();
+      if (locRes.ok) {
+        try { locations = JSON.parse(locText).locations || []; } catch {}
+      } else {
+        console.log('locations/search failed', locRes.status, locText.slice(0, 300));
       }
-    }));
+    }
+    console.log('Found locations:', locations.length);
+
+    // Build email -> business name map by querying each location's contacts
+    const results: Record<string, string> = {};
+    const remaining = new Set(emails.map((e: string) => (e || '').toLowerCase()).filter(Boolean));
+
+    for (const loc of locations) {
+      if (!remaining.size) break;
+      const locId = loc._id || loc.id;
+      if (!locId) continue;
+      // Use search endpoint with each remaining email
+      await Promise.all(Array.from(remaining).map(async (email) => {
+        try {
+          const url = `${GHL_API}/contacts/?locationId=${encodeURIComponent(locId)}&query=${encodeURIComponent(email)}&limit=5`;
+          const r = await fetch(url, { headers: ghHeaders });
+          if (!r.ok) return;
+          const d = await r.json();
+          const list: any[] = d.contacts || [];
+          const match = list.find((c) => (c.email || '').toLowerCase() === email);
+          if (match) {
+            const biz = match.companyName || match.businessName || loc.name || '';
+            if (biz) {
+              results[email] = biz;
+              remaining.delete(email);
+            }
+          }
+        } catch {}
+      }));
+    }
+    console.log('Resolved', Object.keys(results).length, 'of', emails.length);
 
     return jsonRes({ businesses: results });
   } catch (e) {
