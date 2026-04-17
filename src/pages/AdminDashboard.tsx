@@ -21,6 +21,7 @@ import { CallInitiationFailuresMonitor } from '@/components/CallInitiationFailur
 import { SystemTestRunner } from '@/components/SystemTestRunner';
 import { AppointmentSyncQueue } from '@/components/AppointmentSyncQueue';
 import BlogAutomation from '@/components/BlogAutomation';
+import { GhlAdmin } from '@/components/GhlAdmin';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -357,9 +358,10 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="w-full grid grid-cols-6 mb-4 sm:mb-6">
+          <TabsList className="w-full grid grid-cols-7 mb-4 sm:mb-6">
             <TabsTrigger value="users" className="text-xs sm:text-sm">User Stats</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
+            <TabsTrigger value="ghl" className="text-xs sm:text-sm">GHL & Stripe</TabsTrigger>
             <TabsTrigger value="blog" className="text-xs sm:text-sm">Blog</TabsTrigger>
             <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
             <TabsTrigger value="tests" className="text-xs sm:text-sm">Tests</TabsTrigger>
@@ -475,6 +477,10 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="ghl" className="space-y-6 sm:space-y-8">
+            <GhlAdmin />
           </TabsContent>
 
           <TabsContent value="blog" className="space-y-6 sm:space-y-8">
