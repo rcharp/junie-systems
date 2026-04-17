@@ -22,6 +22,7 @@ import { SystemTestRunner } from '@/components/SystemTestRunner';
 import { AppointmentSyncQueue } from '@/components/AppointmentSyncQueue';
 import BlogAutomation from '@/components/BlogAutomation';
 import { GhlAdmin } from '@/components/GhlAdmin';
+import { StripeCustomers } from '@/components/StripeCustomers';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -365,7 +366,7 @@ const AdminDashboard = () => {
 
           <TabsContent value="users" className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
@@ -374,17 +375,6 @@ const AdminDashboard = () => {
                 <CardContent className="pt-2">
                   <div className="text-xl sm:text-2xl font-bold">{stats.totalUsers}</div>
                   <p className="text-xs text-muted-foreground">Registered users on platform</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-medium">Total Calls</CardTitle>
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent className="pt-2">
-                  <div className="text-xl sm:text-2xl font-bold">{stats.totalCalls}</div>
-                  <p className="text-xs text-muted-foreground">Calls handled by AI</p>
                 </CardContent>
               </Card>
 
@@ -410,6 +400,8 @@ const AdminDashboard = () => {
                 </CardContent>
               </Card>
             </div>
+
+            <StripeCustomers />
 
             <AdminUsersList users={users} onRefresh={fetchStats} />
           </TabsContent>
