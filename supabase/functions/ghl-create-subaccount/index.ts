@@ -63,6 +63,7 @@ Deno.serve(async (req) => {
     };
     if (snapshotId || SNAPSHOT_ID) createPayload.snapshotId = snapshotId || SNAPSHOT_ID;
 
+    console.log('GHL create payload:', JSON.stringify(createPayload));
     const createRes = await fetch(`${GHL_API}/locations/`, {
       method: 'POST',
       headers: {
@@ -74,8 +75,9 @@ Deno.serve(async (req) => {
       body: JSON.stringify(createPayload),
     });
     const createData = await createRes.json();
+    console.log('GHL create response:', createRes.status, JSON.stringify(createData));
     if (!createRes.ok) {
-      return jsonRes({ error: 'GHL create failed', status: createRes.status, details: createData }, 500);
+      return jsonRes({ error: 'GHL create failed', status: createRes.status, details: createData, sentPayload: createPayload }, 500);
     }
 
     const locationId = createData?.id || createData?.location?.id || createData?._id;
