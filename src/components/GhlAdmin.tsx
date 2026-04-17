@@ -104,22 +104,36 @@ export const GhlAdmin = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
       const c = data.contact || {};
-      setCreateForm((f) => ({
-        ...f,
-        name: c.name || f.name,
-        email: c.email || f.email,
-        phone: c.phone || f.phone,
-        firstName: c.firstName || f.firstName,
-        lastName: c.lastName || f.lastName,
-        address: c.address || f.address,
-        city: c.city || f.city,
-        state: c.state || f.state,
-        postalCode: c.postalCode || f.postalCode,
-        country: c.country || f.country,
-        website: c.website || f.website,
-        timezone: c.timezone || f.timezone,
-        einNumber: c.einNumber || f.einNumber,
-      }));
+      setCreateForm((f) => {
+        let mergedCustomJson = f.customValuesJson;
+        if (c.customValues && typeof c.customValues === 'object') {
+          let existing: Record<string, string> = {};
+          if (f.customValuesJson.trim()) {
+            try { existing = JSON.parse(f.customValuesJson); } catch {}
+          }
+          const cleaned = Object.fromEntries(
+            Object.entries(c.customValues).filter(([, v]) => v && String(v).trim())
+          );
+          mergedCustomJson = JSON.stringify({ ...existing, ...cleaned }, null, 2);
+        }
+        return {
+          ...f,
+          name: c.name || f.name,
+          email: c.email || f.email,
+          phone: c.phone || f.phone,
+          firstName: c.firstName || f.firstName,
+          lastName: c.lastName || f.lastName,
+          address: c.address || f.address,
+          city: c.city || f.city,
+          state: c.state || f.state,
+          postalCode: c.postalCode || f.postalCode,
+          country: c.country || f.country,
+          website: c.website || f.website,
+          timezone: c.timezone || f.timezone,
+          einNumber: c.einNumber || f.einNumber,
+          customValuesJson: mergedCustomJson,
+        };
+      });
       toast({ title: 'Contact loaded', description: 'Form populated from GHL contact' });
     } catch (e: any) {
       toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
