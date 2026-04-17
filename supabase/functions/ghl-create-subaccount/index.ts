@@ -72,6 +72,7 @@ Deno.serve(async (req) => {
         postalCode,
         einNumber,
         registrationIdType: 'ein',
+        regionOfOperation: 'USA',
       },
       prospectInfo: (firstName || lastName || email) ? { firstName, lastName, email } : undefined,
     };
