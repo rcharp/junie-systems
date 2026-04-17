@@ -360,7 +360,7 @@ const AdminDashboard = () => {
 
         <Tabs defaultValue="users" className="w-full">
           <TabsList className="w-full grid grid-cols-2 mb-4 sm:mb-6">
-            <TabsTrigger value="users" className="text-xs sm:text-sm">User Stats</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm">Customers</TabsTrigger>
             <TabsTrigger value="ghl" className="text-xs sm:text-sm">GHL & Stripe</TabsTrigger>
           </TabsList>
 
