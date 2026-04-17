@@ -92,9 +92,26 @@ Deno.serve(async (req) => {
     const stripSuffix = (s: string) =>
       s.replace(/[\s,]+(llc|l\.l\.c\.|inc|inc\.|incorporated|corp|corp\.|corporation|co|co\.|company|ltd|ltd\.|limited|pllc|p\.l\.l\.c\.|pc|p\.c\.|lp|l\.p\.|llp|l\.l\.p\.)\.?$/i, '').trim();
 
+    const ALL_CAPS_PRESERVE = new Set(['LLC', 'INC', 'LLP', 'LP', 'PC', 'PLLC', 'CO', 'LTD', 'CORP', 'USA', 'HVAC', 'AC', 'II', 'III', 'IV']);
+    const SMALL_WORDS = new Set(['and', 'or', 'of', 'the', 'a', 'an', 'for', 'in', 'on', 'at', 'to', 'by']);
+    const toTitleCase = (s: string) => {
+      if (!s) return s;
+      const trimmed = s.trim();
+      const isAllCaps = trimmed === trimmed.toUpperCase() && /[A-Z]/.test(trimmed);
+      const isAllLower = trimmed === trimmed.toLowerCase() && /[a-z]/.test(trimmed);
+      if (!isAllCaps && !isAllLower) return trimmed;
+      return trimmed.split(/\s+/).map((word, i) => {
+        const upper = word.toUpperCase().replace(/[^A-Z]/g, '');
+        if (ALL_CAPS_PRESERVE.has(upper)) return word.toUpperCase();
+        const lower = word.toLowerCase();
+        if (i > 0 && SMALL_WORDS.has(lower)) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      }).join(' ');
+    };
+
     const rawName = c.companyName || c.businessName || businessNameFull || businessNameShort || '';
-    const fullName = businessNameFull || rawName;
-    const shortName = businessNameShort || stripSuffix(rawName);
+    const fullName = toTitleCase(businessNameFull || rawName);
+    const shortName = toTitleCase(stripSuffix(businessNameShort || rawName));
 
     return jsonRes({
       contact: {
