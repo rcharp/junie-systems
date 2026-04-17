@@ -358,16 +358,11 @@ const AdminDashboard = () => {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="w-full grid grid-cols-7 mb-4 sm:mb-6">
+          <TabsList className="w-full grid grid-cols-2 mb-4 sm:mb-6">
             <TabsTrigger value="users" className="text-xs sm:text-sm">User Stats</TabsTrigger>
-            <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
             <TabsTrigger value="ghl" className="text-xs sm:text-sm">GHL & Stripe</TabsTrigger>
-            <TabsTrigger value="blog" className="text-xs sm:text-sm">Blog</TabsTrigger>
-            <TabsTrigger value="api" className="text-xs sm:text-sm">API</TabsTrigger>
-            <TabsTrigger value="tests" className="text-xs sm:text-sm">Tests</TabsTrigger>
-            <TabsTrigger value="todos" className="text-xs sm:text-sm">Todos</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="users" className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -378,9 +373,7 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent className="pt-2">
                   <div className="text-xl sm:text-2xl font-bold">{stats.totalUsers}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Registered users on platform
-                  </p>
+                  <p className="text-xs text-muted-foreground">Registered users on platform</p>
                 </CardContent>
               </Card>
 
@@ -391,9 +384,7 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent className="pt-2">
                   <div className="text-xl sm:text-2xl font-bold">{stats.totalCalls}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Calls handled by AI
-                  </p>
+                  <p className="text-xs text-muted-foreground">Calls handled by AI</p>
                 </CardContent>
               </Card>
 
@@ -404,9 +395,7 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent className="pt-2">
                   <div className="text-xl sm:text-2xl font-bold">{stats.totalAppointments}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Appointments booked
-                  </p>
+                  <p className="text-xs text-muted-foreground">Appointments booked</p>
                 </CardContent>
               </Card>
 
@@ -417,262 +406,16 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent className="pt-2">
                   <div className="text-xl sm:text-2xl font-bold">{stats.activeUsers}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Active in last 30 days
-                  </p>
+                  <p className="text-xs text-muted-foreground">Active in last 30 days</p>
                 </CardContent>
               </Card>
             </div>
 
             <AdminUsersList users={users} onRefresh={fetchStats} />
           </TabsContent>
-          
-          <TabsContent value="settings" className="space-y-6 sm:space-y-8">
-            {/* Admin Settings */}
-            <AdminSettings />
-
-            {/* Business Types Manager */}
-            <BusinessTypesManager />
-
-            {/* Junie Info */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>About Junie</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-sm">
-                      <strong>Mission:</strong> Never miss a call with our AI-powered answering service
-                    </p>
-                    <p className="text-sm">
-                      <strong>Features:</strong> 24/7 availability, appointment booking, lead capture, smart call routing
-                    </p>
-                    <p className="text-sm">
-                      <strong>Technology:</strong> Advanced AI with natural language processing, integrated with business systems
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>System Health</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">API Status</span>
-                      <Badge variant="default">Operational</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">Database</span>
-                      <Badge variant="default">Healthy</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm">AI Services</span>
-                      <Badge variant="default">Online</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           <TabsContent value="ghl" className="space-y-6 sm:space-y-8">
             <GhlAdmin />
-          </TabsContent>
-
-          <TabsContent value="blog" className="space-y-6 sm:space-y-8">
-            <BlogAutomation />
-          </TabsContent>
-          
-          <TabsContent value="api" className="space-y-6">
-            {/* API Monitoring Section Header */}
-            <div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">API Monitoring & Testing</h3>
-              <p className="text-sm text-muted-foreground">Real-time monitoring of API endpoints and webhooks</p>
-            </div>
-
-            {/* API Sub-tabs */}
-            <Tabs defaultValue="webhooks" className="w-full">
-              <TabsList className="w-full grid grid-cols-4 mb-4">
-                <TabsTrigger value="webhooks" className="text-xs sm:text-sm">Webhooks</TabsTrigger>
-                <TabsTrigger value="client-tools" className="text-xs sm:text-sm">Client Tools</TabsTrigger>
-                <TabsTrigger value="calendar-test" className="text-xs sm:text-sm">Calendar Test</TabsTrigger>
-                <TabsTrigger value="backfill" className="text-xs sm:text-sm">Data Tasks</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="webhooks">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <WebhookMonitor defaultExpanded={true} />
-                  <BusinessDataMonitor defaultExpanded={true} />
-                </div>
-              </TabsContent>
-
-              <TabsContent value="client-tools">
-                <ClientToolMonitor defaultExpanded={true} />
-              </TabsContent>
-
-              <TabsContent value="calendar-test">
-                <Card className="flex flex-col">
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Clock className="h-5 w-5" />
-                          Google Calendar Availability Test
-                        </CardTitle>
-                        <CardDescription className="mt-1.5">
-                          Test the Google Calendar availability endpoint to see current results
-                        </CardDescription>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <Button 
-                          onClick={testGoogleCalendarAvailability}
-                          disabled={calendarLoading}
-                          size="sm"
-                          variant="outline"
-                          className="shrink-0"
-                        >
-                          {calendarLoading ? (
-                            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
-                          ) : (
-                            <RefreshCw className="h-4 w-4 mr-2" />
-                          )}
-                          Test Availability
-                        </Button>
-                        {calendarTestDuration !== null && (
-                          <p className="text-xs text-muted-foreground">
-                            Retrieved in {calendarTestDuration < 1000 
-                              ? `${(calendarTestDuration / 1000).toFixed(2)}s`
-                              : `${Math.floor(calendarTestDuration / 60000)}m ${((calendarTestDuration % 60000) / 1000).toFixed(1)}s`
-                            }
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                  {calendarAvailability ? (
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant={calendarAvailability.available ? "default" : "destructive"}>
-                          {calendarAvailability.available ? "Available" : "Unavailable"}
-                        </Badge>
-                        {calendarAvailability.timezone && (
-                          <Badge variant="outline" className="truncate max-w-[150px]">
-                            {calendarAvailability.timezone}
-                          </Badge>
-                        )}
-                        {calendarAvailability.duration && (
-                          <Badge variant="secondary">
-                            {calendarAvailability.duration} min slots
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {calendarAvailability.slots && calendarAvailability.slots.length > 0 ? (
-                        <div>
-                          <h4 className="font-medium mb-3 text-sm">Available Time Slots ({calendarAvailability.slots.length})</h4>
-                          <ScrollArea className="h-[300px]">
-                            <div className="space-y-2 pr-4">
-                              {calendarAvailability.slots.map((slot: any, index: number) => (
-                                <div key={index} className="flex items-center justify-between p-2.5 bg-muted/50 rounded-lg border border-border/50">
-                                  <div className="min-w-0 flex-1">
-                                    <p className="font-medium text-sm truncate">{slot.humanReadable}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {slot.startTime} - {slot.endTime}
-                                    </p>
-                                  </div>
-                                  <Badge variant="outline" className="capitalize text-xs ml-3 shrink-0">
-                                    {slot.timeOfDay}
-                                  </Badge>
-                                </div>
-                              ))}
-                            </div>
-                          </ScrollArea>
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground text-sm">No available slots found</p>
-                      )}
-                      
-                      {calendarAvailability.error && (
-                        <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                          <p className="text-sm text-destructive font-medium">Error:</p>
-                          <p className="text-sm text-destructive break-words">{calendarAvailability.error}</p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center py-12">
-                      <p className="text-muted-foreground text-sm text-center">
-                        Click "Test Availability" to check Google Calendar availability endpoint
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-              </TabsContent>
-
-
-              <TabsContent value="backfill" className="space-y-6">
-                {/* Appointment Sync Queue */}
-                <AppointmentSyncQueue />
-
-                {/* Issue Details Backfill */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Issue Details Backfill</CardTitle>
-                    <CardDescription>Extract issue details from existing call log transcripts (processes 20 at a time)</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      This will process call logs with transcripts and extract specific issue details using AI. Run multiple times to process all records.
-                    </p>
-                    <Button
-                      onClick={async () => {
-                        try {
-                          toast({
-                            title: "Processing",
-                            description: "Starting backfill operation...",
-                          });
-                          
-                          const { data, error } = await supabase.functions.invoke('backfill-issue-details', {
-                            body: { batchSize: 20 }
-                          });
-                          
-                          if (error) throw error;
-                          
-                          const hasMore = data.hasMore ? ` ${data.remaining} remaining.` : ' All done!';
-                          toast({
-                            title: "Success",
-                            description: `Processed ${data.processed} of ${data.total} appointments. ${data.errors} errors.${hasMore}`,
-                          });
-                        } catch (error) {
-                          toast({
-                            title: "Error",
-                            description: error.message,
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                    >
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Process Next 20 Records
-                    </Button>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          <TabsContent value="tests" className="space-y-6">
-            <SystemTestRunner />
-          </TabsContent>
-
-          <TabsContent value="todos" className="space-y-6">
-            <TodoChecklist />
           </TabsContent>
         </Tabs>
       </main>
