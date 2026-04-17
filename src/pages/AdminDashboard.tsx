@@ -21,6 +21,7 @@ import { CallInitiationFailuresMonitor } from '@/components/CallInitiationFailur
 import { SystemTestRunner } from '@/components/SystemTestRunner';
 import { AppointmentSyncQueue } from '@/components/AppointmentSyncQueue';
 import BlogAutomation from '@/components/BlogAutomation';
+import { GhlAdmin } from '@/components/GhlAdmin';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
