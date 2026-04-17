@@ -72,6 +72,36 @@ Deno.serve(async (req) => {
     }
     console.log('Resolved by location email:', Object.keys(results).length, 'of', wanted.size);
 
+    // Fallback: search the main agency location's contacts for unresolved emails
+    const MAIN_LOCATION_ID = 'yvDlEJb1YBBk2JhD3map';
+    const LOC_PIT = Deno.env.get('GHL_LOCATION_PIT_TOKEN');
+    const unresolved = Array.from(wanted).filter((e) => !results[e]);
+    if (LOC_PIT && unresolved.length) {
+      const locHeaders = {
+        Authorization: `Bearer ${LOC_PIT}`,
+        Version: GHL_VERSION,
+        Accept: 'application/json',
+      };
+      await Promise.all(unresolved.map(async (email) => {
+        try {
+          const url = `${GHL_API}/contacts/?locationId=${MAIN_LOCATION_ID}&query=${encodeURIComponent(email)}&limit=5`;
+          const r = await fetch(url, { headers: locHeaders });
+          if (!r.ok) {
+            console.log('main loc search failed', email, r.status);
+            return;
+          }
+          const d = await r.json();
+          const list: any[] = d.contacts || [];
+          const match = list.find((c) => (c.email || '').toLowerCase() === email);
+          if (match) {
+            const biz = match.companyName || match.businessName || '';
+            if (biz) results[email] = biz;
+          }
+        } catch {}
+      }));
+      console.log('After main-location fallback:', Object.keys(results).length);
+    }
+
     return jsonRes({ businesses: results });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
