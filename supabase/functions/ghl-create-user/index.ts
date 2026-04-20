@@ -112,16 +112,7 @@ Deno.serve(async (req) => {
       userPayload.password = `J${Math.random().toString(36).slice(2, 10)}!${Math.floor(Math.random() * 100)}`;
     }
 
-    // Step 2: Mint a token for the TARGET location for user creation
-    const tgt = await mintLocationToken(locationId);
-    if (!tgt.ok || !tgt.token) {
-      return new Response(JSON.stringify({ error: 'Failed to mint target location token', details: tgt.data }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const locationToken = tgt.token;
-
+    // Step 2: Create the user using the agency PIT token (user creation is an agency-level op)
     const finalPayload = {
       companyId: resolvedCompanyId,
       firstName: userPayload.firstName,
@@ -161,11 +152,10 @@ Deno.serve(async (req) => {
       },
     };
 
-    // Step 2: Create the user using the location-scoped token
     const userRes = await fetch(`${GHL_API}/users/`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${locationToken}`,
+        Authorization: `Bearer ${token}`,
         Version: '2021-07-28',
         'Content-Type': 'application/json',
         Accept: 'application/json',
