@@ -10,8 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from '@/hooks/use-toast';
-import { RefreshCw, Plus, Save, UserPlus } from 'lucide-react';
+import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
@@ -106,6 +109,56 @@ export const GhlAdmin = () => {
   });
   const [creatingUser, setCreatingUser] = useState(false);
   const [createdUserResult, setCreatedUserResult] = useState<any>(null);
+
+  // Location dropdown
+  const [locations, setLocations] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [locationOpen, setLocationOpen] = useState(false);
+
+  // Contact dropdown (searchable)
+  const [contacts, setContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [selectedContactLabel, setSelectedContactLabel] = useState('');
+
+  const loadLocations = async () => {
+    setLocationsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-list-locations');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLocations(data.locations || []);
+    } catch (e: any) {
+      toast({ title: 'Failed to load locations', description: e.message, variant: 'destructive' });
+    } finally {
+      setLocationsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (locations.length === 0) loadLocations();
+  }, []);
+
+  useEffect(() => {
+    if (!contactOpen) return;
+    const t = setTimeout(async () => {
+      setContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: contactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [contactSearch, contactOpen]);
 
   const handleCreateUser = async () => {
     if (!userForm.locationId.trim()) {
@@ -418,12 +471,110 @@ export const GhlAdmin = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Location ID * (target — where to create user)" value={userForm.locationId} onChange={(v) => setUserForm({ ...userForm, locationId: v })} required placeholder="New sub-account location ID" />
+              <div>
+                <Label>Target Location * (where to create user)</Label>
+                <Popover open={locationOpen} onOpenChange={setLocationOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      <span className="truncate">
+                        {userForm.locationId
+                          ? locations.find((l) => l.id === userForm.locationId)?.name || userForm.locationId
+                          : 'Select a sub-account...'}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search sub-accounts..." />
+                      <CommandList>
+                        {locationsLoading && <div className="p-3 text-xs text-muted-foreground">Loading...</div>}
+                        <CommandEmpty>No sub-accounts found.</CommandEmpty>
+                        <CommandGroup>
+                          {locations.map((loc) => (
+                            <CommandItem
+                              key={loc.id}
+                              value={`${loc.name} ${loc.email} ${loc.id}`}
+                              onSelect={() => {
+                                setUserForm({ ...userForm, locationId: loc.id });
+                                setLocationOpen(false);
+                              }}
+                            >
+                              <Check className={cn('mr-2 h-4 w-4', userForm.locationId === loc.id ? 'opacity-100' : 'opacity-0')} />
+                              <div className="flex flex-col">
+                                <span>{loc.name}</span>
+                                {loc.email && <span className="text-xs text-muted-foreground">{loc.email}</span>}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="text-xs text-muted-foreground truncate">{userForm.locationId}</span>
+                  <Button type="button" variant="ghost" size="sm" onClick={loadLocations} disabled={locationsLoading}>
+                    <RefreshCw className={cn('w-3 h-3', locationsLoading && 'animate-spin')} />
+                  </Button>
+                </div>
+              </div>
               <div>
                 <Label>Source Location ID (Junie Systems Subaccount)</Label>
                 <Input value={userForm.sourceLocationId} readOnly disabled className="bg-muted cursor-not-allowed" />
               </div>
-              <Field label="Contact ID (optional)" value={userForm.contactId} onChange={(v) => setUserForm({ ...userForm, contactId: v })} placeholder="GHL contact to pull info from" />
+              <div className="md:col-span-2">
+                <Label>Contact (search Junie Systems contacts)</Label>
+                <Popover open={contactOpen} onOpenChange={setContactOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      <span className="truncate">
+                        {userForm.contactId ? selectedContactLabel || userForm.contactId : 'Search a contact...'}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Search by name, email, phone..."
+                        value={contactSearch}
+                        onValueChange={setContactSearch}
+                      />
+                      <CommandList>
+                        {contactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                        {!contactsLoading && contacts.length === 0 && (
+                          <CommandEmpty>No contacts found.</CommandEmpty>
+                        )}
+                        <CommandGroup>
+                          {contacts.map((c) => (
+                            <CommandItem
+                              key={c.id}
+                              value={c.id}
+                              onSelect={() => {
+                                const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
+                                setUserForm({ ...userForm, contactId: c.id });
+                                setSelectedContactLabel(label);
+                                setContactOpen(false);
+                              }}
+                            >
+                              <Check className={cn('mr-2 h-4 w-4', userForm.contactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                              <div className="flex flex-col">
+                                <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <span className="text-xs text-muted-foreground truncate block mt-1">{userForm.contactId}</span>
+              </div>
+
               <Field label="First Name" value={userForm.firstName} onChange={(v) => setUserForm({ ...userForm, firstName: v })} />
               <Field label="Last Name" value={userForm.lastName} onChange={(v) => setUserForm({ ...userForm, lastName: v })} />
               <Field label="Email" value={userForm.email} onChange={(v) => setUserForm({ ...userForm, email: v })} placeholder="Required if no Contact ID" />
