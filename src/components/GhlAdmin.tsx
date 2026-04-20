@@ -760,6 +760,29 @@ export const GhlAdmin = () => {
         </Card>
       </TabsContent>
 
+      <AlertDialog open={duplicateDialog.open} onOpenChange={(open) => setDuplicateDialog((d) => ({ ...d, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sub-account already exists</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-semibold">{duplicateDialog.existing?.name || 'A matching sub-account'}</span>
+              {duplicateDialog.existing?.email && <> ({duplicateDialog.existing.email})</>} already exists in your agency.
+              <br /><br />
+              Are you sure you want to create a duplicate?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setUpdateLocationId(duplicateDialog.existing?.id || '');
+              setDuplicateDialog({ open: false, existing: null });
+            }}>No, cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setDuplicateDialog({ open: false, existing: null });
+              submitCreate(true);
+            }}>Yes, create duplicate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Tabs>
   );
 };
