@@ -280,9 +280,8 @@ export const GhlAdmin = () => {
 
   return (
     <Tabs defaultValue="create" className="w-full">
-      <TabsList className="grid grid-cols-3 mb-4">
+      <TabsList className="grid grid-cols-2 mb-4">
         <TabsTrigger value="create">Create Sub-account</TabsTrigger>
-        <TabsTrigger value="update">Update Sub-account</TabsTrigger>
         <TabsTrigger value="user">Create User</TabsTrigger>
       </TabsList>
 
