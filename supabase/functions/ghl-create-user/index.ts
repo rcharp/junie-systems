@@ -50,33 +50,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Helper: mint a location-scoped access token from the agency PIT
-    const mintLocationToken = async (locId: string) => {
-      const res = await fetch(`${GHL_API}/oauth/locationToken`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Version: '2021-07-28',
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          companyId: resolvedCompanyId,
-          locationId: locId,
-        }),
-      });
+    const parseJson = async (res: Response) => {
       const text = await res.text();
-      let data: any;
       try {
-        data = text ? JSON.parse(text) : {};
+        return text ? JSON.parse(text) : {};
       } catch {
-        data = { raw: text };
+        return { raw: text };
       }
-      return {
-        ok: res.ok,
-        token: data.access_token || data.locationAccessToken || data.accessToken,
-        data,
-      };
     };
 
     // Step 1: If contactId provided, fetch the contact using the source location's PIT token directly
@@ -122,15 +102,6 @@ Deno.serve(async (req) => {
       userPayload.password = `J${Math.random().toString(36).slice(2, 10)}!${Math.floor(Math.random() * 100)}`;
     }
 
-    // Step 2: Mint a token for the TARGET location and create the user in that location
-    const tgt = await mintLocationToken(locationId);
-    if (!tgt.ok || !tgt.token) {
-      return new Response(JSON.stringify({ error: 'Failed to mint target location token', details: tgt.data, targetLocationId: locationId }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const finalPayload = {
       companyId: resolvedCompanyId,
       firstName: userPayload.firstName,
@@ -149,31 +120,49 @@ Deno.serve(async (req) => {
         workflowsReadOnly: false,
         triggersEnabled: true,
         funnelsEnabled: true,
-        websitesEnabled: true,
+        websitesEnabled: false,
         opportunitiesEnabled: true,
         dashboardStatsEnabled: true,
-        bulkRequestsEnabled: true,
-        appointmentsEnabled: true,
+        bulkRequestsEnabled: false,
+        appointmentsEnabled: false,
         reviewsEnabled: true,
         onlineListingsEnabled: true,
-        phoneCallEnabled: true,
+        phoneCallEnabled: false,
         conversationsEnabled: true,
         assignedDataOnly: false,
         adwordsReportingEnabled: false,
-        membershipEnabled: true,
-        facebookAdsReportingEnabled: false,
+        membershipEnabled: false,
+        facebookAdsReportingEnabled: true,
         attributionsReportingEnabled: false,
-        settingsEnabled: true,
+        settingsEnabled: false,
         tagsEnabled: true,
         leadValueEnabled: true,
-        marketingEnabled: true,
+        marketingEnabled: false,
+        agentReportingEnabled: false,
+        botService: false,
+        socialPlanner: true,
+        bloggingEnabled: false,
+        invoiceEnabled: false,
+        affiliateManagerEnabled: false,
+        contentAiEnabled: false,
+        refundsEnabled: false,
+        recordPaymentEnabled: false,
+        cancelSubscriptionEnabled: false,
+        paymentsEnabled: false,
+        communitiesEnabled: false,
+        exportPaymentsEnabled: false,
+        adManager: false,
+        prospectingEnabled: false,
+        mediaStorageEnabled: true,
+        chatWithAi: false,
+        sas: false,
       },
     };
 
     const userRes = await fetch(`${GHL_API}/users/`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${tgt.token}`,
+        Authorization: `Bearer ${token}`,
         Version: '2021-07-28',
         'Content-Type': 'application/json',
         Accept: 'application/json',
@@ -181,7 +170,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify(finalPayload),
     });
 
-    const userData = await userRes.json();
+    const userData = await parseJson(userRes);
     if (!userRes.ok) {
       return new Response(JSON.stringify({ error: 'Failed to create user', details: userData, payload: finalPayload }), {
         status: userRes.status,
