@@ -167,6 +167,73 @@ export const GhlAdmin = () => {
     return () => clearTimeout(t);
   }, [contactSearch, contactOpen]);
 
+  useEffect(() => {
+    if (!createContactOpen) return;
+    const t = setTimeout(async () => {
+      setCreateContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: createContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setCreateContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setCreateContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [createContactSearch, createContactOpen]);
+
+  const populateCreateFromContactId = async (cid: string) => {
+    setLoadingContact(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-get-contact', {
+        body: { contactId: cid },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      const c = data.contact || {};
+      setCreateForm((f) => {
+        let mergedCustomJson = f.customValuesJson;
+        if (c.customValues && typeof c.customValues === 'object') {
+          let existing: Record<string, string> = {};
+          if (f.customValuesJson.trim()) {
+            try { existing = JSON.parse(f.customValuesJson); } catch {}
+          }
+          const cleaned = Object.fromEntries(
+            Object.entries(c.customValues).filter(([, v]) => v && String(v).trim())
+          );
+          mergedCustomJson = JSON.stringify({ ...existing, ...cleaned }, null, 2);
+        }
+        return {
+          ...f,
+          name: c.companyName || c.name || f.name,
+          email: c.email || f.email,
+          phone: c.phone || f.phone,
+          firstName: c.firstName || f.firstName,
+          lastName: c.lastName || f.lastName,
+          address: c.address || f.address,
+          city: c.city || f.city,
+          state: c.state || f.state,
+          postalCode: c.postalCode || f.postalCode,
+          country: c.country || f.country,
+          website: c.website || f.website,
+          timezone: c.timezone || f.timezone,
+          einNumber: c.einNumber || f.einNumber,
+          customValuesJson: mergedCustomJson,
+        };
+      });
+      toast({ title: 'Contact loaded', description: 'Form populated from GHL contact' });
+    } catch (e: any) {
+      toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
+    } finally {
+      setLoadingContact(false);
+    }
+  };
+
   const handleCreateUser = async () => {
     if (!userForm.locationId.trim()) {
       toast({ title: 'Missing Location ID', variant: 'destructive' });
