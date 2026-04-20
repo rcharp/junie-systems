@@ -59,6 +59,29 @@ Deno.serve(async (req) => {
       }
     };
 
+    const mintLocationToken = async (locId: string) => {
+      const res = await fetch(`${GHL_API}/oauth/locationToken`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Version: '2021-07-28',
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          companyId: resolvedCompanyId,
+          locationId: locId,
+        }),
+      });
+      const data = await parseJson(res);
+      return {
+        ok: res.ok,
+        status: res.status,
+        token: data.access_token || data.locationAccessToken || data.accessToken,
+        data,
+      };
+    };
+
     // Step 1: If contactId provided, fetch the contact using the source location's PIT token directly
     if (contactId) {
       const srcLoc = sourceLocationId || locationId;
@@ -100,6 +123,14 @@ Deno.serve(async (req) => {
     // Generate password if not provided
     if (!userPayload.password) {
       userPayload.password = `J${Math.random().toString(36).slice(2, 10)}!${Math.floor(Math.random() * 100)}`;
+    }
+
+    const tgt = await mintLocationToken(locationId);
+    if (!tgt.ok || !tgt.token) {
+      return new Response(JSON.stringify({ error: 'Failed to mint target location token', details: tgt.data, targetLocationId: locationId }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const finalPayload = {
@@ -162,7 +193,7 @@ Deno.serve(async (req) => {
     const userRes = await fetch(`${GHL_API}/users/`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${tgt.token}`,
         Version: '2021-07-28',
         'Content-Type': 'application/json',
         Accept: 'application/json',
