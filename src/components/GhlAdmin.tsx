@@ -246,34 +246,40 @@ export const GhlAdmin = () => {
 
   const handleCreateUser = async () => {
     if (!userForm.locationId.trim()) {
-      toast({ title: 'Missing Location ID', variant: 'destructive' });
+      toast({ title: 'Missing target location', variant: 'destructive' });
       return;
     }
-    if (!userForm.contactId.trim() && !userForm.email.trim()) {
-      toast({ title: 'Provide Contact ID or Email', variant: 'destructive' });
+    if (!userForm.contactId.trim()) {
+      toast({ title: 'Pick a contact', variant: 'destructive' });
       return;
     }
     setCreatingUser(true);
     setCreatedUserResult(null);
     try {
+      // Fetch contact details to get email/name/phone
+      const { data: contactData, error: contactErr } = await supabase.functions.invoke('ghl-get-contact', {
+        body: { contactId: userForm.contactId.trim() },
+      });
+      if (contactErr) throw contactErr;
+      if (contactData?.error) throw new Error(contactData.error);
+      const c = contactData.contact || {};
+      if (!c.email) throw new Error('Contact has no email — required to create a user');
+
       const { data, error } = await supabase.functions.invoke('ghl-create-user', {
         body: {
           locationId: userForm.locationId.trim(),
-          sourceLocationId: userForm.sourceLocationId.trim() || undefined,
-          contactId: userForm.contactId.trim() || undefined,
-          firstName: userForm.firstName || undefined,
-          lastName: userForm.lastName || undefined,
-          email: userForm.email || undefined,
-          phone: userForm.phone || undefined,
-          password: userForm.password || undefined,
-          role: userForm.role,
-          type: userForm.type,
+          firstName: c.firstName || '',
+          lastName: c.lastName || '',
+          email: c.email,
+          phone: c.phone || '',
+          role: 'admin',
+          type: 'account',
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
       setCreatedUserResult(data);
-      toast({ title: 'User created', description: data.user?.id ? `User ID: ${data.user.id}` : 'Success' });
+      toast({ title: 'User created', description: data.action === 'added_location_to_existing_user' ? 'Added location to existing user' : 'New user created' });
     } catch (e: any) {
       toast({ title: 'Create user failed', description: e.message, variant: 'destructive' });
     } finally {
