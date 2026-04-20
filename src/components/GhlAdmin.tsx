@@ -14,6 +14,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from '@/hooks/use-toast';
 import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 
 const US_STATES: { code: string; name: string }[] = [
@@ -331,16 +341,9 @@ export const GhlAdmin = () => {
     })();
   }, []);
 
-  const handleCreate = async () => {
-    const required: (keyof CreateForm)[] = [
-      'companyId', 'name', 'email', 'phone', 'firstName', 'lastName',
-      'address', 'city', 'state', 'postalCode', 'country', 'timezone', 'einNumber',
-    ];
-    const missing = required.filter((k) => !createForm[k]?.toString().trim());
-    if (missing.length) {
-      toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
-      return;
-    }
+  const [duplicateDialog, setDuplicateDialog] = useState<{ open: boolean; existing: any | null }>({ open: false, existing: null });
+
+  const submitCreate = async (allowDuplicate: boolean) => {
     setCreating(true);
     try {
       let customValues: Record<string, string> | undefined;
@@ -354,20 +357,15 @@ export const GhlAdmin = () => {
         }
       }
       const { data, error } = await supabase.functions.invoke('ghl-create-subaccount', {
-        body: { ...createForm, customValues },
+        body: { ...createForm, customValues, allowDuplicate },
       });
-      // Try to read JSON body even when invoke threw on non-2xx (e.g. 409)
       let payload: any = data;
       if (error && (error as any).context?.json) {
         try { payload = await (error as any).context.json(); } catch {}
       }
-      if (payload?.existing) {
-        toast({
-          title: 'Sub-account already exists',
-          description: `Matched: ${payload.existing.name || payload.existing.id} (${payload.existing.email || payload.existing.phone || payload.existing.id})`,
-          variant: 'destructive',
-        });
-        setUpdateLocationId(payload.existing.id || '');
+      // Duplicate detected — prompt user
+      if (!allowDuplicate && (payload?.duplicate || payload?.existing)) {
+        setDuplicateDialog({ open: true, existing: payload.existing });
         return;
       }
       if (error) throw error;
@@ -381,6 +379,19 @@ export const GhlAdmin = () => {
     } finally {
       setCreating(false);
     }
+  };
+
+  const handleCreate = async () => {
+    const required: (keyof CreateForm)[] = [
+      'companyId', 'name', 'email', 'phone', 'firstName', 'lastName',
+      'address', 'city', 'state', 'postalCode', 'country', 'timezone', 'einNumber',
+    ];
+    const missing = required.filter((k) => !createForm[k]?.toString().trim());
+    if (missing.length) {
+      toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
+      return;
+    }
+    await submitCreate(false);
   };
 
   const handleUpdate = async () => {
@@ -749,6 +760,29 @@ export const GhlAdmin = () => {
         </Card>
       </TabsContent>
 
+      <AlertDialog open={duplicateDialog.open} onOpenChange={(open) => setDuplicateDialog((d) => ({ ...d, open }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sub-account already exists</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-semibold">{duplicateDialog.existing?.name || 'A matching sub-account'}</span>
+              {duplicateDialog.existing?.email && <> ({duplicateDialog.existing.email})</>} already exists in your agency.
+              <br /><br />
+              Are you sure you want to create a duplicate?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setUpdateLocationId(duplicateDialog.existing?.id || '');
+              setDuplicateDialog({ open: false, existing: null });
+            }}>No, cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setDuplicateDialog({ open: false, existing: null });
+              submitCreate(true);
+            }}>Yes, create duplicate</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Tabs>
   );
 };
