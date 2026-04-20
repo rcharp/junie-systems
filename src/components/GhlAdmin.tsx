@@ -356,21 +356,26 @@ export const GhlAdmin = () => {
       const { data, error } = await supabase.functions.invoke('ghl-create-subaccount', {
         body: { ...createForm, customValues },
       });
-      if (error) throw error;
-      if (data?.error) {
-        if (data.existing) {
-          toast({
-            title: 'Sub-account already exists',
-            description: `Matched: ${data.existing.name || data.existing.id} (${data.existing.email || data.existing.phone || data.existing.id})`,
-            variant: 'destructive',
-          });
-          setUpdateLocationId(data.existing.id || '');
-          return;
-        }
-        throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      // Try to read JSON body even when invoke threw on non-2xx (e.g. 409)
+      let payload: any = data;
+      if (error && (error as any).context?.json) {
+        try { payload = await (error as any).context.json(); } catch {}
       }
-      toast({ title: 'Sub-account created', description: `Location ID: ${data.locationId}` });
-      setUpdateLocationId(data.locationId || '');
+      if (payload?.existing) {
+        toast({
+          title: 'Sub-account already exists',
+          description: `Matched: ${payload.existing.name || payload.existing.id} (${payload.existing.email || payload.existing.phone || payload.existing.id})`,
+          variant: 'destructive',
+        });
+        setUpdateLocationId(payload.existing.id || '');
+        return;
+      }
+      if (error) throw error;
+      if (payload?.error) {
+        throw new Error(payload.error + (payload.details ? ': ' + JSON.stringify(payload.details) : ''));
+      }
+      toast({ title: 'Sub-account created', description: `Location ID: ${payload.locationId}` });
+      setUpdateLocationId(payload.locationId || '');
     } catch (e: any) {
       toast({ title: 'Create failed', description: e.message, variant: 'destructive' });
     } finally {
