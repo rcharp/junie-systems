@@ -10,8 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from '@/hooks/use-toast';
-import { RefreshCw, Plus, Save, UserPlus } from 'lucide-react';
+import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
