@@ -421,65 +421,69 @@ export const GhlAdmin = () => {
             <CardDescription>Creates a new location in your GHL agency and imports a snapshot.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-primary" />
+                Populate from GHL Contact
+              </Label>
+              <p className="text-xs text-muted-foreground">Select a contact to auto-fill all fields below.</p>
+              <Popover open={createContactOpen} onOpenChange={setCreateContactOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
+                    <span className="truncate">
+                      {selectedCreateContactLabel || 'Search a contact...'}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Search by name, email, phone..."
+                      value={createContactSearch}
+                      onValueChange={setCreateContactSearch}
+                    />
+                    <CommandList>
+                      {createContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                      {!createContactsLoading && createContacts.length === 0 && (
+                        <CommandEmpty>No contacts found.</CommandEmpty>
+                      )}
+                      <CommandGroup>
+                        {createContacts.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.id}
+                            onSelect={() => {
+                              const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
+                              setSelectedCreateContactLabel(label);
+                              setContactId(c.id);
+                              setCreateContactOpen(false);
+                              populateCreateFromContactId(c.id);
+                            }}
+                          >
+                            <Check className={cn('mr-2 h-4 w-4', contactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                            <div className="flex flex-col">
+                              <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {[c.email, c.phone].filter(Boolean).join(' · ')}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground truncate">{contactId}</span>
+                {loadingContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
+              </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Agency Company ID</Label>
                 <Input value={createForm.companyId} disabled readOnly placeholder="Auto-filled from secret..." className="bg-muted" />
-              </div>
-              <div>
-                <Label>Populate from GHL Contact</Label>
-                <Popover open={createContactOpen} onOpenChange={setCreateContactOpen}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
-                      <span className="truncate">
-                        {selectedCreateContactLabel || 'Search a contact...'}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                    <Command shouldFilter={false}>
-                      <CommandInput
-                        placeholder="Search by name, email, phone..."
-                        value={createContactSearch}
-                        onValueChange={setCreateContactSearch}
-                      />
-                      <CommandList>
-                        {createContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
-                        {!createContactsLoading && createContacts.length === 0 && (
-                          <CommandEmpty>No contacts found.</CommandEmpty>
-                        )}
-                        <CommandGroup>
-                          {createContacts.map((c) => (
-                            <CommandItem
-                              key={c.id}
-                              value={c.id}
-                              onSelect={() => {
-                                const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
-                                setSelectedCreateContactLabel(label);
-                                setContactId(c.id);
-                                setCreateContactOpen(false);
-                                populateCreateFromContactId(c.id);
-                              }}
-                            >
-                              <Check className={cn('mr-2 h-4 w-4', contactId === c.id ? 'opacity-100' : 'opacity-0')} />
-                              <div className="flex flex-col">
-                                <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                <div className="flex items-center justify-between mt-1 gap-2">
-                  <span className="text-xs text-muted-foreground truncate">{contactId}</span>
-                  {loadingContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
-                </div>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
