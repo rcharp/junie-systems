@@ -40,11 +40,59 @@ Deno.serve(async (req) => {
       snapshotId,
       customValues,
       einNumber,
+      allowDuplicate,
     } = body;
 
     const companyId = bodyCompanyId || Deno.env.get('GHL_AGENCY_COMPANY_ID');
     if (!companyId) return jsonRes({ error: 'companyId is required (set GHL_AGENCY_COMPANY_ID secret or pass companyId)' }, 400);
     if (!name) return jsonRes({ error: 'name is required' }, 400);
+
+    // Duplicate check — search existing locations under this company
+    if (!allowDuplicate) {
+      const ghHeaders = {
+        Authorization: `Bearer ${PIT}`,
+        Version: GHL_VERSION,
+        Accept: 'application/json',
+      };
+      try {
+        const searchRes = await fetch(`${GHL_API}/locations/search?companyId=${companyId}&limit=500`, { headers: ghHeaders });
+        if (searchRes.ok) {
+          const searchData = await searchRes.json();
+          const existing: any[] = searchData?.locations || [];
+          const norm = (s: any) => String(s || '').trim().toLowerCase();
+          const normPhone = (s: any) => String(s || '').replace(/\D/g, '');
+          const nName = norm(name);
+          const nEmail = norm(email);
+          const nPhone = normPhone(phone);
+          const match = existing.find((l: any) => {
+            const lName = norm(l.business?.name || l.name);
+            const lEmail = norm(l.email || l.business?.email);
+            const lPhone = normPhone(l.phone || l.business?.phone);
+            return (
+              (nName && lName && lName === nName) ||
+              (nEmail && lEmail && lEmail === nEmail) ||
+              (nPhone && lPhone && lPhone === nPhone)
+            );
+          });
+          if (match) {
+            return jsonRes({
+              error: 'Sub-account already exists',
+              existing: {
+                id: match.id || match._id,
+                name: match.business?.name || match.name,
+                email: match.email || match.business?.email,
+                phone: match.phone || match.business?.phone,
+              },
+              hint: 'Pass allowDuplicate: true to bypass this check.',
+            }, 409);
+          }
+        } else {
+          console.warn('Duplicate-check search failed:', searchRes.status);
+        }
+      } catch (e) {
+        console.warn('Duplicate-check error (continuing):', e);
+      }
+    }
     
 
     // Create sub-account (location)
