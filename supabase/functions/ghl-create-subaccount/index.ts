@@ -199,73 +199,29 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create an Admin user on the new sub-account with scoped permissions
+    // Create an Admin user on the new sub-account using the Agency PIT
     let userResult: any = null;
     if (locationId && email) {
-      const userPermissions = {
-        campaignsEnabled: false,
-        campaignsReadOnly: false,
-        contactsEnabled: true,
-        workflowsEnabled: false,
-        workflowsReadOnly: false,
-        triggersEnabled: false,
-        funnelsEnabled: false,
-        websitesEnabled: false,
-        opportunitiesEnabled: true,
-        dashboardStatsEnabled: true,
-        bulkRequestsEnabled: true,
-        appointmentsEnabled: false,
-        reviewsEnabled: true,
-        onlineListingsEnabled: true,
-        phoneCallEnabled: false,
-        conversationsEnabled: true,
-        assignedDataOnly: false,
-        adwordsReportingEnabled: false,
-        membershipEnabled: false,
-        facebookAdsReportingEnabled: true,
-        attributionsReportingEnabled: false,
-        settingsEnabled: false,
-        tagsEnabled: true,
-        leadValueEnabled: true,
-        marketingEnabled: false,
-        agentReportingEnabled: false,
-        botService: false,
-        socialPlanner: true,
-        bloggingEnabled: false,
-        invoiceEnabled: false,
-        affiliateManagerEnabled: false,
-        contentAiEnabled: false,
-        refundsEnabled: false,
-        recordPaymentEnabled: false,
-        cancelSubscriptionEnabled: false,
-        paymentsEnabled: false,
-        communitiesEnabled: false,
-        exportPaymentsEnabled: false,
-        adManager: false,
-        prospectingEnabled: false,
-        mediaStorageEnabled: true,
-        chatWithAi: false,
-        sas: false,
-      };
-
+      const AGENCY_PIT = Deno.env.get('GHL_AGENCY_PIT_TOKEN') || PIT;
       const [uFirst, ...uRest] = (name || email).split(' ');
+      const generatedPassword = `J${Math.random().toString(36).slice(2, 10)}!${Math.floor(Math.random() * 100)}`;
       const userPayload: any = {
         companyId,
         firstName: firstName || uFirst || 'Account',
         lastName: lastName || uRest.join(' ') || 'Owner',
         email,
+        password: generatedPassword,
         phone,
         type: 'account',
         role: 'admin',
         locationIds: [locationId],
-        permissions: userPermissions,
       };
 
-      console.log('GHL create user payload:', JSON.stringify(userPayload));
+      console.log('GHL create user payload:', JSON.stringify({ ...userPayload, password: '***' }));
       const userRes = await fetch(`${GHL_API}/users/`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${PIT}`,
+          Authorization: `Bearer ${AGENCY_PIT}`,
           Version: GHL_VERSION,
           'Content-Type': 'application/json',
           Accept: 'application/json',
@@ -274,7 +230,7 @@ Deno.serve(async (req) => {
       });
       const userData = await userRes.json();
       console.log('GHL create user response:', userRes.status, JSON.stringify(userData));
-      userResult = { ok: userRes.ok, status: userRes.status, data: userData };
+      userResult = { ok: userRes.ok, status: userRes.status, data: userData, generatedPassword };
     }
 
     return jsonRes({ success: true, locationId, location: createData, user: userResult, businessUpdate: businessUpdateResult });

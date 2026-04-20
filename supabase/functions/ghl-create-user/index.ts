@@ -11,8 +11,8 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const token = Deno.env.get('GHL_PIT_TOKEN') || Deno.env.get('GHL_AGENCY_API_KEY') || Deno.env.get('GHL_PRIVATE_INTEGRATION_TOKEN');
-    if (!token) throw new Error('Missing GHL agency token (set GHL_PIT_TOKEN)');
+    const token = Deno.env.get('GHL_AGENCY_PIT_TOKEN') || Deno.env.get('GHL_PIT_TOKEN');
+    if (!token) throw new Error('Missing GHL agency token (set GHL_AGENCY_PIT_TOKEN)');
 
     const body = await req.json();
     const {
