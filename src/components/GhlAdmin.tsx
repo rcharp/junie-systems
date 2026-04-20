@@ -357,7 +357,18 @@ export const GhlAdmin = () => {
         body: { ...createForm, customValues },
       });
       if (error) throw error;
-      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      if (data?.error) {
+        if (data.existing) {
+          toast({
+            title: 'Sub-account already exists',
+            description: `Matched: ${data.existing.name || data.existing.id} (${data.existing.email || data.existing.phone || data.existing.id})`,
+            variant: 'destructive',
+          });
+          setUpdateLocationId(data.existing.id || '');
+          return;
+        }
+        throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      }
       toast({ title: 'Sub-account created', description: `Location ID: ${data.locationId}` });
       setUpdateLocationId(data.locationId || '');
     } catch (e: any) {
