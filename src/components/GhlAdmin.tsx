@@ -94,6 +94,7 @@ export const GhlAdmin = () => {
   // Create User tab state
   const [userForm, setUserForm] = useState({
     locationId: '',
+    sourceLocationId: '',
     contactId: '',
     firstName: '',
     lastName: '',
@@ -121,6 +122,7 @@ export const GhlAdmin = () => {
       const { data, error } = await supabase.functions.invoke('ghl-create-user', {
         body: {
           locationId: userForm.locationId.trim(),
+          sourceLocationId: userForm.sourceLocationId.trim() || undefined,
           contactId: userForm.contactId.trim() || undefined,
           firstName: userForm.firstName || undefined,
           lastName: userForm.lastName || undefined,
@@ -416,7 +418,8 @@ export const GhlAdmin = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Location ID *" value={userForm.locationId} onChange={(v) => setUserForm({ ...userForm, locationId: v })} required placeholder="Sub-account location ID" />
+              <Field label="Location ID * (target — where to create user)" value={userForm.locationId} onChange={(v) => setUserForm({ ...userForm, locationId: v })} required placeholder="New sub-account location ID" />
+              <Field label="Source Location ID (where the contact lives)" value={userForm.sourceLocationId} onChange={(v) => setUserForm({ ...userForm, sourceLocationId: v })} placeholder="Defaults to target location" />
               <Field label="Contact ID (optional)" value={userForm.contactId} onChange={(v) => setUserForm({ ...userForm, contactId: v })} placeholder="GHL contact to pull info from" />
               <Field label="First Name" value={userForm.firstName} onChange={(v) => setUserForm({ ...userForm, firstName: v })} />
               <Field label="Last Name" value={userForm.lastName} onChange={(v) => setUserForm({ ...userForm, lastName: v })} />

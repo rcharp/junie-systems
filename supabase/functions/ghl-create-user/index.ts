@@ -18,6 +18,7 @@ Deno.serve(async (req) => {
     const {
       companyId,
       locationId,
+      sourceLocationId,
       contactId,
       firstName,
       lastName,
@@ -38,18 +39,56 @@ Deno.serve(async (req) => {
     let resolvedCompanyId = companyId;
     let userPayload: any = { firstName, lastName, email, phone, password, type, role };
 
-    // If contactId provided, fetch the contact and use its info
-    if (contactId) {
-      const cRes = await fetch(`${GHL_API}/contacts/${contactId}`, {
+    // Resolve agency companyId
+    if (!resolvedCompanyId) {
+      resolvedCompanyId = Deno.env.get('GHL_AGENCY_COMPANY_ID') || Deno.env.get('GHL_COMPANY_ID');
+    }
+    if (!resolvedCompanyId) {
+      return new Response(JSON.stringify({ error: 'companyId is required (set GHL_AGENCY_COMPANY_ID or pass companyId)' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Helper: mint a location-scoped access token from the agency PIT
+    const mintLocationToken = async (locId: string) => {
+      const form = new URLSearchParams();
+      form.set('companyId', resolvedCompanyId);
+      form.set('locationId', locId);
+      const res = await fetch(`${GHL_API}/oauth/locationToken`, {
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
+          Version: '2021-07-28',
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+        },
+        body: form.toString(),
+      });
+      const data = await res.json();
+      return { ok: res.ok, token: data.access_token as string | undefined, data };
+    };
+
+    // Step 1: If contactId provided, mint a token for the SOURCE location to fetch the contact
+    if (contactId) {
+      const srcLoc = sourceLocationId || locationId;
+      const src = await mintLocationToken(srcLoc);
+      if (!src.ok || !src.token) {
+        return new Response(JSON.stringify({ error: 'Failed to mint source location token', details: src.data }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const cRes = await fetch(`${GHL_API}/contacts/${contactId}`, {
+        headers: {
+          Authorization: `Bearer ${src.token}`,
           Version: '2021-07-28',
           Accept: 'application/json',
         },
       });
       const cData = await cRes.json();
       if (!cRes.ok) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch contact', details: cData }), {
+        return new Response(JSON.stringify({ error: 'Failed to fetch contact', details: cData, sourceLocationId: srcLoc }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -73,40 +112,15 @@ Deno.serve(async (req) => {
       userPayload.password = `J${Math.random().toString(36).slice(2, 10)}!${Math.floor(Math.random() * 100)}`;
     }
 
-    // Look up companyId if not provided
-    if (!resolvedCompanyId) {
-      resolvedCompanyId = Deno.env.get('GHL_AGENCY_COMPANY_ID') || Deno.env.get('GHL_COMPANY_ID');
-    }
-    if (!resolvedCompanyId) {
-      return new Response(JSON.stringify({ error: 'companyId is required (set GHL_AGENCY_COMPANY_ID or pass companyId)' }), {
+    // Step 2: Mint a token for the TARGET location for user creation
+    const tgt = await mintLocationToken(locationId);
+    if (!tgt.ok || !tgt.token) {
+      return new Response(JSON.stringify({ error: 'Failed to mint target location token', details: tgt.data }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    // Step 1: Mint a location-level access token using the agency PIT
-    const tokenForm = new URLSearchParams();
-    tokenForm.set('companyId', resolvedCompanyId);
-    tokenForm.set('locationId', locationId);
-
-    const locTokenRes = await fetch(`${GHL_API}/oauth/locationToken`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Version: '2021-07-28',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Accept: 'application/json',
-      },
-      body: tokenForm.toString(),
-    });
-    const locTokenData = await locTokenRes.json();
-    if (!locTokenRes.ok || !locTokenData.access_token) {
-      return new Response(JSON.stringify({ error: 'Failed to mint location token', details: locTokenData }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const locationToken = locTokenData.access_token;
+    const locationToken = tgt.token;
 
     const finalPayload = {
       companyId: resolvedCompanyId,
