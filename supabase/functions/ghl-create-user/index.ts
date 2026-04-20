@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
       : Array.isArray(existing.locationIds) ? existing.locationIds : [];
     const mergedLocationIds = Array.from(new Set([...currentLocationIds, locationId]));
 
-    const updatePayload = {
+    const updatePayload: any = {
       firstName: existing.firstName || userPayload.firstName,
       lastName: existing.lastName || userPayload.lastName,
       email: existing.email,
@@ -220,8 +220,10 @@ Deno.serve(async (req) => {
       type: 'account',
       role: 'admin',
       locationIds: mergedLocationIds,
-      permissions: ADMIN_PERMISSIONS,
+      permissions: sourcePermissions,
     };
+    if (sourceScopes) updatePayload.scopes = sourceScopes;
+    if (sourceScopesAssignedToOnly) updatePayload.scopesAssignedToOnly = sourceScopesAssignedToOnly;
 
     const updateRes = await fetch(`${GHL_API}/users/${existing.id}`, {
       method: 'PUT',
