@@ -115,12 +115,19 @@ export const GhlAdmin = () => {
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
 
-  // Contact dropdown (searchable)
+  // Contact dropdown (searchable) — Create User tab
   const [contacts, setContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
   const [contactSearch, setContactSearch] = useState('');
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [selectedContactLabel, setSelectedContactLabel] = useState('');
+
+  // Contact dropdown (searchable) — Create Sub-account tab
+  const [createContacts, setCreateContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [createContactSearch, setCreateContactSearch] = useState('');
+  const [createContactsLoading, setCreateContactsLoading] = useState(false);
+  const [createContactOpen, setCreateContactOpen] = useState(false);
+  const [selectedCreateContactLabel, setSelectedCreateContactLabel] = useState('');
 
   const loadLocations = async () => {
     setLocationsLoading(true);
@@ -159,6 +166,73 @@ export const GhlAdmin = () => {
     }, 300);
     return () => clearTimeout(t);
   }, [contactSearch, contactOpen]);
+
+  useEffect(() => {
+    if (!createContactOpen) return;
+    const t = setTimeout(async () => {
+      setCreateContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: createContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setCreateContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setCreateContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [createContactSearch, createContactOpen]);
+
+  const populateCreateFromContactId = async (cid: string) => {
+    setLoadingContact(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-get-contact', {
+        body: { contactId: cid },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      const c = data.contact || {};
+      setCreateForm((f) => {
+        let mergedCustomJson = f.customValuesJson;
+        if (c.customValues && typeof c.customValues === 'object') {
+          let existing: Record<string, string> = {};
+          if (f.customValuesJson.trim()) {
+            try { existing = JSON.parse(f.customValuesJson); } catch {}
+          }
+          const cleaned = Object.fromEntries(
+            Object.entries(c.customValues).filter(([, v]) => v && String(v).trim())
+          );
+          mergedCustomJson = JSON.stringify({ ...existing, ...cleaned }, null, 2);
+        }
+        return {
+          ...f,
+          name: c.companyName || c.name || f.name,
+          email: c.email || f.email,
+          phone: c.phone || f.phone,
+          firstName: c.firstName || f.firstName,
+          lastName: c.lastName || f.lastName,
+          address: c.address || f.address,
+          city: c.city || f.city,
+          state: c.state || f.state,
+          postalCode: c.postalCode || f.postalCode,
+          country: c.country || f.country,
+          website: c.website || f.website,
+          timezone: c.timezone || f.timezone,
+          einNumber: c.einNumber || f.einNumber,
+          customValuesJson: mergedCustomJson,
+        };
+      });
+      toast({ title: 'Contact loaded', description: 'Form populated from GHL contact' });
+    } catch (e: any) {
+      toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
+    } finally {
+      setLoadingContact(false);
+    }
+  };
 
   const handleCreateUser = async () => {
     if (!userForm.locationId.trim()) {
@@ -354,15 +428,57 @@ export const GhlAdmin = () => {
               </div>
               <div>
                 <Label>Populate from GHL Contact</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={contactId}
-                    onChange={(e) => setContactId(e.target.value)}
-                    placeholder="Contact ID"
-                  />
-                  <Button type="button" variant="outline" onClick={handlePopulateFromContact} disabled={loadingContact}>
-                    {loadingContact ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Populate'}
-                  </Button>
+                <Popover open={createContactOpen} onOpenChange={setCreateContactOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      <span className="truncate">
+                        {selectedCreateContactLabel || 'Search a contact...'}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Search by name, email, phone..."
+                        value={createContactSearch}
+                        onValueChange={setCreateContactSearch}
+                      />
+                      <CommandList>
+                        {createContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                        {!createContactsLoading && createContacts.length === 0 && (
+                          <CommandEmpty>No contacts found.</CommandEmpty>
+                        )}
+                        <CommandGroup>
+                          {createContacts.map((c) => (
+                            <CommandItem
+                              key={c.id}
+                              value={c.id}
+                              onSelect={() => {
+                                const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
+                                setSelectedCreateContactLabel(label);
+                                setContactId(c.id);
+                                setCreateContactOpen(false);
+                                populateCreateFromContactId(c.id);
+                              }}
+                            >
+                              <Check className={cn('mr-2 h-4 w-4', contactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                              <div className="flex flex-col">
+                                <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <div className="flex items-center justify-between mt-1 gap-2">
+                  <span className="text-xs text-muted-foreground truncate">{contactId}</span>
+                  {loadingContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
                 </div>
               </div>
             </div>
