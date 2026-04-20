@@ -6,46 +6,24 @@ const corsHeaders = {
 const GHL_API = 'https://services.leadconnectorhq.com';
 const GHL_VERSION = '2021-07-28';
 
-// Full admin permission set (matches the GHL UI "all permissions" admin checkboxes)
-const ADMIN_PERMISSIONS = {
-  campaignsEnabled: true,
-  campaignsReadOnly: false,
-  contactsEnabled: true,
-  workflowsEnabled: true,
-  workflowsReadOnly: false,
-  triggersEnabled: true,
-  funnelsEnabled: true,
-  websitesEnabled: true,
-  opportunitiesEnabled: true,
-  dashboardStatsEnabled: true,
-  bulkRequestsEnabled: true,
-  appointmentsEnabled: true,
-  reviewsEnabled: true,
-  onlineListingsEnabled: true,
-  phoneCallEnabled: true,
-  conversationsEnabled: true,
-  assignedDataOnly: false,
-  adwordsReportingEnabled: true,
-  membershipEnabled: true,
-  facebookAdsReportingEnabled: true,
-  attributionsReportingEnabled: true,
-  settingsEnabled: true,
-  tagsEnabled: true,
-  leadValueEnabled: true,
-  marketingEnabled: true,
-  agentReportingEnabled: true,
-  botService: true,
-  socialPlanner: true,
-  bloggingEnabled: true,
-  invoiceEnabled: true,
-  affiliateManagerEnabled: true,
-  contentAiEnabled: true,
-  refundsEnabled: true,
-  recordPaymentEnabled: true,
-  cancelSubscriptionEnabled: true,
-  paymentsEnabled: true,
-  communitiesEnabled: true,
-  exportPaymentsEnabled: true,
+// Source user to copy permissions/scopes from
+const SOURCE_USER_ID = 'kBUD7tgg9CxF3Sz3mpUj';
+
+// Fallback admin permissions if source user fetch fails
+const FALLBACK_ADMIN_PERMISSIONS = {
+  campaignsEnabled: true, campaignsReadOnly: false, contactsEnabled: true,
+  workflowsEnabled: true, workflowsReadOnly: false, triggersEnabled: true,
+  funnelsEnabled: true, websitesEnabled: true, opportunitiesEnabled: true,
+  dashboardStatsEnabled: true, bulkRequestsEnabled: true, appointmentsEnabled: true,
+  reviewsEnabled: true, onlineListingsEnabled: true, phoneCallEnabled: true,
+  conversationsEnabled: true, assignedDataOnly: false, adwordsReportingEnabled: true,
+  membershipEnabled: true, facebookAdsReportingEnabled: true, attributionsReportingEnabled: true,
+  settingsEnabled: true, tagsEnabled: true, leadValueEnabled: true,
+  marketingEnabled: true, agentReportingEnabled: true, botService: true,
+  socialPlanner: true, bloggingEnabled: true, invoiceEnabled: true,
+  affiliateManagerEnabled: true, contentAiEnabled: true, refundsEnabled: true,
+  recordPaymentEnabled: true, cancelSubscriptionEnabled: true, paymentsEnabled: true,
+  communitiesEnabled: true, exportPaymentsEnabled: true,
 };
 
 const parseJson = async (res: Response) => {
@@ -144,8 +122,23 @@ Deno.serve(async (req) => {
       Accept: 'application/json',
     };
 
+    // Fetch source user to copy permissions/scopes from
+    let sourcePermissions: any = FALLBACK_ADMIN_PERMISSIONS;
+    let sourceScopes: string[] | undefined;
+    let sourceScopesAssignedToOnly: string[] | undefined;
+    try {
+      const srcRes = await fetch(`${GHL_API}/users/${SOURCE_USER_ID}`, { headers: agencyHeaders });
+      const srcData = await parseJson(srcRes);
+      if (srcRes.ok) {
+        const su = srcData.user || srcData;
+        if (su.permissions && typeof su.permissions === 'object') sourcePermissions = su.permissions;
+        if (Array.isArray(su.scopes)) sourceScopes = su.scopes;
+        if (Array.isArray(su.scopesAssignedToOnly)) sourceScopesAssignedToOnly = su.scopesAssignedToOnly;
+      }
+    } catch { /* fall back to defaults */ }
+
     // ========== STEP 1: Try to create user at agency level ==========
-    const createPayload = {
+    const createPayload: any = {
       companyId: resolvedCompanyId,
       firstName: userPayload.firstName,
       lastName: userPayload.lastName,
@@ -155,8 +148,10 @@ Deno.serve(async (req) => {
       type: userPayload.type,
       role: userPayload.role,
       locationIds: [locationId],
-      permissions: ADMIN_PERMISSIONS,
+      permissions: sourcePermissions,
     };
+    if (sourceScopes) createPayload.scopes = sourceScopes;
+    if (sourceScopesAssignedToOnly) createPayload.scopesAssignedToOnly = sourceScopesAssignedToOnly;
 
     const userRes = await fetch(`${GHL_API}/users/`, {
       method: 'POST',
@@ -217,7 +212,7 @@ Deno.serve(async (req) => {
       : Array.isArray(existing.locationIds) ? existing.locationIds : [];
     const mergedLocationIds = Array.from(new Set([...currentLocationIds, locationId]));
 
-    const updatePayload = {
+    const updatePayload: any = {
       firstName: existing.firstName || userPayload.firstName,
       lastName: existing.lastName || userPayload.lastName,
       email: existing.email,
@@ -225,8 +220,10 @@ Deno.serve(async (req) => {
       type: 'account',
       role: 'admin',
       locationIds: mergedLocationIds,
-      permissions: ADMIN_PERMISSIONS,
+      permissions: sourcePermissions,
     };
+    if (sourceScopes) updatePayload.scopes = sourceScopes;
+    if (sourceScopesAssignedToOnly) updatePayload.scopesAssignedToOnly = sourceScopesAssignedToOnly;
 
     const updateRes = await fetch(`${GHL_API}/users/${existing.id}`, {
       method: 'PUT',
