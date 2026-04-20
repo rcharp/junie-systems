@@ -91,6 +91,57 @@ export const GhlAdmin = () => {
   const [contactId, setContactId] = useState('');
   const [loadingContact, setLoadingContact] = useState(false);
 
+  // Create User tab state
+  const [userForm, setUserForm] = useState({
+    locationId: '',
+    contactId: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'admin',
+    type: 'account',
+  });
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [createdUserResult, setCreatedUserResult] = useState<any>(null);
+
+  const handleCreateUser = async () => {
+    if (!userForm.locationId.trim()) {
+      toast({ title: 'Missing Location ID', variant: 'destructive' });
+      return;
+    }
+    if (!userForm.contactId.trim() && !userForm.email.trim()) {
+      toast({ title: 'Provide Contact ID or Email', variant: 'destructive' });
+      return;
+    }
+    setCreatingUser(true);
+    setCreatedUserResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-create-user', {
+        body: {
+          locationId: userForm.locationId.trim(),
+          contactId: userForm.contactId.trim() || undefined,
+          firstName: userForm.firstName || undefined,
+          lastName: userForm.lastName || undefined,
+          email: userForm.email || undefined,
+          phone: userForm.phone || undefined,
+          password: userForm.password || undefined,
+          role: userForm.role,
+          type: userForm.type,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      setCreatedUserResult(data);
+      toast({ title: 'User created', description: data.user?.id ? `User ID: ${data.user.id}` : 'Success' });
+    } catch (e: any) {
+      toast({ title: 'Create user failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
   const handlePopulateFromContact = async () => {
     if (!contactId.trim()) {
       toast({ title: 'Missing Contact ID', variant: 'destructive' });
