@@ -199,38 +199,34 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create an Admin user on the new sub-account using the Agency PIT
+    // Create / update the admin user via ghl-create-user — this clones permissions
+    // from the COPY PERMISSIONS source user, and if the user already exists,
+    // adds the new locationId to their existing locationIds.
     let userResult: any = null;
     if (locationId && email) {
-      const AGENCY_PIT = Deno.env.get('GHL_AGENCY_PIT_TOKEN') || PIT;
       const [uFirst, ...uRest] = (name || email).split(' ');
-      const generatedPassword = `J${Math.random().toString(36).slice(2, 10)}!${Math.floor(Math.random() * 100)}`;
-      const userPayload: any = {
+      const userBody = {
         companyId,
+        locationId,
         firstName: firstName || uFirst || 'Account',
         lastName: lastName || uRest.join(' ') || 'Owner',
         email,
-        password: generatedPassword,
         phone,
         type: 'account',
         role: 'admin',
-        locationIds: [locationId],
       };
-
-      console.log('GHL create user payload:', JSON.stringify({ ...userPayload, password: '***' }));
-      const userRes = await fetch(`${GHL_API}/users/`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${AGENCY_PIT}`,
-          Version: GHL_VERSION,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(userPayload),
-      });
-      const userData = await userRes.json();
-      console.log('GHL create user response:', userRes.status, JSON.stringify(userData));
-      userResult = { ok: userRes.ok, status: userRes.status, data: userData, generatedPassword };
+      console.log('Invoking ghl-create-user:', JSON.stringify(userBody));
+      const { data: userInvokeData, error: userInvokeErr } = await supabase.functions.invoke(
+        'ghl-create-user',
+        { body: userBody }
+      );
+      if (userInvokeErr) {
+        console.error('ghl-create-user invoke error:', userInvokeErr);
+        userResult = { ok: false, error: String(userInvokeErr?.message || userInvokeErr) };
+      } else {
+        console.log('ghl-create-user response:', JSON.stringify(userInvokeData));
+        userResult = { ok: true, ...userInvokeData };
+      }
     }
 
     return jsonRes({ success: true, locationId, location: createData, user: userResult, businessUpdate: businessUpdateResult });
