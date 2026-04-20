@@ -407,6 +407,55 @@ export const GhlAdmin = () => {
         </Card>
       </TabsContent>
 
+      <TabsContent value="user">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5" /> Create GHL User</CardTitle>
+            <CardDescription>
+              Create a user inside an existing sub-account location. Optionally pass a Contact ID to auto-fill name/email/phone from a GHL contact.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Location ID *" value={userForm.locationId} onChange={(v) => setUserForm({ ...userForm, locationId: v })} required placeholder="Sub-account location ID" />
+              <Field label="Contact ID (optional)" value={userForm.contactId} onChange={(v) => setUserForm({ ...userForm, contactId: v })} placeholder="GHL contact to pull info from" />
+              <Field label="First Name" value={userForm.firstName} onChange={(v) => setUserForm({ ...userForm, firstName: v })} />
+              <Field label="Last Name" value={userForm.lastName} onChange={(v) => setUserForm({ ...userForm, lastName: v })} />
+              <Field label="Email" value={userForm.email} onChange={(v) => setUserForm({ ...userForm, email: v })} placeholder="Required if no Contact ID" />
+              <Field label="Phone" value={userForm.phone} onChange={(v) => setUserForm({ ...userForm, phone: v })} />
+              <Field label="Password (optional)" value={userForm.password} onChange={(v) => setUserForm({ ...userForm, password: v })} placeholder="Auto-generated if blank" />
+              <div>
+                <Label>Role</Label>
+                <Select value={userForm.role} onValueChange={(v) => setUserForm({ ...userForm, role: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="user">User</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button onClick={handleCreateUser} disabled={creatingUser}>
+              {creatingUser ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <UserPlus className="w-4 h-4 mr-2" />}
+              Create User
+            </Button>
+
+            {createdUserResult && (
+              <div className="rounded-md border bg-muted/40 p-3 text-xs font-mono space-y-2">
+                {createdUserResult.generatedPassword && (
+                  <div>
+                    <Badge variant="secondary">Generated Password</Badge>{' '}
+                    <span className="font-bold">{createdUserResult.generatedPassword}</span>
+                  </div>
+                )}
+                <pre className="overflow-auto whitespace-pre-wrap">{JSON.stringify(createdUserResult.user, null, 2)}</pre>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
     </Tabs>
   );
 };
