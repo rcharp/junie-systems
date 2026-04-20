@@ -110,6 +110,56 @@ export const GhlAdmin = () => {
   const [creatingUser, setCreatingUser] = useState(false);
   const [createdUserResult, setCreatedUserResult] = useState<any>(null);
 
+  // Location dropdown
+  const [locations, setLocations] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [locationOpen, setLocationOpen] = useState(false);
+
+  // Contact dropdown (searchable)
+  const [contacts, setContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [selectedContactLabel, setSelectedContactLabel] = useState('');
+
+  const loadLocations = async () => {
+    setLocationsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-list-locations');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLocations(data.locations || []);
+    } catch (e: any) {
+      toast({ title: 'Failed to load locations', description: e.message, variant: 'destructive' });
+    } finally {
+      setLocationsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (locations.length === 0) loadLocations();
+  }, []);
+
+  useEffect(() => {
+    if (!contactOpen) return;
+    const t = setTimeout(async () => {
+      setContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: contactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [contactSearch, contactOpen]);
+
   const handleCreateUser = async () => {
     if (!userForm.locationId.trim()) {
       toast({ title: 'Missing Location ID', variant: 'destructive' });
