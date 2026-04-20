@@ -215,17 +215,26 @@ Deno.serve(async (req) => {
         type: 'account',
         role: 'admin',
       };
-      console.log('Invoking ghl-create-user:', JSON.stringify(userBody));
-      const { data: userInvokeData, error: userInvokeErr } = await supabase.functions.invoke(
-        'ghl-create-user',
-        { body: userBody }
-      );
-      if (userInvokeErr) {
-        console.error('ghl-create-user invoke error:', userInvokeErr);
-        userResult = { ok: false, error: String(userInvokeErr?.message || userInvokeErr) };
-      } else {
-        console.log('ghl-create-user response:', JSON.stringify(userInvokeData));
-        userResult = { ok: true, ...userInvokeData };
+      console.log('Calling ghl-create-user:', JSON.stringify(userBody));
+      try {
+        const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
+        const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+        const ucRes = await fetch(`${SUPABASE_URL}/functions/v1/ghl-create-user`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${SERVICE_ROLE}`,
+            apikey: SERVICE_ROLE,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userBody),
+        });
+        const ucText = await ucRes.text();
+        let ucData: any; try { ucData = JSON.parse(ucText); } catch { ucData = { raw: ucText }; }
+        console.log('ghl-create-user status:', ucRes.status, 'body:', ucText.slice(0, 800));
+        userResult = { ok: ucRes.ok, status: ucRes.status, ...ucData };
+      } catch (e) {
+        console.error('ghl-create-user fetch threw:', e);
+        userResult = { ok: false, error: String(e instanceof Error ? e.message : e) };
       }
     }
 
