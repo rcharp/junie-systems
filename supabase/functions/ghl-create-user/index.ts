@@ -6,46 +6,24 @@ const corsHeaders = {
 const GHL_API = 'https://services.leadconnectorhq.com';
 const GHL_VERSION = '2021-07-28';
 
-// Full admin permission set (matches the GHL UI "all permissions" admin checkboxes)
-const ADMIN_PERMISSIONS = {
-  campaignsEnabled: true,
-  campaignsReadOnly: false,
-  contactsEnabled: true,
-  workflowsEnabled: true,
-  workflowsReadOnly: false,
-  triggersEnabled: true,
-  funnelsEnabled: true,
-  websitesEnabled: true,
-  opportunitiesEnabled: true,
-  dashboardStatsEnabled: true,
-  bulkRequestsEnabled: true,
-  appointmentsEnabled: true,
-  reviewsEnabled: true,
-  onlineListingsEnabled: true,
-  phoneCallEnabled: true,
-  conversationsEnabled: true,
-  assignedDataOnly: false,
-  adwordsReportingEnabled: true,
-  membershipEnabled: true,
-  facebookAdsReportingEnabled: true,
-  attributionsReportingEnabled: true,
-  settingsEnabled: true,
-  tagsEnabled: true,
-  leadValueEnabled: true,
-  marketingEnabled: true,
-  agentReportingEnabled: true,
-  botService: true,
-  socialPlanner: true,
-  bloggingEnabled: true,
-  invoiceEnabled: true,
-  affiliateManagerEnabled: true,
-  contentAiEnabled: true,
-  refundsEnabled: true,
-  recordPaymentEnabled: true,
-  cancelSubscriptionEnabled: true,
-  paymentsEnabled: true,
-  communitiesEnabled: true,
-  exportPaymentsEnabled: true,
+// Source user to copy permissions/scopes from
+const SOURCE_USER_ID = 'kBUD7tgg9CxF3Sz3mpUj';
+
+// Fallback admin permissions if source user fetch fails
+const FALLBACK_ADMIN_PERMISSIONS = {
+  campaignsEnabled: true, campaignsReadOnly: false, contactsEnabled: true,
+  workflowsEnabled: true, workflowsReadOnly: false, triggersEnabled: true,
+  funnelsEnabled: true, websitesEnabled: true, opportunitiesEnabled: true,
+  dashboardStatsEnabled: true, bulkRequestsEnabled: true, appointmentsEnabled: true,
+  reviewsEnabled: true, onlineListingsEnabled: true, phoneCallEnabled: true,
+  conversationsEnabled: true, assignedDataOnly: false, adwordsReportingEnabled: true,
+  membershipEnabled: true, facebookAdsReportingEnabled: true, attributionsReportingEnabled: true,
+  settingsEnabled: true, tagsEnabled: true, leadValueEnabled: true,
+  marketingEnabled: true, agentReportingEnabled: true, botService: true,
+  socialPlanner: true, bloggingEnabled: true, invoiceEnabled: true,
+  affiliateManagerEnabled: true, contentAiEnabled: true, refundsEnabled: true,
+  recordPaymentEnabled: true, cancelSubscriptionEnabled: true, paymentsEnabled: true,
+  communitiesEnabled: true, exportPaymentsEnabled: true,
 };
 
 const parseJson = async (res: Response) => {
