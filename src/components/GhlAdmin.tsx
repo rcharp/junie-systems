@@ -115,12 +115,19 @@ export const GhlAdmin = () => {
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
 
-  // Contact dropdown (searchable)
+  // Contact dropdown (searchable) — Create User tab
   const [contacts, setContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
   const [contactSearch, setContactSearch] = useState('');
   const [contactsLoading, setContactsLoading] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
   const [selectedContactLabel, setSelectedContactLabel] = useState('');
+
+  // Contact dropdown (searchable) — Create Sub-account tab
+  const [createContacts, setCreateContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [createContactSearch, setCreateContactSearch] = useState('');
+  const [createContactsLoading, setCreateContactsLoading] = useState(false);
+  const [createContactOpen, setCreateContactOpen] = useState(false);
+  const [selectedCreateContactLabel, setSelectedCreateContactLabel] = useState('');
 
   const loadLocations = async () => {
     setLocationsLoading(true);
