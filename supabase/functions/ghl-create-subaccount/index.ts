@@ -99,6 +99,7 @@ Deno.serve(async (req) => {
       if (match) {
         console.log('Duplicate found:', match.id || match._id, match.name);
         return jsonRes({
+          duplicate: true,
           error: 'Sub-account already exists',
           existing: {
             id: match.id || match._id,
@@ -107,7 +108,7 @@ Deno.serve(async (req) => {
             phone: match.phone || match.business?.phone,
           },
           hint: 'Pass allowDuplicate: true to bypass this check.',
-        }, 409);
+        }, 200);
       }
       console.log('No duplicate found — proceeding to create');
     }
