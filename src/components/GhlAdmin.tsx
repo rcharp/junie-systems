@@ -122,6 +122,7 @@ export const GhlAdmin = () => {
       const { data, error } = await supabase.functions.invoke('ghl-create-user', {
         body: {
           locationId: userForm.locationId.trim(),
+          sourceLocationId: userForm.sourceLocationId.trim() || undefined,
           contactId: userForm.contactId.trim() || undefined,
           firstName: userForm.firstName || undefined,
           lastName: userForm.lastName || undefined,
