@@ -4,6 +4,54 @@ const corsHeaders = {
 };
 
 const GHL_API = 'https://services.leadconnectorhq.com';
+const GHL_VERSION = '2021-07-28';
+
+// Full admin permission set (matches the GHL UI "all permissions" admin checkboxes)
+const ADMIN_PERMISSIONS = {
+  campaignsEnabled: true,
+  campaignsReadOnly: false,
+  contactsEnabled: true,
+  workflowsEnabled: true,
+  workflowsReadOnly: false,
+  triggersEnabled: true,
+  funnelsEnabled: true,
+  websitesEnabled: true,
+  opportunitiesEnabled: true,
+  dashboardStatsEnabled: true,
+  bulkRequestsEnabled: true,
+  appointmentsEnabled: true,
+  reviewsEnabled: true,
+  onlineListingsEnabled: true,
+  phoneCallEnabled: true,
+  conversationsEnabled: true,
+  assignedDataOnly: false,
+  adwordsReportingEnabled: true,
+  membershipEnabled: true,
+  facebookAdsReportingEnabled: true,
+  attributionsReportingEnabled: true,
+  settingsEnabled: true,
+  tagsEnabled: true,
+  leadValueEnabled: true,
+  marketingEnabled: true,
+  agentReportingEnabled: true,
+  botService: true,
+  socialPlanner: true,
+  bloggingEnabled: true,
+  invoiceEnabled: true,
+  affiliateManagerEnabled: true,
+  contentAiEnabled: true,
+  refundsEnabled: true,
+  recordPaymentEnabled: true,
+  cancelSubscriptionEnabled: true,
+  paymentsEnabled: true,
+  communitiesEnabled: true,
+  exportPaymentsEnabled: true,
+};
+
+const parseJson = async (res: Response) => {
+  const text = await res.text();
+  try { return text ? JSON.parse(text) : {}; } catch { return { raw: text }; }
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -36,13 +84,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    let resolvedCompanyId = companyId;
-    let userPayload: any = { firstName, lastName, email, phone, password, type, role };
-
-    // Resolve agency companyId
-    if (!resolvedCompanyId) {
-      resolvedCompanyId = Deno.env.get('GHL_AGENCY_COMPANY_ID') || Deno.env.get('GHL_COMPANY_ID');
-    }
+    let resolvedCompanyId = companyId
+      || Deno.env.get('GHL_AGENCY_COMPANY_ID')
+      || Deno.env.get('GHL_COMPANY_ID');
     if (!resolvedCompanyId) {
       return new Response(JSON.stringify({ error: 'companyId is required (set GHL_AGENCY_COMPANY_ID or pass companyId)' }), {
         status: 400,
@@ -50,41 +94,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    const parseJson = async (res: Response) => {
-      const text = await res.text();
-      try {
-        return text ? JSON.parse(text) : {};
-      } catch {
-        return { raw: text };
-      }
-    };
+    const userPayload: any = { firstName, lastName, email, phone, password, type, role };
 
-    const mintLocationToken = async (locId: string) => {
-      const res = await fetch(`${GHL_API}/oauth/locationToken`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Version: '2021-07-28',
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          companyId: resolvedCompanyId,
-          locationId: locId,
-        }),
-      });
-      const data = await parseJson(res);
-      return {
-        ok: res.ok,
-        status: res.status,
-        token: data.access_token || data.locationAccessToken || data.accessToken,
-        data,
-      };
-    };
-
-    // Step 1: If contactId provided, fetch the contact using the source location's PIT token directly
+    // Optionally hydrate from contact
     if (contactId) {
-      const srcLoc = sourceLocationId || locationId;
       const sourceToken = Deno.env.get('GHL_LOCATION_PIT_TOKEN');
       if (!sourceToken) {
         return new Response(JSON.stringify({ error: 'Missing GHL_LOCATION_PIT_TOKEN for source location' }), {
@@ -95,13 +108,13 @@ Deno.serve(async (req) => {
       const cRes = await fetch(`${GHL_API}/contacts/${contactId}`, {
         headers: {
           Authorization: `Bearer ${sourceToken}`,
-          Version: '2021-07-28',
+          Version: GHL_VERSION,
           Accept: 'application/json',
         },
       });
       const cData = await cRes.json();
       if (!cRes.ok) {
-        return new Response(JSON.stringify({ error: 'Failed to fetch contact', details: cData, sourceLocationId: srcLoc }), {
+        return new Response(JSON.stringify({ error: 'Failed to fetch contact', details: cData }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -120,12 +133,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate password if not provided
     if (!userPayload.password) {
       userPayload.password = `J${Math.random().toString(36).slice(2, 10)}!${Math.floor(Math.random() * 100)}`;
     }
 
-    const finalPayload = {
+    const agencyHeaders = {
+      Authorization: `Bearer ${token}`,
+      Version: GHL_VERSION,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    // ========== STEP 1: Try to create user at agency level ==========
+    const createPayload = {
       companyId: resolvedCompanyId,
       firstName: userPayload.firstName,
       lastName: userPayload.lastName,
@@ -135,34 +155,103 @@ Deno.serve(async (req) => {
       type: userPayload.type,
       role: userPayload.role,
       locationIds: [locationId],
+      permissions: ADMIN_PERMISSIONS,
     };
 
     const userRes = await fetch(`${GHL_API}/users/`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Version: '2021-07-28',
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(finalPayload),
+      headers: agencyHeaders,
+      body: JSON.stringify(createPayload),
     });
-
     const userData = await parseJson(userRes);
-    if (!userRes.ok) {
-      return new Response(JSON.stringify({ error: 'Failed to create user', details: userData, payload: finalPayload }), {
+
+    if (userRes.ok) {
+      return new Response(JSON.stringify({
+        success: true,
+        action: 'created',
+        user: userData,
+        generatedPassword: userPayload.password,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // ========== STEP 2: If user already exists, find them and add location ==========
+    const errMsg = JSON.stringify(userData).toLowerCase();
+    const isDuplicate = userRes.status === 400 || userRes.status === 409 ||
+      errMsg.includes('already') || errMsg.includes('exist') || errMsg.includes('duplicate');
+
+    if (!isDuplicate) {
+      return new Response(JSON.stringify({ error: 'Failed to create user', details: userData, payload: createPayload }), {
         status: userRes.status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Search agency users by email to find existing user
+    const searchRes = await fetch(`${GHL_API}/users/search?companyId=${resolvedCompanyId}&query=${encodeURIComponent(userPayload.email)}`, {
+      headers: agencyHeaders,
+    });
+    const searchData = await parseJson(searchRes);
+    if (!searchRes.ok) {
+      return new Response(JSON.stringify({ error: 'User exists but search failed', details: searchData, createError: userData }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const usersList: any[] = searchData.users || searchData.data || [];
+    const existing = usersList.find((u: any) =>
+      (u.email || '').toLowerCase() === userPayload.email.toLowerCase()
+    );
+
+    if (!existing?.id) {
+      return new Response(JSON.stringify({
+        error: 'User exists but could not be located via search',
+        createError: userData,
+        searchResult: searchData,
+      }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Merge location into existing user's locationIds
+    const currentLocationIds: string[] = Array.isArray(existing.roles?.locationIds)
+      ? existing.roles.locationIds
+      : Array.isArray(existing.locationIds) ? existing.locationIds : [];
+    const mergedLocationIds = Array.from(new Set([...currentLocationIds, locationId]));
+
+    const updatePayload = {
+      firstName: existing.firstName || userPayload.firstName,
+      lastName: existing.lastName || userPayload.lastName,
+      email: existing.email,
+      phone: existing.phone || userPayload.phone || undefined,
+      type: 'account',
+      role: 'admin',
+      locationIds: mergedLocationIds,
+      permissions: ADMIN_PERMISSIONS,
+    };
+
+    const updateRes = await fetch(`${GHL_API}/users/${existing.id}`, {
+      method: 'PUT',
+      headers: agencyHeaders,
+      body: JSON.stringify(updatePayload),
+    });
+    const updateData = await parseJson(updateRes);
+
+    if (!updateRes.ok) {
+      return new Response(JSON.stringify({
+        error: 'User exists but failed to add location',
+        details: updateData,
+        userId: existing.id,
+        attemptedLocationIds: mergedLocationIds,
+      }), { status: updateRes.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     return new Response(JSON.stringify({
       success: true,
-      user: userData,
-      generatedPassword: userPayload.password,
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      action: 'added_location_to_existing_user',
+      user: updateData,
+      userId: existing.id,
+      locationIds: mergedLocationIds,
+      message: 'User already existed; added new location and granted admin permissions.',
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     return new Response(JSON.stringify({ error: msg }), {
