@@ -526,6 +526,7 @@ export const GhlAdmin = () => {
               <Button
                 type="button"
                 variant="outline"
+                disabled
                 onClick={() =>
                   setCreateForm((f) => ({
                     ...f,
