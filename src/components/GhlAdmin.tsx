@@ -428,15 +428,57 @@ export const GhlAdmin = () => {
               </div>
               <div>
                 <Label>Populate from GHL Contact</Label>
-                <div className="flex gap-2">
-                  <Input
-                    value={contactId}
-                    onChange={(e) => setContactId(e.target.value)}
-                    placeholder="Contact ID"
-                  />
-                  <Button type="button" variant="outline" onClick={handlePopulateFromContact} disabled={loadingContact}>
-                    {loadingContact ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Populate'}
-                  </Button>
+                <Popover open={createContactOpen} onOpenChange={setCreateContactOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                      <span className="truncate">
+                        {selectedCreateContactLabel || 'Search a contact...'}
+                      </span>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command shouldFilter={false}>
+                      <CommandInput
+                        placeholder="Search by name, email, phone..."
+                        value={createContactSearch}
+                        onValueChange={setCreateContactSearch}
+                      />
+                      <CommandList>
+                        {createContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                        {!createContactsLoading && createContacts.length === 0 && (
+                          <CommandEmpty>No contacts found.</CommandEmpty>
+                        )}
+                        <CommandGroup>
+                          {createContacts.map((c) => (
+                            <CommandItem
+                              key={c.id}
+                              value={c.id}
+                              onSelect={() => {
+                                const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
+                                setSelectedCreateContactLabel(label);
+                                setContactId(c.id);
+                                setCreateContactOpen(false);
+                                populateCreateFromContactId(c.id);
+                              }}
+                            >
+                              <Check className={cn('mr-2 h-4 w-4', contactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                              <div className="flex flex-col">
+                                <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                <div className="flex items-center justify-between mt-1 gap-2">
+                  <span className="text-xs text-muted-foreground truncate">{contactId}</span>
+                  {loadingContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
                 </div>
               </div>
             </div>
