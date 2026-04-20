@@ -94,7 +94,7 @@ export const GhlAdmin = () => {
   // Create User tab state
   const [userForm, setUserForm] = useState({
     locationId: '',
-    sourceLocationId: '',
+    sourceLocationId: 'O4Q6W449ZrlAIs2Ambft',
     contactId: '',
     firstName: '',
     lastName: '',
