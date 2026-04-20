@@ -181,28 +181,34 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Search agency users by email to find existing user
-    const searchRes = await fetch(`${GHL_API}/users/search?companyId=${resolvedCompanyId}&query=${encodeURIComponent(userPayload.email)}`, {
-      headers: agencyHeaders,
-    });
-    const searchData = await parseJson(searchRes);
-    if (!searchRes.ok) {
-      return new Response(JSON.stringify({ error: 'User exists but search failed', details: searchData, createError: userData }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Search agency users by email — try multiple strategies because GHL's
+    // /users/search endpoint is inconsistent about filtering by email.
+    const targetEmail = userPayload.email.toLowerCase();
+    let existing: any | undefined;
+    const searchAttempts: any[] = [];
 
-    const usersList: any[] = searchData.users || searchData.data || [];
-    const existing = usersList.find((u: any) =>
-      (u.email || '').toLowerCase() === userPayload.email.toLowerCase()
-    );
+    // Strategy 1: search with query param
+    const tryUrls = [
+      `${GHL_API}/users/search?companyId=${resolvedCompanyId}&query=${encodeURIComponent(userPayload.email)}`,
+      `${GHL_API}/users/search?companyId=${resolvedCompanyId}&limit=500`,
+      `${GHL_API}/users/?companyId=${resolvedCompanyId}&limit=500`,
+    ];
+    for (const url of tryUrls) {
+      const r = await fetch(url, { headers: agencyHeaders });
+      const d = await parseJson(r);
+      searchAttempts.push({ url, status: r.status, count: (d.users || d.data || []).length });
+      if (!r.ok) continue;
+      const list: any[] = d.users || d.data || [];
+      existing = list.find((u: any) => (u.email || '').toLowerCase() === targetEmail);
+      if (existing?.id) break;
+    }
 
     if (!existing?.id) {
       return new Response(JSON.stringify({
         error: 'User exists but could not be located via search',
         createError: userData,
-        searchResult: searchData,
+        searchAttempts,
+        hint: 'GHL API search did not return the user. The user may need to be added manually, or your plan may not allow listing users.',
       }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
