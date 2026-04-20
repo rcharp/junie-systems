@@ -29,8 +29,8 @@ Deno.serve(async (req) => {
     const STORED = Deno.env.get('GHL_AGENCY_COMPANY_ID');
     if (STORED) return jsonRes({ success: true, companyId: STORED, source: 'secret' });
 
-    const PIT = Deno.env.get('GHL_PIT_TOKEN');
-    if (!PIT) return jsonRes({ error: 'GHL_PIT_TOKEN not configured' }, 500);
+    const PIT = Deno.env.get('GHL_AGENCY_PIT_TOKEN') || Deno.env.get('GHL_PIT_TOKEN');
+    if (!PIT) return jsonRes({ error: 'GHL_AGENCY_PIT_TOKEN not configured' }, 500);
 
     const attempts: any[] = [];
 
