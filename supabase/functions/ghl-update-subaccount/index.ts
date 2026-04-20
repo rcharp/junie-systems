@@ -26,8 +26,8 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' });
     if (!isAdmin) return jsonRes({ error: 'Forbidden' }, 403);
 
-    const PIT = Deno.env.get('GHL_PIT_TOKEN');
-    if (!PIT) return jsonRes({ error: 'GHL_PIT_TOKEN not configured' }, 500);
+    const PIT = Deno.env.get('GHL_AGENCY_PIT_TOKEN') || Deno.env.get('GHL_PIT_TOKEN');
+    if (!PIT) return jsonRes({ error: 'GHL_AGENCY_PIT_TOKEN not configured' }, 500);
 
     const body = await req.json();
     const { locationId, customValues, ...contactFields } = body;
