@@ -80,6 +80,14 @@ const Header = ({ showNav = true }: HeaderProps) => {
         {/* Book A Call button - only show if showNav is true */}
         {showNav && (
           <div className="flex items-center space-x-2 sm:space-x-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={() => navigate("/login")}
+            >
+              Admin Login
+            </Button>
             <Button 
               variant="hero" 
               size="sm" 
