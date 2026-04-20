@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
       });
       const userData = await userRes.json();
       console.log('GHL create user response:', userRes.status, JSON.stringify(userData));
-      userResult = { ok: userRes.ok, status: userRes.status, data: userData };
+      userResult = { ok: userRes.ok, status: userRes.status, data: userData, generatedPassword };
     }
 
     return jsonRes({ success: true, locationId, location: createData, user: userResult, businessUpdate: businessUpdateResult });
