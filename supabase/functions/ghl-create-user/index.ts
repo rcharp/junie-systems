@@ -122,8 +122,23 @@ Deno.serve(async (req) => {
       Accept: 'application/json',
     };
 
+    // Fetch source user to copy permissions/scopes from
+    let sourcePermissions: any = FALLBACK_ADMIN_PERMISSIONS;
+    let sourceScopes: string[] | undefined;
+    let sourceScopesAssignedToOnly: string[] | undefined;
+    try {
+      const srcRes = await fetch(`${GHL_API}/users/${SOURCE_USER_ID}`, { headers: agencyHeaders });
+      const srcData = await parseJson(srcRes);
+      if (srcRes.ok) {
+        const su = srcData.user || srcData;
+        if (su.permissions && typeof su.permissions === 'object') sourcePermissions = su.permissions;
+        if (Array.isArray(su.scopes)) sourceScopes = su.scopes;
+        if (Array.isArray(su.scopesAssignedToOnly)) sourceScopesAssignedToOnly = su.scopesAssignedToOnly;
+      }
+    } catch { /* fall back to defaults */ }
+
     // ========== STEP 1: Try to create user at agency level ==========
-    const createPayload = {
+    const createPayload: any = {
       companyId: resolvedCompanyId,
       firstName: userPayload.firstName,
       lastName: userPayload.lastName,
@@ -133,8 +148,10 @@ Deno.serve(async (req) => {
       type: userPayload.type,
       role: userPayload.role,
       locationIds: [locationId],
-      permissions: ADMIN_PERMISSIONS,
+      permissions: sourcePermissions,
     };
+    if (sourceScopes) createPayload.scopes = sourceScopes;
+    if (sourceScopesAssignedToOnly) createPayload.scopesAssignedToOnly = sourceScopesAssignedToOnly;
 
     const userRes = await fetch(`${GHL_API}/users/`, {
       method: 'POST',
