@@ -419,7 +419,10 @@ export const GhlAdmin = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Location ID * (target — where to create user)" value={userForm.locationId} onChange={(v) => setUserForm({ ...userForm, locationId: v })} required placeholder="New sub-account location ID" />
-              <Field label="Source Location ID (where the contact lives)" value={userForm.sourceLocationId} onChange={(v) => setUserForm({ ...userForm, sourceLocationId: v })} placeholder="Defaults to target location" />
+              <div>
+                <Label>Source Location ID (where contacts live)</Label>
+                <Input value={userForm.sourceLocationId} readOnly disabled className="bg-muted cursor-not-allowed" />
+              </div>
               <Field label="Contact ID (optional)" value={userForm.contactId} onChange={(v) => setUserForm({ ...userForm, contactId: v })} placeholder="GHL contact to pull info from" />
               <Field label="First Name" value={userForm.firstName} onChange={(v) => setUserForm({ ...userForm, firstName: v })} />
               <Field label="Last Name" value={userForm.lastName} onChange={(v) => setUserForm({ ...userForm, lastName: v })} />
