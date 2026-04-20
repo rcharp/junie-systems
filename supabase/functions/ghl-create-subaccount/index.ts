@@ -47,51 +47,69 @@ Deno.serve(async (req) => {
     if (!companyId) return jsonRes({ error: 'companyId is required (set GHL_AGENCY_COMPANY_ID secret or pass companyId)' }, 400);
     if (!name) return jsonRes({ error: 'name is required' }, 400);
 
-    // Duplicate check — search existing locations under this company
+    // Duplicate check — search existing locations under this company (fail-closed)
     if (!allowDuplicate) {
       const ghHeaders = {
         Authorization: `Bearer ${PIT}`,
         Version: GHL_VERSION,
         Accept: 'application/json',
       };
+      const searchUrl = `${GHL_API}/locations/search?companyId=${companyId}&limit=500`;
+      console.log('Duplicate-check URL:', searchUrl);
+      let searchRes: Response;
       try {
-        const searchRes = await fetch(`${GHL_API}/locations/search?companyId=${companyId}&limit=500`, { headers: ghHeaders });
-        if (searchRes.ok) {
-          const searchData = await searchRes.json();
-          const existing: any[] = searchData?.locations || [];
-          const norm = (s: any) => String(s || '').trim().toLowerCase();
-          const normPhone = (s: any) => String(s || '').replace(/\D/g, '');
-          const nName = norm(name);
-          const nEmail = norm(email);
-          const nPhone = normPhone(phone);
-          const match = existing.find((l: any) => {
-            const lName = norm(l.business?.name || l.name);
-            const lEmail = norm(l.email || l.business?.email);
-            const lPhone = normPhone(l.phone || l.business?.phone);
-            return (
-              (nName && lName && lName === nName) ||
-              (nEmail && lEmail && lEmail === nEmail) ||
-              (nPhone && lPhone && lPhone === nPhone)
-            );
-          });
-          if (match) {
-            return jsonRes({
-              error: 'Sub-account already exists',
-              existing: {
-                id: match.id || match._id,
-                name: match.business?.name || match.name,
-                email: match.email || match.business?.email,
-                phone: match.phone || match.business?.phone,
-              },
-              hint: 'Pass allowDuplicate: true to bypass this check.',
-            }, 409);
-          }
-        } else {
-          console.warn('Duplicate-check search failed:', searchRes.status);
-        }
+        searchRes = await fetch(searchUrl, { headers: ghHeaders });
       } catch (e) {
-        console.warn('Duplicate-check error (continuing):', e);
+        console.error('Duplicate-check fetch threw:', e);
+        return jsonRes({ error: 'Duplicate check failed (network)', details: String(e), hint: 'Pass allowDuplicate: true to bypass.' }, 500);
       }
+      const searchText = await searchRes.text();
+      console.log('Duplicate-check status:', searchRes.status, 'bodyLen:', searchText.length);
+      if (!searchRes.ok) {
+        console.error('Duplicate-check API error body:', searchText.slice(0, 800));
+        return jsonRes({
+          error: 'Duplicate check failed — refusing to create sub-account',
+          status: searchRes.status,
+          details: (() => { try { return JSON.parse(searchText); } catch { return searchText.slice(0, 500); } })(),
+          hint: 'Pass allowDuplicate: true to bypass this safety check.',
+        }, 500);
+      }
+      let searchData: any = {};
+      try { searchData = JSON.parse(searchText); } catch (e) {
+        console.error('Duplicate-check JSON parse failed:', e);
+        return jsonRes({ error: 'Duplicate check returned invalid JSON', hint: 'Pass allowDuplicate: true to bypass.' }, 500);
+      }
+      const existing: any[] = searchData?.locations || [];
+      console.log('Duplicate-check existing count:', existing.length);
+      const norm = (s: any) => String(s || '').trim().toLowerCase();
+      const normPhone = (s: any) => String(s || '').replace(/\D/g, '');
+      const nName = norm(name);
+      const nEmail = norm(email);
+      const nPhone = normPhone(phone);
+      const match = existing.find((l: any) => {
+        const lName = norm(l.business?.name || l.name);
+        const lEmail = norm(l.email || l.business?.email);
+        const lPhone = normPhone(l.phone || l.business?.phone);
+        return (
+          (nName && lName && lName === nName) ||
+          (nEmail && lEmail && lEmail === nEmail) ||
+          (nPhone && lPhone && lPhone === nPhone)
+        );
+      });
+      if (match) {
+        console.log('Duplicate found:', match.id || match._id, match.name);
+        return jsonRes({
+          error: 'Sub-account already exists',
+          existing: {
+            id: match.id || match._id,
+            name: match.business?.name || match.name,
+            email: match.email || match.business?.email,
+            phone: match.phone || match.business?.phone,
+          },
+          hint: 'Pass allowDuplicate: true to bypass this check.',
+        }, 409);
+      }
+      console.log('No duplicate found — proceeding to create');
     }
     
 
