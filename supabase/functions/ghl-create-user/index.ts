@@ -52,21 +52,31 @@ Deno.serve(async (req) => {
 
     // Helper: mint a location-scoped access token from the agency PIT
     const mintLocationToken = async (locId: string) => {
-      const form = new URLSearchParams();
-      form.set('companyId', resolvedCompanyId);
-      form.set('locationId', locId);
       const res = await fetch(`${GHL_API}/oauth/locationToken`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           Version: '2021-07-28',
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: form.toString(),
+        body: JSON.stringify({
+          companyId: resolvedCompanyId,
+          locationId: locId,
+        }),
       });
-      const data = await res.json();
-      return { ok: res.ok, token: data.access_token as string | undefined, data };
+      const text = await res.text();
+      let data: any;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text };
+      }
+      return {
+        ok: res.ok,
+        token: data.access_token || data.locationAccessToken || data.accessToken,
+        data,
+      };
     };
 
     // Step 1: If contactId provided, fetch the contact using the source location's PIT token directly
