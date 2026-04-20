@@ -626,7 +626,7 @@ export const GhlAdmin = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Target Location * (where to create user)</Label>
+                <Label>Target Location *</Label>
                 <Popover open={locationOpen} onOpenChange={setLocationOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
@@ -674,11 +674,7 @@ export const GhlAdmin = () => {
                 </div>
               </div>
               <div>
-                <Label>Source Location ID (Junie Systems Subaccount)</Label>
-                <Input value={userForm.sourceLocationId} readOnly disabled className="bg-muted cursor-not-allowed" />
-              </div>
-              <div className="md:col-span-2">
-                <Label>Contact (search Junie Systems contacts)</Label>
+                <Label>Contact *</Label>
                 <Popover open={contactOpen} onOpenChange={setContactOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
@@ -727,22 +723,6 @@ export const GhlAdmin = () => {
                   </PopoverContent>
                 </Popover>
                 <span className="text-xs text-muted-foreground truncate block mt-1">{userForm.contactId}</span>
-              </div>
-
-              <Field label="First Name" value={userForm.firstName} onChange={(v) => setUserForm({ ...userForm, firstName: v })} />
-              <Field label="Last Name" value={userForm.lastName} onChange={(v) => setUserForm({ ...userForm, lastName: v })} />
-              <Field label="Email" value={userForm.email} onChange={(v) => setUserForm({ ...userForm, email: v })} placeholder="Required if no Contact ID" />
-              <Field label="Phone" value={userForm.phone} onChange={(v) => setUserForm({ ...userForm, phone: v })} />
-              <Field label="Password (optional)" value={userForm.password} onChange={(v) => setUserForm({ ...userForm, password: v })} placeholder="Auto-generated if blank" />
-              <div>
-                <Label>Role</Label>
-                <Select value={userForm.role} onValueChange={(v) => setUserForm({ ...userForm, role: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
