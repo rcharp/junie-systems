@@ -246,34 +246,40 @@ export const GhlAdmin = () => {
 
   const handleCreateUser = async () => {
     if (!userForm.locationId.trim()) {
-      toast({ title: 'Missing Location ID', variant: 'destructive' });
+      toast({ title: 'Missing target location', variant: 'destructive' });
       return;
     }
-    if (!userForm.contactId.trim() && !userForm.email.trim()) {
-      toast({ title: 'Provide Contact ID or Email', variant: 'destructive' });
+    if (!userForm.contactId.trim()) {
+      toast({ title: 'Pick a contact', variant: 'destructive' });
       return;
     }
     setCreatingUser(true);
     setCreatedUserResult(null);
     try {
+      // Fetch contact details to get email/name/phone
+      const { data: contactData, error: contactErr } = await supabase.functions.invoke('ghl-get-contact', {
+        body: { contactId: userForm.contactId.trim() },
+      });
+      if (contactErr) throw contactErr;
+      if (contactData?.error) throw new Error(contactData.error);
+      const c = contactData.contact || {};
+      if (!c.email) throw new Error('Contact has no email — required to create a user');
+
       const { data, error } = await supabase.functions.invoke('ghl-create-user', {
         body: {
           locationId: userForm.locationId.trim(),
-          sourceLocationId: userForm.sourceLocationId.trim() || undefined,
-          contactId: userForm.contactId.trim() || undefined,
-          firstName: userForm.firstName || undefined,
-          lastName: userForm.lastName || undefined,
-          email: userForm.email || undefined,
-          phone: userForm.phone || undefined,
-          password: userForm.password || undefined,
-          role: userForm.role,
-          type: userForm.type,
+          firstName: c.firstName || '',
+          lastName: c.lastName || '',
+          email: c.email,
+          phone: c.phone || '',
+          role: 'admin',
+          type: 'account',
         },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
       setCreatedUserResult(data);
-      toast({ title: 'User created', description: data.user?.id ? `User ID: ${data.user.id}` : 'Success' });
+      toast({ title: 'User created', description: data.action === 'added_location_to_existing_user' ? 'Added location to existing user' : 'New user created' });
     } catch (e: any) {
       toast({ title: 'Create user failed', description: e.message, variant: 'destructive' });
     } finally {
@@ -620,7 +626,7 @@ export const GhlAdmin = () => {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Target Location * (where to create user)</Label>
+                <Label>Target Location *</Label>
                 <Popover open={locationOpen} onOpenChange={setLocationOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
@@ -668,11 +674,7 @@ export const GhlAdmin = () => {
                 </div>
               </div>
               <div>
-                <Label>Source Location ID (Junie Systems Subaccount)</Label>
-                <Input value={userForm.sourceLocationId} readOnly disabled className="bg-muted cursor-not-allowed" />
-              </div>
-              <div className="md:col-span-2">
-                <Label>Contact (search Junie Systems contacts)</Label>
+                <Label>Contact *</Label>
                 <Popover open={contactOpen} onOpenChange={setContactOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
@@ -721,22 +723,6 @@ export const GhlAdmin = () => {
                   </PopoverContent>
                 </Popover>
                 <span className="text-xs text-muted-foreground truncate block mt-1">{userForm.contactId}</span>
-              </div>
-
-              <Field label="First Name" value={userForm.firstName} onChange={(v) => setUserForm({ ...userForm, firstName: v })} />
-              <Field label="Last Name" value={userForm.lastName} onChange={(v) => setUserForm({ ...userForm, lastName: v })} />
-              <Field label="Email" value={userForm.email} onChange={(v) => setUserForm({ ...userForm, email: v })} placeholder="Required if no Contact ID" />
-              <Field label="Phone" value={userForm.phone} onChange={(v) => setUserForm({ ...userForm, phone: v })} />
-              <Field label="Password (optional)" value={userForm.password} onChange={(v) => setUserForm({ ...userForm, password: v })} placeholder="Auto-generated if blank" />
-              <div>
-                <Label>Role</Label>
-                <Select value={userForm.role} onValueChange={(v) => setUserForm({ ...userForm, role: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="user">User</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
