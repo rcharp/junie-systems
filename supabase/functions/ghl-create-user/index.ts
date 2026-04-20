@@ -69,19 +69,19 @@ Deno.serve(async (req) => {
       return { ok: res.ok, token: data.access_token as string | undefined, data };
     };
 
-    // Step 1: If contactId provided, mint a token for the SOURCE location to fetch the contact
+    // Step 1: If contactId provided, fetch the contact using the source location's PIT token directly
     if (contactId) {
       const srcLoc = sourceLocationId || locationId;
-      const src = await mintLocationToken(srcLoc);
-      if (!src.ok || !src.token) {
-        return new Response(JSON.stringify({ error: 'Failed to mint source location token', details: src.data }), {
+      const sourceToken = Deno.env.get('GHL_LOCATION_PIT_TOKEN');
+      if (!sourceToken) {
+        return new Response(JSON.stringify({ error: 'Missing GHL_LOCATION_PIT_TOKEN for source location' }), {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
       const cRes = await fetch(`${GHL_API}/contacts/${contactId}`, {
         headers: {
-          Authorization: `Bearer ${src.token}`,
+          Authorization: `Bearer ${sourceToken}`,
           Version: '2021-07-28',
           Accept: 'application/json',
         },
