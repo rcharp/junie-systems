@@ -199,46 +199,8 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Create / update the admin user via ghl-create-user — this clones permissions
-    // from the COPY PERMISSIONS source user, and if the user already exists,
-    // adds the new locationId to their existing locationIds.
-    let userResult: any = null;
-    if (locationId && email) {
-      const [uFirst, ...uRest] = (name || email).split(' ');
-      const userBody = {
-        companyId,
-        locationId,
-        firstName: firstName || uFirst || 'Account',
-        lastName: lastName || uRest.join(' ') || 'Owner',
-        email,
-        phone,
-        type: 'account',
-        role: 'admin',
-      };
-      console.log('Calling ghl-create-user:', JSON.stringify(userBody));
-      try {
-        const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-        const SERVICE_ROLE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-        const ucRes = await fetch(`${SUPABASE_URL}/functions/v1/ghl-create-user`, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${SERVICE_ROLE}`,
-            apikey: SERVICE_ROLE,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(userBody),
-        });
-        const ucText = await ucRes.text();
-        let ucData: any; try { ucData = JSON.parse(ucText); } catch { ucData = { raw: ucText }; }
-        console.log('ghl-create-user status:', ucRes.status, 'body:', ucText.slice(0, 800));
-        userResult = { ok: ucRes.ok, status: ucRes.status, ...ucData };
-      } catch (e) {
-        console.error('ghl-create-user fetch threw:', e);
-        userResult = { ok: false, error: String(e instanceof Error ? e.message : e) };
-      }
-    }
-
-    return jsonRes({ success: true, locationId, location: createData, user: userResult, businessUpdate: businessUpdateResult });
+    // User creation is paused — handle manually for now.
+    return jsonRes({ success: true, locationId, location: createData, businessUpdate: businessUpdateResult });
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'Unknown error';
     return jsonRes({ error: msg }, 500);
