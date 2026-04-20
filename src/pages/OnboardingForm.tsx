@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { AddressInput } from "@/components/AddressAutocomplete";
@@ -497,6 +497,36 @@ const OnboardingForm = () => {
               </CardContent>
             </Card>
           </form>
+
+          <Card className="mt-8 border-primary/30 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-xl">📸 One Last Thing — Send Us Your Photos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-base">
+                To make your new website really shine, please email{" "}
+                <strong>25–50 photos</strong> to{" "}
+                <a
+                  href="mailto:ricky@juniesystems.com?subject=Photos%20for%20my%20website"
+                  className="text-primary font-semibold underline underline-offset-2"
+                >
+                  ricky@juniesystems.com
+                </a>
+                . We'll add them to your gallery and About Us section.
+              </p>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p className="font-semibold text-foreground">What to send:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Photos of your work / completed jobs</li>
+                  <li>Before &amp; after photos (if you have them)</li>
+                  <li>Pictures of yourself and/or your team for the About Us page</li>
+                </ul>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The more high-quality photos you send, the better your website will look. Phone photos are perfectly fine!
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </main>
       <Footer />
