@@ -439,11 +439,11 @@ export const GhlAdmin = () => {
         phone: c.phone || f.phone,
         email: c.email || f.email,
         address: fullAddress || f.address,
-        hours: get('hours', 'hoursofoperation', 'businesshours') || f.hours,
+        hours: cv.hours_of_operation || get('hours', 'hoursofoperation', 'businesshours') || f.hours,
         googleBusinessPage: get('googlebusinesspage', 'googlepage', 'gmblink', 'googlebusiness') || f.googleBusinessPage,
-        existingWebsite: c.website || get('website', 'existingwebsite') || f.existingWebsite,
-        instagram: get('instagram', 'instagramurl') || f.instagram,
-        facebook: get('facebook', 'facebookurl') || f.facebook,
+        existingWebsite: cv.existing_website_url || c.website || get('website', 'existingwebsite', 'existingwebsiteurl') || f.existingWebsite,
+        instagram: cv.company_instagram_link || get('instagram', 'instagramurl') || f.instagram,
+        facebook: cv.company_facebook_link || get('facebook', 'facebookurl') || f.facebook,
         services: get('services', 'servicesoffered') || f.services,
         serviceAreas: get('serviceareas', 'areas', 'cities') || f.serviceAreas,
         aboutUs: get('aboutus', 'about', 'description', 'businessdescription') || f.aboutUs,
@@ -452,8 +452,8 @@ export const GhlAdmin = () => {
         quoteWebhook: get('quotewebhook', 'quoteformwebhook', 'quoteformurl') || f.quoteWebhook,
         reviewFormUrl: get('reviewformurl', 'reviewform', 'reviewurl') || f.reviewFormUrl,
         discountFormUrl: get('discountformurl', 'discountform', 'discounturl') || f.discountFormUrl,
-        logoUrl: get('logo', 'logourl', 'companylogo') || f.logoUrl,
-        industry: get('industry', 'companyindustry', 'businesstype') || f.industry,
+        logoUrl: cv.company_logo_url || get('logo', 'logourl', 'companylogo', 'companylogourl') || f.logoUrl,
+        industry: cv.company_industry || get('industry', 'companyindustry', 'businesstype') || f.industry,
       }));
       toast({ title: 'Contact loaded', description: 'Prompt fields populated' });
     } catch (e: any) {

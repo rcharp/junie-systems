@@ -88,6 +88,10 @@ Deno.serve(async (req) => {
     const businessNameFull = findField(['businessnamefull', 'businessfullname', 'companynamefull', 'fulllegalname', 'legalbusinessname']);
     const businessNameShort = findField(['businessname', 'companyname'], ['full', 'legal']);
     const reviewSurveyLink = findField(['negativefeedback', 'reviewsurvey', 'surveylink', 'feedbacklink', 'negativereview']);
+    const hoursOfOperation = findField(['hoursofoperation', 'businesshours', 'hours']);
+    const existingWebsiteUrl = findField(['existingwebsiteurl', 'currentwebsite', 'existingwebsite', 'websiteurl', 'currentwebsiteurl']);
+    const companyIndustry = findField(['companyindustry', 'industry', 'businessindustry', 'businesstype']);
+    const companyLogoUrl = findField(['companylogourl', 'companylogo', 'logourl', 'logo']);
 
     const stripSuffix = (s: string) =>
       s.replace(/[\s,]+(llc|l\.l\.c\.|inc|inc\.|incorporated|corp|corp\.|corporation|co|co\.|company|ltd|ltd\.|limited|pllc|p\.l\.l\.c\.|pc|p\.c\.|lp|l\.p\.|llp|l\.l\.p\.)\.?$/i, '').trim();
@@ -134,6 +138,10 @@ Deno.serve(async (req) => {
           company_name: shortName,
           company_name_full: fullName,
           review_survey_link: reviewSurveyLink,
+          hours_of_operation: hoursOfOperation,
+          existing_website_url: existingWebsiteUrl,
+          company_industry: companyIndustry,
+          company_logo_url: companyLogoUrl,
         },
       },
     });
