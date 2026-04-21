@@ -829,9 +829,9 @@ ${deliverable}`;
                   </SelectContent>
                 </Select>
               </div>
-              <Field label="Postal Code *" value={createForm.postalCode} onChange={(v) => setCreateForm({ ...createForm, postalCode: v })} required />
-              <Field label="Country *" value={createForm.country} onChange={(v) => setCreateForm({ ...createForm, country: v })} required />
-              <Field label="Business Tax ID / EIN *" value={createForm.einNumber} onChange={(v) => setCreateForm({ ...createForm, einNumber: v })} required placeholder="12-3456789" />
+              <Field label="Postal Code" value={createForm.postalCode} onChange={(v) => setCreateForm({ ...createForm, postalCode: v })} required />
+              <Field label="Country" value={createForm.country} onChange={(v) => setCreateForm({ ...createForm, country: v })} required />
+              <Field label="Business Tax ID / EIN" value={createForm.einNumber} onChange={(v) => setCreateForm({ ...createForm, einNumber: v })} required placeholder="12-3456789" />
               <Field label="Snapshot ID (override)" value={createForm.snapshotId} onChange={(v) => setCreateForm({ ...createForm, snapshotId: v })} placeholder="Defaults to GHL_SNAPSHOT_ID secret" />
             </div>
             <div>
