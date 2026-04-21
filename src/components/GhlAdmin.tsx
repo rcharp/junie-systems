@@ -1195,7 +1195,7 @@ ${deliverable}`;
                 label="Chat Widget Embed Code"
                 value={promptForm.chatWidgetEmbed}
                 onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })}
-                placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''}
+                placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : '<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="XXXXXXXXXXXXXXXXXXXXXXXX"></script>'}
                 multiline
                 helpTitle="How to find the Chat Widget Embed Code"
                 helpContent={
