@@ -105,22 +105,36 @@ const SetupChecklist = ({ contactId, onCompletionChange }: { contactId: string; 
         {loading ? 'Loading…' : `${completed} of ${total} steps complete`}
       </div>
       <ul className="space-y-3">
-        {SETUP_CHECKLIST_ITEMS.map((item, idx) => (
-          <li key={item.id} className="flex items-start gap-3 rounded-md border border-border bg-card p-3">
-            <Checkbox
-              id={`setup-${item.id}`}
-              checked={!!checked[item.id]}
-              onCheckedChange={(v) => toggleItem(item.id, v === true)}
-              className="mt-0.5"
-            />
-            <Label htmlFor={`setup-${item.id}`} className="flex-1 cursor-pointer leading-snug">
-              <span className="font-medium">{idx + 1}. {item.label}</span>
-              {item.note && (
-                <span className="ml-2 text-xs text-muted-foreground">({item.note})</span>
+        {SETUP_CHECKLIST_ITEMS.map((item, idx) => {
+          const isDone = !!checked[item.id];
+          return (
+            <li
+              key={item.id}
+              className={cn(
+                'flex items-start gap-3 rounded-md border-2 p-3 transition-colors',
+                isDone
+                  ? 'border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10'
+                  : 'border-destructive bg-destructive/10'
               )}
-            </Label>
-          </li>
-        ))}
+            >
+              <Checkbox
+                id={`setup-${item.id}`}
+                checked={isDone}
+                onCheckedChange={(v) => toggleItem(item.id, v === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor={`setup-${item.id}`} className="flex-1 cursor-pointer leading-snug">
+                <span className="font-medium">{idx + 1}. {item.label}</span>
+                {item.note && (
+                  <span className="ml-2 text-xs text-muted-foreground">({item.note})</span>
+                )}
+                <span className={cn('ml-2 text-xs font-semibold', isDone ? 'text-[hsl(142,71%,30%)]' : 'text-destructive')}>
+                  ({isDone ? 'Complete' : 'Not Complete'})
+                </span>
+              </Label>
+            </li>
+          );
+        })}
       </ul>
       {completed === total ? (
         <div className="rounded-md border border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10 px-4 py-3 text-center text-sm font-semibold text-[hsl(142,71%,35%)]">
@@ -1122,27 +1136,10 @@ ${deliverable}`;
         </div>
       </div>
 
-      <TabsList className="grid grid-cols-3 mb-4 h-auto gap-2 bg-transparent p-0">
-        {[
-          { value: 'create', label: 'Step 1: Create Sub-account', done: step1Done },
-          { value: 'setup', label: 'Step 2: Set Up Sub-Account', done: step2Done },
-          { value: 'prompt', label: 'Step 3: Create Website', done: step3Done },
-        ].map((s) => (
-          <TabsTrigger
-            key={s.value}
-            value={s.value}
-            className={cn(
-              'border-2 rounded-md py-2 px-3 font-medium transition-colors flex items-center justify-center gap-2',
-              s.done
-                ? 'border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10 text-[hsl(142,71%,30%)] data-[state=active]:bg-[hsl(142,71%,45%)] data-[state=active]:text-white'
-                : 'border-destructive bg-destructive/10 text-destructive data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground'
-            )}
-          >
-            {s.done ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-            <span>{s.label}</span>
-            <span className="text-xs opacity-80">({s.done ? 'Complete' : 'Not Complete'})</span>
-          </TabsTrigger>
-        ))}
+      <TabsList className="grid grid-cols-3 mb-4">
+        <TabsTrigger value="create">Step 1: Create Sub-account</TabsTrigger>
+        <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
+        <TabsTrigger value="prompt">Step 3: Create Website</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">
