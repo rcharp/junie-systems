@@ -372,13 +372,27 @@ export const GhlAdmin = () => {
     logoUrl: '',
     industry: '',
   });
-  const [promptContacts, setPromptContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [promptContacts, setPromptContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string; tags: string[] }[]>([]);
   const [promptContactSearch, setPromptContactSearch] = useState('');
   const [promptContactsLoading, setPromptContactsLoading] = useState(false);
   const [promptContactOpen, setPromptContactOpen] = useState(false);
   const [selectedPromptContactLabel, setSelectedPromptContactLabel] = useState('');
   const [promptContactId, setPromptContactId] = useState('');
   const [loadingPromptContact, setLoadingPromptContact] = useState(false);
+  const [promptContactPlan, setPromptContactPlan] = useState<string>('');
+
+  const toTitleCase = (s: string) => {
+    if (!s) return '';
+    return s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
+  };
+
+  const detectPlanFromTags = (tags: string[]): string => {
+    const norm = tags.map((t) => (t || '').toLowerCase());
+    if (norm.some((t) => t.includes('full'))) return 'Full Plan';
+    if (norm.some((t) => t.includes('growth'))) return 'Growth Plan';
+    if (norm.some((t) => t.includes('presence'))) return 'Presence Plan';
+    return '';
+  };
 
   useEffect(() => {
     if (!promptContactOpen) return;
