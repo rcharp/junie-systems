@@ -455,7 +455,49 @@ export const GhlAdmin = () => {
         logoUrl: cv.company_logo_url || get('logo', 'logourl', 'companylogo', 'companylogourl') || f.logoUrl,
         industry: cv.company_industry || get('industry', 'companyindustry', 'businesstype') || f.industry,
       }));
-      toast({ title: 'Contact loaded', description: 'Prompt fields populated' });
+      toast({ title: 'Contact loaded', description: 'Normalizing fields…' });
+
+      // Run AI normalization on the messy fields
+      try {
+        const rawBusinessName = c.companyName || c.name || '';
+        const rawOwnerName = [c.firstName, c.lastName].filter(Boolean).join(' ');
+        const rawPhone = c.phone || '';
+        const rawServices = cv.services_offered || get('services', 'servicesoffered') || '';
+        const rawAreas = cv.service_areas || get('serviceareas', 'areas', 'cities') || '';
+        const rawAbout = cv.about_us || get('aboutus', 'about', 'description', 'businessdescription') || '';
+        const rawTrust = cv.trust_bar || get('trustbar', 'specialthings', 'usp') || '';
+        const rawIndustry = cv.company_industry || get('industry', 'companyindustry', 'businesstype') || '';
+
+        const { data: norm, error: normErr } = await supabase.functions.invoke('normalize-prompt-fields', {
+          body: {
+            businessName: rawBusinessName,
+            ownerName: rawOwnerName,
+            phone: rawPhone,
+            address: fullAddress,
+            services: rawServices,
+            serviceAreas: rawAreas,
+            aboutUs: rawAbout,
+            trustBar: rawTrust,
+            industry: rawIndustry,
+          },
+        });
+        if (normErr) throw normErr;
+        if (norm?.error) throw new Error(norm.error);
+
+        setPromptForm((f) => ({
+          ...f,
+          businessName: norm.businessName || f.businessName,
+          ownerName: norm.ownerName || f.ownerName,
+          phone: norm.phone || f.phone,
+          services: norm.services || f.services,
+          serviceAreas: norm.serviceAreas || f.serviceAreas,
+          aboutUs: norm.aboutUs || f.aboutUs,
+          trustBar: norm.trustBar || f.trustBar,
+        }));
+        toast({ title: 'Fields normalized', description: 'Cleaned services, areas, about us, and trust bar' });
+      } catch (e: any) {
+        toast({ title: 'Normalization skipped', description: e.message, variant: 'destructive' });
+      }
     } catch (e: any) {
       toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
     } finally {
