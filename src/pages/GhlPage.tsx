@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { Activity, ArrowLeft, LogOut, Shield } from 'lucide-react';
@@ -12,6 +12,7 @@ import { handleRobustSignOut } from '@/lib/auth-utils';
 const GhlPage = () => {
   const { user, isAdmin, loading, setSigningOut } = useAuth();
   const navigate = useNavigate();
+  const [adminChecked, setAdminChecked] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -19,7 +20,21 @@ const GhlPage = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  // Wait for admin status check to complete before rendering 404
+  useEffect(() => {
+    if (!loading && user) {
+      // Give the async has_role check a moment to resolve
+      const timer = setTimeout(() => setAdminChecked(true), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, user, isAdmin]);
+
+  // If admin becomes true, mark as checked immediately
+  useEffect(() => {
+    if (isAdmin) setAdminChecked(true);
+  }, [isAdmin]);
+
+  if (loading || (user && !adminChecked && !isAdmin)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
