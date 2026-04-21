@@ -1136,27 +1136,10 @@ ${deliverable}`;
         </div>
       </div>
 
-      <TabsList className="grid grid-cols-3 mb-4 h-auto gap-2 bg-transparent p-0">
-        {[
-          { value: 'create', label: 'Step 1: Create Sub-account', done: step1Done },
-          { value: 'setup', label: 'Step 2: Set Up Sub-Account', done: step2Done },
-          { value: 'prompt', label: 'Step 3: Create Website', done: step3Done },
-        ].map((s) => (
-          <TabsTrigger
-            key={s.value}
-            value={s.value}
-            className={cn(
-              'border-2 rounded-md py-2 px-3 font-medium transition-colors flex items-center justify-center gap-2',
-              s.done
-                ? 'border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10 text-[hsl(142,71%,30%)] data-[state=active]:bg-[hsl(142,71%,45%)] data-[state=active]:text-white'
-                : 'border-destructive bg-destructive/10 text-destructive data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground'
-            )}
-          >
-            {s.done ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
-            <span>{s.label}</span>
-            <span className="text-xs opacity-80">({s.done ? 'Complete' : 'Not Complete'})</span>
-          </TabsTrigger>
-        ))}
+      <TabsList className="grid grid-cols-3 mb-4">
+        <TabsTrigger value="create">Step 1: Create Sub-account</TabsTrigger>
+        <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
+        <TabsTrigger value="prompt">Step 3: Create Website</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">
