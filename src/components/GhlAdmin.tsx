@@ -791,9 +791,10 @@ ${deliverable}`;
 
   return (
     <Tabs defaultValue="create" className="w-full">
-      <TabsList className="grid grid-cols-2 mb-4">
-        <TabsTrigger value="create">Create Sub-account</TabsTrigger>
-        <TabsTrigger value="prompt">Lovable Prompt</TabsTrigger>
+      <TabsList className="grid grid-cols-3 mb-4">
+        <TabsTrigger value="create">Step 1: Create Sub-account</TabsTrigger>
+        <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
+        <TabsTrigger value="prompt">Step 3: Lovable Prompt</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">
