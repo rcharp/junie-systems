@@ -40,11 +40,15 @@ const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
   { id: 'chat-widget', label: 'Set up Chat Widget' },
 ];
 
-const SetupChecklist = ({ contactId }: { contactId: string }) => {
+const SetupChecklist = ({ contactId, onCompletionChange }: { contactId: string; onCompletionChange?: (done: boolean) => void }) => {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const completed = SETUP_CHECKLIST_ITEMS.filter((i) => checked[i.id]).length;
   const total = SETUP_CHECKLIST_ITEMS.length;
+
+  useEffect(() => {
+    onCompletionChange?.(total > 0 && completed === total);
+  }, [completed, total, onCompletionChange]);
 
   useEffect(() => {
     if (!contactId) {
