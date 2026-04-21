@@ -961,6 +961,125 @@ Deliverable: A fully functional website with all new business information, updat
         </Card>
       </TabsContent>
 
+      <TabsContent value="prompt">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5" /> Create Lovable Website Prompt</CardTitle>
+            <CardDescription>Select a contact to auto-fill business information, then copy the generated prompt to remix a website template in Lovable.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-primary" />
+                Populate from GHL Contact
+              </Label>
+              <p className="text-xs text-muted-foreground">Select a contact to auto-fill all fields below.</p>
+              <Popover open={promptContactOpen} onOpenChange={setPromptContactOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
+                    <span className="truncate">{selectedPromptContactLabel || 'Search a contact...'}</span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Search by name, email, phone..."
+                      value={promptContactSearch}
+                      onValueChange={setPromptContactSearch}
+                    />
+                    <CommandList>
+                      {promptContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                      {!promptContactsLoading && promptContacts.length === 0 && (
+                        <CommandEmpty>No contacts found.</CommandEmpty>
+                      )}
+                      <CommandGroup>
+                        {promptContacts.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.id}
+                            onSelect={() => {
+                              const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
+                              setSelectedPromptContactLabel(label);
+                              setPromptContactId(c.id);
+                              setPromptContactOpen(false);
+                              populatePromptFromContactId(c.id);
+                            }}
+                          >
+                            <Check className={cn('mr-2 h-4 w-4', promptContactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                            <div className="flex flex-col">
+                              <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {[c.email, c.phone].filter(Boolean).join(' · ')}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground truncate">{promptContactId}</span>
+                {loadingPromptContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Business Name" value={promptForm.businessName} onChange={(v) => setPromptForm({ ...promptForm, businessName: v })} />
+              <Field label="Owner Name" value={promptForm.ownerName} onChange={(v) => setPromptForm({ ...promptForm, ownerName: v })} />
+              <Field label="Phone Number" value={promptForm.phone} onChange={(v) => setPromptForm({ ...promptForm, phone: v })} />
+              <Field label="Email Address" value={promptForm.email} onChange={(v) => setPromptForm({ ...promptForm, email: v })} />
+              <Field label="Business Address" value={promptForm.address} onChange={(v) => setPromptForm({ ...promptForm, address: v })} />
+              <Field label="Hours of Operation" value={promptForm.hours} onChange={(v) => setPromptForm({ ...promptForm, hours: v })} placeholder="Mon-Fri 8a-6p" />
+              <Field label="Google Business Page" value={promptForm.googleBusinessPage} onChange={(v) => setPromptForm({ ...promptForm, googleBusinessPage: v })} placeholder="URL or None" />
+              <Field label="Existing Website URL" value={promptForm.existingWebsite} onChange={(v) => setPromptForm({ ...promptForm, existingWebsite: v })} placeholder="URL or None" />
+              <Field label="Instagram URL" value={promptForm.instagram} onChange={(v) => setPromptForm({ ...promptForm, instagram: v })} placeholder="URL or None" />
+              <Field label="Facebook URL" value={promptForm.facebook} onChange={(v) => setPromptForm({ ...promptForm, facebook: v })} placeholder="URL or None" />
+              <Field label="Company Industry" value={promptForm.industry} onChange={(v) => setPromptForm({ ...promptForm, industry: v })} placeholder="Plumbing, HVAC, etc." />
+              <Field label="Company Logo URL" value={promptForm.logoUrl} onChange={(v) => setPromptForm({ ...promptForm, logoUrl: v })} placeholder="URL or None" />
+              <Field label="Chat Widget Embed Code" value={promptForm.chatWidgetEmbed} onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })} />
+              <Field label="Quote Form Webhook URL" value={promptForm.quoteWebhook} onChange={(v) => setPromptForm({ ...promptForm, quoteWebhook: v })} />
+              <Field label="Review Form URL" value={promptForm.reviewFormUrl} onChange={(v) => setPromptForm({ ...promptForm, reviewFormUrl: v })} />
+              <Field label="Discount Form URL" value={promptForm.discountFormUrl} onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })} />
+            </div>
+            <div>
+              <Label>Services Offered</Label>
+              <Textarea rows={2} value={promptForm.services} onChange={(e) => setPromptForm({ ...promptForm, services: e.target.value })} placeholder="Comma separated list" />
+            </div>
+            <div>
+              <Label>Service Areas</Label>
+              <Textarea rows={2} value={promptForm.serviceAreas} onChange={(e) => setPromptForm({ ...promptForm, serviceAreas: e.target.value })} placeholder="Comma separated list of cities" />
+            </div>
+            <div>
+              <Label>About Us</Label>
+              <Textarea rows={3} value={promptForm.aboutUs} onChange={(e) => setPromptForm({ ...promptForm, aboutUs: e.target.value })} placeholder="Or leave blank / 'None'" />
+            </div>
+            <div>
+              <Label>Trust Bar</Label>
+              <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Special things about the business" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Generated Prompt</Label>
+                <Button onClick={handleCopyPrompt} variant={copiedPrompt ? 'default' : 'outline'}>
+                  {copiedPrompt ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                  {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
+                </Button>
+              </div>
+              <Textarea
+                readOnly
+                value={buildLovablePrompt()}
+                rows={20}
+                className="font-mono text-xs"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
       <AlertDialog open={duplicateDialog.open} onOpenChange={(open) => setDuplicateDialog((d) => ({ ...d, open }))}>
         <AlertDialogContent>
           <AlertDialogHeader>
