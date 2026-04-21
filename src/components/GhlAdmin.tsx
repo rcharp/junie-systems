@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from '@/hooks/use-toast';
-import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown, Copy, Sparkles } from 'lucide-react';
+import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown, Copy, Sparkles, X } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,11 +40,15 @@ const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
   { id: 'chat-widget', label: 'Set up Chat Widget' },
 ];
 
-const SetupChecklist = ({ contactId }: { contactId: string }) => {
+const SetupChecklist = ({ contactId, onCompletionChange }: { contactId: string; onCompletionChange?: (done: boolean) => void }) => {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const completed = SETUP_CHECKLIST_ITEMS.filter((i) => checked[i.id]).length;
   const total = SETUP_CHECKLIST_ITEMS.length;
+
+  useEffect(() => {
+    onCompletionChange?.(total > 0 && completed === total);
+  }, [completed, total, onCompletionChange]);
 
   useEffect(() => {
     if (!contactId) {
@@ -212,6 +216,41 @@ export const GhlAdmin = () => {
     else url.searchParams.delete('contact_id');
     window.history.replaceState({}, '', url.toString());
     setUrlContactId(id);
+  };
+
+  // Step completion tracking (persisted in ghl_setup_checklist with reserved item_ids)
+  const STEP1_KEY = '__step1_create';
+  const STEP3_KEY = '__step3_prompt';
+  const [step1Done, setStep1Done] = useState(false);
+  const [step2Done, setStep2Done] = useState(false);
+  const [step3Done, setStep3Done] = useState(false);
+
+  useEffect(() => {
+    if (!urlContactId) {
+      setStep1Done(false); setStep3Done(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('ghl_setup_checklist')
+        .select('item_id, completed')
+        .eq('contact_id', urlContactId)
+        .in('item_id', [STEP1_KEY, STEP3_KEY]);
+      if (cancelled) return;
+      const map: Record<string, boolean> = {};
+      (data || []).forEach((r: any) => { map[r.item_id] = !!r.completed; });
+      setStep1Done(!!map[STEP1_KEY]);
+      setStep3Done(!!map[STEP3_KEY]);
+    })();
+    return () => { cancelled = true; };
+  }, [urlContactId]);
+
+  const markStep = async (itemId: string, value: boolean, contactId: string) => {
+    if (!contactId) return;
+    await supabase
+      .from('ghl_setup_checklist')
+      .upsert({ contact_id: contactId, item_id: itemId, completed: value }, { onConflict: 'contact_id,item_id' });
   };
 
   // Setup tab contact picker state
@@ -847,6 +886,10 @@ ${deliverable}`;
       setCopiedPrompt(true);
       toast({ title: 'Copied!', description: 'Prompt copied to clipboard' });
       setTimeout(() => setCopiedPrompt(false), 2000);
+      if (urlContactId) {
+        setStep3Done(true);
+        markStep(STEP3_KEY, true, urlContactId);
+      }
     } catch {
       toast({ title: 'Copy failed', variant: 'destructive' });
     }
@@ -883,6 +926,10 @@ ${deliverable}`;
       }
       toast({ title: 'Sub-account created', description: `Location ID: ${payload.locationId}` });
       setUpdateLocationId(payload.locationId || '');
+      if (urlContactId) {
+        setStep1Done(true);
+        markStep(STEP1_KEY, true, urlContactId);
+      }
     } catch (e: any) {
       toast({ title: 'Create failed', description: e.message, variant: 'destructive' });
     } finally {
@@ -1075,10 +1122,27 @@ ${deliverable}`;
         </div>
       </div>
 
-      <TabsList className="grid grid-cols-3 mb-4">
-        <TabsTrigger value="create">Step 1: Create Sub-account</TabsTrigger>
-        <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
-        <TabsTrigger value="prompt">Step 3: Create Website</TabsTrigger>
+      <TabsList className="grid grid-cols-3 mb-4 h-auto gap-2 bg-transparent p-0">
+        {[
+          { value: 'create', label: 'Step 1: Create Sub-account', done: step1Done },
+          { value: 'setup', label: 'Step 2: Set Up Sub-Account', done: step2Done },
+          { value: 'prompt', label: 'Step 3: Create Website', done: step3Done },
+        ].map((s) => (
+          <TabsTrigger
+            key={s.value}
+            value={s.value}
+            className={cn(
+              'border-2 rounded-md py-2 px-3 font-medium transition-colors flex items-center justify-center gap-2',
+              s.done
+                ? 'border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10 text-[hsl(142,71%,30%)] data-[state=active]:bg-[hsl(142,71%,45%)] data-[state=active]:text-white'
+                : 'border-destructive bg-destructive/10 text-destructive data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground'
+            )}
+          >
+            {s.done ? <Check className="w-4 h-4" /> : <X className="w-4 h-4" />}
+            <span>{s.label}</span>
+            <span className="text-xs opacity-80">({s.done ? 'Complete' : 'Not Complete'})</span>
+          </TabsTrigger>
+        ))}
       </TabsList>
 
       <TabsContent value="create">
@@ -1323,7 +1387,7 @@ ${deliverable}`;
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <SetupChecklist contactId={urlContactId} />
+            <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} />
           </CardContent>
         </Card>
       </TabsContent>
