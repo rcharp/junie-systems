@@ -918,6 +918,10 @@ ${deliverable}`;
       }
       toast({ title: 'Sub-account created', description: `Location ID: ${payload.locationId}` });
       setUpdateLocationId(payload.locationId || '');
+      if (urlContactId) {
+        setStep1Done(true);
+        markStep(STEP1_KEY, true, urlContactId);
+      }
     } catch (e: any) {
       toast({ title: 'Create failed', description: e.message, variant: 'destructive' });
     } finally {
