@@ -1190,7 +1190,35 @@ ${deliverable}`;
               <Field required label="Company Industry" value={promptForm.industry} onChange={(v) => setPromptForm({ ...promptForm, industry: v })} placeholder="Plumbing, HVAC, etc." />
               <Field label="Company Logo URL" value={promptForm.logoUrl} onChange={(v) => setPromptForm({ ...promptForm, logoUrl: v })} placeholder="https://... (or leave blank)" />
               <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Chat Widget Embed Code" value={promptForm.chatWidgetEmbed} onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''} />
-              <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Quote Form Webhook URL" value={promptForm.quoteWebhook} onChange={(v) => setPromptForm({ ...promptForm, quoteWebhook: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Quote forms will email the business' : ''} />
+              <Field
+                required={promptContactPlan !== 'Presence Plan'}
+                disabled={promptContactPlan === 'Presence Plan'}
+                label="Quote Form Webhook URL"
+                value={promptForm.quoteWebhook}
+                onChange={(v) => setPromptForm({ ...promptForm, quoteWebhook: v })}
+                placeholder={promptContactPlan === 'Presence Plan' ? 'Quote forms will email the business' : ''}
+                helpTitle="How to find the Quote Form Webhook URL"
+                helpContent={
+                  <div className="space-y-4">
+                    <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
+                      <iframe
+                        src="https://www.loom.com/embed/af2c666052f141628af2719f21fe08c2"
+                        frameBorder={0}
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full rounded-md"
+                        title="How to find the Quote Form Webhook URL"
+                      />
+                    </div>
+                    <ol className="list-decimal pl-5 space-y-2 text-sm">
+                      <li>Open the newly created company <strong>Subaccount</strong> in GoHighLevel.</li>
+                      <li>Navigate to <strong>Automation</strong>.</li>
+                      <li>Open the <strong>Incoming Lead Workflows</strong>.</li>
+                      <li>Open the <strong>"Form Submission → Confirmation"</strong> workflow.</li>
+                      <li>Copy the inbound webhook <strong>URL</strong> and paste it here.</li>
+                    </ol>
+                  </div>
+                }
+              />
               <Field
                 required
                 label="Review Form URL"
