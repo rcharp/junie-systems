@@ -1224,7 +1224,7 @@ ${deliverable}`;
                 label="Quote Form Webhook URL"
                 value={promptForm.quoteWebhook}
                 onChange={(v) => setPromptForm({ ...promptForm, quoteWebhook: v })}
-                placeholder={promptContactPlan === 'Presence Plan' ? 'Quote forms will email the business' : ''}
+                placeholder={promptContactPlan === 'Presence Plan' ? 'Quote forms will email the business' : 'https://services.leadconnectorhq.com/hooks/XXXXXXXXXXXXXXXXXXXX/webhook-trigger/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'}
                 helpTitle="How to find the Quote Form Webhook URL"
                 helpContent={
                   <div className="space-y-4">
@@ -1249,10 +1249,11 @@ ${deliverable}`;
               />
               <Field
                 required
-                label="Review Form URL"
+                label="Review Form Webhook URL"
                 value={promptForm.reviewFormUrl}
                 onChange={(v) => setPromptForm({ ...promptForm, reviewFormUrl: v })}
-                helpTitle="How to find the Review Form URL"
+                placeholder="https://services.leadconnectorhq.com/hooks/XXXXXXXXXXXXXXXXXXXX/webhook-trigger/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                helpTitle="How to find the Review Form Webhook URL"
                 helpContent={
                   <div className="space-y-4">
                     <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
@@ -1277,11 +1278,11 @@ ${deliverable}`;
               <Field
                 required={promptContactPlan !== 'Presence Plan'}
                 disabled={promptContactPlan === 'Presence Plan'}
-                label="Discount Form URL"
+                label="Discount Form Webhook URL"
                 value={promptForm.discountFormUrl}
                 onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })}
-                placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''}
-                helpTitle="How to find the Discount Form URL"
+                placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : 'https://services.leadconnectorhq.com/hooks/XXXXXXXXXXXXXXXXXXXX/webhook-trigger/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'}
+                helpTitle="How to find the Discount Form Webhook URL"
                 helpContent={
                   <div className="space-y-4">
                     <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
