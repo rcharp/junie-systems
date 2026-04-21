@@ -614,8 +614,6 @@ ${deliverable}`;
       { key: 'industry', label: 'Company Industry' },
       { key: 'services', label: 'Services Offered' },
       { key: 'serviceAreas', label: 'Service Areas' },
-      { key: 'aboutUs', label: 'About Us' },
-      { key: 'trustBar', label: 'Trust Bar' },
       ...(isPresence ? [] : [
         { key: 'chatWidgetEmbed' as const, label: 'Chat Widget Embed Code' },
         { key: 'quoteWebhook' as const, label: 'Quote Form Webhook URL' },
