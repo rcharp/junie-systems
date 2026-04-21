@@ -1034,12 +1034,12 @@ ${deliverable}`;
                 onValueChange={setGlobalContactSearch}
               />
               <CommandList>
-                {globalContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
-                {!globalContactsLoading && globalContacts.length === 0 && (
+                {globalContactsLoading && <div className="p-3 text-xs text-muted-foreground">Loading customers...</div>}
+                {!globalContactsLoading && filteredGlobalContacts.length === 0 && (
                   <CommandEmpty>No contacts found.</CommandEmpty>
                 )}
                 <CommandGroup>
-                  {globalContacts.map((c) => {
+                  {filteredGlobalContacts.map((c) => {
                     const personDisplay = toTitleCase(c.name);
                     const businessDisplay = toTitleCase(c.companyName);
                     const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
