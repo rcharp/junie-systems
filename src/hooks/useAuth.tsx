@@ -8,6 +8,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  adminLoading: boolean;
   signingOut: boolean;
   setSigningOut: (value: boolean) => void;
 }
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   isAdmin: false,
+  adminLoading: true,
   signingOut: false,
   setSigningOut: () => {},
 });
