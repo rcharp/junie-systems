@@ -553,6 +553,25 @@ Deliverable: A fully functional website with all new business information, updat
 
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const handleCopyPrompt = async () => {
+    const requiredFields: { key: keyof typeof promptForm; label: string }[] = [
+      { key: 'businessName', label: 'Business Name' },
+      { key: 'ownerName', label: 'Owner Name' },
+      { key: 'phone', label: 'Phone Number' },
+      { key: 'email', label: 'Email Address' },
+      { key: 'address', label: 'Business Address' },
+      { key: 'hours', label: 'Hours of Operation' },
+      { key: 'googleBusinessPage', label: 'Google Business Page' },
+      { key: 'industry', label: 'Company Industry' },
+      { key: 'services', label: 'Services Offered' },
+      { key: 'serviceAreas', label: 'Service Areas' },
+      { key: 'aboutUs', label: 'About Us' },
+      { key: 'trustBar', label: 'Trust Bar' },
+    ];
+    const missing = requiredFields.filter((f) => !promptForm[f.key]?.trim()).map((f) => f.label);
+    if (missing.length) {
+      toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
+      return;
+    }
     try {
       await navigator.clipboard.writeText(buildLovablePrompt());
       setCopiedPrompt(true);
