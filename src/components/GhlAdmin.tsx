@@ -465,7 +465,53 @@ export const GhlAdmin = () => {
 
   const buildLovablePrompt = () => {
     const v = (s: string, fallback = 'None') => (s && s.trim() ? s.trim() : fallback);
+    const isPresence = promptContactPlan === 'Presence Plan';
+
+    const techRows = isPresence
+      ? `| Quote Form Email Recipient | ${v(promptForm.email)} |`
+      : `| Chat Widget Embed Code | ${v(promptForm.chatWidgetEmbed)} |
+| Quote Form Webhook URL | ${v(promptForm.quoteWebhook)} |
+| Discount Form URL | ${v(promptForm.discountFormUrl)} |`;
+
+    const technicalIntegrations = isPresence
+      ? `Technical Integrations (Presence Plan):
+- Quote Forms: The business is on the Presence Plan and does NOT have a chat widget, quote webhook, or discount form. Wire ALL quote/contact forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to send the submission as an email to the business email address: ${v(promptForm.email)}. Use a simple mailto handler or the standard email-sending edge function pattern already used in the template. Do NOT include a chat widget. Do NOT include a /get-your-discount page or link to it.
+- Review Form URL: Update the form on /review to POST to the review form URL from above.`
+      : `Technical Integrations:
+- Chat Widget Embed Code: Replace the existing chat widget embed code in the footer with this new code. Put the code in index.html so that it propagates across the entire site.
+- Quote Form Webhook URL: Update ALL quote forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to POST submissions to this webhook URL.
+- Review Form URL: Update the form on /review to POST to the review form URL from above.
+- Discount Form URL: Update the form on /get-your-discount to POST to the discount form URL from above.`;
+
+    const businessInfoLines = isPresence
+      ? `- /review page: replace where the form POSTs to the REVIEW FORM URL. Be sure to replace the logo with the company logo, or none.`
+      : `- /review page: replace where the form POSTs to the REVIEW FORM URL. Be sure to replace the logo with the company logo, or none.
+- /get-your-discount page: replace where the form POSTs to the DISCOUNT FORM URL.`;
+
+    const stepSix = isPresence
+      ? `6. Remove the chat widget from the footer (Presence Plan does not include a chat widget).`
+      : `6. Replace the existing chat widget embed code in the footer with the new embed code provided.`;
+
+    const stepSeven = isPresence
+      ? `7. Update ALL quote/contact forms throughout the entire site to send submissions as an email to the business email address (${v(promptForm.email)}), including:
+   - Quote forms embedded on individual pages
+   - Quote form in the popup modal
+   - Quote form on the dedicated /quote page
+   - Any other quote/contact form instances
+   Also remove the /get-your-discount page and any links to it (Presence Plan does not include the discount form).`
+      : `7. Update ALL quote/contact forms throughout the entire site to POST to the provided quote form webhook URL, including:
+   - Quote forms embedded on individual pages
+   - Quote form in the popup modal
+   - Quote form on the dedicated /quote page
+   - Any other quote/contact form instances`;
+
+    const deliverable = isPresence
+      ? `Deliverable: A fully functional website with all new business information, updated color scheme, replaced imagery, no chat widget in footer, and all quote forms wired to email submissions to the business's email address, while maintaining 100% of the original template's functionality and user experience.`
+      : `Deliverable: A fully functional website with all new business information, updated color scheme, replaced imagery, updated chat widget in footer, and all quote forms connected to the new webhook URL, while maintaining 100% of the original template's functionality and user experience.`;
+
     return `You are a senior web designer tasked with remixing this existing website template for a new business client. Your job is to replace all existing business information with the new client's information while preserving ALL existing functionality, layout structure, and interactive features. CRITICAL: Do NOT change any functionality, animations, interactions, or structural elements of the site. Only replace content and update the color scheme.
+
+Plan: ${promptContactPlan || 'Unspecified'}
 
 Information that will be used:
 
@@ -485,10 +531,8 @@ Information that will be used:
 | Service Areas | ${v(promptForm.serviceAreas)} |
 | About Us | ${v(promptForm.aboutUs)} |
 | Trust Bar | ${v(promptForm.trustBar)} |
-| Chat Widget Embed Code | ${v(promptForm.chatWidgetEmbed)} |
-| Quote Form Webhook URL | ${v(promptForm.quoteWebhook)} |
+${techRows}
 | Review Form URL | ${v(promptForm.reviewFormUrl)} |
-| Discount Form URL | ${v(promptForm.discountFormUrl)} |
 | Company Logo URL | ${v(promptForm.logoUrl)} |
 | Company Industry | ${v(promptForm.industry)} |
 
@@ -504,8 +548,7 @@ Business Information to Replace:
 - Existing Website URL: if provided, visit this website to gather additional context and information about the business to enhance the content.
 - Instagram: If provided, link the instagram icon in the footer to this link.
 - Facebook: If provided, link the facebook icon in the footer to this link.
-- /review page: replace where the form POSTs to the REVIEW FORM URL. Be sure to replace the logo with the company logo, or none.
-- /get-your-discount page: replace where the form POSTs to the DISCOUNT FORM URL.
+${businessInfoLines}
 
 Services Offered: This may be a comma separated list, treat each of those as a separate service.
 
@@ -522,11 +565,7 @@ In the hero section, craft an appropriate H1 header and hero paragraph text for 
 1. The About Us section from above
 2. The Trust Bar section from above
 
-Technical Integrations:
-- Chat Widget Embed Code: Replace the existing chat widget embed code in the footer with this new code. Put the code in index.html so that it propagates across the entire site.
-- Quote Form Webhook URL: Update ALL quote forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to POST submissions to this webhook URL.
-- Review Form URL: Update the form on /review to POST to the review form URL from above.
-- Discount Form URL: Update the form on /get-your-discount to POST to the discount form URL from above.
+${technicalIntegrations}
 
 Logo: Use this URL for the company logo. Replace it in the navbar, in the footer, and anywhere else that the logo is located. In the navbar, set the logo to a fixed height of 150px, and keep the aspect ratio. On mobile, the logo should have a fixed width of 64px, maintaining the aspect ratio.
 
@@ -549,12 +588,8 @@ Instructions:
 3. Update the logo in the header, footer, and any other locations where it appears.
 4. Replace all photos with the newly provided images, maintaining the same layout and image placement structure.
 5. Apply the new color scheme consistently across all pages and components.
-6. Replace the existing chat widget embed code in the footer with the new embed code provided.
-7. Update ALL quote/contact forms throughout the entire site to POST to the provided quote form webhook URL, including:
-   - Quote forms embedded on individual pages
-   - Quote form in the popup modal
-   - Quote form on the dedicated /quote page
-   - Any other quote/contact form instances
+${stepSix}
+${stepSeven}
 8. If an existing website URL is provided, visit it to gather additional details about the business (services descriptions, tone of voice, unique selling points) to make the content more accurate and comprehensive.
 9. Ensure all contact information (phone, address, social media links, Google Business link) is updated throughout the site.
 10. Update meta tags, page titles, and any SEO elements with the new business name and relevant information.
@@ -562,7 +597,7 @@ Instructions:
 12. DO NOT alter any existing functionality, animations, forms, interactive elements, or structural layout.
 13. Create a sitemap file.
 
-Deliverable: A fully functional website with all new business information, updated color scheme, replaced imagery, updated chat widget in footer, and all quote forms connected to the new webhook URL, while maintaining 100% of the original template's functionality and user experience.`;
+${deliverable}`;
   };
 
   const [copiedPrompt, setCopiedPrompt] = useState(false);
