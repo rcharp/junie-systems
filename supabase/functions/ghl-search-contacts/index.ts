@@ -38,19 +38,36 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const query = (body.query || '').toString().trim();
+    const tag = (body.tag || '').toString().trim();
     const locationId = (body.locationId || SOURCE_LOCATION_ID).toString();
 
     const ghHeaders = {
       Authorization: `Bearer ${PIT}`,
       Version: GHL_VERSION,
       Accept: 'application/json',
+      'Content-Type': 'application/json',
     };
 
-    const url = `${GHL_API}/contacts/?locationId=${locationId}&limit=25${query ? `&query=${encodeURIComponent(query)}` : ''}`;
-    const res = await fetch(url, { headers: ghHeaders });
-    const text = await res.text();
-    let data: any; try { data = JSON.parse(text); } catch { data = { raw: text }; }
-    if (!res.ok) return jsonRes({ error: 'Failed to search contacts', details: data }, 500);
+    let data: any;
+    if (tag) {
+      // Use search endpoint with tag filter to fetch all matching contacts
+      const searchUrl = `${GHL_API}/contacts/search`;
+      const searchBody: any = {
+        locationId,
+        pageLimit: 100,
+        filters: [{ field: 'tags', operator: 'contains', value: tag }],
+      };
+      const res = await fetch(searchUrl, { method: 'POST', headers: ghHeaders, body: JSON.stringify(searchBody) });
+      const text = await res.text();
+      try { data = JSON.parse(text); } catch { data = { raw: text }; }
+      if (!res.ok) return jsonRes({ error: 'Failed to search contacts', details: data }, 500);
+    } else {
+      const url = `${GHL_API}/contacts/?locationId=${locationId}&limit=100${query ? `&query=${encodeURIComponent(query)}` : ''}`;
+      const res = await fetch(url, { headers: ghHeaders });
+      const text = await res.text();
+      try { data = JSON.parse(text); } catch { data = { raw: text }; }
+      if (!res.ok) return jsonRes({ error: 'Failed to search contacts', details: data }, 500);
+    }
 
     const contacts = (data.contacts || []).map((c: any) => ({
       id: c.id || c._id,
