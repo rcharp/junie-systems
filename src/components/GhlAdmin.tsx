@@ -1367,6 +1367,10 @@ const Field = ({ label, value, onChange, placeholder, required, disabled, helpTi
         </Dialog>
       )}
     </div>
-    <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} disabled={disabled} />
+    {multiline ? (
+      <Textarea value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} disabled={disabled} className="min-h-[80px] text-sm font-mono" />
+    ) : (
+      <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} disabled={disabled} />
+    )}
   </div>
 );
