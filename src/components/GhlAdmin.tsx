@@ -1148,10 +1148,13 @@ ${deliverable}`;
               <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Leave blank to auto-generate" />
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-semibold">Generated Prompt</Label>
-                <Button onClick={handleCopyPrompt} variant={copiedPrompt ? 'default' : 'outline'}>
+            <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <Label className="text-base font-semibold">Generated Prompt</Label>
+                </div>
+                <Button onClick={handleCopyPrompt} variant={copiedPrompt ? 'default' : 'default'}>
                   {copiedPrompt ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
                   {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
                 </Button>
@@ -1160,7 +1163,7 @@ ${deliverable}`;
                 readOnly
                 value={buildLovablePrompt()}
                 rows={20}
-                className="font-mono text-xs"
+                className="font-mono text-xs bg-background"
               />
             </div>
           </CardContent>
