@@ -138,6 +138,10 @@ Deno.serve(async (req) => {
           company_name: shortName,
           company_name_full: fullName,
           review_survey_link: reviewSurveyLink,
+          hours_of_operation: hoursOfOperation,
+          existing_website_url: existingWebsiteUrl,
+          company_industry: companyIndustry,
+          company_logo_url: companyLogoUrl,
         },
       },
     });
