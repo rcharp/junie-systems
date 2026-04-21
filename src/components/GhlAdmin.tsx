@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 const US_STATES: { code: string; name: string }[] = [
@@ -1190,7 +1191,22 @@ ${deliverable}`;
               <Field label="Company Logo URL" value={promptForm.logoUrl} onChange={(v) => setPromptForm({ ...promptForm, logoUrl: v })} placeholder="https://... (or leave blank)" />
               <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Chat Widget Embed Code" value={promptForm.chatWidgetEmbed} onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''} />
               <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Quote Form Webhook URL" value={promptForm.quoteWebhook} onChange={(v) => setPromptForm({ ...promptForm, quoteWebhook: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Quote forms will email the business' : ''} />
-              <Field required label="Review Form URL" value={promptForm.reviewFormUrl} onChange={(v) => setPromptForm({ ...promptForm, reviewFormUrl: v })} />
+              <Field
+                required
+                label="Review Form URL"
+                value={promptForm.reviewFormUrl}
+                onChange={(v) => setPromptForm({ ...promptForm, reviewFormUrl: v })}
+                helpTitle="How to find the Review Form URL"
+                helpContent={
+                  <ol className="list-decimal pl-5 space-y-2 text-sm">
+                    <li>Open the newly created company <strong>Subaccount</strong> in GoHighLevel.</li>
+                    <li>Navigate to <strong>Automation</strong>.</li>
+                    <li>Open the <strong>Review / Referral Workflows</strong>.</li>
+                    <li>Find the <strong>Inbound Webhook</strong> trigger.</li>
+                    <li>Copy the <strong>URL</strong> from the inbound webhook and paste it here.</li>
+                  </ol>
+                }
+              />
               <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Discount Form URL" value={promptForm.discountFormUrl} onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''} />
             </div>
             <div>
@@ -1259,12 +1275,31 @@ ${deliverable}`;
   );
 };
 
-const Field = ({ label, value, onChange, placeholder, required, disabled }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean; disabled?: boolean }) => (
+const Field = ({ label, value, onChange, placeholder, required, disabled, helpTitle, helpContent }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean; disabled?: boolean; helpTitle?: string; helpContent?: React.ReactNode }) => (
   <div>
-    <Label className="capitalize">
-      {label}
-      {required && <span className="text-destructive ml-0.5">*</span>}
-    </Label>
+    <div className="flex items-center justify-between gap-2">
+      <Label className="capitalize">
+        {label}
+        {required && <span className="text-destructive ml-0.5">*</span>}
+      </Label>
+      {helpContent && (
+        <Dialog>
+          <DialogTrigger asChild>
+            <button type="button" className="text-xs text-primary hover:underline">
+              How Do I find this?
+            </button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{helpTitle || `How to find the ${label}`}</DialogTitle>
+              <DialogDescription asChild>
+                <div className="pt-2">{helpContent}</div>
+              </DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      )}
+    </div>
     <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} disabled={disabled} />
   </div>
 );
