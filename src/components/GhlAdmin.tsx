@@ -952,11 +952,12 @@ ${deliverable}`;
 
   useEffect(() => {
     if (!globalContactOpen) return;
-    const t = setTimeout(async () => {
-      setGlobalContactsLoading(true);
+    if (globalContacts.length > 0) return; // already loaded
+    setGlobalContactsLoading(true);
+    (async () => {
       try {
         const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
-          body: { query: globalContactSearch },
+          body: { tag: 'customer' },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
@@ -965,13 +966,24 @@ ${deliverable}`;
         );
         setGlobalContacts(onlyCustomers);
       } catch (e: any) {
-        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+        toast({ title: 'Failed to load contacts', description: e.message, variant: 'destructive' });
       } finally {
         setGlobalContactsLoading(false);
       }
-    }, 300);
-    return () => clearTimeout(t);
-  }, [globalContactSearch, globalContactOpen]);
+    })();
+  }, [globalContactOpen, globalContacts.length]);
+
+  const filteredGlobalContacts = globalContactSearch.trim()
+    ? globalContacts.filter((c) => {
+        const q = globalContactSearch.toLowerCase();
+        return (
+          c.name.toLowerCase().includes(q) ||
+          c.email.toLowerCase().includes(q) ||
+          c.phone.toLowerCase().includes(q) ||
+          c.companyName.toLowerCase().includes(q)
+        );
+      })
+    : globalContacts;
 
   const handleGlobalContactSelect = (c: { id: string; name: string; companyName: string; tags: string[] }) => {
     const personDisplay = toTitleCase(c.name);
@@ -1022,12 +1034,12 @@ ${deliverable}`;
                 onValueChange={setGlobalContactSearch}
               />
               <CommandList>
-                {globalContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
-                {!globalContactsLoading && globalContacts.length === 0 && (
+                {globalContactsLoading && <div className="p-3 text-xs text-muted-foreground">Loading customers...</div>}
+                {!globalContactsLoading && filteredGlobalContacts.length === 0 && (
                   <CommandEmpty>No contacts found.</CommandEmpty>
                 )}
                 <CommandGroup>
-                  {globalContacts.map((c) => {
+                  {filteredGlobalContacts.map((c) => {
                     const personDisplay = toTitleCase(c.name);
                     const businessDisplay = toTitleCase(c.companyName);
                     const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
