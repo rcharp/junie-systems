@@ -214,6 +214,41 @@ export const GhlAdmin = () => {
     setUrlContactId(id);
   };
 
+  // Step completion tracking (persisted in ghl_setup_checklist with reserved item_ids)
+  const STEP1_KEY = '__step1_create';
+  const STEP3_KEY = '__step3_prompt';
+  const [step1Done, setStep1Done] = useState(false);
+  const [step2Done, setStep2Done] = useState(false);
+  const [step3Done, setStep3Done] = useState(false);
+
+  useEffect(() => {
+    if (!urlContactId) {
+      setStep1Done(false); setStep3Done(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from('ghl_setup_checklist')
+        .select('item_id, completed')
+        .eq('contact_id', urlContactId)
+        .in('item_id', [STEP1_KEY, STEP3_KEY]);
+      if (cancelled) return;
+      const map: Record<string, boolean> = {};
+      (data || []).forEach((r: any) => { map[r.item_id] = !!r.completed; });
+      setStep1Done(!!map[STEP1_KEY]);
+      setStep3Done(!!map[STEP3_KEY]);
+    })();
+    return () => { cancelled = true; };
+  }, [urlContactId]);
+
+  const markStep = async (itemId: string, value: boolean, contactId: string) => {
+    if (!contactId) return;
+    await supabase
+      .from('ghl_setup_checklist')
+      .upsert({ contact_id: contactId, item_id: itemId, completed: value }, { onConflict: 'contact_id,item_id' });
+  };
+
   // Setup tab contact picker state
   const [setupContacts, setSetupContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
   const [setupContactSearch, setSetupContactSearch] = useState('');
