@@ -92,6 +92,10 @@ Deno.serve(async (req) => {
     const existingWebsiteUrl = findField(['existingwebsiteurl', 'currentwebsite', 'existingwebsite', 'websiteurl', 'currentwebsiteurl']);
     const companyIndustry = findField(['companyindustry', 'industry', 'businessindustry', 'businesstype']);
     const companyLogoUrl = findField(['companylogourl', 'companylogo', 'logourl', 'logo']);
+    const servicesOffered = findField(['servicesoffered', 'services', 'serviceslist', 'offeredservices']);
+    const serviceAreas = findField(['serviceareas', 'areas', 'cities', 'servicearea', 'locationsserved', 'areasserved']);
+    const aboutUs = findField(['aboutus', 'about', 'aboutussection', 'businessdescription', 'description']);
+    const trustBar = findField(['trustbar', 'specialthings', 'usp', 'uniqueselling', 'whychooseus']);
 
     const stripSuffix = (s: string) =>
       s.replace(/[\s,]+(llc|l\.l\.c\.|inc|inc\.|incorporated|corp|corp\.|corporation|co|co\.|company|ltd|ltd\.|limited|pllc|p\.l\.l\.c\.|pc|p\.c\.|lp|l\.p\.|llp|l\.l\.p\.)\.?$/i, '').trim();
