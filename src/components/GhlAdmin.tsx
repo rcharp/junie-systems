@@ -1147,7 +1147,6 @@ ${deliverable}`;
               <Label>Trust Bar</Label>
               <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Leave blank to auto-generate" />
             </div>
-            </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
