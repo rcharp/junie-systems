@@ -165,7 +165,9 @@ Deno.serve(async (req) => {
         country,
         postalCode,
         einNumber,
+        businessRegistrationNumber: einNumber,
         registrationIdType: 'ein',
+        businessRegistrationIdType: 'USA',
         regionOfOperation: 'USA',
       };
       console.log('GHL create business payload:', JSON.stringify(businessPayload));
