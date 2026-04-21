@@ -40,11 +40,14 @@ const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
   { id: 'chat-widget', label: 'Set up Chat Widget' },
 ];
 
-const SetupChecklist = ({ contactId, onCompletionChange }: { contactId: string; onCompletionChange?: (done: boolean) => void }) => {
+const SetupChecklist = ({ contactId, onCompletionChange, plan }: { contactId: string; onCompletionChange?: (done: boolean) => void; plan?: string }) => {
+  const isPresence = plan === 'Presence Plan';
+  const isItemDisabled = (id: string) => isPresence && id === 'phone-number';
+  const applicableItems = SETUP_CHECKLIST_ITEMS.filter((i) => !isItemDisabled(i.id));
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
-  const completed = SETUP_CHECKLIST_ITEMS.filter((i) => checked[i.id]).length;
-  const total = SETUP_CHECKLIST_ITEMS.length;
+  const completed = applicableItems.filter((i) => checked[i.id]).length;
+  const total = applicableItems.length;
 
   useEffect(() => {
     onCompletionChange?.(total > 0 && completed === total);
@@ -107,29 +110,45 @@ const SetupChecklist = ({ contactId, onCompletionChange }: { contactId: string; 
       <ul className="space-y-3">
         {SETUP_CHECKLIST_ITEMS.map((item, idx) => {
           const isDone = !!checked[item.id];
+          const disabled = isItemDisabled(item.id);
           return (
             <li
               key={item.id}
               className={cn(
                 'flex items-start gap-3 rounded-md border-2 p-3 transition-colors',
-                isDone
-                  ? 'border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10'
-                  : 'border-destructive bg-destructive/10'
+                disabled
+                  ? 'border-muted bg-muted/40 opacity-60'
+                  : isDone
+                    ? 'border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10'
+                    : 'border-destructive bg-destructive/10'
               )}
             >
               <Checkbox
                 id={`setup-${item.id}`}
-                checked={isDone}
-                onCheckedChange={(v) => toggleItem(item.id, v === true)}
+                checked={disabled ? false : isDone}
+                disabled={disabled}
+                onCheckedChange={(v) => !disabled && toggleItem(item.id, v === true)}
                 className="mt-0.5"
               />
-              <Label htmlFor={`setup-${item.id}`} className="flex-1 cursor-pointer leading-snug">
+              <Label
+                htmlFor={`setup-${item.id}`}
+                className={cn('flex-1 leading-snug', disabled ? 'cursor-not-allowed text-muted-foreground' : 'cursor-pointer')}
+              >
                 <span className="font-medium">{idx + 1}. {item.label}</span>
                 {item.note && (
                   <span className="ml-2 text-xs text-muted-foreground">({item.note})</span>
                 )}
-                <span className={cn('ml-2 text-xs font-semibold', isDone ? 'text-[hsl(142,71%,30%)]' : 'text-destructive')}>
-                  ({isDone ? 'Complete' : 'Not Complete'})
+                <span
+                  className={cn(
+                    'ml-2 text-xs font-semibold',
+                    disabled
+                      ? 'text-muted-foreground'
+                      : isDone
+                        ? 'text-[hsl(142,71%,30%)]'
+                        : 'text-destructive'
+                  )}
+                >
+                  ({disabled ? 'N/A for Presence Plan' : isDone ? 'Complete' : 'Not Complete'})
                 </span>
               </Label>
             </li>
@@ -1384,7 +1403,7 @@ ${deliverable}`;
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} />
+            <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={promptContactPlan} />
           </CardContent>
         </Card>
       </TabsContent>
