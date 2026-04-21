@@ -943,8 +943,123 @@ ${deliverable}`;
     }
   };
 
+  // Global contact picker — drives all 3 tabs
+  const [globalContactOpen, setGlobalContactOpen] = useState(false);
+  const [globalContactSearch, setGlobalContactSearch] = useState('');
+  const [globalContacts, setGlobalContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string; tags: string[] }[]>([]);
+  const [globalContactsLoading, setGlobalContactsLoading] = useState(false);
+  const [globalContactLabel, setGlobalContactLabel] = useState('');
+
+  useEffect(() => {
+    if (!globalContactOpen) return;
+    const t = setTimeout(async () => {
+      setGlobalContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: globalContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setGlobalContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setGlobalContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [globalContactSearch, globalContactOpen]);
+
+  const handleGlobalContactSelect = (c: { id: string; name: string; companyName: string; tags: string[] }) => {
+    const personDisplay = toTitleCase(c.name);
+    const businessDisplay = toTitleCase(c.companyName);
+    const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
+    setGlobalContactLabel(combined);
+
+    // Step 1 (Create Sub-account)
+    setContactId(c.id);
+    setSelectedCreateContactLabel(combined);
+    populateCreateFromContactId(c.id);
+
+    // Step 2 (Setup checklist) — drives via URL param
+    setSelectedSetupContactLabel(combined);
+    updateContactIdParam(c.id);
+
+    // Step 3 (Lovable Prompt)
+    setPromptContactId(c.id);
+    setSelectedPromptContactLabel(combined);
+    setPromptContactPlan(detectPlanFromTags(c.tags || []));
+    populatePromptFromContactId(c.id);
+
+    setGlobalContactOpen(false);
+  };
+
   return (
     <Tabs defaultValue="create" className="w-full">
+      <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2 mb-4">
+        <Label className="text-base font-semibold flex items-center gap-2">
+          <UserPlus className="w-4 h-4 text-primary" />
+          Populate from GHL Contact
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          Select a contact once to fill in fields across all three steps.
+        </p>
+        <Popover open={globalContactOpen} onOpenChange={setGlobalContactOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
+              <span className="truncate">{globalContactLabel || 'Search a contact...'}</span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <Command shouldFilter={false}>
+              <CommandInput
+                placeholder="Search by name, email, phone..."
+                value={globalContactSearch}
+                onValueChange={setGlobalContactSearch}
+              />
+              <CommandList>
+                {globalContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                {!globalContactsLoading && globalContacts.length === 0 && (
+                  <CommandEmpty>No contacts found.</CommandEmpty>
+                )}
+                <CommandGroup>
+                  {globalContacts.map((c) => {
+                    const personDisplay = toTitleCase(c.name);
+                    const businessDisplay = toTitleCase(c.companyName);
+                    const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
+                    return (
+                      <CommandItem
+                        key={c.id}
+                        value={c.id}
+                        onSelect={() => handleGlobalContactSelect(c)}
+                      >
+                        <Check className={cn('mr-2 h-4 w-4', urlContactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                        <div className="flex flex-col">
+                          <span className="font-medium">{combined}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {[c.email, c.phone].filter(Boolean).join(' · ')}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs text-muted-foreground truncate font-mono">{urlContactId}</span>
+            {promptContactPlan && (
+              <Badge variant="secondary" className="shrink-0">{promptContactPlan}</Badge>
+            )}
+          </div>
+          {(loadingContact || loadingPromptContact) && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
+        </div>
+      </div>
+
       <TabsList className="grid grid-cols-3 mb-4">
         <TabsTrigger value="create">Step 1: Create Sub-account</TabsTrigger>
         <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
