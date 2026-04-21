@@ -860,7 +860,7 @@ ${deliverable}`;
       <TabsList className="grid grid-cols-3 mb-4">
         <TabsTrigger value="create">Step 1: Create Sub-account</TabsTrigger>
         <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
-        <TabsTrigger value="prompt">Step 3: Lovable Prompt</TabsTrigger>
+        <TabsTrigger value="prompt">Step 3: Create Website</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">
