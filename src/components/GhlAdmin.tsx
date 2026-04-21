@@ -1189,7 +1189,35 @@ ${deliverable}`;
               <Field label="Facebook URL" value={promptForm.facebook} onChange={(v) => setPromptForm({ ...promptForm, facebook: v })} placeholder="URL or None" />
               <Field required label="Company Industry" value={promptForm.industry} onChange={(v) => setPromptForm({ ...promptForm, industry: v })} placeholder="Plumbing, HVAC, etc." />
               <Field label="Company Logo URL" value={promptForm.logoUrl} onChange={(v) => setPromptForm({ ...promptForm, logoUrl: v })} placeholder="https://... (or leave blank)" />
-              <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Chat Widget Embed Code" value={promptForm.chatWidgetEmbed} onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''} />
+              <Field
+                required={promptContactPlan !== 'Presence Plan'}
+                disabled={promptContactPlan === 'Presence Plan'}
+                label="Chat Widget Embed Code"
+                value={promptForm.chatWidgetEmbed}
+                onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })}
+                placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''}
+                multiline
+                helpTitle="How to find the Chat Widget Embed Code"
+                helpContent={
+                  <div className="space-y-4">
+                    <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
+                      <iframe
+                        src="https://www.loom.com/embed/e02f2b7c082b4e12beace8e654fe1ef4"
+                        frameBorder={0}
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full rounded-md"
+                        title="How to find the Chat Widget Embed Code"
+                      />
+                    </div>
+                    <ol className="list-decimal pl-5 space-y-2 text-sm">
+                      <li>Open the newly created company <strong>Subaccount</strong> in GoHighLevel.</li>
+                      <li>Navigate to <strong>Sites</strong> → <strong>Chat Widget</strong>.</li>
+                      <li>Configure (or open) the chat widget and locate the <strong>Embed Code</strong>.</li>
+                      <li>Copy the full embed code snippet and paste it here.</li>
+                    </ol>
+                  </div>
+                }
+              />
               <Field
                 required={promptContactPlan !== 'Presence Plan'}
                 disabled={promptContactPlan === 'Presence Plan'}
