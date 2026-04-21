@@ -808,17 +808,18 @@ ${deliverable}`;
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Business Name *" value={createForm.name} onChange={(v) => setCreateForm({ ...createForm, name: v })} required />
-              <Field label="First Name *" value={createForm.firstName} onChange={(v) => setCreateForm({ ...createForm, firstName: v })} required />
-              <Field label="Last Name *" value={createForm.lastName} onChange={(v) => setCreateForm({ ...createForm, lastName: v })} required />
-              <Field label="Email *" value={createForm.email} onChange={(v) => setCreateForm({ ...createForm, email: v })} required />
-              <Field label="Phone *" value={createForm.phone} onChange={(v) => setCreateForm({ ...createForm, phone: v })} required />
+              <Field label="Business Name" value={createForm.name} onChange={(v) => setCreateForm({ ...createForm, name: v })} required />
+              <Field label="First Name" value={createForm.firstName} onChange={(v) => setCreateForm({ ...createForm, firstName: v })} required />
+              <Field label="Last Name" value={createForm.lastName} onChange={(v) => setCreateForm({ ...createForm, lastName: v })} required />
+              <Field label="Email" value={createForm.email} onChange={(v) => setCreateForm({ ...createForm, email: v })} required />
+              <Field label="Phone" value={createForm.phone} onChange={(v) => setCreateForm({ ...createForm, phone: v })} required />
               <Field label="Website" value={createForm.website} onChange={(v) => setCreateForm({ ...createForm, website: v })} />
-              <Field label="Timezone *" value={createForm.timezone} onChange={(v) => setCreateForm({ ...createForm, timezone: v })} required />
-              <Field label="Address *" value={createForm.address} onChange={(v) => setCreateForm({ ...createForm, address: v })} required />
-              <Field label="City *" value={createForm.city} onChange={(v) => setCreateForm({ ...createForm, city: v })} required />
+              <Field label="Timezone" value={createForm.timezone} onChange={(v) => setCreateForm({ ...createForm, timezone: v })} required />
+              <Field label="Address" value={createForm.address} onChange={(v) => setCreateForm({ ...createForm, address: v })} required />
+              <Field label="City" value={createForm.city} onChange={(v) => setCreateForm({ ...createForm, city: v })} required />
               <div>
-                <Label>State *</Label>
+                <Label>State<span className="text-destructive ml-0.5">*</span></Label>
+
                 <Select value={createForm.state} onValueChange={(v) => setCreateForm({ ...createForm, state: v })}>
                   <SelectTrigger><SelectValue placeholder="Select a state" /></SelectTrigger>
                   <SelectContent className="max-h-72">
@@ -828,9 +829,9 @@ ${deliverable}`;
                   </SelectContent>
                 </Select>
               </div>
-              <Field label="Postal Code *" value={createForm.postalCode} onChange={(v) => setCreateForm({ ...createForm, postalCode: v })} required />
-              <Field label="Country *" value={createForm.country} onChange={(v) => setCreateForm({ ...createForm, country: v })} required />
-              <Field label="Business Tax ID / EIN *" value={createForm.einNumber} onChange={(v) => setCreateForm({ ...createForm, einNumber: v })} required placeholder="12-3456789" />
+              <Field label="Postal Code" value={createForm.postalCode} onChange={(v) => setCreateForm({ ...createForm, postalCode: v })} required />
+              <Field label="Country" value={createForm.country} onChange={(v) => setCreateForm({ ...createForm, country: v })} required />
+              <Field label="Business Tax ID / EIN" value={createForm.einNumber} onChange={(v) => setCreateForm({ ...createForm, einNumber: v })} required placeholder="12-3456789" />
               <Field label="Snapshot ID (override)" value={createForm.snapshotId} onChange={(v) => setCreateForm({ ...createForm, snapshotId: v })} placeholder="Defaults to GHL_SNAPSHOT_ID secret" />
             </div>
             <div>
