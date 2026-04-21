@@ -589,7 +589,7 @@ Information that will be used:
 | Trust Bar | ${v(promptForm.trustBar)} |
 ${techRows}
 | Review Form URL | ${v(promptForm.reviewFormUrl)} |
-| Company Logo URL | ${v(promptForm.logoUrl)} |
+| Company Logo URL | ${promptForm.logoUrl?.trim() || ''} |
 | Company Industry | ${v(promptForm.industry)} |
 
 Services Offered:
@@ -1187,7 +1187,7 @@ ${deliverable}`;
               <Field label="Instagram URL" value={promptForm.instagram} onChange={(v) => setPromptForm({ ...promptForm, instagram: v })} placeholder="URL or None" />
               <Field label="Facebook URL" value={promptForm.facebook} onChange={(v) => setPromptForm({ ...promptForm, facebook: v })} placeholder="URL or None" />
               <Field required label="Company Industry" value={promptForm.industry} onChange={(v) => setPromptForm({ ...promptForm, industry: v })} placeholder="Plumbing, HVAC, etc." />
-              <Field label="Company Logo URL" value={promptForm.logoUrl} onChange={(v) => setPromptForm({ ...promptForm, logoUrl: v })} placeholder="URL or None" />
+              <Field label="Company Logo URL" value={promptForm.logoUrl} onChange={(v) => setPromptForm({ ...promptForm, logoUrl: v })} placeholder="https://... (or leave blank)" />
               <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Chat Widget Embed Code" value={promptForm.chatWidgetEmbed} onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''} />
               <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Quote Form Webhook URL" value={promptForm.quoteWebhook} onChange={(v) => setPromptForm({ ...promptForm, quoteWebhook: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Quote forms will email the business' : ''} />
               <Field required label="Review Form URL" value={promptForm.reviewFormUrl} onChange={(v) => setPromptForm({ ...promptForm, reviewFormUrl: v })} />
