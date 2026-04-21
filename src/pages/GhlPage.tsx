@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
 const GhlPage = () => {
-  const { user, isAdmin, loading, setSigningOut } = useAuth();
+  const { user, isAdmin, loading, adminLoading, setSigningOut } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,7 +19,7 @@ const GhlPage = () => {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  if (loading || (user && adminLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
