@@ -882,6 +882,10 @@ ${deliverable}`;
       setCopiedPrompt(true);
       toast({ title: 'Copied!', description: 'Prompt copied to clipboard' });
       setTimeout(() => setCopiedPrompt(false), 2000);
+      if (urlContactId) {
+        setStep3Done(true);
+        markStep(STEP3_KEY, true, urlContactId);
+      }
     } catch {
       toast({ title: 'Copy failed', variant: 'destructive' });
     }
