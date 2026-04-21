@@ -1320,67 +1320,6 @@ ${deliverable}`;
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-primary" />
-                Populate from GHL Contact
-              </Label>
-              <p className="text-xs text-muted-foreground">Select a contact to load and track their setup progress.</p>
-              <Popover open={setupContactOpen} onOpenChange={setSetupContactOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
-                    <span className="truncate">
-                      {selectedSetupContactLabel || (urlContactId ? urlContactId : 'Search a contact...')}
-                    </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command shouldFilter={false}>
-                    <CommandInput
-                      placeholder="Search by name, email, phone..."
-                      value={setupContactSearch}
-                      onValueChange={setSetupContactSearch}
-                    />
-                    <CommandList>
-                      {setupContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
-                      {!setupContactsLoading && setupContacts.length === 0 && (
-                        <CommandEmpty>No contacts found.</CommandEmpty>
-                      )}
-                      <CommandGroup>
-                        {setupContacts.map((c) => {
-                          const personDisplay = toTitleCase(c.name);
-                          const businessDisplay = toTitleCase(c.companyName);
-                          const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
-                          return (
-                            <CommandItem
-                              key={c.id}
-                              value={c.id}
-                              onSelect={() => {
-                                setSelectedSetupContactLabel(combined);
-                                updateContactIdParam(c.id);
-                                setSetupContactOpen(false);
-                              }}
-                            >
-                              <Check className={cn('mr-2 h-4 w-4', urlContactId === c.id ? 'opacity-100' : 'opacity-0')} />
-                              <div className="flex flex-col">
-                                <span className="font-medium">{combined}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground truncate font-mono">{urlContactId}</span>
-              </div>
-            </div>
             <SetupChecklist contactId={urlContactId} />
           </CardContent>
         </Card>
