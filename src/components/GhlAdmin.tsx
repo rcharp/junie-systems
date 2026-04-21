@@ -40,41 +40,79 @@ const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
   { id: 'chat-widget', label: 'Set up Chat Widget' },
 ];
 
-const SetupChecklist = () => {
+const SetupChecklist = ({ contactId }: { contactId: string }) => {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
   const completed = SETUP_CHECKLIST_ITEMS.filter((i) => checked[i.id]).length;
   const total = SETUP_CHECKLIST_ITEMS.length;
+
+  useEffect(() => {
+    if (!contactId) {
+      setChecked({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('ghl_setup_checklist')
+        .select('item_id, completed')
+        .eq('contact_id', contactId);
+      if (!cancelled) {
+        if (error) {
+          toast({ title: 'Failed to load progress', description: error.message, variant: 'destructive' });
+        } else {
+          const map: Record<string, boolean> = {};
+          (data || []).forEach((row: any) => { map[row.item_id] = !!row.completed; });
+          setChecked(map);
+        }
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [contactId]);
+
+  const toggleItem = async (itemId: string, value: boolean) => {
+    if (!contactId) {
+      toast({ title: 'No contact selected', description: 'Pick a contact above to track progress.', variant: 'destructive' });
+      return;
+    }
+    setChecked((prev) => ({ ...prev, [itemId]: value }));
+    const { error } = await supabase
+      .from('ghl_setup_checklist')
+      .upsert({ contact_id: contactId, item_id: itemId, completed: value }, { onConflict: 'contact_id,item_id' });
+    if (error) {
+      setChecked((prev) => ({ ...prev, [itemId]: !value }));
+      toast({ title: 'Save failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  if (!contactId) {
+    return (
+      <div className="rounded-md border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+        Select a contact above to track setup progress.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground">
-        {completed} of {total} steps complete
+        {loading ? 'Loading…' : `${completed} of ${total} steps complete`}
       </div>
       <ul className="space-y-3">
         {SETUP_CHECKLIST_ITEMS.map((item, idx) => (
-          <li
-            key={item.id}
-            className="flex items-start gap-3 rounded-md border border-border bg-card p-3"
-          >
+          <li key={item.id} className="flex items-start gap-3 rounded-md border border-border bg-card p-3">
             <Checkbox
               id={`setup-${item.id}`}
               checked={!!checked[item.id]}
-              onCheckedChange={(v) =>
-                setChecked((prev) => ({ ...prev, [item.id]: v === true }))
-              }
+              onCheckedChange={(v) => toggleItem(item.id, v === true)}
               className="mt-0.5"
             />
-            <Label
-              htmlFor={`setup-${item.id}`}
-              className="flex-1 cursor-pointer leading-snug"
-            >
-              <span className="font-medium">
-                {idx + 1}. {item.label}
-              </span>
+            <Label htmlFor={`setup-${item.id}`} className="flex-1 cursor-pointer leading-snug">
+              <span className="font-medium">{idx + 1}. {item.label}</span>
               {item.note && (
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({item.note})
-                </span>
+                <span className="ml-2 text-xs text-muted-foreground">({item.note})</span>
               )}
             </Label>
           </li>
