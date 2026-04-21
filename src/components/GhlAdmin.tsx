@@ -1076,7 +1076,8 @@ ${deliverable}`;
                               key={c.id}
                               value={c.id}
                               onSelect={() => {
-                                setSelectedPromptContactLabel(businessDisplay);
+                                const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ');
+                                setSelectedPromptContactLabel(combined || businessDisplay);
                                 setPromptContactId(c.id);
                                 setPromptContactPlan(detectPlanFromTags(c.tags || []));
                                 setPromptContactOpen(false);
@@ -1085,9 +1086,11 @@ ${deliverable}`;
                             >
                               <Check className={cn('mr-2 h-4 w-4', promptContactId === c.id ? 'opacity-100' : 'opacity-0')} />
                               <div className="flex flex-col">
-                                <span className="font-medium">{businessDisplay}</span>
+                                <span className="font-medium">
+                                  {[personDisplay, businessDisplay].filter(Boolean).join(' - ') || businessDisplay}
+                                </span>
                                 <span className="text-xs text-muted-foreground">
-                                  {[personDisplay, c.email, c.phone].filter(Boolean).join(' · ')}
+                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
                                 </span>
                               </div>
                             </CommandItem>
