@@ -943,8 +943,123 @@ ${deliverable}`;
     }
   };
 
+  // Global contact picker — drives all 3 tabs
+  const [globalContactOpen, setGlobalContactOpen] = useState(false);
+  const [globalContactSearch, setGlobalContactSearch] = useState('');
+  const [globalContacts, setGlobalContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string; tags: string[] }[]>([]);
+  const [globalContactsLoading, setGlobalContactsLoading] = useState(false);
+  const [globalContactLabel, setGlobalContactLabel] = useState('');
+
+  useEffect(() => {
+    if (!globalContactOpen) return;
+    const t = setTimeout(async () => {
+      setGlobalContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: globalContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setGlobalContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setGlobalContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [globalContactSearch, globalContactOpen]);
+
+  const handleGlobalContactSelect = (c: { id: string; name: string; companyName: string; tags: string[] }) => {
+    const personDisplay = toTitleCase(c.name);
+    const businessDisplay = toTitleCase(c.companyName);
+    const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
+    setGlobalContactLabel(combined);
+
+    // Step 1 (Create Sub-account)
+    setContactId(c.id);
+    setSelectedCreateContactLabel(combined);
+    populateCreateFromContactId(c.id);
+
+    // Step 2 (Setup checklist) — drives via URL param
+    setSelectedSetupContactLabel(combined);
+    updateContactIdParam(c.id);
+
+    // Step 3 (Lovable Prompt)
+    setPromptContactId(c.id);
+    setSelectedPromptContactLabel(combined);
+    setPromptContactPlan(detectPlanFromTags(c.tags || []));
+    populatePromptFromContactId(c.id);
+
+    setGlobalContactOpen(false);
+  };
+
   return (
     <Tabs defaultValue="create" className="w-full">
+      <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2 mb-4">
+        <Label className="text-base font-semibold flex items-center gap-2">
+          <UserPlus className="w-4 h-4 text-primary" />
+          Populate from GHL Contact
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          Select a contact once to fill in fields across all three steps.
+        </p>
+        <Popover open={globalContactOpen} onOpenChange={setGlobalContactOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
+              <span className="truncate">{globalContactLabel || 'Search a contact...'}</span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <Command shouldFilter={false}>
+              <CommandInput
+                placeholder="Search by name, email, phone..."
+                value={globalContactSearch}
+                onValueChange={setGlobalContactSearch}
+              />
+              <CommandList>
+                {globalContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                {!globalContactsLoading && globalContacts.length === 0 && (
+                  <CommandEmpty>No contacts found.</CommandEmpty>
+                )}
+                <CommandGroup>
+                  {globalContacts.map((c) => {
+                    const personDisplay = toTitleCase(c.name);
+                    const businessDisplay = toTitleCase(c.companyName);
+                    const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
+                    return (
+                      <CommandItem
+                        key={c.id}
+                        value={c.id}
+                        onSelect={() => handleGlobalContactSelect(c)}
+                      >
+                        <Check className={cn('mr-2 h-4 w-4', urlContactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                        <div className="flex flex-col">
+                          <span className="font-medium">{combined}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {[c.email, c.phone].filter(Boolean).join(' · ')}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xs text-muted-foreground truncate font-mono">{urlContactId}</span>
+            {promptContactPlan && (
+              <Badge variant="secondary" className="shrink-0">{promptContactPlan}</Badge>
+            )}
+          </div>
+          {(loadingContact || loadingPromptContact) && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
+        </div>
+      </div>
+
       <TabsList className="grid grid-cols-3 mb-4">
         <TabsTrigger value="create">Step 1: Create Sub-account</TabsTrigger>
         <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
@@ -958,69 +1073,10 @@ ${deliverable}`;
             <CardDescription>Creates a new location in your GHL agency and imports a snapshot.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-primary" />
-                Populate from GHL Contact
-              </Label>
-              <p className="text-xs text-muted-foreground">Select a contact to auto-fill all fields below.</p>
-              <Popover open={createContactOpen} onOpenChange={setCreateContactOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
-                    <span className="truncate">
-                      {selectedCreateContactLabel || 'Search a contact...'}
-                    </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command shouldFilter={false}>
-                    <CommandInput
-                      placeholder="Search by name, email, phone..."
-                      value={createContactSearch}
-                      onValueChange={setCreateContactSearch}
-                    />
-                    <CommandList>
-                      {createContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
-                      {!createContactsLoading && createContacts.length === 0 && (
-                        <CommandEmpty>No contacts found.</CommandEmpty>
-                      )}
-                      <CommandGroup>
-                        {createContacts.map((c) => {
-                          const personDisplay = toTitleCase(c.name);
-                          const businessDisplay = toTitleCase(c.companyName);
-                          const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
-                          return (
-                            <CommandItem
-                              key={c.id}
-                              value={c.id}
-                              onSelect={() => {
-                                setSelectedCreateContactLabel(combined);
-                                setContactId(c.id);
-                                updateContactIdParam(c.id);
-                                setSelectedSetupContactLabel(combined);
-                                setCreateContactOpen(false);
-                                populateCreateFromContactId(c.id);
-                              }}
-                            >
-                              <Check className={cn('mr-2 h-4 w-4', contactId === c.id ? 'opacity-100' : 'opacity-0')} />
-                              <div className="flex flex-col">
-                                <span className="font-medium">{combined}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground truncate">{contactId}</span>
-                {loadingContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Agency Company ID</Label>
+                <Input value={createForm.companyId} disabled readOnly placeholder="Auto-filled from secret..." className="bg-muted" />
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1264,67 +1320,6 @@ ${deliverable}`;
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-primary" />
-                Populate from GHL Contact
-              </Label>
-              <p className="text-xs text-muted-foreground">Select a contact to load and track their setup progress.</p>
-              <Popover open={setupContactOpen} onOpenChange={setSetupContactOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
-                    <span className="truncate">
-                      {selectedSetupContactLabel || (urlContactId ? urlContactId : 'Search a contact...')}
-                    </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command shouldFilter={false}>
-                    <CommandInput
-                      placeholder="Search by name, email, phone..."
-                      value={setupContactSearch}
-                      onValueChange={setSetupContactSearch}
-                    />
-                    <CommandList>
-                      {setupContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
-                      {!setupContactsLoading && setupContacts.length === 0 && (
-                        <CommandEmpty>No contacts found.</CommandEmpty>
-                      )}
-                      <CommandGroup>
-                        {setupContacts.map((c) => {
-                          const personDisplay = toTitleCase(c.name);
-                          const businessDisplay = toTitleCase(c.companyName);
-                          const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
-                          return (
-                            <CommandItem
-                              key={c.id}
-                              value={c.id}
-                              onSelect={() => {
-                                setSelectedSetupContactLabel(combined);
-                                updateContactIdParam(c.id);
-                                setSetupContactOpen(false);
-                              }}
-                            >
-                              <Check className={cn('mr-2 h-4 w-4', urlContactId === c.id ? 'opacity-100' : 'opacity-0')} />
-                              <div className="flex flex-col">
-                                <span className="font-medium">{combined}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground truncate font-mono">{urlContactId}</span>
-              </div>
-            </div>
             <SetupChecklist contactId={urlContactId} />
           </CardContent>
         </Card>
@@ -1337,79 +1332,6 @@ ${deliverable}`;
             <CardDescription>Select a contact to auto-fill business information, then copy the generated prompt to remix a website template in Lovable.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
-              <Label className="text-base font-semibold flex items-center gap-2">
-                <UserPlus className="w-4 h-4 text-primary" />
-                Populate from GHL Contact
-              </Label>
-              <p className="text-xs text-muted-foreground">Select a contact to auto-fill all fields below.</p>
-              <Popover open={promptContactOpen} onOpenChange={setPromptContactOpen}>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
-                    <span className="truncate">{selectedPromptContactLabel || 'Search a contact...'}</span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                  <Command shouldFilter={false}>
-                    <CommandInput
-                      placeholder="Search by name, email, phone..."
-                      value={promptContactSearch}
-                      onValueChange={setPromptContactSearch}
-                    />
-                    <CommandList>
-                      {promptContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
-                      {!promptContactsLoading && promptContacts.length === 0 && (
-                        <CommandEmpty>No contacts found.</CommandEmpty>
-                      )}
-                      <CommandGroup>
-                        {promptContacts.map((c) => {
-                          const businessDisplay = toTitleCase(c.companyName) || toTitleCase(c.name) || '(no name)';
-                          const personDisplay = toTitleCase(c.name);
-                          return (
-                            <CommandItem
-                              key={c.id}
-                              value={c.id}
-                              onSelect={() => {
-                                const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ');
-                                setSelectedPromptContactLabel(combined || businessDisplay);
-                                setPromptContactId(c.id);
-                                setPromptContactPlan(detectPlanFromTags(c.tags || []));
-                                setPromptContactOpen(false);
-                                populatePromptFromContactId(c.id);
-                              }}
-                            >
-                              <Check className={cn('mr-2 h-4 w-4', promptContactId === c.id ? 'opacity-100' : 'opacity-0')} />
-                              <div className="flex flex-col">
-                                <span className="font-medium">
-                                  {[personDisplay, businessDisplay].filter(Boolean).join(' - ') || businessDisplay}
-                                </span>
-                                <span className="text-xs text-muted-foreground">
-                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
-                                </span>
-                              </div>
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-xs text-muted-foreground truncate">{promptContactId}</span>
-                  {promptContactPlan && (
-                    <Badge variant="secondary" className="shrink-0">{promptContactPlan}</Badge>
-                  )}
-                  {promptContactId && !promptContactPlan && !loadingPromptContact && (
-                    <Badge variant="outline" className="shrink-0">No plan tag</Badge>
-                  )}
-                </div>
-                {loadingPromptContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
-              </div>
-            </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field required label="Business Name" value={promptForm.businessName} onChange={(v) => setPromptForm({ ...promptForm, businessName: v })} />
               <Field required label="Owner Name" value={promptForm.ownerName} onChange={(v) => setPromptForm({ ...promptForm, ownerName: v })} />
