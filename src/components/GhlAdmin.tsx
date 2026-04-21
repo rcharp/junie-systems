@@ -1387,7 +1387,7 @@ ${deliverable}`;
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <SetupChecklist contactId={urlContactId} />
+            <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} />
           </CardContent>
         </Card>
       </TabsContent>
