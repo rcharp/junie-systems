@@ -1248,7 +1248,7 @@ ${deliverable}`;
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent>
-            <SetupChecklist />
+            <SetupChecklist contactId={urlContactId} />
           </CardContent>
         </Card>
       </TabsContent>
