@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
       email: c.email || '',
       phone: c.phone || '',
       companyName: c.companyName || c.businessName || '',
+      tags: Array.isArray(c.tags) ? c.tags : [],
     })).filter((c: any) => c.id);
 
     return jsonRes({ contacts });
