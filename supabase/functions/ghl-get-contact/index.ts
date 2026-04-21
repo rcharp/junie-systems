@@ -146,6 +146,10 @@ Deno.serve(async (req) => {
           existing_website_url: existingWebsiteUrl,
           company_industry: companyIndustry,
           company_logo_url: companyLogoUrl,
+          services_offered: servicesOffered,
+          service_areas: serviceAreas,
+          about_us: aboutUs,
+          trust_bar: trustBar,
         },
       },
     });
