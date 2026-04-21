@@ -1192,12 +1192,12 @@ ${deliverable}`;
   );
 };
 
-const Field = ({ label, value, onChange, placeholder, required }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean }) => (
+const Field = ({ label, value, onChange, placeholder, required, disabled }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean; disabled?: boolean }) => (
   <div>
     <Label className="capitalize">
       {label}
       {required && <span className="text-destructive ml-0.5">*</span>}
     </Label>
-    <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />
+    <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} disabled={disabled} />
   </div>
 );
