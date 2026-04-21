@@ -331,6 +331,27 @@ export const GhlAdmin = () => {
     return () => clearTimeout(t);
   }, [createContactSearch, createContactOpen]);
 
+  // Setup tab: debounced contact search
+  useEffect(() => {
+    if (!setupContactOpen) return;
+    const t = setTimeout(async () => {
+      setSetupContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: setupContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setSetupContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setSetupContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [setupContactSearch, setupContactOpen]);
+
   const populateCreateFromContactId = async (cid: string) => {
     setLoadingContact(true);
     try {
