@@ -1101,6 +1101,18 @@ ${deliverable}`;
         </Card>
       </TabsContent>
 
+      <TabsContent value="setup">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Check className="w-5 h-5" /> Set Up Sub-Account Checklist</CardTitle>
+            <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <SetupChecklist />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
       <TabsContent value="prompt">
         <Card>
           <CardHeader>
