@@ -1074,12 +1074,6 @@ ${deliverable}`;
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Agency Company ID</Label>
-                <Input value={createForm.companyId} disabled readOnly placeholder="Auto-filled from secret..." className="bg-muted" />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Business Name" value={createForm.name} onChange={(v) => setCreateForm({ ...createForm, name: v })} required />
               <Field label="First Name" value={createForm.firstName} onChange={(v) => setCreateForm({ ...createForm, firstName: v })} required />
               <Field label="Last Name" value={createForm.lastName} onChange={(v) => setCreateForm({ ...createForm, lastName: v })} required />
