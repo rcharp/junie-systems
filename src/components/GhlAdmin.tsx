@@ -515,15 +515,21 @@ export const GhlAdmin = () => {
 | Quote Form Webhook URL | ${v(promptForm.quoteWebhook)} |
 | Discount Form URL | ${v(promptForm.discountFormUrl)} |`;
 
+    const reviewRedirect = promptForm.googleBusinessPage?.trim()
+      ? `The 5-star and 4-star rating buttons on the /review page MUST redirect the user to the Google Business Page URL: ${promptForm.googleBusinessPage.trim()}.`
+      : `No Google Business Page URL was provided — leave the existing 5-star/4-star button behavior on the /review page as-is.`;
+
     const technicalIntegrations = isPresence
       ? `Technical Integrations (Presence Plan):
-- Quote Forms: The business is on the Presence Plan and does NOT have a chat widget, quote webhook, or discount form. Wire ALL quote/contact forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to send the submission as an email to the business email address: ${v(promptForm.email)}. Use a simple mailto handler or the standard email-sending edge function pattern already used in the template. Do NOT include a chat widget. Do NOT include a /get-your-discount page or link to it.
-- Review Form URL: Update the form on /review to POST to the review form URL from above.`
+- Quote Forms: The business is on the Presence Plan and does NOT have a chat widget, quote webhook, or discount form. Wire ALL quote/contact forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to ALWAYS send the submission as an email to the company email address: ${v(promptForm.email)}. Use the standard email-sending edge function pattern already used in the template. Do NOT include a chat widget. Do NOT include a /get-your-discount page or link to it.
+- Review: Update the form on /review to POST to the Review Form URL from above. ${reviewRedirect}
+- Existing Website URL: Only use the existing website URL to pull additional context/information about the business if needed to enrich the new site's content. Do NOT link to it from the new site.`
       : `Technical Integrations:
-- Chat Widget Embed Code: Replace the existing chat widget embed code in the footer with this new code. Put the code in index.html so that it propagates across the entire site.
-- Quote Form Webhook URL: Update ALL quote forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to POST submissions to this webhook URL.
-- Review Form URL: Update the form on /review to POST to the review form URL from above.
-- Discount Form URL: Update the form on /get-your-discount to POST to the discount form URL from above.`;
+- Chat Widget Embed Code: Embed this code in the footer of the index page (place it in index.html) so it propagates across the entire site. Replace any existing chat widget embed code.
+- Quote Form Webhook URL: On the Growth and Full plans, update ALL quote/contact forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to POST submissions to this webhook URL.
+- Review: Update the form on /review to POST to the Review Form URL from above. ${reviewRedirect}
+- Discount Form URL: Update the form on /get-your-discount to POST to the Discount Form URL from above.
+- Existing Website URL: Only use the existing website URL to pull additional context/information about the business if needed to enrich the new site's content. Do NOT link to it from the new site.`;
 
     const businessInfoLines = isPresence
       ? `- /review page: replace where the form POSTs to the REVIEW FORM URL. Be sure to replace the logo with the company logo, or none.`
