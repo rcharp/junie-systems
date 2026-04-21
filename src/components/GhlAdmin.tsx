@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from '@/hooks/use-toast';
-import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown, Copy, Sparkles } from 'lucide-react';
+import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown, Copy, Sparkles, X } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
