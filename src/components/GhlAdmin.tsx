@@ -1198,13 +1198,24 @@ ${deliverable}`;
                 onChange={(v) => setPromptForm({ ...promptForm, reviewFormUrl: v })}
                 helpTitle="How to find the Review Form URL"
                 helpContent={
-                  <ol className="list-decimal pl-5 space-y-2 text-sm">
-                    <li>Open the newly created company <strong>Subaccount</strong> in GoHighLevel.</li>
-                    <li>Navigate to <strong>Automation</strong>.</li>
-                    <li>Open the <strong>Review / Referral Workflows</strong>.</li>
-                    <li>Find the <strong>Inbound Webhook</strong> trigger.</li>
-                    <li>Copy the <strong>URL</strong> from the inbound webhook and paste it here.</li>
-                  </ol>
+                  <div className="space-y-4">
+                    <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
+                      <iframe
+                        src="https://www.loom.com/embed/0907d2a2b7d9469c95a23c9596a9b37f"
+                        frameBorder={0}
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full rounded-md"
+                        title="How to find the Review Form URL"
+                      />
+                    </div>
+                    <ol className="list-decimal pl-5 space-y-2 text-sm">
+                      <li>Open the newly created company <strong>Subaccount</strong> in GoHighLevel.</li>
+                      <li>Navigate to <strong>Automation</strong>.</li>
+                      <li>Open the <strong>Review / Referral Workflows</strong>.</li>
+                      <li>Find the <strong>Inbound Webhook</strong> trigger.</li>
+                      <li>Copy the <strong>URL</strong> from the inbound webhook and paste it here.</li>
+                    </ol>
+                  </div>
                 }
               />
               <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Discount Form URL" value={promptForm.discountFormUrl} onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''} />
