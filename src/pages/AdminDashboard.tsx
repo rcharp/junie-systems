@@ -33,7 +33,7 @@ interface Stats {
 }
 
 const AdminDashboard = () => {
-  const { user, isAdmin, loading, setSigningOut } = useAuth();
+  const { user, isAdmin, loading, adminLoading, setSigningOut } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
@@ -175,7 +175,7 @@ const AdminDashboard = () => {
   };
 
 
-  if (loading || (user && !isAdmin && loading)) {
+  if (loading || (user && adminLoading)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
