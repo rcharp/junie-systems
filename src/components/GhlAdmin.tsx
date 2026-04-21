@@ -40,15 +40,68 @@ const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
   { id: 'chat-widget', label: 'Set up Chat Widget' },
 ];
 
-const SetupChecklist = () => {
+const SetupChecklist = ({ contactId }: { contactId: string }) => {
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
   const completed = SETUP_CHECKLIST_ITEMS.filter((i) => checked[i.id]).length;
   const total = SETUP_CHECKLIST_ITEMS.length;
+
+  // Load progress when contact changes
+  useEffect(() => {
+    if (!contactId) {
+      setChecked({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('ghl_setup_checklist')
+        .select('item_id, completed')
+        .eq('contact_id', contactId);
+      if (!cancelled) {
+        if (error) {
+          toast({ title: 'Failed to load progress', description: error.message, variant: 'destructive' });
+        } else {
+          const map: Record<string, boolean> = {};
+          (data || []).forEach((row: any) => { map[row.item_id] = !!row.completed; });
+          setChecked(map);
+        }
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [contactId]);
+
+  const toggleItem = async (itemId: string, value: boolean) => {
+    if (!contactId) {
+      toast({ title: 'No contact selected', description: 'Add ?contact_id=... to the URL or select a contact first.', variant: 'destructive' });
+      return;
+    }
+    setChecked((prev) => ({ ...prev, [itemId]: value }));
+    const { error } = await supabase
+      .from('ghl_setup_checklist')
+      .upsert({ contact_id: contactId, item_id: itemId, completed: value }, { onConflict: 'contact_id,item_id' });
+    if (error) {
+      // revert on failure
+      setChecked((prev) => ({ ...prev, [itemId]: !value }));
+      toast({ title: 'Save failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  if (!contactId) {
+    return (
+      <div className="rounded-md border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
+        No contact selected. Add <code className="font-mono">?contact_id=&lt;id&gt;</code> to the URL to track progress for a specific customer.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground">
-        {completed} of {total} steps complete
+        {loading ? 'Loading…' : `${completed} of ${total} steps complete`}
+        <span className="ml-2 font-mono text-xs opacity-70">contact: {contactId}</span>
       </div>
       <ul className="space-y-3">
         {SETUP_CHECKLIST_ITEMS.map((item, idx) => (
@@ -59,9 +112,7 @@ const SetupChecklist = () => {
             <Checkbox
               id={`setup-${item.id}`}
               checked={!!checked[item.id]}
-              onCheckedChange={(v) =>
-                setChecked((prev) => ({ ...prev, [item.id]: v === true }))
-              }
+              onCheckedChange={(v) => toggleItem(item.id, v === true)}
               className="mt-0.5"
             />
             <Label
@@ -92,6 +143,7 @@ const SetupChecklist = () => {
     </div>
   );
 };
+
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
@@ -154,6 +206,28 @@ const emptyCreate: CreateForm = {
 const CUSTOM_VALUES_PLACEHOLDER = '{\n  "business_description": "Family-owned plumbing company serving the Richmond area"\n}';
 
 export const GhlAdmin = () => {
+  // URL contact_id param - source of truth for which customer's setup we're tracking
+  const [urlContactId, setUrlContactId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('contact_id') || '';
+  });
+
+  useEffect(() => {
+    const onPop = () => {
+      setUrlContactId(new URLSearchParams(window.location.search).get('contact_id') || '');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const updateContactIdParam = (id: string) => {
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set('contact_id', id);
+    else url.searchParams.delete('contact_id');
+    window.history.replaceState({}, '', url.toString());
+    setUrlContactId(id);
+  };
+
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
   const [creating, setCreating] = useState(false);
 
@@ -909,6 +983,7 @@ ${deliverable}`;
                               onSelect={() => {
                                 setSelectedCreateContactLabel(combined);
                                 setContactId(c.id);
+                                updateContactIdParam(c.id);
                                 setCreateContactOpen(false);
                                 populateCreateFromContactId(c.id);
                               }}
@@ -1174,7 +1249,7 @@ ${deliverable}`;
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent>
-            <SetupChecklist />
+            <SetupChecklist contactId={urlContactId} />
           </CardContent>
         </Card>
       </TabsContent>
