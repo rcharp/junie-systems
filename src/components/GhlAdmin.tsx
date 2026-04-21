@@ -80,6 +80,15 @@ const SetupChecklist = () => {
           </li>
         ))}
       </ul>
+      {completed === total ? (
+        <div className="rounded-md border border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10 px-4 py-3 text-center text-sm font-semibold text-[hsl(142,71%,35%)]">
+          Sub-account setup complete
+        </div>
+      ) : (
+        <div className="rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-center text-sm font-semibold text-destructive">
+          Sub-account setup not complete
+        </div>
+      )}
     </div>
   );
 };
