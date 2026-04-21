@@ -1140,12 +1140,13 @@ ${deliverable}`;
               <Textarea rows={2} value={promptForm.serviceAreas} onChange={(e) => setPromptForm({ ...promptForm, serviceAreas: e.target.value })} placeholder="Comma separated list of cities" />
             </div>
             <div>
-              <Label>About Us<span className="text-destructive ml-0.5">*</span></Label>
-              <Textarea rows={3} value={promptForm.aboutUs} onChange={(e) => setPromptForm({ ...promptForm, aboutUs: e.target.value })} />
+              <Label>About Us</Label>
+              <Textarea rows={3} value={promptForm.aboutUs} onChange={(e) => setPromptForm({ ...promptForm, aboutUs: e.target.value })} placeholder="Leave blank to auto-generate" />
             </div>
             <div>
-              <Label>Trust Bar<span className="text-destructive ml-0.5">*</span></Label>
-              <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Special things about the business" />
+              <Label>Trust Bar</Label>
+              <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Leave blank to auto-generate" />
+            </div>
             </div>
 
             <div className="space-y-2">
