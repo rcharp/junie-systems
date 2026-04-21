@@ -999,7 +999,7 @@ ${deliverable}`;
 
   return (
     <Tabs defaultValue="create" className="w-full">
-      <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2 mb-4">
+      <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2 mb-4 mx-auto w-[60%] min-w-[500px] max-w-full">
         <Label className="text-base font-semibold flex items-center gap-2">
           <UserPlus className="w-4 h-4 text-primary" />
           Populate from GHL Contact
