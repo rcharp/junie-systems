@@ -553,6 +553,25 @@ Deliverable: A fully functional website with all new business information, updat
 
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const handleCopyPrompt = async () => {
+    const requiredFields: { key: keyof typeof promptForm; label: string }[] = [
+      { key: 'businessName', label: 'Business Name' },
+      { key: 'ownerName', label: 'Owner Name' },
+      { key: 'phone', label: 'Phone Number' },
+      { key: 'email', label: 'Email Address' },
+      { key: 'address', label: 'Business Address' },
+      { key: 'hours', label: 'Hours of Operation' },
+      { key: 'googleBusinessPage', label: 'Google Business Page' },
+      { key: 'industry', label: 'Company Industry' },
+      { key: 'services', label: 'Services Offered' },
+      { key: 'serviceAreas', label: 'Service Areas' },
+      { key: 'aboutUs', label: 'About Us' },
+      { key: 'trustBar', label: 'Trust Bar' },
+    ];
+    const missing = requiredFields.filter((f) => !promptForm[f.key]?.trim()).map((f) => f.label);
+    if (missing.length) {
+      toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
+      return;
+    }
     try {
       await navigator.clipboard.writeText(buildLovablePrompt());
       setCopiedPrompt(true);
@@ -1026,17 +1045,17 @@ Deliverable: A fully functional website with all new business information, updat
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Business Name" value={promptForm.businessName} onChange={(v) => setPromptForm({ ...promptForm, businessName: v })} />
-              <Field label="Owner Name" value={promptForm.ownerName} onChange={(v) => setPromptForm({ ...promptForm, ownerName: v })} />
-              <Field label="Phone Number" value={promptForm.phone} onChange={(v) => setPromptForm({ ...promptForm, phone: v })} />
-              <Field label="Email Address" value={promptForm.email} onChange={(v) => setPromptForm({ ...promptForm, email: v })} />
-              <Field label="Business Address" value={promptForm.address} onChange={(v) => setPromptForm({ ...promptForm, address: v })} />
-              <Field label="Hours of Operation" value={promptForm.hours} onChange={(v) => setPromptForm({ ...promptForm, hours: v })} placeholder="Mon-Fri 8a-6p" />
-              <Field label="Google Business Page" value={promptForm.googleBusinessPage} onChange={(v) => setPromptForm({ ...promptForm, googleBusinessPage: v })} placeholder="URL or None" />
+              <Field required label="Business Name" value={promptForm.businessName} onChange={(v) => setPromptForm({ ...promptForm, businessName: v })} />
+              <Field required label="Owner Name" value={promptForm.ownerName} onChange={(v) => setPromptForm({ ...promptForm, ownerName: v })} />
+              <Field required label="Phone Number" value={promptForm.phone} onChange={(v) => setPromptForm({ ...promptForm, phone: v })} />
+              <Field required label="Email Address" value={promptForm.email} onChange={(v) => setPromptForm({ ...promptForm, email: v })} />
+              <Field required label="Business Address" value={promptForm.address} onChange={(v) => setPromptForm({ ...promptForm, address: v })} />
+              <Field required label="Hours of Operation" value={promptForm.hours} onChange={(v) => setPromptForm({ ...promptForm, hours: v })} placeholder="Mon-Fri 8a-6p" />
+              <Field required label="Google Business Page" value={promptForm.googleBusinessPage} onChange={(v) => setPromptForm({ ...promptForm, googleBusinessPage: v })} placeholder="URL" />
               <Field label="Existing Website URL" value={promptForm.existingWebsite} onChange={(v) => setPromptForm({ ...promptForm, existingWebsite: v })} placeholder="URL or None" />
               <Field label="Instagram URL" value={promptForm.instagram} onChange={(v) => setPromptForm({ ...promptForm, instagram: v })} placeholder="URL or None" />
               <Field label="Facebook URL" value={promptForm.facebook} onChange={(v) => setPromptForm({ ...promptForm, facebook: v })} placeholder="URL or None" />
-              <Field label="Company Industry" value={promptForm.industry} onChange={(v) => setPromptForm({ ...promptForm, industry: v })} placeholder="Plumbing, HVAC, etc." />
+              <Field required label="Company Industry" value={promptForm.industry} onChange={(v) => setPromptForm({ ...promptForm, industry: v })} placeholder="Plumbing, HVAC, etc." />
               <Field label="Company Logo URL" value={promptForm.logoUrl} onChange={(v) => setPromptForm({ ...promptForm, logoUrl: v })} placeholder="URL or None" />
               <Field label="Chat Widget Embed Code" value={promptForm.chatWidgetEmbed} onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })} />
               <Field label="Quote Form Webhook URL" value={promptForm.quoteWebhook} onChange={(v) => setPromptForm({ ...promptForm, quoteWebhook: v })} />
@@ -1044,19 +1063,19 @@ Deliverable: A fully functional website with all new business information, updat
               <Field label="Discount Form URL" value={promptForm.discountFormUrl} onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })} />
             </div>
             <div>
-              <Label>Services Offered</Label>
+              <Label>Services Offered<span className="text-destructive ml-0.5">*</span></Label>
               <Textarea rows={2} value={promptForm.services} onChange={(e) => setPromptForm({ ...promptForm, services: e.target.value })} placeholder="Comma separated list" />
             </div>
             <div>
-              <Label>Service Areas</Label>
+              <Label>Service Areas<span className="text-destructive ml-0.5">*</span></Label>
               <Textarea rows={2} value={promptForm.serviceAreas} onChange={(e) => setPromptForm({ ...promptForm, serviceAreas: e.target.value })} placeholder="Comma separated list of cities" />
             </div>
             <div>
-              <Label>About Us</Label>
-              <Textarea rows={3} value={promptForm.aboutUs} onChange={(e) => setPromptForm({ ...promptForm, aboutUs: e.target.value })} placeholder="Or leave blank / 'None'" />
+              <Label>About Us<span className="text-destructive ml-0.5">*</span></Label>
+              <Textarea rows={3} value={promptForm.aboutUs} onChange={(e) => setPromptForm({ ...promptForm, aboutUs: e.target.value })} />
             </div>
             <div>
-              <Label>Trust Bar</Label>
+              <Label>Trust Bar<span className="text-destructive ml-0.5">*</span></Label>
               <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Special things about the business" />
             </div>
 
@@ -1108,7 +1127,10 @@ Deliverable: A fully functional website with all new business information, updat
 
 const Field = ({ label, value, onChange, placeholder, required }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean }) => (
   <div>
-    <Label className="capitalize">{label}</Label>
+    <Label className="capitalize">
+      {label}
+      {required && <span className="text-destructive ml-0.5">*</span>}
+    </Label>
     <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} />
   </div>
 );
