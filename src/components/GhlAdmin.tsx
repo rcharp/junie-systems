@@ -592,6 +592,12 @@ ${techRows}
 | Company Logo URL | ${v(promptForm.logoUrl)} |
 | Company Industry | ${v(promptForm.industry)} |
 
+Services Offered:
+${servicesList}
+
+Service Areas:
+${areasList}
+
 Business Information to Replace:
 
 - Business Name: Make sure to replace this everywhere on the site, including all the pages, in the quote form, and in any meta and SEO tags.
@@ -606,9 +612,9 @@ Business Information to Replace:
 - Facebook: If provided, link the facebook icon in the footer to this link.
 ${businessInfoLines}
 
-Services Offered: This may be a comma separated list, treat each of those as a separate service.
+Services Offered: Use the bulleted list above. Treat each item as a separate service.
 
-Service Areas: This may be a comma separated list, treat each of those as a separate service area.
+Service Areas: Use the bulleted list above. Treat each item as a separate service area.
 
 About Us Section:
 If this is None, create a professional, engaging About Us section based on the business name, services offered, and any information gathered from their existing website. Keep it authentic and focused on their expertise and commitment to customer service.
