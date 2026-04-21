@@ -559,8 +559,6 @@ export const GhlAdmin = () => {
 
     return `You are a senior web designer tasked with remixing this existing website template for a new business client. Your job is to replace all existing business information with the new client's information while preserving ALL existing functionality, layout structure, and interactive features. CRITICAL: Do NOT change any functionality, animations, interactions, or structural elements of the site. Only replace content and update the color scheme.
 
-Plan: ${promptContactPlan || 'Unspecified'}
-
 Information that will be used:
 
 | Field | Value |
