@@ -960,7 +960,10 @@ ${deliverable}`;
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
-        setGlobalContacts(data.contacts || []);
+        const onlyCustomers = (data.contacts || []).filter((c: any) =>
+          Array.isArray(c.tags) && c.tags.some((t: string) => (t || '').toLowerCase().trim() === 'customer')
+        );
+        setGlobalContacts(onlyCustomers);
       } catch (e: any) {
         toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
       } finally {
