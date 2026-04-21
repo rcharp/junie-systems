@@ -602,6 +602,7 @@ ${deliverable}`;
 
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const handleCopyPrompt = async () => {
+    const isPresence = promptContactPlan === 'Presence Plan';
     const requiredFields: { key: keyof typeof promptForm; label: string }[] = [
       { key: 'businessName', label: 'Business Name' },
       { key: 'ownerName', label: 'Owner Name' },
@@ -615,6 +616,11 @@ ${deliverable}`;
       { key: 'serviceAreas', label: 'Service Areas' },
       { key: 'aboutUs', label: 'About Us' },
       { key: 'trustBar', label: 'Trust Bar' },
+      ...(isPresence ? [] : [
+        { key: 'chatWidgetEmbed' as const, label: 'Chat Widget Embed Code' },
+        { key: 'quoteWebhook' as const, label: 'Quote Form Webhook URL' },
+        { key: 'discountFormUrl' as const, label: 'Discount Form URL' },
+      ]),
     ];
     const missing = requiredFields.filter((f) => !promptForm[f.key]?.trim()).map((f) => f.label);
     if (missing.length) {
