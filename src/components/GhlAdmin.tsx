@@ -1026,34 +1026,46 @@ Deliverable: A fully functional website with all new business information, updat
                         <CommandEmpty>No contacts found.</CommandEmpty>
                       )}
                       <CommandGroup>
-                        {promptContacts.map((c) => (
-                          <CommandItem
-                            key={c.id}
-                            value={c.id}
-                            onSelect={() => {
-                              const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
-                              setSelectedPromptContactLabel(label);
-                              setPromptContactId(c.id);
-                              setPromptContactOpen(false);
-                              populatePromptFromContactId(c.id);
-                            }}
-                          >
-                            <Check className={cn('mr-2 h-4 w-4', promptContactId === c.id ? 'opacity-100' : 'opacity-0')} />
-                            <div className="flex flex-col">
-                              <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {[c.email, c.phone].filter(Boolean).join(' · ')}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
+                        {promptContacts.map((c) => {
+                          const businessDisplay = toTitleCase(c.companyName) || toTitleCase(c.name) || '(no name)';
+                          const personDisplay = toTitleCase(c.name);
+                          return (
+                            <CommandItem
+                              key={c.id}
+                              value={c.id}
+                              onSelect={() => {
+                                setSelectedPromptContactLabel(businessDisplay);
+                                setPromptContactId(c.id);
+                                setPromptContactPlan(detectPlanFromTags(c.tags || []));
+                                setPromptContactOpen(false);
+                                populatePromptFromContactId(c.id);
+                              }}
+                            >
+                              <Check className={cn('mr-2 h-4 w-4', promptContactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{businessDisplay}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {[personDisplay, c.email, c.phone].filter(Boolean).join(' · ')}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          );
+                        })}
                       </CommandGroup>
                     </CommandList>
                   </Command>
                 </PopoverContent>
               </Popover>
               <div className="flex items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground truncate">{promptContactId}</span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs text-muted-foreground truncate">{promptContactId}</span>
+                  {promptContactPlan && (
+                    <Badge variant="secondary" className="shrink-0">{promptContactPlan}</Badge>
+                  )}
+                  {promptContactId && !promptContactPlan && !loadingPromptContact && (
+                    <Badge variant="outline" className="shrink-0">No plan tag</Badge>
+                  )}
+                </div>
                 {loadingPromptContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
               </div>
             </div>
