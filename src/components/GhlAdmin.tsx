@@ -642,7 +642,7 @@ For the background images behind the hero section and the Special Offers and Ben
 Site content:
 For content across the site, make sure that the information in it matches the Company Industry from the table above. This includes headers, paragraphs, subtext and subheaders, blog articles, and everything else on the site. Create a sitemap file.
 
-For the "Homeowners Trust Us" header, update the heading to "Homeowners Across ${v(promptForm.serviceAreas, '[service areas]')} Trust ${v(promptForm.businessName, '[Company Name]')}".
+For the "Homeowners Trust Us" header, update the heading to "Customers across [General Area] trust ${v(promptForm.businessName, '[Business Name]')}". Replace [General Area] with a SHORT, natural region name (e.g., a metro area, county, or state) inferred from the Service Areas list above — do NOT paste the full list of cities. Examples: "Greater Columbus", "Central Ohio", "the Richmond Metro".
 
 Instructions:
 1. Systematically go through every page and section of the website.
