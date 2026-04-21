@@ -1246,7 +1246,35 @@ ${deliverable}`;
                   </div>
                 }
               />
-              <Field required={promptContactPlan !== 'Presence Plan'} disabled={promptContactPlan === 'Presence Plan'} label="Discount Form URL" value={promptForm.discountFormUrl} onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })} placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''} />
+              <Field
+                required={promptContactPlan !== 'Presence Plan'}
+                disabled={promptContactPlan === 'Presence Plan'}
+                label="Discount Form URL"
+                value={promptForm.discountFormUrl}
+                onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })}
+                placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : ''}
+                helpTitle="How to find the Discount Form URL"
+                helpContent={
+                  <div className="space-y-4">
+                    <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
+                      <iframe
+                        src="https://www.loom.com/embed/db46ccc583354c518a38483d3ec9cfac"
+                        frameBorder={0}
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full rounded-md"
+                        title="How to find the Discount Form URL"
+                      />
+                    </div>
+                    <ol className="list-decimal pl-5 space-y-2 text-sm">
+                      <li>Open the newly created company <strong>Subaccount</strong> in GoHighLevel.</li>
+                      <li>Navigate to <strong>Automation</strong>.</li>
+                      <li>Open the <strong>Review / Referral Workflows</strong>.</li>
+                      <li>Open the <strong>"Discount form filled in → notify lead and contractor"</strong> workflow.</li>
+                      <li>Copy the <strong>Inbound Webhook URL</strong> and paste it here.</li>
+                    </ol>
+                  </div>
+                }
+              />
             </div>
             <div>
               <Label>Services Offered<span className="text-destructive ml-0.5">*</span></Label>
