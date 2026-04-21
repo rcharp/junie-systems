@@ -192,6 +192,35 @@ const emptyCreate: CreateForm = {
 const CUSTOM_VALUES_PLACEHOLDER = '{\n  "business_description": "Family-owned plumbing company serving the Richmond area"\n}';
 
 export const GhlAdmin = () => {
+  // URL contact_id param - shared identifier for which customer's setup we're tracking
+  const [urlContactId, setUrlContactId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return new URLSearchParams(window.location.search).get('contact_id') || '';
+  });
+
+  useEffect(() => {
+    const onPop = () => {
+      setUrlContactId(new URLSearchParams(window.location.search).get('contact_id') || '');
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  const updateContactIdParam = (id: string) => {
+    const url = new URL(window.location.href);
+    if (id) url.searchParams.set('contact_id', id);
+    else url.searchParams.delete('contact_id');
+    window.history.replaceState({}, '', url.toString());
+    setUrlContactId(id);
+  };
+
+  // Setup tab contact picker state
+  const [setupContacts, setSetupContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [setupContactSearch, setSetupContactSearch] = useState('');
+  const [setupContactsLoading, setSetupContactsLoading] = useState(false);
+  const [setupContactOpen, setSetupContactOpen] = useState(false);
+  const [selectedSetupContactLabel, setSelectedSetupContactLabel] = useState('');
+
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
   const [creating, setCreating] = useState(false);
 
