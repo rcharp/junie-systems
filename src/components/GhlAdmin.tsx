@@ -831,27 +831,31 @@ ${deliverable}`;
                         <CommandEmpty>No contacts found.</CommandEmpty>
                       )}
                       <CommandGroup>
-                        {createContacts.map((c) => (
-                          <CommandItem
-                            key={c.id}
-                            value={c.id}
-                            onSelect={() => {
-                              const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
-                              setSelectedCreateContactLabel(label);
-                              setContactId(c.id);
-                              setCreateContactOpen(false);
-                              populateCreateFromContactId(c.id);
-                            }}
-                          >
-                            <Check className={cn('mr-2 h-4 w-4', contactId === c.id ? 'opacity-100' : 'opacity-0')} />
-                            <div className="flex flex-col">
-                              <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {[c.email, c.phone].filter(Boolean).join(' · ')}
-                              </span>
-                            </div>
-                          </CommandItem>
-                        ))}
+                        {createContacts.map((c) => {
+                          const personDisplay = toTitleCase(c.name);
+                          const businessDisplay = toTitleCase(c.companyName);
+                          const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
+                          return (
+                            <CommandItem
+                              key={c.id}
+                              value={c.id}
+                              onSelect={() => {
+                                setSelectedCreateContactLabel(combined);
+                                setContactId(c.id);
+                                setCreateContactOpen(false);
+                                populateCreateFromContactId(c.id);
+                              }}
+                            >
+                              <Check className={cn('mr-2 h-4 w-4', contactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{combined}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          );
+                        })}
                       </CommandGroup>
                     </CommandList>
                   </Command>
