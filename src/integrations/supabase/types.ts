@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      ghl_setup_checklist: {
+        Row: {
+          completed: boolean
+          contact_id: string
+          created_at: string
+          id: string
+          item_id: string
+          updated_at: string
+        }
+        Insert: {
+          completed?: boolean
+          contact_id: string
+          created_at?: string
+          id?: string
+          item_id: string
+          updated_at?: string
+        }
+        Update: {
+          completed?: boolean
+          contact_id?: string
+          created_at?: string
+          id?: string
+          item_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
