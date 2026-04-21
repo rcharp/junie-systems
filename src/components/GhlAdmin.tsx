@@ -509,6 +509,18 @@ export const GhlAdmin = () => {
     const v = (s: string, fallback = 'None') => (s && s.trim() ? s.trim() : fallback);
     const isPresence = promptContactPlan === 'Presence Plan';
 
+    const toBulletList = (s: string) => {
+      if (!s || !s.trim()) return '- None';
+      return s
+        .split(/[,\n;]+/)
+        .map((x) => x.trim())
+        .filter(Boolean)
+        .map((x) => `- ${x}`)
+        .join('\n');
+    };
+    const servicesList = toBulletList(promptForm.services);
+    const areasList = toBulletList(promptForm.serviceAreas);
+
     const techRows = isPresence
       ? `| Quote Form Email Recipient | ${v(promptForm.email)} |`
       : `| Chat Widget Embed Code | ${v(promptForm.chatWidgetEmbed)} |
@@ -573,8 +585,6 @@ Information that will be used:
 | Existing Website URL | ${v(promptForm.existingWebsite)} |
 | Instagram URL | ${v(promptForm.instagram)} |
 | Facebook URL | ${v(promptForm.facebook)} |
-| Services Offered | ${v(promptForm.services)} |
-| Service Areas | ${v(promptForm.serviceAreas)} |
 | About Us | ${v(promptForm.aboutUs)} |
 | Trust Bar | ${v(promptForm.trustBar)} |
 ${techRows}
