@@ -1342,7 +1342,7 @@ ${deliverable}`;
   );
 };
 
-const Field = ({ label, value, onChange, placeholder, required, disabled, helpTitle, helpContent }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean; disabled?: boolean; helpTitle?: string; helpContent?: React.ReactNode }) => (
+const Field = ({ label, value, onChange, placeholder, required, disabled, helpTitle, helpContent, multiline }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean; disabled?: boolean; helpTitle?: string; helpContent?: React.ReactNode; multiline?: boolean }) => (
   <div>
     <div className="flex items-center gap-2">
       <Label className="capitalize">
