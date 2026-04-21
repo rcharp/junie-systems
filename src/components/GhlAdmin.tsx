@@ -1300,7 +1300,7 @@ const Field = ({ label, value, onChange, placeholder, required, disabled, helpTi
               How Do I find this?
             </button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>{helpTitle || `How to find the ${label}`}</DialogTitle>
               <DialogDescription asChild>
