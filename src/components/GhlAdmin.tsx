@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from '@/hooks/use-toast';
-import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown } from 'lucide-react';
+import { RefreshCw, Plus, Save, UserPlus, Check, ChevronsUpDown, Copy, Sparkles } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -349,6 +349,220 @@ export const GhlAdmin = () => {
 
   const [duplicateDialog, setDuplicateDialog] = useState<{ open: boolean; existing: any | null }>({ open: false, existing: null });
 
+  // Lovable Prompt tab state
+  const [promptForm, setPromptForm] = useState({
+    businessName: '',
+    ownerName: '',
+    phone: '',
+    email: '',
+    address: '',
+    hours: '',
+    googleBusinessPage: '',
+    existingWebsite: '',
+    instagram: '',
+    facebook: '',
+    services: '',
+    serviceAreas: '',
+    aboutUs: '',
+    trustBar: '',
+    chatWidgetEmbed: '',
+    quoteWebhook: '',
+    reviewFormUrl: '',
+    discountFormUrl: '',
+    logoUrl: '',
+    industry: '',
+  });
+  const [promptContacts, setPromptContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [promptContactSearch, setPromptContactSearch] = useState('');
+  const [promptContactsLoading, setPromptContactsLoading] = useState(false);
+  const [promptContactOpen, setPromptContactOpen] = useState(false);
+  const [selectedPromptContactLabel, setSelectedPromptContactLabel] = useState('');
+  const [promptContactId, setPromptContactId] = useState('');
+  const [loadingPromptContact, setLoadingPromptContact] = useState(false);
+
+  useEffect(() => {
+    if (!promptContactOpen) return;
+    const t = setTimeout(async () => {
+      setPromptContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: promptContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setPromptContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setPromptContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [promptContactSearch, promptContactOpen]);
+
+  const populatePromptFromContactId = async (cid: string) => {
+    setLoadingPromptContact(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-get-contact', {
+        body: { contactId: cid },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const c = data.contact || {};
+      const cv = c.customValues || {};
+      const get = (...keys: string[]) => {
+        for (const k of keys) {
+          const found = Object.entries(cv).find(([key]) => key.toLowerCase().replace(/[\s_-]/g, '') === k.toLowerCase().replace(/[\s_-]/g, ''));
+          if (found && found[1]) return String(found[1]);
+        }
+        return '';
+      };
+      const fullAddress = [c.address, c.city, c.state, c.postalCode].filter(Boolean).join(', ');
+      setPromptForm((f) => ({
+        ...f,
+        businessName: c.companyName || c.name || f.businessName,
+        ownerName: [c.firstName, c.lastName].filter(Boolean).join(' ') || f.ownerName,
+        phone: c.phone || f.phone,
+        email: c.email || f.email,
+        address: fullAddress || f.address,
+        hours: get('hours', 'hoursofoperation', 'businesshours') || f.hours,
+        googleBusinessPage: get('googlebusinesspage', 'googlepage', 'gmblink', 'googlebusiness') || f.googleBusinessPage,
+        existingWebsite: c.website || get('website', 'existingwebsite') || f.existingWebsite,
+        instagram: get('instagram', 'instagramurl') || f.instagram,
+        facebook: get('facebook', 'facebookurl') || f.facebook,
+        services: get('services', 'servicesoffered') || f.services,
+        serviceAreas: get('serviceareas', 'areas', 'cities') || f.serviceAreas,
+        aboutUs: get('aboutus', 'about', 'description', 'businessdescription') || f.aboutUs,
+        trustBar: get('trustbar', 'specialthings', 'usp') || f.trustBar,
+        chatWidgetEmbed: get('chatwidget', 'chatembed', 'chatwidgetembed') || f.chatWidgetEmbed,
+        quoteWebhook: get('quotewebhook', 'quoteformwebhook', 'quoteformurl') || f.quoteWebhook,
+        reviewFormUrl: get('reviewformurl', 'reviewform', 'reviewurl') || f.reviewFormUrl,
+        discountFormUrl: get('discountformurl', 'discountform', 'discounturl') || f.discountFormUrl,
+        logoUrl: get('logo', 'logourl', 'companylogo') || f.logoUrl,
+        industry: get('industry', 'companyindustry', 'businesstype') || f.industry,
+      }));
+      toast({ title: 'Contact loaded', description: 'Prompt fields populated' });
+    } catch (e: any) {
+      toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
+    } finally {
+      setLoadingPromptContact(false);
+    }
+  };
+
+  const buildLovablePrompt = () => {
+    const v = (s: string, fallback = 'None') => (s && s.trim() ? s.trim() : fallback);
+    return `You are a senior web designer tasked with remixing this existing website template for a new business client. Your job is to replace all existing business information with the new client's information while preserving ALL existing functionality, layout structure, and interactive features. CRITICAL: Do NOT change any functionality, animations, interactions, or structural elements of the site. Only replace content and update the color scheme.
+
+Information that will be used:
+
+| Field | Value |
+| --- | --- |
+| Business Name | ${v(promptForm.businessName)} |
+| Owner Name | ${v(promptForm.ownerName)} |
+| Phone Number | ${v(promptForm.phone)} |
+| Email Address | ${v(promptForm.email)} |
+| Business Address | ${v(promptForm.address)} |
+| Hours of Operation | ${v(promptForm.hours)} |
+| Google Business Page | ${v(promptForm.googleBusinessPage)} |
+| Existing Website URL | ${v(promptForm.existingWebsite)} |
+| Instagram URL | ${v(promptForm.instagram)} |
+| Facebook URL | ${v(promptForm.facebook)} |
+| Services Offered | ${v(promptForm.services)} |
+| Service Areas | ${v(promptForm.serviceAreas)} |
+| About Us | ${v(promptForm.aboutUs)} |
+| Trust Bar | ${v(promptForm.trustBar)} |
+| Chat Widget Embed Code | ${v(promptForm.chatWidgetEmbed)} |
+| Quote Form Webhook URL | ${v(promptForm.quoteWebhook)} |
+| Review Form URL | ${v(promptForm.reviewFormUrl)} |
+| Discount Form URL | ${v(promptForm.discountFormUrl)} |
+| Company Logo URL | ${v(promptForm.logoUrl)} |
+| Company Industry | ${v(promptForm.industry)} |
+
+Business Information to Replace:
+
+- Business Name: Make sure to replace this everywhere on the site, including all the pages, in the quote form, and in any meta and SEO tags.
+- Owner Name
+- Phone Number
+- Email
+- Business Address
+- Hours of Operation
+- Google Business Page: If provided, use this to pull customer reviews to populate the "What our customers are saying" section of the landing page, as well as the "Trusted by X customers" section underneath the hero text. Also use this information to get the Google Map embed to replace the map embed on the home page, the contact pages, and everywhere else they appear on the site.
+- Existing Website URL: if provided, visit this website to gather additional context and information about the business to enhance the content.
+- Instagram: If provided, link the instagram icon in the footer to this link.
+- Facebook: If provided, link the facebook icon in the footer to this link.
+- /review page: replace where the form POSTs to the REVIEW FORM URL. Be sure to replace the logo with the company logo, or none.
+- /get-your-discount page: replace where the form POSTs to the DISCOUNT FORM URL.
+
+Services Offered: This may be a comma separated list, treat each of those as a separate service.
+
+Service Areas: This may be a comma separated list, treat each of those as a separate service area.
+
+About Us Section:
+If this is None, create a professional, engaging About Us section based on the business name, services offered, and any information gathered from their existing website. Keep it authentic and focused on their expertise and commitment to customer service.
+
+Trust Bar Section:
+Update the trust bar section, directly under the hero section, with information from the Trust Bar section in the table above. If not provided, create the trust bar from information provided by and relevant to the business. Include proper icons for each of the items in the trust bar. Have a minimum of 3 and maximum of 5 items in the Trust Bar.
+
+Hero Section information:
+In the hero section, craft an appropriate H1 header and hero paragraph text for the business using the following information:
+1. The About Us section from above
+2. The Trust Bar section from above
+
+Technical Integrations:
+- Chat Widget Embed Code: Replace the existing chat widget embed code in the footer with this new code. Put the code in index.html so that it propagates across the entire site.
+- Quote Form Webhook URL: Update ALL quote forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to POST submissions to this webhook URL.
+- Review Form URL: Update the form on /review to POST to the review form URL from above.
+- Discount Form URL: Update the form on /get-your-discount to POST to the discount form URL from above.
+
+Logo: Use this URL for the company logo. Replace it in the navbar, in the footer, and anywhere else that the logo is located. In the navbar, set the logo to a fixed height of 150px, and keep the aspect ratio. On mobile, the logo should have a fixed width of 64px, maintaining the aspect ratio.
+
+Photos: [25-50 photos uploaded separately - replace existing imagery throughout the site with these new photos in appropriate locations]. These photos will be attached separately, and will be used for the gallery and the "See Us In Action" section. These should be compressed, optimized, and cropped appropriately. If you can identify before and after photos of completed work, create before and after sliders on both the homepage as well as in the image gallery. Also, update the stock photos in the services section on the homepage to relevant photos that have been uploaded. If none can be found, use stock photos relevant to the industry. Important: DO NOT USE AI GENERATED IMAGES. Use actual stock photos from Pexels or Pixabay or Unsplash.
+
+Blog:
+Update the Blog section with blog articles that are relevant to the company industry, the services offered and the service areas.
+
+Background Images:
+For the background images behind the hero section and the Special Offers and Benefits section, use the best and most appropriate images that have been uploaded. Upscale the images to at least 1600px width, 4k resolution, and keep the aspect ratio. If none can be found, or none are appropriate or look good enough, use unique stock photos that are relevant to the industry.
+
+Site content:
+For content across the site, make sure that the information in it matches the Company Industry from the table above. This includes headers, paragraphs, subtext and subheaders, blog articles, and everything else on the site. Create a sitemap file.
+
+For the "Homeowners Trust Us" header, update the heading to "Homeowners Across ${v(promptForm.serviceAreas, '[service areas]')} Trust ${v(promptForm.businessName, '[Company Name]')}".
+
+Instructions:
+1. Systematically go through every page and section of the website.
+2. Replace all instances of the old business information with the new information provided above.
+3. Update the logo in the header, footer, and any other locations where it appears.
+4. Replace all photos with the newly provided images, maintaining the same layout and image placement structure.
+5. Apply the new color scheme consistently across all pages and components.
+6. Replace the existing chat widget embed code in the footer with the new embed code provided.
+7. Update ALL quote/contact forms throughout the entire site to POST to the provided quote form webhook URL, including:
+   - Quote forms embedded on individual pages
+   - Quote form in the popup modal
+   - Quote form on the dedicated /quote page
+   - Any other quote/contact form instances
+8. If an existing website URL is provided, visit it to gather additional details about the business (services descriptions, tone of voice, unique selling points) to make the content more accurate and comprehensive.
+9. Ensure all contact information (phone, address, social media links, Google Business link) is updated throughout the site.
+10. Update meta tags, page titles, and any SEO elements with the new business name and relevant information.
+11. Verify all links are functional and point to the correct new destinations.
+12. DO NOT alter any existing functionality, animations, forms, interactive elements, or structural layout.
+13. Create a sitemap file.
+
+Deliverable: A fully functional website with all new business information, updated color scheme, replaced imagery, updated chat widget in footer, and all quote forms connected to the new webhook URL, while maintaining 100% of the original template's functionality and user experience.`;
+  };
+
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const handleCopyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(buildLovablePrompt());
+      setCopiedPrompt(true);
+      toast({ title: 'Copied!', description: 'Prompt copied to clipboard' });
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
+
   const submitCreate = async (allowDuplicate: boolean) => {
     setCreating(true);
     try {
@@ -442,9 +656,10 @@ export const GhlAdmin = () => {
 
   return (
     <Tabs defaultValue="create" className="w-full">
-      <TabsList className="grid grid-cols-2 mb-4">
+      <TabsList className="grid grid-cols-3 mb-4">
         <TabsTrigger value="create">Create Sub-account</TabsTrigger>
         <TabsTrigger value="user">Create User</TabsTrigger>
+        <TabsTrigger value="prompt">Lovable Prompt</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">
@@ -742,6 +957,125 @@ export const GhlAdmin = () => {
                 <pre className="overflow-auto whitespace-pre-wrap">{JSON.stringify(createdUserResult.user, null, 2)}</pre>
               </div>
             )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="prompt">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5" /> Create Lovable Website Prompt</CardTitle>
+            <CardDescription>Select a contact to auto-fill business information, then copy the generated prompt to remix a website template in Lovable.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-primary" />
+                Populate from GHL Contact
+              </Label>
+              <p className="text-xs text-muted-foreground">Select a contact to auto-fill all fields below.</p>
+              <Popover open={promptContactOpen} onOpenChange={setPromptContactOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
+                    <span className="truncate">{selectedPromptContactLabel || 'Search a contact...'}</span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Search by name, email, phone..."
+                      value={promptContactSearch}
+                      onValueChange={setPromptContactSearch}
+                    />
+                    <CommandList>
+                      {promptContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                      {!promptContactsLoading && promptContacts.length === 0 && (
+                        <CommandEmpty>No contacts found.</CommandEmpty>
+                      )}
+                      <CommandGroup>
+                        {promptContacts.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.id}
+                            onSelect={() => {
+                              const label = `${c.name}${c.email ? ` — ${c.email}` : ''}`;
+                              setSelectedPromptContactLabel(label);
+                              setPromptContactId(c.id);
+                              setPromptContactOpen(false);
+                              populatePromptFromContactId(c.id);
+                            }}
+                          >
+                            <Check className={cn('mr-2 h-4 w-4', promptContactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                            <div className="flex flex-col">
+                              <span>{c.name}{c.companyName ? ` · ${c.companyName}` : ''}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {[c.email, c.phone].filter(Boolean).join(' · ')}
+                              </span>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground truncate">{promptContactId}</span>
+                {loadingPromptContact && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Business Name" value={promptForm.businessName} onChange={(v) => setPromptForm({ ...promptForm, businessName: v })} />
+              <Field label="Owner Name" value={promptForm.ownerName} onChange={(v) => setPromptForm({ ...promptForm, ownerName: v })} />
+              <Field label="Phone Number" value={promptForm.phone} onChange={(v) => setPromptForm({ ...promptForm, phone: v })} />
+              <Field label="Email Address" value={promptForm.email} onChange={(v) => setPromptForm({ ...promptForm, email: v })} />
+              <Field label="Business Address" value={promptForm.address} onChange={(v) => setPromptForm({ ...promptForm, address: v })} />
+              <Field label="Hours of Operation" value={promptForm.hours} onChange={(v) => setPromptForm({ ...promptForm, hours: v })} placeholder="Mon-Fri 8a-6p" />
+              <Field label="Google Business Page" value={promptForm.googleBusinessPage} onChange={(v) => setPromptForm({ ...promptForm, googleBusinessPage: v })} placeholder="URL or None" />
+              <Field label="Existing Website URL" value={promptForm.existingWebsite} onChange={(v) => setPromptForm({ ...promptForm, existingWebsite: v })} placeholder="URL or None" />
+              <Field label="Instagram URL" value={promptForm.instagram} onChange={(v) => setPromptForm({ ...promptForm, instagram: v })} placeholder="URL or None" />
+              <Field label="Facebook URL" value={promptForm.facebook} onChange={(v) => setPromptForm({ ...promptForm, facebook: v })} placeholder="URL or None" />
+              <Field label="Company Industry" value={promptForm.industry} onChange={(v) => setPromptForm({ ...promptForm, industry: v })} placeholder="Plumbing, HVAC, etc." />
+              <Field label="Company Logo URL" value={promptForm.logoUrl} onChange={(v) => setPromptForm({ ...promptForm, logoUrl: v })} placeholder="URL or None" />
+              <Field label="Chat Widget Embed Code" value={promptForm.chatWidgetEmbed} onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })} />
+              <Field label="Quote Form Webhook URL" value={promptForm.quoteWebhook} onChange={(v) => setPromptForm({ ...promptForm, quoteWebhook: v })} />
+              <Field label="Review Form URL" value={promptForm.reviewFormUrl} onChange={(v) => setPromptForm({ ...promptForm, reviewFormUrl: v })} />
+              <Field label="Discount Form URL" value={promptForm.discountFormUrl} onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })} />
+            </div>
+            <div>
+              <Label>Services Offered</Label>
+              <Textarea rows={2} value={promptForm.services} onChange={(e) => setPromptForm({ ...promptForm, services: e.target.value })} placeholder="Comma separated list" />
+            </div>
+            <div>
+              <Label>Service Areas</Label>
+              <Textarea rows={2} value={promptForm.serviceAreas} onChange={(e) => setPromptForm({ ...promptForm, serviceAreas: e.target.value })} placeholder="Comma separated list of cities" />
+            </div>
+            <div>
+              <Label>About Us</Label>
+              <Textarea rows={3} value={promptForm.aboutUs} onChange={(e) => setPromptForm({ ...promptForm, aboutUs: e.target.value })} placeholder="Or leave blank / 'None'" />
+            </div>
+            <div>
+              <Label>Trust Bar</Label>
+              <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Special things about the business" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-base font-semibold">Generated Prompt</Label>
+                <Button onClick={handleCopyPrompt} variant={copiedPrompt ? 'default' : 'outline'}>
+                  {copiedPrompt ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                  {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
+                </Button>
+              </div>
+              <Textarea
+                readOnly
+                value={buildLovablePrompt()}
+                rows={20}
+                className="font-mono text-xs"
+              />
+            </div>
           </CardContent>
         </Card>
       </TabsContent>
