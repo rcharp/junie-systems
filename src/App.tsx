@@ -37,6 +37,7 @@ import GrowPage from "./pages/GrowPage";
 import PresencePage from "./pages/PresencePage";
 import GrowthPage from "./pages/GrowthPage";
 import FullPage from "./pages/FullPage";
+import GhlPage from "./pages/GhlPage";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/google-auth-callback" element={<GoogleAuthCallback />} />
             <Route path="/setup-guide" element={<SetupGuide />} />
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/ghl" element={<GhlPage />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/sms-policy" element={<SmsPolicy />} />
