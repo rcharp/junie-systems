@@ -1300,28 +1300,6 @@ const Field = ({ label, value, onChange, placeholder, required, disabled, helpTi
         </Dialog>
       )}
     </div>
-      <Label className="capitalize">
-        {label}
-        {required && <span className="text-destructive ml-0.5">*</span>}
-      </Label>
-      {helpContent && (
-        <Dialog>
-          <DialogTrigger asChild>
-            <button type="button" className="text-xs text-primary hover:underline">
-              How Do I find this?
-            </button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{helpTitle || `How to find the ${label}`}</DialogTitle>
-              <DialogDescription asChild>
-                <div className="pt-2">{helpContent}</div>
-              </DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
     <Input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required} disabled={disabled} />
   </div>
 );
