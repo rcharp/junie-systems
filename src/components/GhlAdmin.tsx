@@ -983,6 +983,7 @@ ${deliverable}`;
                               onSelect={() => {
                                 setSelectedCreateContactLabel(combined);
                                 setContactId(c.id);
+                                updateContactIdParam(c.id);
                                 setCreateContactOpen(false);
                                 populateCreateFromContactId(c.id);
                               }}
