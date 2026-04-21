@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
   const [signingOut, setSigningOutState] = useState(false);
   const signingOutRef = useRef(false);
 
@@ -56,6 +57,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error('Error checking admin status:', error);
       setIsAdmin(false);
+    } finally {
+      setAdminLoading(false);
     }
   };
 
@@ -73,6 +76,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setTimeout(() => {
           if (mounted) checkAdminStatus(session.user.id);
         }, 0);
+      } else {
+        setAdminLoading(false);
       }
       
       setLoading(false);
@@ -87,11 +92,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          setAdminLoading(true);
           setTimeout(() => {
             if (mounted) checkAdminStatus(session.user.id);
           }, 0);
         } else {
           setIsAdmin(false);
+          setAdminLoading(false);
         }
       }
     );
@@ -103,7 +110,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, signingOut, setSigningOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, adminLoading, signingOut, setSigningOut }}>
       {children}
     </AuthContext.Provider>
   );
