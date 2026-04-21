@@ -41,10 +41,13 @@ const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
 ];
 
 const SetupChecklist = ({ contactId, onCompletionChange, plan }: { contactId: string; onCompletionChange?: (done: boolean) => void; plan?: string }) => {
+  const isPresence = plan === 'Presence Plan';
+  const isItemDisabled = (id: string) => isPresence && id === 'phone-number';
+  const applicableItems = SETUP_CHECKLIST_ITEMS.filter((i) => !isItemDisabled(i.id));
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
-  const completed = SETUP_CHECKLIST_ITEMS.filter((i) => checked[i.id]).length;
-  const total = SETUP_CHECKLIST_ITEMS.length;
+  const completed = applicableItems.filter((i) => checked[i.id]).length;
+  const total = applicableItems.length;
 
   useEffect(() => {
     onCompletionChange?.(total > 0 && completed === total);
