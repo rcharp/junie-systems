@@ -25,7 +25,64 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
+
+const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
+  { id: 'disable-reselling', label: 'Disable Reselling options for the subaccount' },
+  { id: 'custom-values', label: 'Update custom values' },
+  { id: 'add-user', label: 'Add a user and configure their permissions' },
+  { id: 'phone-number', label: 'Get a phone number', note: 'ONLY for Growth or Full System Plan customers' },
+  { id: 'connect-gmb', label: 'Connect Google My Business account to GHL' },
+  { id: 'reputation-settings', label: 'Update Reputation Management Settings' },
+  { id: 'auto-reviews', label: 'Add automatic Google Reviews scheduling' },
+  { id: 'edit-gmb', label: 'Edit and update Google My Business Page' },
+  { id: 'chat-widget', label: 'Set up Chat Widget' },
+];
+
+const SetupChecklist = () => {
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const completed = SETUP_CHECKLIST_ITEMS.filter((i) => checked[i.id]).length;
+  const total = SETUP_CHECKLIST_ITEMS.length;
+
+  return (
+    <div className="space-y-4">
+      <div className="text-sm text-muted-foreground">
+        {completed} of {total} steps complete
+      </div>
+      <ul className="space-y-3">
+        {SETUP_CHECKLIST_ITEMS.map((item, idx) => (
+          <li
+            key={item.id}
+            className="flex items-start gap-3 rounded-md border border-border bg-card p-3"
+          >
+            <Checkbox
+              id={`setup-${item.id}`}
+              checked={!!checked[item.id]}
+              onCheckedChange={(v) =>
+                setChecked((prev) => ({ ...prev, [item.id]: v === true }))
+              }
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor={`setup-${item.id}`}
+              className="flex-1 cursor-pointer leading-snug"
+            >
+              <span className="font-medium">
+                {idx + 1}. {item.label}
+              </span>
+              {item.note && (
+                <span className="ml-2 text-xs text-muted-foreground">
+                  ({item.note})
+                </span>
+              )}
+            </Label>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
