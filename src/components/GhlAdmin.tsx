@@ -46,7 +46,6 @@ const SetupChecklist = ({ contactId }: { contactId: string }) => {
   const completed = SETUP_CHECKLIST_ITEMS.filter((i) => checked[i.id]).length;
   const total = SETUP_CHECKLIST_ITEMS.length;
 
-  // Load progress when contact changes
   useEffect(() => {
     if (!contactId) {
       setChecked({});
@@ -75,7 +74,7 @@ const SetupChecklist = ({ contactId }: { contactId: string }) => {
 
   const toggleItem = async (itemId: string, value: boolean) => {
     if (!contactId) {
-      toast({ title: 'No contact selected', description: 'Add ?contact_id=... to the URL or select a contact first.', variant: 'destructive' });
+      toast({ title: 'No contact selected', description: 'Pick a contact above to track progress.', variant: 'destructive' });
       return;
     }
     setChecked((prev) => ({ ...prev, [itemId]: value }));
@@ -83,7 +82,6 @@ const SetupChecklist = ({ contactId }: { contactId: string }) => {
       .from('ghl_setup_checklist')
       .upsert({ contact_id: contactId, item_id: itemId, completed: value }, { onConflict: 'contact_id,item_id' });
     if (error) {
-      // revert on failure
       setChecked((prev) => ({ ...prev, [itemId]: !value }));
       toast({ title: 'Save failed', description: error.message, variant: 'destructive' });
     }
@@ -92,7 +90,7 @@ const SetupChecklist = ({ contactId }: { contactId: string }) => {
   if (!contactId) {
     return (
       <div className="rounded-md border border-border bg-muted/30 p-4 text-sm text-muted-foreground">
-        No contact selected. Add <code className="font-mono">?contact_id=&lt;id&gt;</code> to the URL to track progress for a specific customer.
+        Select a contact above to track setup progress.
       </div>
     );
   }
@@ -101,31 +99,20 @@ const SetupChecklist = ({ contactId }: { contactId: string }) => {
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground">
         {loading ? 'Loading…' : `${completed} of ${total} steps complete`}
-        <span className="ml-2 font-mono text-xs opacity-70">contact: {contactId}</span>
       </div>
       <ul className="space-y-3">
         {SETUP_CHECKLIST_ITEMS.map((item, idx) => (
-          <li
-            key={item.id}
-            className="flex items-start gap-3 rounded-md border border-border bg-card p-3"
-          >
+          <li key={item.id} className="flex items-start gap-3 rounded-md border border-border bg-card p-3">
             <Checkbox
               id={`setup-${item.id}`}
               checked={!!checked[item.id]}
               onCheckedChange={(v) => toggleItem(item.id, v === true)}
               className="mt-0.5"
             />
-            <Label
-              htmlFor={`setup-${item.id}`}
-              className="flex-1 cursor-pointer leading-snug"
-            >
-              <span className="font-medium">
-                {idx + 1}. {item.label}
-              </span>
+            <Label htmlFor={`setup-${item.id}`} className="flex-1 cursor-pointer leading-snug">
+              <span className="font-medium">{idx + 1}. {item.label}</span>
               {item.note && (
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ({item.note})
-                </span>
+                <span className="ml-2 text-xs text-muted-foreground">({item.note})</span>
               )}
             </Label>
           </li>
@@ -143,7 +130,6 @@ const SetupChecklist = ({ contactId }: { contactId: string }) => {
     </div>
   );
 };
-
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
@@ -206,7 +192,7 @@ const emptyCreate: CreateForm = {
 const CUSTOM_VALUES_PLACEHOLDER = '{\n  "business_description": "Family-owned plumbing company serving the Richmond area"\n}';
 
 export const GhlAdmin = () => {
-  // URL contact_id param - source of truth for which customer's setup we're tracking
+  // URL contact_id param - shared identifier for which customer's setup we're tracking
   const [urlContactId, setUrlContactId] = useState<string>(() => {
     if (typeof window === 'undefined') return '';
     return new URLSearchParams(window.location.search).get('contact_id') || '';
@@ -227,6 +213,13 @@ export const GhlAdmin = () => {
     window.history.replaceState({}, '', url.toString());
     setUrlContactId(id);
   };
+
+  // Setup tab contact picker state
+  const [setupContacts, setSetupContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [setupContactSearch, setSetupContactSearch] = useState('');
+  const [setupContactsLoading, setSetupContactsLoading] = useState(false);
+  const [setupContactOpen, setSetupContactOpen] = useState(false);
+  const [selectedSetupContactLabel, setSelectedSetupContactLabel] = useState('');
 
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
   const [creating, setCreating] = useState(false);
@@ -337,6 +330,27 @@ export const GhlAdmin = () => {
     }, 300);
     return () => clearTimeout(t);
   }, [createContactSearch, createContactOpen]);
+
+  // Setup tab: debounced contact search
+  useEffect(() => {
+    if (!setupContactOpen) return;
+    const t = setTimeout(async () => {
+      setSetupContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: setupContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setSetupContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setSetupContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [setupContactSearch, setupContactOpen]);
 
   const populateCreateFromContactId = async (cid: string) => {
     setLoadingContact(true);
@@ -984,6 +998,7 @@ ${deliverable}`;
                                 setSelectedCreateContactLabel(combined);
                                 setContactId(c.id);
                                 updateContactIdParam(c.id);
+                                setSelectedSetupContactLabel(combined);
                                 setCreateContactOpen(false);
                                 populateCreateFromContactId(c.id);
                               }}
@@ -1248,7 +1263,68 @@ ${deliverable}`;
             <CardTitle className="flex items-center gap-2"><Check className="w-5 h-5" /> Set Up Sub-Account Checklist</CardTitle>
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-primary" />
+                Populate from GHL Contact
+              </Label>
+              <p className="text-xs text-muted-foreground">Select a contact to load and track their setup progress.</p>
+              <Popover open={setupContactOpen} onOpenChange={setSetupContactOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
+                    <span className="truncate">
+                      {selectedSetupContactLabel || (urlContactId ? urlContactId : 'Search a contact...')}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      placeholder="Search by name, email, phone..."
+                      value={setupContactSearch}
+                      onValueChange={setSetupContactSearch}
+                    />
+                    <CommandList>
+                      {setupContactsLoading && <div className="p-3 text-xs text-muted-foreground">Searching...</div>}
+                      {!setupContactsLoading && setupContacts.length === 0 && (
+                        <CommandEmpty>No contacts found.</CommandEmpty>
+                      )}
+                      <CommandGroup>
+                        {setupContacts.map((c) => {
+                          const personDisplay = toTitleCase(c.name);
+                          const businessDisplay = toTitleCase(c.companyName);
+                          const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
+                          return (
+                            <CommandItem
+                              key={c.id}
+                              value={c.id}
+                              onSelect={() => {
+                                setSelectedSetupContactLabel(combined);
+                                updateContactIdParam(c.id);
+                                setSetupContactOpen(false);
+                              }}
+                            >
+                              <Check className={cn('mr-2 h-4 w-4', urlContactId === c.id ? 'opacity-100' : 'opacity-0')} />
+                              <div className="flex flex-col">
+                                <span className="font-medium">{combined}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {[c.email, c.phone].filter(Boolean).join(' · ')}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-xs text-muted-foreground truncate font-mono">{urlContactId}</span>
+              </div>
+            </div>
             <SetupChecklist contactId={urlContactId} />
           </CardContent>
         </Card>
