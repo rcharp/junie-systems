@@ -81,7 +81,7 @@ const SetupChecklist = () => {
         ))}
       </ul>
       {completed === total ? (
-        <div className="rounded-md border border-green-600 bg-green-50 px-4 py-3 text-center text-sm font-semibold text-green-700 dark:bg-green-950/30 dark:text-green-400">
+        <div className="rounded-md border border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10 px-4 py-3 text-center text-sm font-semibold text-[hsl(142,71%,35%)]">
           Sub-account setup complete
         </div>
       ) : (
