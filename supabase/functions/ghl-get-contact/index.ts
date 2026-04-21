@@ -92,8 +92,14 @@ Deno.serve(async (req) => {
     const existingWebsiteUrl = findField(['existingwebsiteurl', 'currentwebsite', 'existingwebsite', 'websiteurl', 'currentwebsiteurl']);
     const companyIndustry = findField(['companyindustry', 'industry', 'businessindustry', 'businesstype']);
     const companyLogoUrl = findField(['companylogourl', 'companylogo', 'logourl', 'logo']);
-    const servicesOffered = findField(['alltheservicesyouofferandthepriceforeachservice', 'servicesandprices', 'servicesoffered', 'services', 'serviceslist', 'offeredservices']);
-    const serviceAreas = findField(['serviceareas', 'areas', 'cities', 'servicearea', 'locationsserved', 'areasserved']);
+    const servicesOffered = findField(
+      ['alltheservicesyouofferandthepriceforeachservice', 'servicesandpricing', 'servicesandprices', 'servicesoffered', 'serviceslist', 'offeredservices', 'servicesandprice', 'servicesprice'],
+      ['area', 'areas', 'location', 'city', 'cities', 'county', 'counties', 'zip', 'region']
+    );
+    const serviceAreas = findField(
+      ['yourlocationandtheareasthatyouservice', 'locationandareas', 'serviceareas', 'servicearea', 'areasserviced', 'areasserved', 'areasyouservice', 'locationsserved', 'citiesserved', 'countiesserved'],
+      ['price', 'pricing', 'cost', 'rate']
+    );
     const aboutUs = findField(['aboutus', 'about', 'aboutussection', 'businessdescription', 'description']);
     const trustBar = findField(['trustbar', 'specialthings', 'usp', 'uniqueselling', 'whychooseus']);
 
