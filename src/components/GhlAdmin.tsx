@@ -987,6 +987,38 @@ ${deliverable}`;
   };
 
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [promptGenerated, setPromptGenerated] = useState(false);
+
+  const getRequiredPromptFields = (): { key: keyof typeof promptForm; label: string }[] => {
+    const isPresence = promptContactPlan === 'Presence Plan';
+    return [
+      { key: 'businessName', label: 'Business Name' },
+      { key: 'ownerName', label: 'Owner Name' },
+      { key: 'phone', label: 'Phone Number' },
+      { key: 'email', label: 'Email Address' },
+      { key: 'address', label: 'Business Address' },
+      { key: 'hours', label: 'Hours of Operation' },
+      { key: 'googleBusinessPage', label: 'Google Reviews URL' },
+      { key: 'industry', label: 'Company Industry' },
+      { key: 'services', label: 'Services Offered' },
+      { key: 'serviceAreas', label: 'Service Areas' },
+      { key: 'chatWidgetEmbed', label: 'Chat Widget Embed Code' },
+      { key: 'quoteWebhook', label: 'Quote Form Webhook URL' },
+      ...(isPresence ? [] : [
+        { key: 'discountFormUrl' as const, label: 'Discount Form URL' },
+      ]),
+    ];
+  };
+
+  const missingPromptFields = getRequiredPromptFields().filter((f) => !promptForm[f.key]?.trim());
+  const allRequiredFilled = missingPromptFields.length === 0;
+
+  useEffect(() => {
+    if (!allRequiredFilled && promptGenerated) {
+      setPromptGenerated(false);
+    }
+  }, [allRequiredFilled, promptGenerated]);
+
   const handleCopyPrompt = async () => {
     const isPresence = promptContactPlan === 'Presence Plan';
     const requiredFields: { key: keyof typeof promptForm; label: string }[] = [
