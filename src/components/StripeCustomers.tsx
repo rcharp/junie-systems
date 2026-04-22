@@ -104,9 +104,9 @@ export const StripeCustomers = () => {
                   <TableCell>{businesses[(c.email || '').toLowerCase()] || '—'}</TableCell>
                   <TableCell>
                     {websiteCreated[(c.email || '').toLowerCase()] ? (
-                      <Check className="w-5 h-5 text-green-600" />
+                      <Check className="w-5 h-5 text-success" />
                     ) : (
-                      <X className="w-5 h-5 text-red-600" />
+                      <X className="w-5 h-5 text-destructive" />
                     )}
                   </TableCell>
                   <TableCell>
