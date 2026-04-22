@@ -847,7 +847,8 @@ export const GhlAdmin = () => {
     const areasList = toBulletList(promptForm.serviceAreas);
 
     const techRows = isPresence
-      ? `| Quote Form Email Recipient | ${v(promptForm.email)} |`
+      ? `| Chat Widget Embed Code | ${v(promptForm.chatWidgetEmbed)} |
+| Quote Form Webhook URL | ${v(promptForm.quoteWebhook)} |`
       : `| Chat Widget Embed Code | ${v(promptForm.chatWidgetEmbed)} |
 | Quote Form Webhook URL | ${v(promptForm.quoteWebhook)} |
 | Discount Form URL | ${v(promptForm.discountFormUrl)} |`;
@@ -858,12 +859,14 @@ export const GhlAdmin = () => {
 
     const technicalIntegrations = isPresence
       ? `Technical Integrations (Presence Plan):
-- Quote Forms: The business is on the Presence Plan and does NOT have a chat widget, quote webhook, or discount form. Wire ALL quote/contact forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to ALWAYS send the submission as an email to the company email address: ${v(promptForm.email)}. Use the standard email-sending edge function pattern already used in the template. Do NOT include a chat widget. Do NOT include a /get-your-discount page or link to it.
+- Chat Widget Embed Code: Embed this code in the footer of the index page (place it in index.html) so it propagates across the entire site. Replace any existing chat widget embed code.
+- Quote Form Webhook URL: Update ALL quote/contact forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to POST submissions to this webhook URL.
 - Review: Update the form on /review to POST to the Review Form URL from above. ${reviewRedirect}
+- Discount Form: The Presence Plan does NOT include a discount form. Do NOT include a /get-your-discount page or link to it.
 - Existing Website URL: Only use the existing website URL to pull additional context/information about the business if needed to enrich the new site's content. Do NOT link to it from the new site.`
       : `Technical Integrations:
 - Chat Widget Embed Code: Embed this code in the footer of the index page (place it in index.html) so it propagates across the entire site. Replace any existing chat widget embed code.
-- Quote Form Webhook URL: On the Growth and Full plans, update ALL quote/contact forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to POST submissions to this webhook URL.
+- Quote Form Webhook URL: Update ALL quote/contact forms throughout the site (including forms on pages, in the popup modal, and on the /quote page) to POST submissions to this webhook URL.
 - Review: Update the form on /review to POST to the Review Form URL from above. ${reviewRedirect}
 - Discount Form URL: Update the form on /get-your-discount to POST to the Discount Form URL from above.
 - Existing Website URL: Only use the existing website URL to pull additional context/information about the business if needed to enrich the new site's content. Do NOT link to it from the new site.`;
@@ -873,12 +876,10 @@ export const GhlAdmin = () => {
       : `- /review page: replace where the form POSTs to the REVIEW FORM URL. Be sure to replace the logo with the company logo, or none.
 - /get-your-discount page: replace where the form POSTs to the DISCOUNT FORM URL.`;
 
-    const stepSix = isPresence
-      ? `6. Remove the chat widget from the footer (Presence Plan does not include a chat widget).`
-      : `6. Replace the existing chat widget embed code in the footer with the new embed code provided.`;
+    const stepSix = `6. Replace the existing chat widget embed code in the footer with the new embed code provided.`;
 
     const stepSeven = isPresence
-      ? `7. Update ALL quote/contact forms throughout the entire site to send submissions as an email to the business email address (${v(promptForm.email)}), including:
+      ? `7. Update ALL quote/contact forms throughout the entire site to POST to the provided quote form webhook URL, including:
    - Quote forms embedded on individual pages
    - Quote form in the popup modal
    - Quote form on the dedicated /quote page
@@ -890,9 +891,7 @@ export const GhlAdmin = () => {
    - Quote form on the dedicated /quote page
    - Any other quote/contact form instances`;
 
-    const deliverable = isPresence
-      ? `Deliverable: A fully functional website with all new business information, updated color scheme, replaced imagery, no chat widget in footer, and all quote forms wired to email submissions to the business's email address, while maintaining 100% of the original template's functionality and user experience.`
-      : `Deliverable: A fully functional website with all new business information, updated color scheme, replaced imagery, updated chat widget in footer, and all quote forms connected to the new webhook URL, while maintaining 100% of the original template's functionality and user experience.`;
+    const deliverable = `Deliverable: A fully functional website with all new business information, updated color scheme, replaced imagery, updated chat widget in footer, and all quote forms connected to the new webhook URL, while maintaining 100% of the original template's functionality and user experience.`;
 
     return `You are a senior web designer tasked with remixing this existing website template for a new business client. Your job is to replace all existing business information with the new client's information while preserving ALL existing functionality, layout structure, and interactive features. CRITICAL: Do NOT change any functionality, animations, interactions, or structural elements of the site. Only replace content and update the color scheme.
 
