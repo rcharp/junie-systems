@@ -1402,7 +1402,21 @@ ${deliverable}`;
             <CardTitle className="flex items-center gap-2"><Check className="w-5 h-5" /> Set Up Sub-Account Checklist</CardTitle>
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">Step 1 - Set Up Client Sub-Account</h3>
+              <div className="w-1/3 min-w-[280px]">
+                <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
+                  <iframe
+                    src="https://www.loom.com/embed/2f486ae3c51043158a1edb9632fd1d1f"
+                    frameBorder={0}
+                    allowFullScreen
+                    className="absolute top-0 left-0 w-full h-full rounded-md"
+                    title="Step 1 - Set Up Client Sub-Account"
+                  />
+                </div>
+              </div>
+            </div>
             <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={promptContactPlan} />
           </CardContent>
         </Card>
