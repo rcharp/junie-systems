@@ -1019,43 +1019,26 @@ ${deliverable}`;
     }
   }, [allRequiredFilled, promptGenerated]);
 
-  const handleCopyPrompt = async () => {
-    const isPresence = promptContactPlan === 'Presence Plan';
-    const requiredFields: { key: keyof typeof promptForm; label: string }[] = [
-      { key: 'businessName', label: 'Business Name' },
-      { key: 'ownerName', label: 'Owner Name' },
-      { key: 'phone', label: 'Phone Number' },
-      { key: 'email', label: 'Email Address' },
-      { key: 'address', label: 'Business Address' },
-      { key: 'hours', label: 'Hours of Operation' },
-      { key: 'googleBusinessPage', label: 'Google Business Page' },
-      { key: 'industry', label: 'Company Industry' },
-      { key: 'services', label: 'Services Offered' },
-      { key: 'serviceAreas', label: 'Service Areas' },
-      { key: 'chatWidgetEmbed', label: 'Chat Widget Embed Code' },
-      { key: 'quoteWebhook', label: 'Quote Form Webhook URL' },
-      ...(isPresence ? [] : [
-        { key: 'discountFormUrl' as const, label: 'Discount Form URL' },
-      ]),
-    ];
-    const missing = requiredFields.filter((f) => !promptForm[f.key]?.trim()).map((f) => f.label);
-    if (missing.length) {
-      toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
-      return;
+  const handleGeneratePrompt = () => {
+    if (!allRequiredFilled) return;
+    setPromptGenerated(true);
+    if (urlContactId) {
+      setStep3Done(true);
+      markStep(STEP3_KEY, true, urlContactId);
     }
+  };
+
+  const handleCopyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(buildLovablePrompt());
       setCopiedPrompt(true);
       toast({ title: 'Copied!', description: 'Prompt copied to clipboard' });
       setTimeout(() => setCopiedPrompt(false), 2000);
-      if (urlContactId) {
-        setStep3Done(true);
-        markStep(STEP3_KEY, true, urlContactId);
-      }
     } catch {
       toast({ title: 'Copy failed', variant: 'destructive' });
     }
   };
+
 
   const submitCreate = async (allowDuplicate: boolean) => {
     setCreating(true);
