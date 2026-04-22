@@ -21,7 +21,7 @@ import { CallInitiationFailuresMonitor } from '@/components/CallInitiationFailur
 import { SystemTestRunner } from '@/components/SystemTestRunner';
 import { AppointmentSyncQueue } from '@/components/AppointmentSyncQueue';
 import BlogAutomation from '@/components/BlogAutomation';
-import { StripeCustomers } from '@/components/StripeCustomers';
+import { GhlAdmin } from '@/components/GhlAdmin';
 import { useNavigate, Link } from 'react-router-dom';
 import { handleRobustSignOut } from '@/lib/auth-utils';
 
@@ -358,11 +358,11 @@ const AdminDashboard = () => {
         </div>
 
         <div className="mb-4 flex justify-end">
-          <Button variant="outline" onClick={() => navigate('/ghl')}>
-            Open GHL Admin
+          <Button variant="outline" onClick={() => navigate('/customers')}>
+            View Customers
           </Button>
         </div>
-        <StripeCustomers />
+        <GhlAdmin />
       </main>
     </div>
   );

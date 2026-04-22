@@ -38,6 +38,7 @@ import PresencePage from "./pages/PresencePage";
 import GrowthPage from "./pages/GrowthPage";
 import FullPage from "./pages/FullPage";
 import GhlPage from "./pages/GhlPage";
+import CustomersPage from "./pages/CustomersPage";
 import PipelineLayout from "./features/personalized-website/components/PipelineLayout";
 import PipelineDashboard from "./features/personalized-website/pages/PipelineDashboard";
 import NewRun from "./features/personalized-website/pages/NewRun";
@@ -68,6 +69,7 @@ const App = () => (
             <Route path="/setup-guide" element={<SetupGuide />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/ghl" element={<GhlPage />} />
+            <Route path="/customers" element={<CustomersPage />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/sms-policy" element={<SmsPolicy />} />
