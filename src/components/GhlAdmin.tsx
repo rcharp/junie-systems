@@ -1199,7 +1199,7 @@ ${deliverable}`;
         <Popover open={globalContactOpen} onOpenChange={setGlobalContactOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" role="combobox" className="w-full h-12 justify-between font-normal text-base bg-background">
-              <span className="truncate">{globalContactLabel || 'Search a contact...'}</span>
+              <span className="truncate">{globalContactLabel || 'Select a Customer...'}</span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
