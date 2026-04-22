@@ -762,7 +762,7 @@ export const GhlAdmin = () => {
         ...f,
         businessName: c.companyName || c.name || f.businessName,
         ownerName: [c.firstName, c.lastName].filter(Boolean).join(' ') || f.ownerName,
-        phone: c.phone || f.phone,
+        phone: '',
         email: c.email || f.email,
         address: fullAddress || f.address,
         hours: cv.hours_of_operation || get('hours', 'hoursofoperation', 'businesshours') || f.hours,
@@ -814,7 +814,7 @@ export const GhlAdmin = () => {
           ...f,
           businessName: norm.businessName || f.businessName,
           ownerName: norm.ownerName || f.ownerName,
-          phone: norm.phone || f.phone,
+          phone: '',
           services: norm.services || f.services,
           serviceAreas: norm.serviceAreas || f.serviceAreas,
           aboutUs: norm.aboutUs || f.aboutUs,
@@ -1637,12 +1637,15 @@ ${deliverable}`;
                 helpContent={
                   promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full Plan' ? (
                     <div className="space-y-3 text-sm">
-                      <ol className="list-decimal pl-5 space-y-2">
-                        <li>Log in to your <strong>Signal House</strong> account.</li>
-                        <li>Navigate to <strong>Numbers</strong> (or <strong>Phone Numbers</strong>) in the sidebar.</li>
-                        <li>Locate the number provisioned for this client.</li>
-                        <li>Copy the full phone number (including country code) and paste it here.</li>
-                      </ol>
+                      <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
+                        <iframe
+                          src="https://www.loom.com/embed/8b81ff853c4c4782badfdbb3793cdb80"
+                          frameBorder={0}
+                          allowFullScreen
+                          className="absolute inset-0 w-full h-full rounded-md"
+                          title="How to find the Signal House Phone Number"
+                        />
+                      </div>
                     </div>
                   ) : undefined
                 }
