@@ -229,13 +229,19 @@ const emptyCreate: CreateForm = {
 const CUSTOM_VALUES_PLACEHOLDER = '{\n  "business_description": "Family-owned plumbing company serving the Richmond area"\n}';
 
 export const GhlAdmin = () => {
-  // URL contact_id param - shared identifier for which customer's setup we're tracking
-  const [urlContactId, setUrlContactId] = useState<string>(() => {
-    if (typeof window === 'undefined') return '';
-    return new URLSearchParams(window.location.search).get('contact_id') || '';
-  });
+  // URL contact_id param - shared identifier for which customer's setup we're tracking.
+  // Always starts empty on page load; user must select a contact from the dropdown.
+  const [urlContactId, setUrlContactId] = useState<string>('');
 
   useEffect(() => {
+    // Clear any contact_id query param present on initial load so nothing pre-fills.
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('contact_id')) {
+        url.searchParams.delete('contact_id');
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
     const onPop = () => {
       setUrlContactId(new URLSearchParams(window.location.search).get('contact_id') || '');
     };
