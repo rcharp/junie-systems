@@ -1638,7 +1638,27 @@ ${deliverable}`;
                 onChange={(v) => setPromptForm({ ...promptForm, chatWidgetEmbed: v })}
                 placeholder='<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="XXXXXXXXXXXXXXXXXXXXXXXX"></script>'
                 multiline
-...
+                helpTitle="How to find the Chat Widget Embed Code"
+                helpContent={
+                  <div className="space-y-4">
+                    <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
+                      <iframe
+                        src="https://www.loom.com/embed/e02f2b7c082b4e12beace8e654fe1ef4"
+                        frameBorder={0}
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full rounded-md"
+                        title="How to find the Chat Widget Embed Code"
+                      />
+                    </div>
+                    <ol className="list-decimal pl-5 space-y-2 text-sm">
+                      <li>Open the newly created company <strong>Subaccount</strong> in GoHighLevel.</li>
+                      <li>Navigate to <strong>Sites</strong> → <strong>Chat Widget</strong>.</li>
+                      <li>Configure (or open) the chat widget and locate the <strong>Embed Code</strong>.</li>
+                      <li>Copy the full embed code snippet and paste it here.</li>
+                    </ol>
+                  </div>
+                }
+              />
               <Field
                 required
                 label="Quote Form Webhook URL"
