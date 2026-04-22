@@ -1627,7 +1627,25 @@ ${deliverable}`;
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field required label="Business Name" value={promptForm.businessName} onChange={(v) => setPromptForm({ ...promptForm, businessName: v })} />
               <Field required label="Owner Name" value={promptForm.ownerName} onChange={(v) => setPromptForm({ ...promptForm, ownerName: v })} />
-              <Field required label="Phone Number" value={promptForm.phone} onChange={(v) => setPromptForm({ ...promptForm, phone: v })} />
+              <Field
+                required
+                label={promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full Plan' ? 'Signal House Phone Number' : 'Phone Number'}
+                value={promptForm.phone}
+                onChange={(v) => setPromptForm({ ...promptForm, phone: v })}
+                helpTitle={promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full Plan' ? 'How to find the Signal House Phone Number' : undefined}
+                helpContent={
+                  promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full Plan' ? (
+                    <div className="space-y-3 text-sm">
+                      <ol className="list-decimal pl-5 space-y-2">
+                        <li>Log in to your <strong>Signal House</strong> account.</li>
+                        <li>Navigate to <strong>Numbers</strong> (or <strong>Phone Numbers</strong>) in the sidebar.</li>
+                        <li>Locate the number provisioned for this client.</li>
+                        <li>Copy the full phone number (including country code) and paste it here.</li>
+                      </ol>
+                    </div>
+                  ) : undefined
+                }
+              />
               <Field required label="Email Address" value={promptForm.email} onChange={(v) => setPromptForm({ ...promptForm, email: v })} />
               <Field required label="Business Address" value={promptForm.address} onChange={(v) => setPromptForm({ ...promptForm, address: v })} />
               <Field required label="Hours of Operation" value={promptForm.hours} onChange={(v) => setPromptForm({ ...promptForm, hours: v })} placeholder="Mon-Fri 8a-6p" />
