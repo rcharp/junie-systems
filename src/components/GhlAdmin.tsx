@@ -762,7 +762,7 @@ export const GhlAdmin = () => {
         ...f,
         businessName: c.companyName || c.name || f.businessName,
         ownerName: [c.firstName, c.lastName].filter(Boolean).join(' ') || f.ownerName,
-        phone: c.phone || f.phone,
+        phone: '',
         email: c.email || f.email,
         address: fullAddress || f.address,
         hours: cv.hours_of_operation || get('hours', 'hoursofoperation', 'businesshours') || f.hours,
