@@ -1001,9 +1001,9 @@ ${deliverable}`;
       { key: 'industry', label: 'Company Industry' },
       { key: 'services', label: 'Services Offered' },
       { key: 'serviceAreas', label: 'Service Areas' },
+      { key: 'chatWidgetEmbed', label: 'Chat Widget Embed Code' },
+      { key: 'quoteWebhook', label: 'Quote Form Webhook URL' },
       ...(isPresence ? [] : [
-        { key: 'chatWidgetEmbed' as const, label: 'Chat Widget Embed Code' },
-        { key: 'quoteWebhook' as const, label: 'Quote Form Webhook URL' },
         { key: 'discountFormUrl' as const, label: 'Discount Form URL' },
       ]),
     ];
