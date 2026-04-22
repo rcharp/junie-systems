@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from '@/hooks/use-toast';
-import { RefreshCw, Users } from 'lucide-react';
+import { RefreshCw, Users, Check, X } from 'lucide-react';
 
 export const StripeCustomers = () => {
   const [customers, setCustomers] = useState<any[]>([]);
   const [businesses, setBusinesses] = useState<Record<string, string>>({});
+  const [websiteCreated, setWebsiteCreated] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export const StripeCustomers = () => {
         supabase.functions.invoke('ghl-lookup-contacts-by-email', { body: { emails } })
           .then(({ data: gd }) => {
             if (gd?.businesses) setBusinesses(gd.businesses);
+            if (gd?.websiteCreated) setWebsiteCreated(gd.websiteCreated);
           })
           .catch(() => {});
       }
@@ -90,6 +92,7 @@ export const StripeCustomers = () => {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Business</TableHead>
+                <TableHead>Website</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
@@ -99,6 +102,13 @@ export const StripeCustomers = () => {
                 <TableRow key={c.customerId}>
                   <TableCell>{c.name || '—'}</TableCell>
                   <TableCell>{businesses[(c.email || '').toLowerCase()] || '—'}</TableCell>
+                  <TableCell>
+                    {websiteCreated[(c.email || '').toLowerCase()] ? (
+                      <Check className="w-5 h-5 text-success" />
+                    ) : (
+                      <X className="w-5 h-5 text-destructive" />
+                    )}
+                  </TableCell>
                   <TableCell>
                     {c.amount != null ? `$${c.amount}/${c.interval || 'mo'}` : '—'}
                   </TableCell>
