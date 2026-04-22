@@ -195,6 +195,19 @@ const SetupChecklist = ({ contactId, onCompletionChange, plan, business }: { con
                 >
                   ({disabled ? 'N/A for Presence Plan' : isDone ? 'Complete' : 'Not Complete'})
                 </span>
+                {item.id === 'edit-gmb' && !disabled && (
+                  <div className="mt-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); openGmbDialog(); }}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Generate GMB description with AI
+                    </Button>
+                  </div>
+                )}
               </Label>
             </li>
           );
@@ -209,9 +222,43 @@ const SetupChecklist = ({ contactId, onCompletionChange, plan, business }: { con
           Sub-account setup not complete
         </div>
       )}
+
+      <Dialog open={gmbOpen} onOpenChange={setGmbOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Google Business Profile description</DialogTitle>
+            <DialogDescription>
+              AI-generated description tailored to this business. Edit as needed, then copy and paste into Google Business Profile.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              value={gmbDescription}
+              onChange={(e) => setGmbDescription(e.target.value)}
+              placeholder={gmbLoading ? 'Generating…' : 'Description will appear here.'}
+              rows={10}
+              disabled={gmbLoading}
+            />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{gmbDescription.length} / 750 characters</span>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={generateGmbDescription} disabled={gmbLoading}>
+                  <RefreshCw className={cn('h-4 w-4', gmbLoading && 'animate-spin')} />
+                  Regenerate
+                </Button>
+                <Button type="button" size="sm" onClick={copyGmbDescription} disabled={!gmbDescription || gmbLoading}>
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
