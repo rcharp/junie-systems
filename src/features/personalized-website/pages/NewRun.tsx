@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 
-const BASE = "/personalized-website";
+const BASE = "/loom";
 
 export default function NewRun() {
   const navigate = useNavigate();
