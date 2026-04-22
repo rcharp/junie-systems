@@ -25,7 +25,6 @@ export const StripeCustomers = () => {
       if (data?.error) throw new Error(data.error);
       const list = data.customers || [];
       setCustomers(list);
-      toast({ title: 'Loaded', description: `${data.total} customers` });
 
       // Lookup GHL business names by email in background
       const emails = list.map((c: any) => c.email).filter(Boolean);
