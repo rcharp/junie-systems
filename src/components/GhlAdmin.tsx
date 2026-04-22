@@ -1796,24 +1796,46 @@ ${deliverable}`;
               <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Leave blank to auto-generate" />
             </div>
 
-            <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-4 shadow-sm">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <Label className="text-base font-semibold">Generated Prompt</Label>
-                </div>
-                <Button onClick={handleCopyPrompt} variant={copiedPrompt ? 'default' : 'default'}>
-                  {copiedPrompt ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                  {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
-                </Button>
-              </div>
-              <Textarea
-                readOnly
-                value={buildLovablePrompt()}
-                rows={20}
-                className="font-mono text-xs bg-background"
-              />
+            <div className="pt-2">
+              <Button
+                onClick={handleGeneratePrompt}
+                disabled={!allRequiredFilled}
+                size="lg"
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Prompt
+              </Button>
+              {!allRequiredFilled && (
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Fill in all required fields to generate the prompt. Missing: {missingPromptFields.map((f) => f.label).join(', ')}
+                </p>
+              )}
             </div>
+
+            {promptGenerated && allRequiredFilled && (
+              <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <Label className="text-base font-semibold">Generated Prompt</Label>
+                  </div>
+                  <Button onClick={handleCopyPrompt}>
+                    {copiedPrompt ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                    {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
+                  </Button>
+                </div>
+                <Textarea
+                  readOnly
+                  value={buildLovablePrompt()}
+                  rows={20}
+                  className="font-mono text-xs bg-background"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This prompt updates automatically as you edit the fields above.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>
