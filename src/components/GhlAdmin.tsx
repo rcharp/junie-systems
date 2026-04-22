@@ -780,7 +780,7 @@ export const GhlAdmin = () => {
         logoUrl: cv.company_logo_url || get('logo', 'logourl', 'companylogo', 'companylogourl') || f.logoUrl,
         industry: cv.company_industry || get('industry', 'companyindustry', 'businesstype') || f.industry,
       }));
-      toast({ title: 'Contact loaded', description: 'Normalizing fields…' });
+      
 
       // Run AI normalization on the messy fields
       try {
@@ -819,9 +819,8 @@ export const GhlAdmin = () => {
           aboutUs: norm.aboutUs || f.aboutUs,
           trustBar: norm.trustBar || f.trustBar,
         }));
-        toast({ title: 'Fields normalized', description: 'Cleaned services, areas, about us, and trust bar' });
       } catch (e: any) {
-        toast({ title: 'Normalization skipped', description: e.message, variant: 'destructive' });
+        console.warn('Normalization skipped:', e.message);
       }
     } catch (e: any) {
       toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
