@@ -1448,14 +1448,26 @@ ${deliverable}`;
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-sm font-semibold">Step 4 - How to Set Up a Customer Chat Widget</h3>
+                  <h3 className="text-sm font-semibold">Step 4 - Setting Up Customer's Reviews and Social Planner</h3>
+                  <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
+                    <iframe
+                      src="https://www.loom.com/embed/b741004851e84910a8e50d0cc1acd345"
+                      frameBorder={0}
+                      allowFullScreen
+                      className="absolute top-0 left-0 w-full h-full rounded-md"
+                      title="Step 4 - Setting Up Customer's Reviews and Social Planner"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold">Step 5 - How to Set Up a Customer Chat Widget</h3>
                   <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
                     <iframe
                       src="https://www.loom.com/embed/663ab1b0a64647808404016a5b1ed60e"
                       frameBorder={0}
                       allowFullScreen
                       className="absolute top-0 left-0 w-full h-full rounded-md"
-                      title="Step 4 - How to Set Up a Customer Chat Widget"
+                      title="Step 5 - How to Set Up a Customer Chat Widget"
                     />
                   </div>
                 </div>
