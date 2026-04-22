@@ -1220,6 +1220,18 @@ ${deliverable}`;
                     const personDisplay = toTitleCase(c.name);
                     const businessDisplay = toTitleCase(c.companyName);
                     const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
+                    const plan = detectPlanFromTags(c.tags || []);
+                    const planShort = plan === 'Presence Plan' ? 'Presence'
+                      : plan === 'Growth Plan' ? 'Growth'
+                      : plan === 'Full Plan' ? 'Full'
+                      : '';
+                    const planClass = planShort === 'Presence'
+                      ? 'bg-blue-500/15 text-blue-600 border-blue-500/30 dark:text-blue-400'
+                      : planShort === 'Growth'
+                      ? 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30 dark:text-emerald-400'
+                      : planShort === 'Full'
+                      ? 'bg-orange-500/15 text-orange-600 border-orange-500/30 dark:text-orange-400'
+                      : '';
                     return (
                       <CommandItem
                         key={c.id}
@@ -1227,8 +1239,15 @@ ${deliverable}`;
                         onSelect={() => handleGlobalContactSelect(c)}
                       >
                         <Check className={cn('mr-2 h-4 w-4', urlContactId === c.id ? 'opacity-100' : 'opacity-0')} />
-                        <div className="flex flex-col">
-                          <span className="font-medium">{combined}</span>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium truncate">{combined}</span>
+                            {planShort && (
+                              <Badge variant="outline" className={cn('shrink-0 text-[10px] px-1.5 py-0 h-4 font-medium', planClass)}>
+                                {planShort}
+                              </Badge>
+                            )}
+                          </div>
                           <span className="text-xs text-muted-foreground">
                             {[c.email, c.phone].filter(Boolean).join(' · ')}
                           </span>
