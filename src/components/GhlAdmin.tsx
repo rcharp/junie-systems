@@ -1403,9 +1403,9 @@ ${deliverable}`;
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold">Step 1 - Set Up Client Sub-Account</h3>
-              <div className="w-1/3 min-w-[280px]">
+            <div className="flex flex-wrap gap-6">
+              <div className="space-y-2 w-1/3 min-w-[280px]">
+                <h3 className="text-sm font-semibold">Step 1 - Set Up Client Sub-Account</h3>
                 <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
                   <iframe
                     src="https://www.loom.com/embed/2f486ae3c51043158a1edb9632fd1d1f"
@@ -1413,6 +1413,18 @@ ${deliverable}`;
                     allowFullScreen
                     className="absolute top-0 left-0 w-full h-full rounded-md"
                     title="Step 1 - Set Up Client Sub-Account"
+                  />
+                </div>
+              </div>
+              <div className={cn("space-y-2 w-1/3 min-w-[280px]", promptContactPlan === 'Presence Plan' && "opacity-50 pointer-events-none")}>
+                <h3 className="text-sm font-semibold">How to Get a Phone Number for a Client {promptContactPlan === 'Presence Plan' && <span className="text-xs font-normal text-muted-foreground">(N/A for Presence Plan)</span>}</h3>
+                <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
+                  <iframe
+                    src="https://www.loom.com/embed/ca1289b8bacb4816afcf8bc197a0d337"
+                    frameBorder={0}
+                    allowFullScreen
+                    className="absolute top-0 left-0 w-full h-full rounded-md"
+                    title="How to Get a Phone Number for a Client"
                   />
                 </div>
               </div>
