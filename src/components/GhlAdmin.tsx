@@ -814,7 +814,7 @@ export const GhlAdmin = () => {
           ...f,
           businessName: norm.businessName || f.businessName,
           ownerName: norm.ownerName || f.ownerName,
-          phone: norm.phone || f.phone,
+          phone: '',
           services: norm.services || f.services,
           serviceAreas: norm.serviceAreas || f.serviceAreas,
           aboutUs: norm.aboutUs || f.aboutUs,
