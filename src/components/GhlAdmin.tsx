@@ -40,7 +40,52 @@ const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
   { id: 'chat-widget', label: 'Set up Chat Widget' },
 ];
 
-const SetupChecklist = ({ contactId, onCompletionChange, plan }: { contactId: string; onCompletionChange?: (done: boolean) => void; plan?: string }) => {
+const SetupChecklist = ({ contactId, onCompletionChange, plan, business }: { contactId: string; onCompletionChange?: (done: boolean) => void; plan?: string; business?: any }) => {
+  const [gmbOpen, setGmbOpen] = useState(false);
+  const [gmbLoading, setGmbLoading] = useState(false);
+  const [gmbDescription, setGmbDescription] = useState('');
+
+  const generateGmbDescription = async () => {
+    setGmbLoading(true);
+    setGmbDescription('');
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-gmb-description', {
+        body: {
+          businessName: business?.businessName || '',
+          industry: business?.industry || '',
+          address: business?.address || '',
+          services: business?.services || '',
+          serviceAreas: business?.serviceAreas || '',
+          aboutUs: business?.aboutUs || '',
+          trustBar: business?.trustBar || '',
+          website: business?.existingWebsite || '',
+          phone: business?.phone || '',
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setGmbDescription(data?.description || '');
+    } catch (e: any) {
+      toast({ title: 'Generation failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setGmbLoading(false);
+    }
+  };
+
+  const openGmbDialog = () => {
+    setGmbOpen(true);
+    if (!gmbDescription) generateGmbDescription();
+  };
+
+  const copyGmbDescription = async () => {
+    try {
+      await navigator.clipboard.writeText(gmbDescription);
+      toast({ title: 'Copied', description: 'GMB description copied to clipboard.' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
+
   const isPresence = plan === 'Presence Plan';
   const isItemDisabled = (id: string) => isPresence && id === 'phone-number';
   const applicableItems = SETUP_CHECKLIST_ITEMS.filter((i) => !isItemDisabled(i.id));
@@ -150,6 +195,19 @@ const SetupChecklist = ({ contactId, onCompletionChange, plan }: { contactId: st
                 >
                   ({disabled ? 'N/A for Presence Plan' : isDone ? 'Complete' : 'Not Complete'})
                 </span>
+                {item.id === 'edit-gmb' && !disabled && (
+                  <div className="mt-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); openGmbDialog(); }}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      Generate GMB description with AI
+                    </Button>
+                  </div>
+                )}
               </Label>
             </li>
           );
@@ -164,9 +222,43 @@ const SetupChecklist = ({ contactId, onCompletionChange, plan }: { contactId: st
           Sub-account setup not complete
         </div>
       )}
+
+      <Dialog open={gmbOpen} onOpenChange={setGmbOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Google Business Profile description</DialogTitle>
+            <DialogDescription>
+              AI-generated description tailored to this business. Edit as needed, then copy and paste into Google Business Profile.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Textarea
+              value={gmbDescription}
+              onChange={(e) => setGmbDescription(e.target.value)}
+              placeholder={gmbLoading ? 'Generating…' : 'Description will appear here.'}
+              rows={10}
+              disabled={gmbLoading}
+            />
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>{gmbDescription.length} / 750 characters</span>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={generateGmbDescription} disabled={gmbLoading}>
+                  <RefreshCw className={cn('h-4 w-4', gmbLoading && 'animate-spin')} />
+                  Regenerate
+                </Button>
+                <Button type="button" size="sm" onClick={copyGmbDescription} disabled={!gmbDescription || gmbLoading}>
+                  <Copy className="h-4 w-4" />
+                  Copy
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
+
 
 const US_STATES: { code: string; name: string }[] = [
   { code: 'AL', name: 'Alabama' }, { code: 'AK', name: 'Alaska' }, { code: 'AZ', name: 'Arizona' },
@@ -1473,7 +1565,7 @@ ${deliverable}`;
                 </div>
               </div>
               <div>
-                <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={promptContactPlan} />
+                <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={promptContactPlan} business={promptForm} />
               </div>
             </div>
           </CardContent>
