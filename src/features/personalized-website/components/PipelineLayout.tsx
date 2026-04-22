@@ -15,7 +15,7 @@ export default function PipelineLayout() {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background grid-bg">
+    <div className="junie-pipeline min-h-screen bg-background grid-bg">
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link to={BASE} className="flex items-center gap-2.5">

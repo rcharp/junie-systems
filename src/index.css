@@ -2,6 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================================================
+   Junie Personalized Website Pipeline — scoped dark theme + utilities
+   Applied only when wrapped in `.junie-pipeline` (see PipelineLayout).
+   ======================================================================== */
+.junie-pipeline {
+  --background: 220 20% 6%;
+  --foreground: 210 20% 92%;
+  --card: 220 18% 10%;
+  --card-foreground: 210 20% 92%;
+  --popover: 220 18% 10%;
+  --popover-foreground: 210 20% 92%;
+  --primary: 190 95% 50%;
+  --primary-foreground: 220 20% 6%;
+  --secondary: 220 16% 16%;
+  --secondary-foreground: 210 20% 80%;
+  --muted: 220 14% 14%;
+  --muted-foreground: 215 12% 50%;
+  --accent: 270 80% 60%;
+  --accent-foreground: 210 20% 95%;
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 210 40% 98%;
+  --success: 150 80% 45%;
+  --success-foreground: 220 20% 6%;
+  --warning: 40 95% 55%;
+  --warning-foreground: 220 20% 6%;
+  --border: 220 14% 18%;
+  --input: 220 14% 18%;
+  --ring: 190 95% 50%;
+  --glow-primary: 0 0 30px hsl(190 95% 50% / 0.3);
+  --glow-accent: 0 0 30px hsl(270 80% 60% / 0.3);
+  --glow-success: 0 0 20px hsl(150 80% 45% / 0.3);
+
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.junie-pipeline .glass {
+  background-color: hsl(var(--card) / 0.6);
+  backdrop-filter: blur(24px);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+.junie-pipeline .glow-primary { box-shadow: var(--glow-primary); }
+.junie-pipeline .glow-accent { box-shadow: var(--glow-accent); }
+.junie-pipeline .glow-success { box-shadow: var(--glow-success); }
+.junie-pipeline .gradient-text {
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+}
+.junie-pipeline .grid-bg {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.junie-pipeline .text-success { color: hsl(var(--success)); }
+.junie-pipeline .text-warning { color: hsl(var(--warning)); }
+.junie-pipeline .bg-success { background-color: hsl(var(--success)); }
+.junie-pipeline .bg-warning { background-color: hsl(var(--warning)); }
+.junie-pipeline .border-success\/30 { border-color: hsl(var(--success) / 0.3); }
+.junie-pipeline .border-warning\/30 { border-color: hsl(var(--warning) / 0.3); }
+
 /* Junie - Premium Design System */
 
 @layer base {

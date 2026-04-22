@@ -38,6 +38,13 @@ import PresencePage from "./pages/PresencePage";
 import GrowthPage from "./pages/GrowthPage";
 import FullPage from "./pages/FullPage";
 import GhlPage from "./pages/GhlPage";
+import PipelineLayout from "./features/personalized-website/components/PipelineLayout";
+import PipelineDashboard from "./features/personalized-website/pages/PipelineDashboard";
+import NewRun from "./features/personalized-website/pages/NewRun";
+import NewScreenshot from "./features/personalized-website/pages/NewScreenshot";
+import RunDetail from "./features/personalized-website/pages/RunDetail";
+import PipelineSettings from "./features/personalized-website/pages/PipelineSettings";
+import RenderTemplate from "./features/personalized-website/pages/RenderTemplate";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +99,14 @@ const App = () => (
             <Route path="/growth" element={<GrowthPage />} />
             <Route path="/full" element={<FullPage />} />
             <Route path="/grow" element={<GrowPage />} />
+            <Route path="/personalized-website" element={<PipelineLayout />}>
+              <Route index element={<PipelineDashboard />} />
+              <Route path="new" element={<NewRun />} />
+              <Route path="screenshot" element={<NewScreenshot />} />
+              <Route path="runs/:id" element={<RunDetail />} />
+              <Route path="settings" element={<PipelineSettings />} />
+            </Route>
+            <Route path="/personalized-website/render/:templateId" element={<RenderTemplate />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
