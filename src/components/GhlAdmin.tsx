@@ -1162,7 +1162,7 @@ ${deliverable}`;
       </div>
 
       <TabsList className="grid grid-cols-3 mb-4">
-        <TabsTrigger value="create">Step 1: Create Sub-account</TabsTrigger>
+        <TabsTrigger value="create">Step 1: Create Client Subaccount in GHL</TabsTrigger>
         <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
         <TabsTrigger value="prompt">Step 3: Create Website</TabsTrigger>
       </TabsList>
@@ -1170,7 +1170,7 @@ ${deliverable}`;
       <TabsContent value="create">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Plus className="w-5 h-5" /> Create GHL Sub-account</CardTitle>
+            <CardTitle className="flex items-center gap-2"><Plus className="w-5 h-5" /> Create Client Subaccount in GHL</CardTitle>
             <CardDescription>Creates a new location in your GHL agency and imports a snapshot.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1214,7 +1214,7 @@ ${deliverable}`;
             <div className="flex gap-2">
               <Button onClick={handleCreate} disabled={creating}>
                 {creating ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-                Create Sub-account
+                Create Client Subaccount in GHL
               </Button>
               <Button
                 type="button"
