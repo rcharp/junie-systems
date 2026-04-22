@@ -38,6 +38,13 @@ import PresencePage from "./pages/PresencePage";
 import GrowthPage from "./pages/GrowthPage";
 import FullPage from "./pages/FullPage";
 import GhlPage from "./pages/GhlPage";
+import PipelineLayout from "./features/personalized-website/components/PipelineLayout";
+import PipelineDashboard from "./features/personalized-website/pages/PipelineDashboard";
+import NewRun from "./features/personalized-website/pages/NewRun";
+import NewScreenshot from "./features/personalized-website/pages/NewScreenshot";
+import RunDetail from "./features/personalized-website/pages/RunDetail";
+import PipelineSettings from "./features/personalized-website/pages/PipelineSettings";
+import RenderTemplate from "./features/personalized-website/pages/RenderTemplate";
 
 const queryClient = new QueryClient();
 
