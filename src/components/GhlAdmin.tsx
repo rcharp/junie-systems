@@ -987,16 +987,18 @@ ${deliverable}`;
   };
 
   const [copiedPrompt, setCopiedPrompt] = useState(false);
-  const handleCopyPrompt = async () => {
+  const [promptGenerated, setPromptGenerated] = useState(false);
+
+  const getRequiredPromptFields = (): { key: keyof typeof promptForm; label: string }[] => {
     const isPresence = promptContactPlan === 'Presence Plan';
-    const requiredFields: { key: keyof typeof promptForm; label: string }[] = [
+    return [
       { key: 'businessName', label: 'Business Name' },
       { key: 'ownerName', label: 'Owner Name' },
       { key: 'phone', label: 'Phone Number' },
       { key: 'email', label: 'Email Address' },
       { key: 'address', label: 'Business Address' },
       { key: 'hours', label: 'Hours of Operation' },
-      { key: 'googleBusinessPage', label: 'Google Business Page' },
+      { key: 'googleBusinessPage', label: 'Google Reviews URL' },
       { key: 'industry', label: 'Company Industry' },
       { key: 'services', label: 'Services Offered' },
       { key: 'serviceAreas', label: 'Service Areas' },
@@ -1006,24 +1008,37 @@ ${deliverable}`;
         { key: 'discountFormUrl' as const, label: 'Discount Form URL' },
       ]),
     ];
-    const missing = requiredFields.filter((f) => !promptForm[f.key]?.trim()).map((f) => f.label);
-    if (missing.length) {
-      toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
-      return;
+  };
+
+  const missingPromptFields = getRequiredPromptFields().filter((f) => !promptForm[f.key]?.trim());
+  const allRequiredFilled = missingPromptFields.length === 0;
+
+  useEffect(() => {
+    if (!allRequiredFilled && promptGenerated) {
+      setPromptGenerated(false);
     }
+  }, [allRequiredFilled, promptGenerated]);
+
+  const handleGeneratePrompt = () => {
+    if (!allRequiredFilled) return;
+    setPromptGenerated(true);
+    if (urlContactId) {
+      setStep3Done(true);
+      markStep(STEP3_KEY, true, urlContactId);
+    }
+  };
+
+  const handleCopyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(buildLovablePrompt());
       setCopiedPrompt(true);
       toast({ title: 'Copied!', description: 'Prompt copied to clipboard' });
       setTimeout(() => setCopiedPrompt(false), 2000);
-      if (urlContactId) {
-        setStep3Done(true);
-        markStep(STEP3_KEY, true, urlContactId);
-      }
     } catch {
       toast({ title: 'Copy failed', variant: 'destructive' });
     }
   };
+
 
   const submitCreate = async (allowDuplicate: boolean) => {
     setCreating(true);
@@ -1781,24 +1796,46 @@ ${deliverable}`;
               <Textarea rows={2} value={promptForm.trustBar} onChange={(e) => setPromptForm({ ...promptForm, trustBar: e.target.value })} placeholder="Leave blank to auto-generate" />
             </div>
 
-            <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-4 shadow-sm">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <Label className="text-base font-semibold">Generated Prompt</Label>
-                </div>
-                <Button onClick={handleCopyPrompt} variant={copiedPrompt ? 'default' : 'default'}>
-                  {copiedPrompt ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
-                  {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
-                </Button>
-              </div>
-              <Textarea
-                readOnly
-                value={buildLovablePrompt()}
-                rows={20}
-                className="font-mono text-xs bg-background"
-              />
+            <div className="pt-2">
+              <Button
+                onClick={handleGeneratePrompt}
+                disabled={!allRequiredFilled}
+                size="lg"
+                className="w-full"
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Prompt
+              </Button>
+              {!allRequiredFilled && (
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  Fill in all required fields to generate the prompt. Missing: {missingPromptFields.map((f) => f.label).join(', ')}
+                </p>
+              )}
             </div>
+
+            {promptGenerated && allRequiredFilled && (
+              <div className="space-y-3 rounded-lg border-2 border-primary/40 bg-primary/5 p-4 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <Label className="text-base font-semibold">Generated Prompt</Label>
+                  </div>
+                  <Button onClick={handleCopyPrompt}>
+                    {copiedPrompt ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                    {copiedPrompt ? 'Copied!' : 'Copy Prompt'}
+                  </Button>
+                </div>
+                <Textarea
+                  readOnly
+                  value={buildLovablePrompt()}
+                  rows={20}
+                  className="font-mono text-xs bg-background"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This prompt updates automatically as you edit the fields above.
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>
