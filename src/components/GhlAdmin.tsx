@@ -1565,7 +1565,7 @@ ${deliverable}`;
                 </div>
               </div>
               <div>
-                <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={promptContactPlan} />
+                <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={promptContactPlan} business={promptForm} />
               </div>
             </div>
           </CardContent>
