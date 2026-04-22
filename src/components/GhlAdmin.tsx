@@ -40,7 +40,52 @@ const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
   { id: 'chat-widget', label: 'Set up Chat Widget' },
 ];
 
-const SetupChecklist = ({ contactId, onCompletionChange, plan }: { contactId: string; onCompletionChange?: (done: boolean) => void; plan?: string }) => {
+const SetupChecklist = ({ contactId, onCompletionChange, plan, business }: { contactId: string; onCompletionChange?: (done: boolean) => void; plan?: string; business?: any }) => {
+  const [gmbOpen, setGmbOpen] = useState(false);
+  const [gmbLoading, setGmbLoading] = useState(false);
+  const [gmbDescription, setGmbDescription] = useState('');
+
+  const generateGmbDescription = async () => {
+    setGmbLoading(true);
+    setGmbDescription('');
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-gmb-description', {
+        body: {
+          businessName: business?.businessName || '',
+          industry: business?.industry || '',
+          address: business?.address || '',
+          services: business?.services || '',
+          serviceAreas: business?.serviceAreas || '',
+          aboutUs: business?.aboutUs || '',
+          trustBar: business?.trustBar || '',
+          website: business?.existingWebsite || '',
+          phone: business?.phone || '',
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setGmbDescription(data?.description || '');
+    } catch (e: any) {
+      toast({ title: 'Generation failed', description: e?.message || 'Unknown error', variant: 'destructive' });
+    } finally {
+      setGmbLoading(false);
+    }
+  };
+
+  const openGmbDialog = () => {
+    setGmbOpen(true);
+    if (!gmbDescription) generateGmbDescription();
+  };
+
+  const copyGmbDescription = async () => {
+    try {
+      await navigator.clipboard.writeText(gmbDescription);
+      toast({ title: 'Copied', description: 'GMB description copied to clipboard.' });
+    } catch {
+      toast({ title: 'Copy failed', variant: 'destructive' });
+    }
+  };
+
   const isPresence = plan === 'Presence Plan';
   const isItemDisabled = (id: string) => isPresence && id === 'phone-number';
   const applicableItems = SETUP_CHECKLIST_ITEMS.filter((i) => !isItemDisabled(i.id));
