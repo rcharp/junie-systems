@@ -1,8 +1,9 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Camera, Settings, Video } from "lucide-react";
+import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
+import { LayoutDashboard, PlusCircle, Camera, Settings, Video, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
-const BASE = "/personalized-website";
+const BASE = "/loom";
 
 const navItems = [
   { path: BASE, label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -13,6 +14,35 @@ const navItems = [
 
 export default function PipelineLayout() {
   const location = useLocation();
+  const { user, loading, isAdmin, adminLoading } = useAuth();
+
+  if (loading || adminLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6">
+        <div className="max-w-md text-center space-y-3">
+          <h1 className="text-2xl font-bold">Admin access required</h1>
+          <p className="text-muted-foreground text-sm">
+            You need administrator privileges to access the Loom pipeline.
+          </p>
+          <Link to="/" className="inline-block text-primary hover:underline text-sm">
+            ← Back to home
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="junie-pipeline min-h-screen bg-background grid-bg">
@@ -23,7 +53,7 @@ export default function PipelineLayout() {
               <Video className="w-4.5 h-4.5 text-primary" />
             </div>
             <span className="text-lg font-bold tracking-tight">
-              <span className="gradient-text">Junie</span>{" "}
+              <span className="gradient-text">Loom</span>{" "}
               <span className="text-muted-foreground font-medium">Pipeline</span>
             </span>
           </Link>
