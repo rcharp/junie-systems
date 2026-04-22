@@ -1629,12 +1629,12 @@ ${deliverable}`;
               <Field required label="Owner Name" value={promptForm.ownerName} onChange={(v) => setPromptForm({ ...promptForm, ownerName: v })} />
               <Field
                 required
-                label={promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full System Plan' ? 'Signal House Phone Number' : 'Phone Number'}
+                label={promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full Plan' ? 'Signal House Phone Number' : 'Phone Number'}
                 value={promptForm.phone}
                 onChange={(v) => setPromptForm({ ...promptForm, phone: v })}
-                helpTitle={promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full System Plan' ? 'How to find the Signal House Phone Number' : undefined}
+                helpTitle={promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full Plan' ? 'How to find the Signal House Phone Number' : undefined}
                 helpContent={
-                  promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full System Plan' ? (
+                  promptContactPlan === 'Growth Plan' || promptContactPlan === 'Full Plan' ? (
                     <div className="space-y-3 text-sm">
                       <ol className="list-decimal pl-5 space-y-2">
                         <li>Log in to your <strong>Signal House</strong> account.</li>
