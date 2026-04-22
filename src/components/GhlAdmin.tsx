@@ -1260,15 +1260,16 @@ ${deliverable}`;
             </Command>
           </PopoverContent>
         </Popover>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs text-muted-foreground truncate font-mono">{urlContactId}</span>
-            {promptContactPlan && (
-              <Badge variant="secondary" className="shrink-0">{promptContactPlan}</Badge>
-            )}
+        {(promptContactPlan || loadingContact || loadingPromptContact) && (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {promptContactPlan && (
+                <Badge variant="secondary" className="shrink-0">{promptContactPlan}</Badge>
+              )}
+            </div>
+            {(loadingContact || loadingPromptContact) && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
           </div>
-          {(loadingContact || loadingPromptContact) && <RefreshCw className="w-3 h-3 animate-spin shrink-0" />}
-        </div>
+        )}
       </div>
 
       <TabsList className="grid grid-cols-3 mb-4">
