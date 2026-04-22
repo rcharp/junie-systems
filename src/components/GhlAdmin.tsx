@@ -1699,15 +1699,15 @@ ${deliverable}`;
 
 const Field = ({ label, value, onChange, placeholder, required, disabled, helpTitle, helpContent, multiline }: { label: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean; disabled?: boolean; helpTitle?: string; helpContent?: React.ReactNode; multiline?: boolean }) => (
   <div>
-    <div className="flex items-center gap-2">
-      <Label className="capitalize">
+    <div className="flex items-center gap-2 leading-none mb-2">
+      <Label className="capitalize leading-none m-0">
         {label}
         {required && <span className="text-destructive ml-0.5">*</span>}
       </Label>
       {helpContent && (
         <Dialog>
           <DialogTrigger asChild>
-            <button type="button" className="text-xs text-primary hover:underline">
+            <button type="button" className="text-xs text-primary hover:underline leading-none m-0 p-0">
               How Do I find this?
             </button>
           </DialogTrigger>
