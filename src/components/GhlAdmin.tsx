@@ -1599,11 +1599,11 @@ ${deliverable}`;
               <Field required label="Hours of Operation" value={promptForm.hours} onChange={(v) => setPromptForm({ ...promptForm, hours: v })} placeholder="Mon-Fri 8a-6p" />
               <Field
                 required
-                label="Google Review Link"
+                label="Google Reviews URL"
                 value={promptForm.googleBusinessPage}
                 onChange={(v) => setPromptForm({ ...promptForm, googleBusinessPage: v })}
                 placeholder="URL"
-                helpTitle="How to find the Google Review Link"
+                helpTitle="How to find the Google Reviews URL"
                 helpContent={
                   <div className="space-y-4">
                     <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
@@ -1612,7 +1612,7 @@ ${deliverable}`;
                         frameBorder={0}
                         allowFullScreen
                         className="absolute inset-0 w-full h-full rounded-md"
-                        title="How to find the Google Review Link"
+                        title="How to find the Google Reviews URL"
                       />
                     </div>
                     <ol className="list-decimal pl-5 space-y-2 text-sm">
