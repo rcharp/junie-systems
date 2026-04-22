@@ -28,7 +28,7 @@ import { format } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-const BASE = "/personalized-website";
+const BASE = "/loom";
 
 interface PipelineCompany {
   id: string;
