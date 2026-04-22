@@ -749,6 +749,7 @@ export const GhlAdmin = () => {
       if (data?.error) throw new Error(data.error);
       const c = data.contact || {};
       const cv = c.customValues || {};
+      setPromptContactPlan(detectPlanFromTags(c.tags || []));
       const get = (...keys: string[]) => {
         for (const k of keys) {
           const found = Object.entries(cv).find(([key]) => key.toLowerCase().replace(/[\s_-]/g, '') === k.toLowerCase().replace(/[\s_-]/g, ''));
