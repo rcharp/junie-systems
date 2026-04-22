@@ -1482,7 +1482,34 @@ ${deliverable}`;
               <Field required label="Email Address" value={promptForm.email} onChange={(v) => setPromptForm({ ...promptForm, email: v })} />
               <Field required label="Business Address" value={promptForm.address} onChange={(v) => setPromptForm({ ...promptForm, address: v })} />
               <Field required label="Hours of Operation" value={promptForm.hours} onChange={(v) => setPromptForm({ ...promptForm, hours: v })} placeholder="Mon-Fri 8a-6p" />
-              <Field required label="Google Business Page" value={promptForm.googleBusinessPage} onChange={(v) => setPromptForm({ ...promptForm, googleBusinessPage: v })} placeholder="URL" />
+              <Field
+                required
+                label="Google Review Link"
+                value={promptForm.googleBusinessPage}
+                onChange={(v) => setPromptForm({ ...promptForm, googleBusinessPage: v })}
+                placeholder="URL"
+                helpTitle="How to find the Google Review Link"
+                helpContent={
+                  <div className="space-y-4">
+                    <div className="relative w-full" style={{ paddingBottom: '62.5%', height: 0 }}>
+                      <iframe
+                        src="https://www.loom.com/embed/47deb4b03d9041efbb9be7fc8fc35118"
+                        frameBorder={0}
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full rounded-md"
+                        title="How to find the Google Review Link"
+                      />
+                    </div>
+                    <ol className="list-decimal pl-5 space-y-2 text-sm">
+                      <li>Open the newly created company <strong>Subaccount</strong> in GoHighLevel.</li>
+                      <li>Navigate to <strong>Reputation</strong>.</li>
+                      <li>Click <strong>Settings</strong> at the top of the Reputation page.</li>
+                      <li>Click <strong>Review Links</strong> in the left pane.</li>
+                      <li>Copy the review link on the right hand side and paste it here.</li>
+                    </ol>
+                  </div>
+                }
+              />
               <Field label="Existing Website URL" value={promptForm.existingWebsite} onChange={(v) => setPromptForm({ ...promptForm, existingWebsite: v })} placeholder="URL or None" />
               <Field label="Instagram URL" value={promptForm.instagram} onChange={(v) => setPromptForm({ ...promptForm, instagram: v })} placeholder="URL or None" />
               <Field label="Facebook URL" value={promptForm.facebook} onChange={(v) => setPromptForm({ ...promptForm, facebook: v })} placeholder="URL or None" />
