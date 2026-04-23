@@ -1131,7 +1131,12 @@ Blog:
 Update the Blog section with blog articles that are relevant to the company industry, the services offered and the service areas.
 
 Background Images:
-For the background images behind the hero section and the Special Offers and Benefits section, use the best and most appropriate images that have been uploaded. Upscale the images to at least 1600px width, 4k resolution, and keep the aspect ratio. If none can be found, or none are appropriate or look good enough, use unique stock photos that are relevant to the industry.
+From the photos attached, choose the most appropriate images for each of the following background image locations. Each location below should use a UNIQUE photo (do not repeat the same image across different locations), EXCEPT for the services pages and service areas pages which must all share the SAME single background photo across every services page and every service areas page.
+- Homepage hero section background: pick the single most appropriate, visually striking photo.
+- Special Offers section background: pick a unique photo (different from the hero) that fits the offers/promotional context.
+- Benefits section background: pick a unique photo (different from the hero and Special Offers) that complements the benefits messaging.
+- Services pages hero background AND Service Areas pages hero background: pick ONE photo that works well as a hero background and use that SAME photo across the hero of every individual services page and every individual service areas page.
+If any chosen photo is low resolution or low quality, upscale it to at least 1600px width / 4K resolution while preserving the original aspect ratio so it looks crisp as a full-width background. If no uploaded photos are appropriate for a given location, fall back to unique, industry-relevant stock photos from Pexels, Pixabay, or Unsplash (no AI-generated images).
 
 Site content:
 For content across the site, make sure that the information in it matches the Company Industry from the table above. This includes headers, paragraphs, subtext and subheaders, blog articles, and everything else on the site. Create a sitemap file.
