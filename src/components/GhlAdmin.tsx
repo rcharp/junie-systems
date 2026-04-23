@@ -980,8 +980,27 @@ export const GhlAdmin = () => {
         .map((x) => `- ${x}`)
         .join('\n');
     };
+    // Service areas come as "City, ST, City, ST, ..." — keep each "City, ST" pair intact.
+    const toAreaBulletList = (s: string) => {
+      if (!s || !s.trim()) return '- None';
+      const tokens = s.split(/[,\n;]+/).map((x) => x.trim()).filter(Boolean);
+      const pairs: string[] = [];
+      let i = 0;
+      while (i < tokens.length) {
+        const cur = tokens[i];
+        const next = tokens[i + 1];
+        if (next && /^[A-Za-z]{2}$/.test(next)) {
+          pairs.push(`${cur}, ${next.toUpperCase()}`);
+          i += 2;
+        } else {
+          pairs.push(cur);
+          i += 1;
+        }
+      }
+      return pairs.map((x) => `- ${x}`).join('\n');
+    };
     const servicesList = toBulletList(promptForm.services);
-    const areasList = toBulletList(promptForm.serviceAreas);
+    const areasList = toAreaBulletList(promptForm.serviceAreas);
 
     const techRows = isPresence
       ? `| Chat Widget Embed Code | ${v(promptForm.chatWidgetEmbed)} |
