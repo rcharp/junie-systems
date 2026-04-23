@@ -1138,12 +1138,21 @@ For content across the site, make sure that the information in it matches the Co
 
 For the "Homeowners Trust Us" header, update the heading to "Customers across [General Area] trust ${v(promptForm.businessName, '[Business Name]')}". Replace [General Area] with a SHORT, natural region name (e.g., a metro area, county, or state) inferred from the Service Areas list above — do NOT paste the full list of cities. Examples: "Greater Columbus", "Central Ohio", "the Richmond Metro".
 
+Color Scheme:
+Always update the website's primary and secondary colors to match the primary and secondary colors of the provided logo. Sample the dominant colors from the logo and apply them consistently across the entire site (buttons, links, accents, headings, hero highlights, etc.) using the existing design tokens.
+
+Reviews / Testimonials:
+If a Google Business Page link is provided, pull real customer reviews from it for the "What our customers are saying" section. If NO Google Business link is provided, populate the testimonials section with generic but realistic, industry-appropriate testimonials (use plausible first names + last initials, varied wording, 4-5 star ratings).
+
+Map Embed:
+If a Google Business Page or specific map embed is provided, use it for the map on the home page, contact page, and footer. If none is provided, embed a Google Map of the general service area (a natural region inferred from the Service Areas list, e.g. "Greater Columbus, OH") instead of leaving the map blank.
+
 Instructions:
-1. Systematically go through every page and section of the website.
+1. Perform ALL of the updates described above in a single pass — do not stop partway and ask for confirmation. Systematically go through every page and section of the website and apply every change at once.
 2. Replace all instances of the old business information with the new information provided above.
 3. Update the logo in the header, footer, and any other locations where it appears.
 4. Replace all photos with the newly provided images, maintaining the same layout and image placement structure.
-5. Apply the new color scheme consistently across all pages and components.
+5. Apply the new color scheme (derived from the logo) consistently across all pages and components.
 ${stepSix}
 ${stepSeven}
 8. If an existing website URL is provided, visit it to gather additional details about the business (services descriptions, tone of voice, unique selling points) to make the content more accurate and comprehensive.
