@@ -632,6 +632,185 @@ export const GhlAdmin = () => {
     return '';
   };
 
+  const loadLocations = async () => {
+    setLocationsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-list-locations');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLocations(data.locations || []);
+    } catch (e: any) {
+      toast({ title: 'Failed to load locations', description: e.message, variant: 'destructive' });
+    } finally {
+      setLocationsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (locations.length === 0) loadLocations();
+  }, []);
+
+  useEffect(() => {
+    if (!contactOpen) return;
+    const t = setTimeout(async () => {
+      setContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: contactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [contactSearch, contactOpen]);
+
+  useEffect(() => {
+    if (!createContactOpen) return;
+    const t = setTimeout(async () => {
+      setCreateContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: createContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setCreateContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setCreateContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [createContactSearch, createContactOpen]);
+
+  // Setup tab: debounced contact search
+  useEffect(() => {
+    if (!setupContactOpen) return;
+    const t = setTimeout(async () => {
+      setSetupContactsLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
+          body: { query: setupContactSearch },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setSetupContacts(data.contacts || []);
+      } catch (e: any) {
+        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
+      } finally {
+        setSetupContactsLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(t);
+  }, [setupContactSearch, setupContactOpen]);
+
+  const populateCreateFromContactId = async (cid: string) => {
+    setLoadingContact(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ghl-get-contact', {
+        body: { contactId: cid },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      const c = data.contact || {};
+      setCreateForm((f) => {
+        let mergedCustomJson = f.customValuesJson;
+        if (c.customValues && typeof c.customValues === 'object') {
+          let existing: Record<string, string> = {};
+          if (f.customValuesJson.trim()) {
+            try { existing = JSON.parse(f.customValuesJson); } catch {}
+          }
+          const cleaned = Object.fromEntries(
+            Object.entries(c.customValues).filter(([, v]) => v && String(v).trim())
+          );
+          mergedCustomJson = JSON.stringify({ ...existing, ...cleaned }, null, 2);
+        }
+        return {
+          ...f,
+          name: c.companyName || c.name || f.name,
+          email: c.email || f.email,
+          phone: c.phone || f.phone,
+          firstName: c.firstName || f.firstName,
+          lastName: c.lastName || f.lastName,
+          address: c.address || f.address,
+          city: c.city || f.city,
+          state: c.state || f.state,
+          postalCode: c.postalCode || f.postalCode,
+          country: c.country || f.country,
+          website: c.website || f.website,
+          timezone: c.timezone || f.timezone,
+          einNumber: c.einNumber || f.einNumber,
+          customValuesJson: mergedCustomJson,
+        };
+      });
+      toast({ title: 'Contact loaded', description: 'Form populated from GHL contact' });
+    } catch (e: any) {
+      toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
+    } finally {
+      setLoadingContact(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!userForm.locationId.trim()) {
+      toast({ title: 'Missing target location', variant: 'destructive' });
+      return;
+    }
+    if (!userForm.contactId.trim()) {
+      toast({ title: 'Pick a contact', variant: 'destructive' });
+      return;
+    }
+    setCreatingUser(true);
+    setCreatedUserResult(null);
+    try {
+      const { data: contactData, error: contactErr } = await supabase.functions.invoke('ghl-get-contact', {
+        body: { contactId: userForm.contactId.trim() },
+      });
+      if (contactErr) throw contactErr;
+      if (contactData?.error) throw new Error(contactData.error);
+      const c = contactData.contact || {};
+      if (!c.email) throw new Error('Contact has no email — required to create a user');
+
+      const { data, error } = await supabase.functions.invoke('ghl-create-user', {
+        body: {
+          locationId: userForm.locationId.trim(),
+          firstName: c.firstName || '',
+          lastName: c.lastName || '',
+          email: c.email,
+          phone: c.phone || '',
+          role: 'admin',
+          type: 'account',
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
+      setCreatedUserResult(data);
+      toast({ title: 'User created', description: data.action === 'added_location_to_existing_user' ? 'Added location to existing user' : 'New user created' });
+    } catch (e: any) {
+      toast({ title: 'Create user failed', description: e.message, variant: 'destructive' });
+    } finally {
+      setCreatingUser(false);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.functions.invoke('ghl-get-company-id');
+        if (data?.companyId) setCreateForm((f) => ({ ...f, companyId: data.companyId }));
+      } catch {}
+    })();
+  }, []);
+
+  const [duplicateDialog, setDuplicateDialog] = useState<{ open: boolean; existing: any | null }>({ open: false, existing: null });
+
   useEffect(() => {
     if (!urlContactId) {
       setSetupContactPlan('');
