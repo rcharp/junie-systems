@@ -849,14 +849,17 @@ export const GhlAdmin = () => {
   };
 
   const detectPlanFromTags = (tags: string[], customValues?: Record<string, any>): string => {
-    const tagStrs = (tags || []).map((t) => (t || '').toLowerCase());
+    const tagStrs = (tags || []).map((t) => (t || '').toLowerCase().trim());
     const cvStrs = customValues
       ? Object.entries(customValues).map(([k, v]) => `${k} ${v ?? ''}`.toLowerCase())
       : [];
     const haystack = [...tagStrs, ...cvStrs];
-    if (haystack.some((t) => t.includes('full'))) return 'Full Plan';
-    if (haystack.some((t) => t.includes('growth'))) return 'Growth Plan';
-    if (haystack.some((t) => t.includes('presence'))) return 'Presence Plan';
+    // Match the exact GHL tag names: "presence plan", "growth plan", "full plan".
+    // Check presence first so a customer tagged ONLY with "presence plan" is never
+    // misclassified by an unrelated tag that happens to contain "full" or "growth".
+    if (haystack.some((t) => /\bpresence plan\b/.test(t))) return 'Presence Plan';
+    if (haystack.some((t) => /\bgrowth plan\b/.test(t))) return 'Growth Plan';
+    if (haystack.some((t) => /\bfull plan\b/.test(t))) return 'Full Plan';
     return '';
   };
 
