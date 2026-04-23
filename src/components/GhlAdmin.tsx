@@ -528,6 +528,7 @@ export const GhlAdmin = () => {
   const [setupContactOpen, setSetupContactOpen] = useState(false);
   const [selectedSetupContactLabel, setSelectedSetupContactLabel] = useState('');
   const [setupContactPlan, setSetupContactPlan] = useState<string>('');
+  const [knownContactTags, setKnownContactTags] = useState<Record<string, string[]>>({});
 
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
   const [creating, setCreating] = useState(false);
@@ -630,6 +631,23 @@ export const GhlAdmin = () => {
     if (has(/\bfull(\s+(plan|system))?\b/)) return 'Full Plan';
     if (has(/\bgrowth(\s+plan)?\b/)) return 'Growth Plan';
     return '';
+  };
+
+  const rememberContactTags = (contactId: string, tags?: string[]) => {
+    if (!contactId || !Array.isArray(tags) || tags.length === 0) return;
+    setKnownContactTags((prev) => {
+      const existing = prev[contactId] || [];
+      const same = existing.length === tags.length && existing.every((tag, index) => tag === tags[index]);
+      if (same) return prev;
+      return { ...prev, [contactId]: tags };
+    });
+  };
+
+  const getKnownPlanForContact = (contactId: string, fallbackTags?: string[]) => {
+    const tags = (Array.isArray(fallbackTags) && fallbackTags.length > 0)
+      ? fallbackTags
+      : knownContactTags[contactId] || [];
+    return detectPlanFromTags(tags);
   };
 
   const loadLocations = async () => {
