@@ -827,8 +827,11 @@ export const GhlAdmin = () => {
         if (data?.error) throw new Error(data.error);
         if (cancelled) return;
         const c = data.contact || {};
-        setSetupContactPlan(detectPlanFromTags(c.tags || [], c.customValues || {}));
-      } catch {
+        const detected = detectPlanFromTags(c.tags || [], c.customValues || {});
+        console.log('[GhlAdmin] Setup tab plan detection', { contactId: urlContactId, tags: c.tags, detected });
+        setSetupContactPlan(detected);
+      } catch (e) {
+        console.warn('[GhlAdmin] Setup tab plan detection failed', e);
         if (!cancelled) setSetupContactPlan('');
       }
     })();
