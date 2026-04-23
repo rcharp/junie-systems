@@ -28,6 +28,143 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
+const WEBSITE_VERIFY_ITEMS: { id: string; label: string; note?: string }[] = [
+  { id: 'wv-business-name', label: 'Business name is correct everywhere it appears' },
+  { id: 'wv-phone', label: 'Phone number is correct and click-to-call works' },
+  { id: 'wv-email', label: 'Email address is correct and mailto link works' },
+  { id: 'wv-address', label: 'Business address is correct and links to Google Maps' },
+  { id: 'wv-hours', label: 'Hours of operation are accurate' },
+  { id: 'wv-services', label: 'Services list matches what the business actually offers' },
+  { id: 'wv-service-areas', label: 'Service areas match the business coverage' },
+  { id: 'wv-about', label: 'About Us copy reads well and is accurate' },
+  { id: 'wv-trust-bar', label: 'Trust bar / value props display correctly' },
+  { id: 'wv-logo', label: 'Logo displays correctly on all pages' },
+  { id: 'wv-images', label: 'All images load and look professional' },
+  { id: 'wv-google-reviews', label: 'Google Reviews link/widget works' },
+  { id: 'wv-quote-form', label: 'Quote form submits and reaches GHL workflow' },
+  { id: 'wv-review-form', label: 'Review form submits and reaches GHL workflow' },
+  { id: 'wv-discount-form', label: 'Discount form submits and reaches GHL workflow', note: 'Skip for Presence Plan' },
+  { id: 'wv-chat-widget', label: 'Chat widget loads and accepts messages' },
+  { id: 'wv-social-links', label: 'Instagram and Facebook links open the correct profiles' },
+  { id: 'wv-mobile', label: 'Site looks correct on mobile (responsive)' },
+  { id: 'wv-meta', label: 'Page title and meta description are set' },
+  { id: 'wv-favicon', label: 'Favicon displays in the browser tab' },
+];
+
+const WebsiteVerifyChecklist = ({ contactId }: { contactId: string }) => {
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(false);
+  const total = WEBSITE_VERIFY_ITEMS.length;
+  const completed = WEBSITE_VERIFY_ITEMS.filter((i) => checked[i.id]).length;
+
+  useEffect(() => {
+    if (!contactId) {
+      setChecked({});
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('ghl_setup_checklist')
+        .select('item_id, completed')
+        .eq('contact_id', contactId)
+        .in('item_id', WEBSITE_VERIFY_ITEMS.map((i) => i.id));
+      if (!cancelled) {
+        if (error) {
+          toast({ title: 'Failed to load progress', description: error.message, variant: 'destructive' });
+        } else {
+          const map: Record<string, boolean> = {};
+          (data || []).forEach((row: any) => { map[row.item_id] = !!row.completed; });
+          setChecked(map);
+        }
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [contactId]);
+
+  const toggleItem = async (itemId: string, value: boolean) => {
+    if (!contactId) {
+      toast({ title: 'No contact selected', description: 'Pick a contact above to track progress.', variant: 'destructive' });
+      return;
+    }
+    setChecked((prev) => ({ ...prev, [itemId]: value }));
+    const { error } = await supabase
+      .from('ghl_setup_checklist')
+      .upsert({ contact_id: contactId, item_id: itemId, completed: value }, { onConflict: 'contact_id,item_id' });
+    if (error) {
+      setChecked((prev) => ({ ...prev, [itemId]: !value }));
+      toast({ title: 'Save failed', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  if (!contactId) {
+    return (
+      <div className="rounded-md border border-border bg-muted/30 p-4 text-[16px] text-muted-foreground">
+        Select a contact above to track website verification progress.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="text-[16px] text-muted-foreground">
+        {loading ? 'Loading…' : `${completed} of ${total} items verified`}
+      </div>
+      <ul className="space-y-2">
+        {WEBSITE_VERIFY_ITEMS.map((item, idx) => {
+          const isDone = !!checked[item.id];
+          return (
+            <li
+              key={item.id}
+              className={cn(
+                'flex items-start gap-3 rounded-md border-2 p-2.5 transition-colors',
+                isDone
+                  ? 'border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10'
+                  : 'border-destructive bg-destructive/10'
+              )}
+            >
+              <Checkbox
+                id={`wv-${item.id}`}
+                checked={isDone}
+                onCheckedChange={(v) => toggleItem(item.id, v === true)}
+                className="mt-0.5"
+              />
+              <Label
+                htmlFor={`wv-${item.id}`}
+                className="flex-1 leading-snug cursor-pointer text-[16px]"
+              >
+                <span className="font-medium">{idx + 1}. {item.label}</span>
+                {item.note && (
+                  <span className="ml-2 text-xs text-muted-foreground">({item.note})</span>
+                )}
+                <span
+                  className={cn(
+                    'ml-2 text-xs font-semibold',
+                    isDone ? 'text-[hsl(142,71%,30%)]' : 'text-destructive'
+                  )}
+                >
+                  ({isDone ? 'Verified' : 'Not Verified'})
+                </span>
+              </Label>
+            </li>
+          );
+        })}
+      </ul>
+      {completed === total ? (
+        <div className="rounded-md border border-[hsl(142,71%,45%)] bg-[hsl(142,71%,45%)]/10 px-4 py-3 text-center text-[16px] font-semibold text-[hsl(142,71%,35%)]">
+          Website verification complete
+        </div>
+      ) : (
+        <div className="rounded-md border border-destructive bg-destructive/10 px-4 py-3 text-center text-[16px] font-semibold text-destructive">
+          Website verification not complete
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SETUP_CHECKLIST_ITEMS: { id: string; label: string; note?: string }[] = [
   { id: 'disable-reselling', label: 'Disable Reselling options for the subaccount' },
   { id: 'custom-values', label: 'Update custom values' },
@@ -1287,10 +1424,11 @@ ${deliverable}`;
         )}
       </div>
 
-      <TabsList className="grid grid-cols-3 mb-4">
+      <TabsList className="grid grid-cols-4 mb-4">
         <TabsTrigger value="create">Step 1: Create Client Subaccount in GHL</TabsTrigger>
         <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
         <TabsTrigger value="prompt">Step 3: Create Website</TabsTrigger>
+        <TabsTrigger value="verify">Step 4: Verify Website</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">
@@ -1857,6 +1995,18 @@ ${deliverable}`;
                 </p>
               </div>
             )}
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="verify">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Check className="w-5 h-5" /> Verify Website Accuracy</CardTitle>
+            <CardDescription>After the website has been built, walk through the live site and confirm each item below is accurate and working.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WebsiteVerifyChecklist contactId={urlContactId} />
           </CardContent>
         </Card>
       </TabsContent>
