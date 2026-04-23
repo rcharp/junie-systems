@@ -34,6 +34,84 @@ function titleCase(s: string): string {
     .join('');
 }
 
+const STATE_MAP: Record<string, string> = {
+  alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA',
+  colorado: 'CO', connecticut: 'CT', delaware: 'DE', florida: 'FL', georgia: 'GA',
+  hawaii: 'HI', idaho: 'ID', illinois: 'IL', indiana: 'IN', iowa: 'IA',
+  kansas: 'KS', kentucky: 'KY', louisiana: 'LA', maine: 'ME', maryland: 'MD',
+  massachusetts: 'MA', michigan: 'MI', minnesota: 'MN', mississippi: 'MS', missouri: 'MO',
+  montana: 'MT', nebraska: 'NE', nevada: 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ',
+  'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND', ohio: 'OH',
+  oklahoma: 'OK', oregon: 'OR', pennsylvania: 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+  'south dakota': 'SD', tennessee: 'TN', texas: 'TX', utah: 'UT', vermont: 'VT',
+  virginia: 'VA', washington: 'WA', 'west virginia': 'WV', wisconsin: 'WI', wyoming: 'WY',
+  'district of columbia': 'DC',
+};
+const STATE_ABBRS = new Set(Object.values(STATE_MAP));
+
+function toStateAbbr(token: string): string | null {
+  const t = token.trim().toLowerCase().replace(/\.$/, '');
+  if (!t) return null;
+  if (STATE_ABBRS.has(t.toUpperCase())) return t.toUpperCase();
+  if (STATE_MAP[t]) return STATE_MAP[t];
+  return null;
+}
+
+/**
+ * Normalize a flat "City, State, City, State, ..." (or newline/semicolon separated) string
+ * into an array of "City, ST" entries. Handles cases where city and state are separated
+ * only by commas (so the list looks like a single flat CSV).
+ */
+function normalizeServiceAreas(raw: string): string[] {
+  if (!raw) return [];
+  // Split on newlines/semicolons first to preserve any explicit groupings
+  const groups = raw.split(/[\n;]+/).map((g) => g.trim()).filter(Boolean);
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  const pushPair = (city: string, state: string | null) => {
+    const c = titleCase(city.trim());
+    if (!c) return;
+    const entry = state ? `${c}, ${state}` : c;
+    const key = entry.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(entry);
+  };
+
+  for (const group of groups) {
+    // Tokenize on commas
+    const tokens = group.split(',').map((t) => t.trim()).filter(Boolean);
+    let i = 0;
+    while (i < tokens.length) {
+      const cur = tokens[i];
+      const next = tokens[i + 1];
+      const nextAbbr = next ? toStateAbbr(next) : null;
+      const curAbbr = toStateAbbr(cur);
+      if (nextAbbr) {
+        // city, state pair
+        pushPair(cur, nextAbbr);
+        i += 2;
+      } else if (curAbbr && out.length > 0) {
+        // Stray state token after a city already pushed without state — attach it
+        const last = out[out.length - 1];
+        if (!/, [A-Z]{2}$/.test(last)) {
+          const updated = `${last}, ${curAbbr}`;
+          seen.delete(last.toLowerCase());
+          seen.add(updated.toLowerCase());
+          out[out.length - 1] = updated;
+        }
+        i += 1;
+      } else {
+        // City with no state info
+        pushPair(cur, null);
+        i += 1;
+      }
+    }
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -78,7 +156,7 @@ Deno.serve(async (req) => {
 Rules:
 - Output STRICT JSON only, no prose, no code fences. Match the schema exactly.
 - "services": array of clean service names with optional pricing. Split comma/newline/semicolon separated lists. Title Case each service. Keep prices if present (e.g., "Drain Cleaning - $99"). Remove duplicates and filler. If a single service mentions multiple, split sensibly.
-- "serviceAreas": array of city/area names. Title Case. Split lists. Remove duplicates and noise. Strip filler words like "and surrounding" — keep concrete place names. Append state abbreviation only if clearly part of the original.
+- "serviceAreas": array of "City, ST" strings (state as 2-letter US abbreviation, e.g. "Columbus, OH"). The raw input often comes as a flat comma-separated stream like "Columbus, Ohio, Hilliard, Ohio, Dublin, Ohio" — pair every city with the state token that follows it. Title Case city names. Remove duplicates and filler words like "and surrounding". Never merge multiple cities into one entry.
 - "aboutUs": rewrite into 3-5 polished sentences, first-person plural ("we") or owner-focused, professional but warm, focused on expertise, story, and customer commitment. Fix grammar/capitalization. Do NOT invent facts not implied by the input. If input is empty/very thin, write a credible generic 3-5 sentence About Us based on the business name and industry.
 - "trustBar": array of 3-5 short standalone phrases (3-6 words each) suitable as trust-bar bullets (e.g., "Licensed & Insured", "24/7 Emergency Service", "Family Owned Since 1998"). Title Case. No sentences, no trailing punctuation. Split run-on inputs into individual items. If input is thin, infer reasonable items from industry.
 
@@ -134,7 +212,12 @@ ${trustBar || '(none)'}`;
     try { parsed = JSON.parse(content); } catch { parsed = {}; }
 
     const servicesArr: string[] = Array.isArray(parsed.services) ? parsed.services.filter(Boolean) : [];
-    const areasArr: string[] = Array.isArray(parsed.serviceAreas) ? parsed.serviceAreas.filter(Boolean) : [];
+    const aiAreas: string[] = Array.isArray(parsed.serviceAreas) ? parsed.serviceAreas.filter(Boolean) : [];
+    // Run AI output through deterministic normalizer to guarantee "City, ST" formatting,
+    // pairing, abbreviation, and dedupe — also handles cases where AI returned a flat list.
+    const areasArr: string[] = normalizeServiceAreas(aiAreas.join(', ')) ;
+    // Fallback: if AI produced nothing, normalize the raw input directly.
+    const finalAreas = areasArr.length > 0 ? areasArr : normalizeServiceAreas(String(serviceAreas));
     const trustArr: string[] = Array.isArray(parsed.trustBar) ? parsed.trustBar.filter(Boolean).slice(0, 5) : [];
     const aboutStr: string = typeof parsed.aboutUs === 'string' ? parsed.aboutUs.trim() : '';
 
@@ -143,7 +226,7 @@ ${trustBar || '(none)'}`;
       ownerName: normalizedOwnerName,
       phone: normalizedPhone,
       services: servicesArr.join(', '),
-      serviceAreas: areasArr.join(', '),
+      serviceAreas: finalAreas.join(', '),
       aboutUs: aboutStr,
       trustBar: trustArr.join(', '),
     });

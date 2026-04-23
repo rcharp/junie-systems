@@ -1073,9 +1073,9 @@ Business Information to Replace:
 - Facebook: If provided, link the facebook icon in the footer to this link.
 ${businessInfoLines}
 
-Services Offered: Use the bulleted list above. Treat each item as a separate service.
+Services Offered: Use the bulleted list above. Treat each item as a separate service. For EACH service in the list, create a dedicated, SEO-optimized service page (e.g. /services/<slug>) with unique content (overview, benefits, process, FAQs, CTA) and add a link to that page in the site navigation (under a "Services" dropdown if more than 4 items) and from the homepage services section. Do not lump multiple services onto a single page.
 
-Service Areas: Use the bulleted list above. Treat each item as a separate service area.
+Service Areas: Use the bulleted list above. Treat each item as a separate service area. For EACH service area in the list, create a dedicated, SEO-optimized location page (e.g. /service-areas/<city-state-slug>) with unique content tailored to that city (local landmarks/neighborhoods, services offered there, local trust signals, CTA) and add a link to that page in the site navigation (under a "Service Areas" dropdown) and from the homepage service-areas section. Do not lump multiple cities onto a single page.
 
 About Us Section:
 If this is None, create a professional, engaging About Us section based on the business name, services offered, and any information gathered from their existing website. Keep it authentic and focused on their expertise and commitment to customer service.
