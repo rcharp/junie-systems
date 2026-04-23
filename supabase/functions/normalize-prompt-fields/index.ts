@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
 Rules:
 - Output STRICT JSON only, no prose, no code fences. Match the schema exactly.
 - "services": array of clean service names with optional pricing. Split comma/newline/semicolon separated lists. Title Case each service. Keep prices if present (e.g., "Drain Cleaning - $99"). Remove duplicates and filler. If a single service mentions multiple, split sensibly.
-- "serviceAreas": array of city/area names. Title Case. Split lists. Remove duplicates and noise. Strip filler words like "and surrounding" — keep concrete place names. Append state abbreviation only if clearly part of the original.
+- "serviceAreas": array of "City, ST" strings (state as 2-letter US abbreviation, e.g. "Columbus, OH"). The raw input often comes as a flat comma-separated stream like "Columbus, Ohio, Hilliard, Ohio, Dublin, Ohio" — pair every city with the state token that follows it. Title Case city names. Remove duplicates and filler words like "and surrounding". Never merge multiple cities into one entry.
 - "aboutUs": rewrite into 3-5 polished sentences, first-person plural ("we") or owner-focused, professional but warm, focused on expertise, story, and customer commitment. Fix grammar/capitalization. Do NOT invent facts not implied by the input. If input is empty/very thin, write a credible generic 3-5 sentence About Us based on the business name and industry.
 - "trustBar": array of 3-5 short standalone phrases (3-6 words each) suitable as trust-bar bullets (e.g., "Licensed & Insured", "24/7 Emergency Service", "Family Owned Since 1998"). Title Case. No sentences, no trailing punctuation. Split run-on inputs into individual items. If input is thin, infer reasonable items from industry.
 
@@ -212,7 +212,12 @@ ${trustBar || '(none)'}`;
     try { parsed = JSON.parse(content); } catch { parsed = {}; }
 
     const servicesArr: string[] = Array.isArray(parsed.services) ? parsed.services.filter(Boolean) : [];
-    const areasArr: string[] = Array.isArray(parsed.serviceAreas) ? parsed.serviceAreas.filter(Boolean) : [];
+    const aiAreas: string[] = Array.isArray(parsed.serviceAreas) ? parsed.serviceAreas.filter(Boolean) : [];
+    // Run AI output through deterministic normalizer to guarantee "City, ST" formatting,
+    // pairing, abbreviation, and dedupe — also handles cases where AI returned a flat list.
+    const areasArr: string[] = normalizeServiceAreas(aiAreas.join(', ')) ;
+    // Fallback: if AI produced nothing, normalize the raw input directly.
+    const finalAreas = areasArr.length > 0 ? areasArr : normalizeServiceAreas(String(serviceAreas));
     const trustArr: string[] = Array.isArray(parsed.trustBar) ? parsed.trustBar.filter(Boolean).slice(0, 5) : [];
     const aboutStr: string = typeof parsed.aboutUs === 'string' ? parsed.aboutUs.trim() : '';
 
