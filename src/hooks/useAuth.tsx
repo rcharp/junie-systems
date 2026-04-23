@@ -64,11 +64,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    let lastUserId: string | null = null;
     
     // Check for existing session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
+      lastUserId = session?.user?.id ?? null;
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -87,10 +89,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted || signingOutRef.current) return;
-        
+
+        // Ignore token refreshes and re-fired initial sessions when the user
+        // hasn't actually changed (e.g. tab regains focus). These would
+        // otherwise toggle adminLoading and cause routes to remount.
+        const newUserId = session?.user?.id ?? null;
+        if (
+          (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
+          newUserId === lastUserId
+        ) {
+          setSession(session);
+          return;
+        }
+        lastUserId = newUserId;
+
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           setAdminLoading(true);
           setTimeout(() => {
