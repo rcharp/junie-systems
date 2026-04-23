@@ -193,10 +193,10 @@ export default function NewScreenshot() {
           </label>
           <Tabs value={logoMode} onValueChange={(v) => setLogoMode(v as "upload" | "url")} className="mb-2">
             <TabsList className="grid w-full grid-cols-2 h-8">
-              <TabsTrigger value="upload" className="text-xs gap-1">
+              <TabsTrigger value="upload" className="text-xs gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Upload className="w-3 h-3" /> Upload
               </TabsTrigger>
-              <TabsTrigger value="url" className="text-xs gap-1">
+              <TabsTrigger value="url" className="text-xs gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <LinkIcon className="w-3 h-3" /> URL
               </TabsTrigger>
             </TabsList>
