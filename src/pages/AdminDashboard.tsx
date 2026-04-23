@@ -219,9 +219,6 @@ const AdminDashboard = () => {
           {/* Mobile Layout */}
           <div className="md:hidden flex items-center justify-between">
             <div className="flex items-center space-x-2 flex-1 min-w-0">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
               <a href="/" className="flex items-center flex-shrink-0">
                 <img 
                   src="/lovable-uploads/junie-logo.png" 
@@ -271,9 +268,6 @@ const AdminDashboard = () => {
           {/* Desktop Layout */}
           <div className="hidden md:flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
               <a href="/" className="flex items-center">
                 <img 
                   src="/lovable-uploads/junie-logo.png" 
