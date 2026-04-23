@@ -34,6 +34,84 @@ function titleCase(s: string): string {
     .join('');
 }
 
+const STATE_MAP: Record<string, string> = {
+  alabama: 'AL', alaska: 'AK', arizona: 'AZ', arkansas: 'AR', california: 'CA',
+  colorado: 'CO', connecticut: 'CT', delaware: 'DE', florida: 'FL', georgia: 'GA',
+  hawaii: 'HI', idaho: 'ID', illinois: 'IL', indiana: 'IN', iowa: 'IA',
+  kansas: 'KS', kentucky: 'KY', louisiana: 'LA', maine: 'ME', maryland: 'MD',
+  massachusetts: 'MA', michigan: 'MI', minnesota: 'MN', mississippi: 'MS', missouri: 'MO',
+  montana: 'MT', nebraska: 'NE', nevada: 'NV', 'new hampshire': 'NH', 'new jersey': 'NJ',
+  'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND', ohio: 'OH',
+  oklahoma: 'OK', oregon: 'OR', pennsylvania: 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+  'south dakota': 'SD', tennessee: 'TN', texas: 'TX', utah: 'UT', vermont: 'VT',
+  virginia: 'VA', washington: 'WA', 'west virginia': 'WV', wisconsin: 'WI', wyoming: 'WY',
+  'district of columbia': 'DC',
+};
+const STATE_ABBRS = new Set(Object.values(STATE_MAP));
+
+function toStateAbbr(token: string): string | null {
+  const t = token.trim().toLowerCase().replace(/\.$/, '');
+  if (!t) return null;
+  if (STATE_ABBRS.has(t.toUpperCase())) return t.toUpperCase();
+  if (STATE_MAP[t]) return STATE_MAP[t];
+  return null;
+}
+
+/**
+ * Normalize a flat "City, State, City, State, ..." (or newline/semicolon separated) string
+ * into an array of "City, ST" entries. Handles cases where city and state are separated
+ * only by commas (so the list looks like a single flat CSV).
+ */
+function normalizeServiceAreas(raw: string): string[] {
+  if (!raw) return [];
+  // Split on newlines/semicolons first to preserve any explicit groupings
+  const groups = raw.split(/[\n;]+/).map((g) => g.trim()).filter(Boolean);
+  const out: string[] = [];
+  const seen = new Set<string>();
+
+  const pushPair = (city: string, state: string | null) => {
+    const c = titleCase(city.trim());
+    if (!c) return;
+    const entry = state ? `${c}, ${state}` : c;
+    const key = entry.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push(entry);
+  };
+
+  for (const group of groups) {
+    // Tokenize on commas
+    const tokens = group.split(',').map((t) => t.trim()).filter(Boolean);
+    let i = 0;
+    while (i < tokens.length) {
+      const cur = tokens[i];
+      const next = tokens[i + 1];
+      const nextAbbr = next ? toStateAbbr(next) : null;
+      const curAbbr = toStateAbbr(cur);
+      if (nextAbbr) {
+        // city, state pair
+        pushPair(cur, nextAbbr);
+        i += 2;
+      } else if (curAbbr && out.length > 0) {
+        // Stray state token after a city already pushed without state — attach it
+        const last = out[out.length - 1];
+        if (!/, [A-Z]{2}$/.test(last)) {
+          const updated = `${last}, ${curAbbr}`;
+          seen.delete(last.toLowerCase());
+          seen.add(updated.toLowerCase());
+          out[out.length - 1] = updated;
+        }
+        i += 1;
+      } else {
+        // City with no state info
+        pushPair(cur, null);
+        i += 1;
+      }
+    }
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
