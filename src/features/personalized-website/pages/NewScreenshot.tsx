@@ -161,7 +161,9 @@ export default function NewScreenshot() {
           <Input
             value={phoneNumber}
             onChange={(e) => {
-              const val = e.target.value.replace(/[^0-9()\-\s]/g, "");
+              let val = e.target.value.replace(/[^0-9()\-\s+]/g, "");
+              // Strip leading + or +1 country code
+              val = val.replace(/^\+\s*1?\s*/, "").replace(/^\+/, "");
               const digitCount = (val.match(/\d/g) || []).length;
               if (digitCount <= 10) setPhoneNumber(val);
             }}
