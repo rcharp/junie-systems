@@ -1,10 +1,9 @@
 import { useState, useRef } from "react";
-import {
-  supabase,
-  JUNIE_SUPABASE_URL,
-  JUNIE_SUPABASE_PUBLISHABLE_KEY,
-} from "@/integrations/junie-pipeline/client";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 import { Camera, Loader2, Upload, Link as LinkIcon, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,13 +44,13 @@ export default function NewScreenshot() {
       const ext = logoFile.name.split(".").pop() || "png";
       const path = `logos/screenshot-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
-        .from("templates")
+        .from("sites")
         .upload(path, logoFile, { contentType: logoFile.type, upsert: true });
       if (upErr) {
         toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
         return;
       }
-      finalLogoUrl = `${JUNIE_SUPABASE_URL}/storage/v1/object/public/templates/${path}`;
+      finalLogoUrl = `${SUPABASE_URL}/storage/v1/object/public/sites/${path}`;
     }
 
     if (!finalLogoUrl) {
@@ -63,12 +62,12 @@ export default function NewScreenshot() {
     setScreenshotUrl(null);
 
     try {
-      const res = await fetch(`${JUNIE_SUPABASE_URL}/functions/v1/generate-screenshot`, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-screenshot`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: JUNIE_SUPABASE_PUBLISHABLE_KEY,
-          Authorization: `Bearer ${JUNIE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: SUPABASE_PUBLISHABLE_KEY,
+          Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
           companyName: name,
@@ -83,23 +82,6 @@ export default function NewScreenshot() {
       if (!res.ok) throw new Error(data.error || "Screenshot generation failed");
 
       setScreenshotUrl(data.screenshotUrl);
-
-      try {
-        await supabase.from("pipeline_companies").insert({
-          run_id: "00000000-0000-0000-0000-000000000000",
-          name,
-          url: finalLogoUrl,
-          industry: industry.trim() || "general",
-          phone_number: phoneNumber.trim(),
-          logo_url: finalLogoUrl,
-          screen_url: data.screenshotUrl,
-          status: "screenshot-done",
-          primary_color: data.colors?.primary || null,
-          secondary_color: data.colors?.secondary || null,
-        } as any);
-      } catch (dbErr) {
-        console.error("Failed to save screenshot record:", dbErr);
-      }
 
       toast({ title: "Screenshot generated!", description: "Your personalized site screenshot is ready." });
 
