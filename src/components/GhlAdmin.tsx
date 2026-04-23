@@ -528,6 +528,7 @@ export const GhlAdmin = () => {
   const [setupContactOpen, setSetupContactOpen] = useState(false);
   const [selectedSetupContactLabel, setSelectedSetupContactLabel] = useState('');
   const [setupContactPlan, setSetupContactPlan] = useState<string>('');
+  const [knownContactTags, setKnownContactTags] = useState<Record<string, string[]>>({});
 
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
   const [creating, setCreating] = useState(false);
@@ -630,6 +631,23 @@ export const GhlAdmin = () => {
     if (has(/\bfull(\s+(plan|system))?\b/)) return 'Full Plan';
     if (has(/\bgrowth(\s+plan)?\b/)) return 'Growth Plan';
     return '';
+  };
+
+  const rememberContactTags = (contactId: string, tags?: string[]) => {
+    if (!contactId || !Array.isArray(tags) || tags.length === 0) return;
+    setKnownContactTags((prev) => {
+      const existing = prev[contactId] || [];
+      const same = existing.length === tags.length && existing.every((tag, index) => tag === tags[index]);
+      if (same) return prev;
+      return { ...prev, [contactId]: tags };
+    });
+  };
+
+  const getKnownPlanForContact = (contactId: string, fallbackTags?: string[]) => {
+    const tags = (Array.isArray(fallbackTags) && fallbackTags.length > 0)
+      ? fallbackTags
+      : knownContactTags[contactId] || [];
+    return detectPlanFromTags(tags);
   };
 
   const loadLocations = async () => {
@@ -827,8 +845,9 @@ export const GhlAdmin = () => {
         if (data?.error) throw new Error(data.error);
         if (cancelled) return;
         const c = data.contact || {};
-        const detected = detectPlanFromTags(c.tags || [], c.customValues || {});
-        console.log('[GhlAdmin] Setup tab plan detection', { contactId: urlContactId, tags: c.tags, detected });
+        rememberContactTags(urlContactId, c.tags);
+        const detected = getKnownPlanForContact(urlContactId, c.tags || []);
+        console.log('[GhlAdmin] Setup tab plan detection', { contactId: urlContactId, tags: c.tags, fallbackTags: knownContactTags[urlContactId], detected });
         setSetupContactPlan(detected);
       } catch (e) {
         console.warn('[GhlAdmin] Setup tab plan detection failed', e);
@@ -852,6 +871,7 @@ export const GhlAdmin = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         setPromptContacts(data.contacts || []);
+        (data.contacts || []).forEach((contact: any) => rememberContactTags(contact.id, contact.tags));
       } catch (e: any) {
         toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
       } finally {
@@ -870,8 +890,9 @@ export const GhlAdmin = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const c = data.contact || {};
+      rememberContactTags(cid, c.tags);
       const cv = c.customValues || {};
-      const detectedPlan = detectPlanFromTags(c.tags || [], cv);
+      const detectedPlan = getKnownPlanForContact(cid, c.tags || []);
       setPromptContactPlan(detectedPlan);
       const isPresencePlan = detectedPlan === 'Presence Plan';
       const get = (...keys: string[]) => {
@@ -1299,6 +1320,7 @@ ${deliverable}`;
         const onlyCustomers = (data.contacts || []).filter((c: any) =>
           Array.isArray(c.tags) && c.tags.some((t: string) => (t || '').toLowerCase().trim() === 'customer')
         );
+        onlyCustomers.forEach((contact: any) => rememberContactTags(contact.id, contact.tags));
         setGlobalContacts(onlyCustomers);
       } catch (e: any) {
         toast({ title: 'Failed to load contacts', description: e.message, variant: 'destructive' });
@@ -1325,6 +1347,7 @@ ${deliverable}`;
     const businessDisplay = toTitleCase(c.companyName);
     const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
     setGlobalContactLabel(combined);
+    rememberContactTags(c.id, c.tags);
 
     // Step 1 (Create Sub-account)
     setContactId(c.id);
@@ -1338,7 +1361,9 @@ ${deliverable}`;
     // Step 3 (Lovable Prompt)
     setPromptContactId(c.id);
     setSelectedPromptContactLabel(combined);
-    setPromptContactPlan(detectPlanFromTags(c.tags || []));
+    const detectedPlan = getKnownPlanForContact(c.id, c.tags || []);
+    setSetupContactPlan(detectedPlan);
+    setPromptContactPlan(detectedPlan);
     populatePromptFromContactId(c.id);
 
     setGlobalContactOpen(false);
