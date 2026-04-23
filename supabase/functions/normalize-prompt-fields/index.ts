@@ -226,7 +226,7 @@ ${trustBar || '(none)'}`;
       ownerName: normalizedOwnerName,
       phone: normalizedPhone,
       services: servicesArr.join(', '),
-      serviceAreas: areasArr.join(', '),
+      serviceAreas: finalAreas.join(', '),
       aboutUs: aboutStr,
       trustBar: trustArr.join(', '),
     });
