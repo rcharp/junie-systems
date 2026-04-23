@@ -1424,10 +1424,11 @@ ${deliverable}`;
         )}
       </div>
 
-      <TabsList className="grid grid-cols-3 mb-4">
+      <TabsList className="grid grid-cols-4 mb-4">
         <TabsTrigger value="create">Step 1: Create Client Subaccount in GHL</TabsTrigger>
         <TabsTrigger value="setup">Step 2: Set Up Sub-Account</TabsTrigger>
         <TabsTrigger value="prompt">Step 3: Create Website</TabsTrigger>
+        <TabsTrigger value="verify">Step 4: Verify Website</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">
