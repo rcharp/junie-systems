@@ -102,7 +102,7 @@ const App = () => (
             <Route path="/full" element={<FullPage />} />
             <Route path="/grow" element={<GrowPage />} />
             <Route path="/loom" element={<PipelineLayout />}>
-              <Route index element={<NewRun />} />
+              <Route index element={<NewScreenshot />} />
               <Route path="dashboard" element={<PipelineDashboard />} />
               <Route path="new" element={<NewRun />} />
               <Route path="screenshot" element={<NewScreenshot />} />
