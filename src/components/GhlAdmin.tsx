@@ -1999,6 +1999,18 @@ ${deliverable}`;
         </Card>
       </TabsContent>
 
+      <TabsContent value="verify">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Check className="w-5 h-5" /> Verify Website Accuracy</CardTitle>
+            <CardDescription>After the website has been built, walk through the live site and confirm each item below is accurate and working.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <WebsiteVerifyChecklist contactId={urlContactId} />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
       <AlertDialog open={duplicateDialog.open} onOpenChange={(open) => setDuplicateDialog((d) => ({ ...d, open }))}>
         <AlertDialogContent>
           <AlertDialogHeader>
