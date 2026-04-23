@@ -5,8 +5,9 @@ import { Check, ArrowRight } from "lucide-react";
 
 const presenceFeatures = [
   "Complete website redesigned for conversion",
-  "Google My Business setup & optimization",
+  "Google Business Page optimization",
   "QR code for Google reviews",
+  "Automated social media posts",
 ];
 
 const allFeatures = [
