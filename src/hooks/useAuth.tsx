@@ -64,11 +64,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    let lastUserId: string | null = null;
     
     // Check for existing session first
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mounted) return;
       
+      lastUserId = session?.user?.id ?? null;
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -84,7 +86,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // Set up auth state listener
-    let lastUserId: string | null = null;
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted || signingOutRef.current) return;
