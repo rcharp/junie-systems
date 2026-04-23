@@ -350,7 +350,7 @@ const AdminDashboard = () => {
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-muted-foreground mb-2">
-            Admin Dashboard
+            Client Website Creation
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             Monitor platform performance and manage development tasks
