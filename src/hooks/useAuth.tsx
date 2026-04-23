@@ -84,13 +84,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     // Set up auth state listener
+    let lastUserId: string | null = null;
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         if (!mounted || signingOutRef.current) return;
-        
+
+        // Ignore token refreshes and re-fired initial sessions when the user
+        // hasn't actually changed (e.g. tab regains focus). These would
+        // otherwise toggle adminLoading and cause routes to remount.
+        const newUserId = session?.user?.id ?? null;
+        if (
+          (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION' || event === 'SIGNED_IN') &&
+          newUserId === lastUserId
+        ) {
+          setSession(session);
+          return;
+        }
+        lastUserId = newUserId;
+
         setSession(session);
         setUser(session?.user ?? null);
-        
+
         if (session?.user) {
           setAdminLoading(true);
           setTimeout(() => {
