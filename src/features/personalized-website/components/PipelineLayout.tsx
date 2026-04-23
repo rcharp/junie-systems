@@ -60,8 +60,8 @@ export default function PipelineLayout() {
 
           <nav className="flex items-center gap-1">
             {navItems.map((item) => {
-              const isActive = item.exact
-                ? location.pathname === item.path
+              const isActive = "matchExact" in item
+                ? item.matchExact.includes(location.pathname)
                 : location.pathname.startsWith(item.path);
 
               return (
