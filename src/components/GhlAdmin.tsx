@@ -1115,6 +1115,12 @@ In the hero section, craft an appropriate H1 header and hero paragraph text for 
 1. The About Us section from above
 2. The Trust Bar section from above
 
+Hero Title (H1) requirements:
+- Come up with a UNIQUE hero title for this specific business — do NOT reuse a generic template. It should be short (ideally 4-8 words), catchy, and memorable.
+- Within the hero title, choose ONE anchor word (or at most two consecutive words) that is the most impactful/emotive word in the headline, and wrap it in a span with the class "hero-highlighted" so it can be styled as the visual anchor. Example: \`<h1>Your Home, <span class="hero-highlighted">Beautifully</span> Restored</h1>\`.
+- The highlighted word should be a strong noun, verb, or adjective — not filler words like "the", "and", "your", "we", etc.
+- Make sure the chosen anchor word actually appears naturally in the headline; do not force it.
+
 ${technicalIntegrations}
 
 Logo: Use this URL for the company logo. Replace it in the navbar, in the footer, and anywhere else that the logo is located. In the navbar, set the logo to a fixed height of 150px, and keep the aspect ratio. On mobile, the logo should have a fixed width of 64px, maintaining the aspect ratio.
