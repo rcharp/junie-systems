@@ -1511,8 +1511,8 @@ ${deliverable}`;
                     />
                   </div>
                 </div>
-                <div className={cn("space-y-2", promptContactPlan === 'Presence Plan' && "opacity-50 pointer-events-none")}>
-                  <h3 className="text-sm font-semibold">Step 2 - How to Get a Phone Number for a Client {promptContactPlan === 'Presence Plan' && <span className="text-xs font-normal text-muted-foreground">(N/A for Presence Plan)</span>}</h3>
+                <div className={cn("space-y-2", setupContactPlan === 'Presence Plan' && "opacity-50 pointer-events-none")}>
+                  <h3 className="text-sm font-semibold">Step 2 - How to Get a Phone Number for a Client {setupContactPlan === 'Presence Plan' && <span className="text-xs font-normal text-muted-foreground">(N/A for Presence Plan)</span>}</h3>
                   <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
                     <iframe
                       src="https://www.loom.com/embed/e65070eddd5a4a38b46d6c68ff7504e7"
@@ -1573,7 +1573,7 @@ ${deliverable}`;
                 </div>
               </div>
               <div>
-                <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={promptContactPlan} business={promptForm} />
+                <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={setupContactPlan} business={promptForm} />
               </div>
             </div>
           </CardContent>
