@@ -1553,7 +1553,7 @@ ${deliverable}`;
                   <h3 className="text-sm font-semibold">Step 2 - How to Get a Phone Number for a Client {promptContactPlan === 'Presence Plan' && <span className="text-xs font-normal text-muted-foreground">(N/A for Presence Plan)</span>}</h3>
                   <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
                     <iframe
-                      src="https://www.loom.com/embed/ca1289b8bacb4816afcf8bc197a0d337"
+                      src="https://www.loom.com/embed/e65070eddd5a4a38b46d6c68ff7504e7"
                       frameBorder={0}
                       allowFullScreen
                       className="absolute top-0 left-0 w-full h-full rounded-md"
