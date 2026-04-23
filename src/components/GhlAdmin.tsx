@@ -827,8 +827,11 @@ export const GhlAdmin = () => {
         if (data?.error) throw new Error(data.error);
         if (cancelled) return;
         const c = data.contact || {};
-        setSetupContactPlan(detectPlanFromTags(c.tags || [], c.customValues || {}));
-      } catch {
+        const detected = detectPlanFromTags(c.tags || [], c.customValues || {});
+        console.log('[GhlAdmin] Setup tab plan detection', { contactId: urlContactId, tags: c.tags, detected });
+        setSetupContactPlan(detected);
+      } catch (e) {
+        console.warn('[GhlAdmin] Setup tab plan detection failed', e);
         if (!cancelled) setSetupContactPlan('');
       }
     })();
@@ -1672,7 +1675,14 @@ ${deliverable}`;
       <TabsContent value="setup">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Check className="w-5 h-5" /> Set Up Sub-Account Checklist</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Check className="w-5 h-5" /> Set Up Sub-Account Checklist
+              {urlContactId && (
+                <Badge variant={setupContactPlan === 'Presence Plan' ? 'secondary' : 'default'} className="ml-2">
+                  {setupContactPlan || 'No plan tag detected'}
+                </Badge>
+              )}
+            </CardTitle>
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent>
