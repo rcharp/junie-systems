@@ -845,8 +845,9 @@ export const GhlAdmin = () => {
         if (data?.error) throw new Error(data.error);
         if (cancelled) return;
         const c = data.contact || {};
-        const detected = detectPlanFromTags(c.tags || [], c.customValues || {});
-        console.log('[GhlAdmin] Setup tab plan detection', { contactId: urlContactId, tags: c.tags, detected });
+        rememberContactTags(urlContactId, c.tags);
+        const detected = getKnownPlanForContact(urlContactId, c.tags || []);
+        console.log('[GhlAdmin] Setup tab plan detection', { contactId: urlContactId, tags: c.tags, fallbackTags: knownContactTags[urlContactId], detected });
         setSetupContactPlan(detected);
       } catch (e) {
         console.warn('[GhlAdmin] Setup tab plan detection failed', e);
@@ -870,6 +871,7 @@ export const GhlAdmin = () => {
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
         setPromptContacts(data.contacts || []);
+        (data.contacts || []).forEach((contact: any) => rememberContactTags(contact.id, contact.tags));
       } catch (e: any) {
         toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
       } finally {
@@ -888,8 +890,9 @@ export const GhlAdmin = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       const c = data.contact || {};
+      rememberContactTags(cid, c.tags);
       const cv = c.customValues || {};
-      const detectedPlan = detectPlanFromTags(c.tags || [], cv);
+      const detectedPlan = getKnownPlanForContact(cid, c.tags || []);
       setPromptContactPlan(detectedPlan);
       const isPresencePlan = detectedPlan === 'Presence Plan';
       const get = (...keys: string[]) => {
