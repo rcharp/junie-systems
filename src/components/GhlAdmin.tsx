@@ -1320,6 +1320,7 @@ ${deliverable}`;
         const onlyCustomers = (data.contacts || []).filter((c: any) =>
           Array.isArray(c.tags) && c.tags.some((t: string) => (t || '').toLowerCase().trim() === 'customer')
         );
+        onlyCustomers.forEach((contact: any) => rememberContactTags(contact.id, contact.tags));
         setGlobalContacts(onlyCustomers);
       } catch (e: any) {
         toast({ title: 'Failed to load contacts', description: e.message, variant: 'destructive' });
@@ -1346,6 +1347,7 @@ ${deliverable}`;
     const businessDisplay = toTitleCase(c.companyName);
     const combined = [personDisplay, businessDisplay].filter(Boolean).join(' - ') || personDisplay || businessDisplay || '(no name)';
     setGlobalContactLabel(combined);
+    rememberContactTags(c.id, c.tags);
 
     // Step 1 (Create Sub-account)
     setContactId(c.id);
@@ -1359,7 +1361,9 @@ ${deliverable}`;
     // Step 3 (Lovable Prompt)
     setPromptContactId(c.id);
     setSelectedPromptContactLabel(combined);
-    setPromptContactPlan(detectPlanFromTags(c.tags || []));
+    const detectedPlan = getKnownPlanForContact(c.id, c.tags || []);
+    setSetupContactPlan(detectedPlan);
+    setPromptContactPlan(detectedPlan);
     populatePromptFromContactId(c.id);
 
     setGlobalContactOpen(false);
