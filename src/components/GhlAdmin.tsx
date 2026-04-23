@@ -1675,7 +1675,14 @@ ${deliverable}`;
       <TabsContent value="setup">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Check className="w-5 h-5" /> Set Up Sub-Account Checklist</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Check className="w-5 h-5" /> Set Up Sub-Account Checklist
+              {urlContactId && (
+                <Badge variant={setupContactPlan === 'Presence Plan' ? 'secondary' : 'default'} className="ml-2">
+                  {setupContactPlan || 'No plan tag detected'}
+                </Badge>
+              )}
+            </CardTitle>
             <CardDescription>Complete these steps after creating the sub-account to fully configure it.</CardDescription>
           </CardHeader>
           <CardContent>
