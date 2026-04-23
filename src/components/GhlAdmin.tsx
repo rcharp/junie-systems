@@ -848,11 +848,15 @@ export const GhlAdmin = () => {
     return s.toLowerCase().replace(/\b([a-z])/g, (m) => m.toUpperCase());
   };
 
-  const detectPlanFromTags = (tags: string[]): string => {
-    const norm = tags.map((t) => (t || '').toLowerCase());
-    if (norm.some((t) => t.includes('full'))) return 'Full Plan';
-    if (norm.some((t) => t.includes('growth'))) return 'Growth Plan';
-    if (norm.some((t) => t.includes('presence'))) return 'Presence Plan';
+  const detectPlanFromTags = (tags: string[], customValues?: Record<string, any>): string => {
+    const tagStrs = (tags || []).map((t) => (t || '').toLowerCase());
+    const cvStrs = customValues
+      ? Object.entries(customValues).map(([k, v]) => `${k} ${v ?? ''}`.toLowerCase())
+      : [];
+    const haystack = [...tagStrs, ...cvStrs];
+    if (haystack.some((t) => t.includes('full'))) return 'Full Plan';
+    if (haystack.some((t) => t.includes('growth'))) return 'Growth Plan';
+    if (haystack.some((t) => t.includes('presence'))) return 'Presence Plan';
     return '';
   };
 
@@ -886,7 +890,7 @@ export const GhlAdmin = () => {
       if (data?.error) throw new Error(data.error);
       const c = data.contact || {};
       const cv = c.customValues || {};
-      setPromptContactPlan(detectPlanFromTags(c.tags || []));
+      setPromptContactPlan(detectPlanFromTags(c.tags || [], cv));
       const get = (...keys: string[]) => {
         for (const k of keys) {
           const found = Object.entries(cv).find(([key]) => key.toLowerCase().replace(/[\s_-]/g, '') === k.toLowerCase().replace(/[\s_-]/g, ''));
