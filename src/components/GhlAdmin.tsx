@@ -534,7 +534,81 @@ export const GhlAdmin = () => {
 
   const [updateLocationId, setUpdateLocationId] = useState('');
   const [updateForm, setUpdateForm] = useState({
-...
+    name: '', email: '', phone: '', firstName: '', lastName: '',
+    address: '', city: '', state: '', postalCode: '', country: '', website: '', timezone: '',
+  });
+  const [updateCustomJson, setUpdateCustomJson] = useState('{}');
+  const [updating, setUpdating] = useState(false);
+
+  const [stripeCustomers, setStripeCustomers] = useState<any[]>([]);
+  const [stripeLoading, setStripeLoading] = useState(false);
+
+  const [contactId, setContactId] = useState('');
+  const [loadingContact, setLoadingContact] = useState(false);
+
+  // Create User tab state
+  const [userForm, setUserForm] = useState({
+    locationId: '',
+    sourceLocationId: 'yvDlEJb1YBBk2JhD3map',
+    contactId: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    role: 'admin',
+    type: 'account',
+  });
+  const [creatingUser, setCreatingUser] = useState(false);
+  const [createdUserResult, setCreatedUserResult] = useState<any>(null);
+
+  // Location dropdown
+  const [locations, setLocations] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [locationsLoading, setLocationsLoading] = useState(false);
+  const [locationOpen, setLocationOpen] = useState(false);
+
+  // Contact dropdown (searchable) — Create User tab
+  const [contacts, setContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [contactSearch, setContactSearch] = useState('');
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [selectedContactLabel, setSelectedContactLabel] = useState('');
+
+  // Contact dropdown (searchable) — Create Sub-account tab
+  const [createContacts, setCreateContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string }[]>([]);
+  const [createContactSearch, setCreateContactSearch] = useState('');
+  const [createContactsLoading, setCreateContactsLoading] = useState(false);
+  const [createContactOpen, setCreateContactOpen] = useState(false);
+  const [selectedCreateContactLabel, setSelectedCreateContactLabel] = useState('');
+
+  // Lovable Prompt tab state
+  const [promptForm, setPromptForm] = useState({
+    businessName: '',
+    ownerName: '',
+    phone: '',
+    email: '',
+    address: '',
+    hours: '',
+    googleBusinessPage: '',
+    existingWebsite: '',
+    instagram: '',
+    facebook: '',
+    services: '',
+    serviceAreas: '',
+    aboutUs: '',
+    trustBar: '',
+    chatWidgetEmbed: '',
+    quoteWebhook: '',
+    reviewFormUrl: '',
+    discountFormUrl: '',
+    logoUrl: '',
+    industry: '',
+  });
+  const [promptContacts, setPromptContacts] = useState<{ id: string; name: string; email: string; phone: string; companyName: string; tags: string[] }[]>([]);
+  const [promptContactSearch, setPromptContactSearch] = useState('');
+  const [promptContactsLoading, setPromptContactsLoading] = useState(false);
+  const [promptContactOpen, setPromptContactOpen] = useState(false);
+  const [selectedPromptContactLabel, setSelectedPromptContactLabel] = useState('');
   const [promptContactId, setPromptContactId] = useState('');
   const [loadingPromptContact, setLoadingPromptContact] = useState(false);
   const [promptContactPlan, setPromptContactPlan] = useState<string>('');
