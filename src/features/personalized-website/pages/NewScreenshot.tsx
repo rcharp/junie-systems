@@ -22,7 +22,7 @@ export default function NewScreenshot() {
   );
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [transparentLogoBg, setTransparentLogoBg] = useState(true);
+  const [transparentLogoBg, setTransparentLogoBg] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
