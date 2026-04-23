@@ -527,6 +527,7 @@ export const GhlAdmin = () => {
   const [setupContactsLoading, setSetupContactsLoading] = useState(false);
   const [setupContactOpen, setSetupContactOpen] = useState(false);
   const [selectedSetupContactLabel, setSelectedSetupContactLabel] = useState('');
+  const [setupContactPlan, setSetupContactPlan] = useState<string>('');
 
   const [createForm, setCreateForm] = useState<CreateForm>(emptyCreate);
   const [creating, setCreating] = useState(false);
@@ -580,237 +581,6 @@ export const GhlAdmin = () => {
   const [createContactOpen, setCreateContactOpen] = useState(false);
   const [selectedCreateContactLabel, setSelectedCreateContactLabel] = useState('');
 
-  const loadLocations = async () => {
-    setLocationsLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ghl-list-locations');
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setLocations(data.locations || []);
-    } catch (e: any) {
-      toast({ title: 'Failed to load locations', description: e.message, variant: 'destructive' });
-    } finally {
-      setLocationsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (locations.length === 0) loadLocations();
-  }, []);
-
-  useEffect(() => {
-    if (!contactOpen) return;
-    const t = setTimeout(async () => {
-      setContactsLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
-          body: { query: contactSearch },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        setContacts(data.contacts || []);
-      } catch (e: any) {
-        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
-      } finally {
-        setContactsLoading(false);
-      }
-    }, 300);
-    return () => clearTimeout(t);
-  }, [contactSearch, contactOpen]);
-
-  useEffect(() => {
-    if (!createContactOpen) return;
-    const t = setTimeout(async () => {
-      setCreateContactsLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
-          body: { query: createContactSearch },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        setCreateContacts(data.contacts || []);
-      } catch (e: any) {
-        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
-      } finally {
-        setCreateContactsLoading(false);
-      }
-    }, 300);
-    return () => clearTimeout(t);
-  }, [createContactSearch, createContactOpen]);
-
-  // Setup tab: debounced contact search
-  useEffect(() => {
-    if (!setupContactOpen) return;
-    const t = setTimeout(async () => {
-      setSetupContactsLoading(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('ghl-search-contacts', {
-          body: { query: setupContactSearch },
-        });
-        if (error) throw error;
-        if (data?.error) throw new Error(data.error);
-        setSetupContacts(data.contacts || []);
-      } catch (e: any) {
-        toast({ title: 'Failed to search contacts', description: e.message, variant: 'destructive' });
-      } finally {
-        setSetupContactsLoading(false);
-      }
-    }, 300);
-    return () => clearTimeout(t);
-  }, [setupContactSearch, setupContactOpen]);
-
-  const populateCreateFromContactId = async (cid: string) => {
-    setLoadingContact(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ghl-get-contact', {
-        body: { contactId: cid },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
-      const c = data.contact || {};
-      setCreateForm((f) => {
-        let mergedCustomJson = f.customValuesJson;
-        if (c.customValues && typeof c.customValues === 'object') {
-          let existing: Record<string, string> = {};
-          if (f.customValuesJson.trim()) {
-            try { existing = JSON.parse(f.customValuesJson); } catch {}
-          }
-          const cleaned = Object.fromEntries(
-            Object.entries(c.customValues).filter(([, v]) => v && String(v).trim())
-          );
-          mergedCustomJson = JSON.stringify({ ...existing, ...cleaned }, null, 2);
-        }
-        return {
-          ...f,
-          name: c.companyName || c.name || f.name,
-          email: c.email || f.email,
-          phone: c.phone || f.phone,
-          firstName: c.firstName || f.firstName,
-          lastName: c.lastName || f.lastName,
-          address: c.address || f.address,
-          city: c.city || f.city,
-          state: c.state || f.state,
-          postalCode: c.postalCode || f.postalCode,
-          country: c.country || f.country,
-          website: c.website || f.website,
-          timezone: c.timezone || f.timezone,
-          einNumber: c.einNumber || f.einNumber,
-          customValuesJson: mergedCustomJson,
-        };
-      });
-      toast({ title: 'Contact loaded', description: 'Form populated from GHL contact' });
-    } catch (e: any) {
-      toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
-    } finally {
-      setLoadingContact(false);
-    }
-  };
-
-  const handleCreateUser = async () => {
-    if (!userForm.locationId.trim()) {
-      toast({ title: 'Missing target location', variant: 'destructive' });
-      return;
-    }
-    if (!userForm.contactId.trim()) {
-      toast({ title: 'Pick a contact', variant: 'destructive' });
-      return;
-    }
-    setCreatingUser(true);
-    setCreatedUserResult(null);
-    try {
-      // Fetch contact details to get email/name/phone
-      const { data: contactData, error: contactErr } = await supabase.functions.invoke('ghl-get-contact', {
-        body: { contactId: userForm.contactId.trim() },
-      });
-      if (contactErr) throw contactErr;
-      if (contactData?.error) throw new Error(contactData.error);
-      const c = contactData.contact || {};
-      if (!c.email) throw new Error('Contact has no email — required to create a user');
-
-      const { data, error } = await supabase.functions.invoke('ghl-create-user', {
-        body: {
-          locationId: userForm.locationId.trim(),
-          firstName: c.firstName || '',
-          lastName: c.lastName || '',
-          email: c.email,
-          phone: c.phone || '',
-          role: 'admin',
-          type: 'account',
-        },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
-      setCreatedUserResult(data);
-      toast({ title: 'User created', description: data.action === 'added_location_to_existing_user' ? 'Added location to existing user' : 'New user created' });
-    } catch (e: any) {
-      toast({ title: 'Create user failed', description: e.message, variant: 'destructive' });
-    } finally {
-      setCreatingUser(false);
-    }
-  };
-
-  const handlePopulateFromContact = async () => {
-    if (!contactId.trim()) {
-      toast({ title: 'Missing Contact ID', variant: 'destructive' });
-      return;
-    }
-    setLoadingContact(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ghl-get-contact', {
-        body: { contactId: contactId.trim() },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error + (data.details ? ': ' + JSON.stringify(data.details) : ''));
-      const c = data.contact || {};
-      setCreateForm((f) => {
-        let mergedCustomJson = f.customValuesJson;
-        if (c.customValues && typeof c.customValues === 'object') {
-          let existing: Record<string, string> = {};
-          if (f.customValuesJson.trim()) {
-            try { existing = JSON.parse(f.customValuesJson); } catch {}
-          }
-          const cleaned = Object.fromEntries(
-            Object.entries(c.customValues).filter(([, v]) => v && String(v).trim())
-          );
-          mergedCustomJson = JSON.stringify({ ...existing, ...cleaned }, null, 2);
-        }
-        return {
-          ...f,
-          name: c.name || f.name,
-          email: c.email || f.email,
-          phone: c.phone || f.phone,
-          firstName: c.firstName || f.firstName,
-          lastName: c.lastName || f.lastName,
-          address: c.address || f.address,
-          city: c.city || f.city,
-          state: c.state || f.state,
-          postalCode: c.postalCode || f.postalCode,
-          country: c.country || f.country,
-          website: c.website || f.website,
-          timezone: c.timezone || f.timezone,
-          einNumber: c.einNumber || f.einNumber,
-          customValuesJson: mergedCustomJson,
-        };
-      });
-      toast({ title: 'Contact loaded', description: 'Form populated from GHL contact' });
-    } catch (e: any) {
-      toast({ title: 'Failed to load contact', description: e.message, variant: 'destructive' });
-    } finally {
-      setLoadingContact(false);
-    }
-  };
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await supabase.functions.invoke('ghl-get-company-id');
-        if (data?.companyId) setCreateForm((f) => ({ ...f, companyId: data.companyId }));
-      } catch {}
-    })();
-  }, []);
-
-  const [duplicateDialog, setDuplicateDialog] = useState<{ open: boolean; existing: any | null }>({ open: false, existing: null });
-
   // Lovable Prompt tab state
   const [promptForm, setPromptForm] = useState({
     businessName: '',
@@ -863,6 +633,33 @@ export const GhlAdmin = () => {
   };
 
   useEffect(() => {
+    if (!urlContactId) {
+      setSetupContactPlan('');
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('ghl-get-contact', {
+          body: { contactId: urlContactId },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        if (cancelled) return;
+        const c = data.contact || {};
+        setSetupContactPlan(detectPlanFromTags(c.tags || [], c.customValues || {}));
+      } catch {
+        if (!cancelled) setSetupContactPlan('');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [urlContactId]);
+
+  useEffect(() => {
     if (!promptContactOpen) return;
     const t = setTimeout(async () => {
       setPromptContactsLoading(true);
@@ -892,7 +689,9 @@ export const GhlAdmin = () => {
       if (data?.error) throw new Error(data.error);
       const c = data.contact || {};
       const cv = c.customValues || {};
-      setPromptContactPlan(detectPlanFromTags(c.tags || [], cv));
+      const detectedPlan = detectPlanFromTags(c.tags || [], cv);
+      setPromptContactPlan(detectedPlan);
+      const isPresencePlan = detectedPlan === 'Presence Plan';
       const get = (...keys: string[]) => {
         for (const k of keys) {
           const found = Object.entries(cv).find(([key]) => key.toLowerCase().replace(/[\s_-]/g, '') === k.toLowerCase().replace(/[\s_-]/g, ''));
@@ -905,7 +704,7 @@ export const GhlAdmin = () => {
         ...f,
         businessName: c.companyName || c.name || f.businessName,
         ownerName: [c.firstName, c.lastName].filter(Boolean).join(' ') || f.ownerName,
-        phone: '',
+        phone: isPresencePlan ? (c.phone || f.phone) : '',
         email: c.email || f.email,
         address: fullAddress || f.address,
         hours: cv.hours_of_operation || get('hours', 'hoursofoperation', 'businesshours') || f.hours,
@@ -957,7 +756,7 @@ export const GhlAdmin = () => {
           ...f,
           businessName: norm.businessName || f.businessName,
           ownerName: norm.ownerName || f.ownerName,
-          phone: '',
+          phone: isPresencePlan ? (f.phone || rawPhone) : '',
           services: norm.services || f.services,
           serviceAreas: norm.serviceAreas || f.serviceAreas,
           aboutUs: norm.aboutUs || f.aboutUs,
@@ -1712,8 +1511,8 @@ ${deliverable}`;
                     />
                   </div>
                 </div>
-                <div className={cn("space-y-2", promptContactPlan === 'Presence Plan' && "opacity-50 pointer-events-none")}>
-                  <h3 className="text-sm font-semibold">Step 2 - How to Get a Phone Number for a Client {promptContactPlan === 'Presence Plan' && <span className="text-xs font-normal text-muted-foreground">(N/A for Presence Plan)</span>}</h3>
+                <div className={cn("space-y-2", setupContactPlan === 'Presence Plan' && "opacity-50 pointer-events-none")}>
+                  <h3 className="text-sm font-semibold">Step 2 - How to Get a Phone Number for a Client {setupContactPlan === 'Presence Plan' && <span className="text-xs font-normal text-muted-foreground">(N/A for Presence Plan)</span>}</h3>
                   <div className="relative" style={{ paddingBottom: '56.25%', height: 0 }}>
                     <iframe
                       src="https://www.loom.com/embed/e65070eddd5a4a38b46d6c68ff7504e7"
@@ -1774,7 +1573,7 @@ ${deliverable}`;
                 </div>
               </div>
               <div>
-                <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={promptContactPlan} business={promptForm} />
+                <SetupChecklist contactId={urlContactId} onCompletionChange={setStep2Done} plan={setupContactPlan} business={promptForm} />
               </div>
             </div>
           </CardContent>
