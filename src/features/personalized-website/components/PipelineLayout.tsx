@@ -6,9 +6,9 @@ import { useAuth } from "@/hooks/useAuth";
 const BASE = "/loom";
 
 const navItems = [
-  { path: `${BASE}/new`, label: "New Run", icon: PlusCircle, matchExact: [BASE, `${BASE}/new`] as string[] },
+  { path: `${BASE}/screenshot`, label: "Screenshot", icon: Camera, matchExact: [BASE, `${BASE}/screenshot`] as string[] },
+  { path: `${BASE}/new`, label: "New Run", icon: PlusCircle },
   { path: `${BASE}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
-  { path: `${BASE}/screenshot`, label: "Screenshot", icon: Camera },
   { path: `${BASE}/settings`, label: "Settings", icon: Settings },
 ];
 
