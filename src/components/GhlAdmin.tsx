@@ -1267,11 +1267,22 @@ ${deliverable}`;
   };
 
   const handleCreate = async () => {
+    // Auto-fetch companyId if missing (uses GHL_AGENCY_COMPANY_ID secret on the server)
+    let formToCheck = createForm;
+    if (!createForm.companyId?.trim()) {
+      try {
+        const { data } = await supabase.functions.invoke('ghl-get-company-id');
+        if (data?.companyId) {
+          formToCheck = { ...createForm, companyId: data.companyId };
+          setCreateForm(formToCheck);
+        }
+      } catch {}
+    }
     const required: (keyof CreateForm)[] = [
       'companyId', 'name', 'email', 'phone', 'firstName', 'lastName',
       'address', 'city', 'state', 'postalCode', 'country', 'timezone', 'einNumber',
     ];
-    const missing = required.filter((k) => !createForm[k]?.toString().trim());
+    const missing = required.filter((k) => !formToCheck[k]?.toString().trim());
     if (missing.length) {
       toast({ title: 'Missing required fields', description: missing.join(', '), variant: 'destructive' });
       return;
