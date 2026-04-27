@@ -1979,11 +1979,10 @@ ${deliverable}`;
               />
               <Field
                 required={promptContactPlan !== 'Presence Plan'}
-                disabled={promptContactPlan === 'Presence Plan'}
                 label="Discount Form Webhook URL"
                 value={promptForm.discountFormUrl}
                 onChange={(v) => setPromptForm({ ...promptForm, discountFormUrl: v })}
-                placeholder={promptContactPlan === 'Presence Plan' ? 'Not included on Presence Plan' : 'https://services.leadconnectorhq.com/hooks/XXXXXXXXXXXXXXXXXXXX/webhook-trigger/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'}
+                placeholder="https://services.leadconnectorhq.com/hooks/XXXXXXXXXXXXXXXXXXXX/webhook-trigger/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
                 helpTitle="How to find the Discount Form Webhook URL"
                 helpContent={
                   <div className="space-y-4">
