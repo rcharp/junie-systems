@@ -81,6 +81,57 @@ const OnboardingForm = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    const valid: File[] = [];
+    for (const f of files) {
+      if (!f.type.startsWith("image/")) {
+        toast({ title: "Invalid file", description: `${f.name} is not an image.`, variant: "destructive" });
+        continue;
+      }
+      if (f.size > 25 * 1024 * 1024) {
+        toast({ title: "File too large", description: `${f.name} exceeds 25MB.`, variant: "destructive" });
+        continue;
+      }
+      valid.push(f);
+    }
+    setPhotoFiles((prev) => [...prev, ...valid]);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const removePhoto = (idx: number) => {
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const uploadPhotos = async () => {
+    if (!form.businessName.trim()) {
+      toast({ title: "Business name required", description: "Please enter your business name above before uploading photos.", variant: "destructive" });
+      return;
+    }
+    if (photoFiles.length === 0) {
+      toast({ title: "No photos selected", description: "Please choose photos to upload.", variant: "destructive" });
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("companyName", form.businessName.trim());
+      photoFiles.forEach((f) => fd.append("files", f, f.name));
+      const { data, error } = await supabase.functions.invoke("upload-onboarding-photos", { body: fd });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error ?? "Upload failed");
+      setPhotoUploadedCount((prev) => prev + photoFiles.length);
+      setPhotoFiles([]);
+      toast({ title: "Photos uploaded!", description: `${data.uploaded?.length ?? 0} photo(s) sent to your folder.` });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      toast({ title: "Upload failed", description: msg, variant: "destructive" });
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
