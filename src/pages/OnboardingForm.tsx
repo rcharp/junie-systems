@@ -556,7 +556,7 @@ const OnboardingForm = () => {
                     className="hidden"
                     id="photoUploader"
                   />
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap items-center gap-3">
                     <Button
                       type="button"
                       variant="outline"
@@ -568,19 +568,29 @@ const OnboardingForm = () => {
                     </Button>
                     <Button
                       type="button"
+                      size="lg"
                       onClick={uploadPhotos}
                       disabled={photoUploading || photoFiles.length === 0}
+                      className="text-lg font-bold px-8 py-6 h-auto shadow-lg"
                     >
                       {photoUploading ? (
                         <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                           Uploading...
                         </>
                       ) : (
-                        <>Upload {photoFiles.length > 0 ? `${photoFiles.length} ` : ""}Photo{photoFiles.length === 1 ? "" : "s"}</>
+                        <>
+                          <Upload className="w-5 h-5 mr-2" />
+                          Upload!
+                        </>
                       )}
                     </Button>
                   </div>
+                  {photoFiles.length > 0 && photoUploadedCount === 0 && (
+                    <p className="text-sm font-semibold text-primary">
+                      ⚠️ Don't forget to click the <span className="underline">Upload!</span> button — otherwise your photos won't be sent.
+                    </p>
+                  )}
 
                   {photoFiles.length > 0 && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
