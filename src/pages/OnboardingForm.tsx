@@ -19,10 +19,14 @@ const OnboardingForm = () => {
   const contactId = searchParams.get("contact_id");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadedCount, setPhotoUploadedCount] = useState(0);
 
   const [form, setForm] = useState({
     fullName: "",
@@ -75,6 +79,57 @@ const OnboardingForm = () => {
     setLogoFile(null);
     setLogoPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const handlePhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    const valid: File[] = [];
+    for (const f of files) {
+      if (!f.type.startsWith("image/")) {
+        toast({ title: "Invalid file", description: `${f.name} is not an image.`, variant: "destructive" });
+        continue;
+      }
+      if (f.size > 25 * 1024 * 1024) {
+        toast({ title: "File too large", description: `${f.name} exceeds 25MB.`, variant: "destructive" });
+        continue;
+      }
+      valid.push(f);
+    }
+    setPhotoFiles((prev) => [...prev, ...valid]);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+  };
+
+  const removePhoto = (idx: number) => {
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const uploadPhotos = async () => {
+    if (!form.businessName.trim()) {
+      toast({ title: "Business name required", description: "Please enter your business name above before uploading photos.", variant: "destructive" });
+      return;
+    }
+    if (photoFiles.length === 0) {
+      toast({ title: "No photos selected", description: "Please choose photos to upload.", variant: "destructive" });
+      return;
+    }
+    setPhotoUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("companyName", form.businessName.trim());
+      photoFiles.forEach((f) => fd.append("files", f, f.name));
+      const { data, error } = await supabase.functions.invoke("upload-onboarding-photos", { body: fd });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error ?? "Upload failed");
+      setPhotoUploadedCount((prev) => prev + photoFiles.length);
+      setPhotoFiles([]);
+      toast({ title: "Photos uploaded!", description: `${data.uploaded?.length ?? 0} photo(s) sent to your folder.` });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed";
+      toast({ title: "Upload failed", description: msg, variant: "destructive" });
+    } finally {
+      setPhotoUploading(false);
+    }
   };
 
   const validate = () => {
@@ -473,15 +528,14 @@ const OnboardingForm = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-base">
-                  To make your new website really shine, please email{" "}
-                  <strong>25–50 photos</strong> to{" "}
+                  Upload your photos below — they'll go straight into your project folder. Prefer email? Send them to{" "}
                   <a
                     href="mailto:ricky@juniesystems.com?subject=Photos%20for%20my%20website"
                     className="text-primary font-semibold underline underline-offset-2"
                   >
                     ricky@juniesystems.com
                   </a>
-                  . We'll add them to your gallery and About Us section.
+                  . Aim for <strong>25–50 photos</strong>.
                 </p>
                 <div className="space-y-2 text-sm text-muted-foreground">
                   <p className="font-semibold text-foreground">What to send:</p>
@@ -491,8 +545,76 @@ const OnboardingForm = () => {
                     <li>Pictures of yourself and/or your team for the About Us page</li>
                   </ul>
                 </div>
+
+                <div className="space-y-3 pt-2">
+                  <input
+                    ref={photoInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handlePhotosChange}
+                    className="hidden"
+                    id="photoUploader"
+                  />
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => photoInputRef.current?.click()}
+                      disabled={photoUploading}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Choose Photos
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={uploadPhotos}
+                      disabled={photoUploading || photoFiles.length === 0}
+                    >
+                      {photoUploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>Upload {photoFiles.length > 0 ? `${photoFiles.length} ` : ""}Photo{photoFiles.length === 1 ? "" : "s"}</>
+                      )}
+                    </Button>
+                  </div>
+
+                  {photoFiles.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {photoFiles.map((f, idx) => (
+                        <div key={idx} className="relative group rounded-lg overflow-hidden border bg-background">
+                          <img
+                            src={URL.createObjectURL(f)}
+                            alt={f.name}
+                            className="w-full h-24 object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePhoto(idx)}
+                            disabled={photoUploading}
+                            className="absolute top-1 right-1 bg-background/90 hover:bg-background rounded-full p-1 shadow"
+                            aria-label={`Remove ${f.name}`}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {photoUploadedCount > 0 && (
+                    <p className="text-sm text-primary flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4" />
+                      {photoUploadedCount} photo{photoUploadedCount === 1 ? "" : "s"} uploaded successfully.
+                    </p>
+                  )}
+                </div>
+
                 <p className="text-xs text-muted-foreground">
-                  The more high-quality photos you send, the better your website will look. Phone photos are perfectly fine!
+                  The more high-quality photos you send, the better your website will look. Phone photos are perfectly fine! Max 25MB per photo.
                 </p>
               </CardContent>
             </Card>
