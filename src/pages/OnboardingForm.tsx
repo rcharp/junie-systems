@@ -19,10 +19,14 @@ const OnboardingForm = () => {
   const contactId = searchParams.get("contact_id");
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoUploadedCount, setPhotoUploadedCount] = useState(0);
 
   const [form, setForm] = useState({
     fullName: "",
