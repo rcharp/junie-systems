@@ -1162,7 +1162,7 @@ ${stepSix}
 ${stepSeven}
 8. If an existing website URL is provided, visit it to gather additional details about the business (services descriptions, tone of voice, unique selling points) to make the content more accurate and comprehensive.
 9. Ensure all contact information (phone, address, social media links, Google Business link) is updated throughout the site.
-10. Update meta tags, page titles, and any SEO elements with the new business name and relevant information.
+10. SEO & Branding metadata: Set the site favicon to the company logo (copy the logo into public/ and reference it via <link rel="icon"> in index.html, replacing any existing favicon). Update ALL meta and SEO information across the site to reflect the new business: <title>, <meta name="description">, <meta name="keywords">, <meta name="author">, Open Graph tags (og:title, og:description, og:image, og:url, og:type, og:site_name), Twitter card tags (twitter:card, twitter:title, twitter:description, twitter:image), canonical URL, and theme-color. Use the company logo (or a relevant hero photo) as the og:image and twitter:image. Apply page-specific titles/descriptions on every page (home, services, service areas, about, contact, blog, review, etc.) and add JSON-LD LocalBusiness structured data with the business name, address, phone, hours, and service area.
 11. Verify all links are functional and point to the correct new destinations.
 12. DO NOT alter any existing functionality, animations, forms, interactive elements, or structural layout.
 13. Create a sitemap file.
