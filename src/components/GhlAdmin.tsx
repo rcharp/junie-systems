@@ -1166,6 +1166,7 @@ ${stepSeven}
 11. Verify all links are functional and point to the correct new destinations.
 12. DO NOT alter any existing functionality, animations, forms, interactive elements, or structural layout.
 13. Create a sitemap file.
+14. GitHub Pages SPA routing: This site is hosted on GitHub Pages, which does NOT have built-in SPA fallback, so deep links like /review return a 404 on refresh. Add a public/404.html file that mirrors index.html (same <head>, same root div, same script tag loading the app bundle) so GitHub Pages serves the SPA shell for unknown routes and the client-side router can handle them. Include a small inline script in 404.html that saves the requested path to sessionStorage and redirects to "/", and a matching script in index.html that, on load, restores that path via history.replaceState — this preserves deep links across refreshes.
 
 ${deliverable}`;
   };
