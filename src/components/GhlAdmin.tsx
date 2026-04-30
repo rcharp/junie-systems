@@ -1167,6 +1167,8 @@ ${stepSeven}
 12. DO NOT alter any existing functionality, animations, forms, interactive elements, or structural layout.
 13. Create a sitemap file.
 14. GitHub Pages SPA routing: This site is hosted on GitHub Pages, which does NOT have built-in SPA fallback, so deep links like /review return a 404 on refresh. Add a public/404.html file that mirrors index.html (same <head>, same root div, same script tag loading the app bundle) so GitHub Pages serves the SPA shell for unknown routes and the client-side router can handle them. Include a small inline script in 404.html that saves the requested path to sessionStorage and redirects to "/", and a matching script in index.html that, on load, restores that path via history.replaceState — this preserves deep links across refreshes.
+15. DO NOT change the structure, layout, component hierarchy, sections, or ordering of any existing pages — only update the CONTENT (text, images, colors, business-specific data, SEO metadata) within the existing structure. Preserve all existing sections, their order, their wrappers, and their layout primitives exactly as they are.
+16. Ensure every page is fully mobile responsive. All sections, hero areas, navigation, grids, images, forms, buttons, and text must render correctly and remain usable on small screens (down to 375px wide) as well as tablet and desktop breakpoints. Use responsive Tailwind utilities (sm:, md:, lg:), avoid fixed widths that overflow on mobile, ensure tap targets are large enough, prevent horizontal scroll, and verify the mobile navigation/hamburger menu works on every page.
 
 ${deliverable}`;
   };
