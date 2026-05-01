@@ -41,6 +41,87 @@ export type Database = {
         }
         Relationships: []
       }
+      pipeline_companies: {
+        Row: {
+          audio_url: string | null
+          contact_name: string | null
+          created_at: string
+          error: string | null
+          id: string
+          industry: string | null
+          logo_url: string | null
+          name: string
+          phone_number: string | null
+          primary_color: string | null
+          run_id: string | null
+          screen_url: string | null
+          secondary_color: string | null
+          status: string
+          updated_at: string
+          url: string
+          video_url: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          contact_name?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name: string
+          phone_number?: string | null
+          primary_color?: string | null
+          run_id?: string | null
+          screen_url?: string | null
+          secondary_color?: string | null
+          status?: string
+          updated_at?: string
+          url: string
+          video_url?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          contact_name?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          industry?: string | null
+          logo_url?: string | null
+          name?: string
+          phone_number?: string | null
+          primary_color?: string | null
+          run_id?: string | null
+          screen_url?: string | null
+          secondary_color?: string | null
+          status?: string
+          updated_at?: string
+          url?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          created_at: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

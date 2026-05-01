@@ -1,1 +1,7 @@
 project_id = "umrgfcppgptuawtfcnqw"
+
+[functions.generate-screenshot]
+verify_jwt = false
+
+[functions.screenshot-webhook]
+verify_jwt = false
