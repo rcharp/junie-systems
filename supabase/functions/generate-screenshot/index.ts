@@ -393,14 +393,20 @@ Return valid 6-digit hex codes only.` },
     const formattedPhone = formatPhone(phoneNumber || "");
     injectedLogoSrc = await buildInlineLogoSrc(finalLogoUrl) ?? `${finalLogoUrl}${finalLogoUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
 
+    const rawPhoneDigits = (phoneNumber || "").replace(/\D/g, "");
+    const areaCode = rawPhoneDigits.length >= 10 ? rawPhoneDigits.slice(-10, -7) : "";
+    const locationName = lookupAreaCodeLocation(areaCode);
+    console.log(`Area code ${areaCode || "(none)"} -> location: ${locationName || "(none)"}`);
+
     const injectionScript = buildInjectionScript({
       companyName,
       phoneNumber: formattedPhone,
-      rawPhone: (phoneNumber || "").replace(/\D/g, ""),
+      rawPhone: rawPhoneDigits,
       logoUrl: injectedLogoSrc,
       navbarBgColor,
       primaryColor,
       secondaryColor,
+      locationName,
       skipLogoProcessing: !wantsTransparent, // Always bake deterministic white outline when transparency is desired
       logoAlreadyTransparent: wantsTransparent, // Tell browser code the AI already removed bg
     });
@@ -511,10 +517,11 @@ function buildInjectionScript(params: {
   navbarBgColor: string;
   primaryColor: string;
   secondaryColor: string;
+  locationName?: string;
   skipLogoProcessing?: boolean;
   logoAlreadyTransparent?: boolean;
 }): string {
-  const { companyName, phoneNumber, rawPhone, logoUrl, navbarBgColor, primaryColor, secondaryColor, skipLogoProcessing, logoAlreadyTransparent } = params;
+  const { companyName, phoneNumber, rawPhone, logoUrl, navbarBgColor, primaryColor, secondaryColor, locationName, skipLogoProcessing, logoAlreadyTransparent } = params;
   const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n");
 
 
@@ -528,6 +535,7 @@ function buildInjectionScript(params: {
     var navbarBgColor = '${esc(navbarBgColor)}';
     var primaryColor = '${esc(primaryColor)}';
     var secondaryColor = '${esc(secondaryColor)}';
+    var locationName = '${esc(locationName || "")}';
     var skipLogoProcessing = ${skipLogoProcessing ? "true" : "false"};
     var logoAlreadyTransparent = ${logoAlreadyTransparent ? "true" : "false"};
 
@@ -832,6 +840,14 @@ function buildInjectionScript(params: {
           var escaped = name.replace(/[-\\/\\\\^$*+?.()|{}]/g, '\\\\$&');
           node.textContent = node.textContent.replace(new RegExp(escaped, 'gi'), companyName);
         });
+        // Replace location placeholders with the area-code-derived city
+        if (locationName) {
+          node.textContent = node.textContent
+            .replace(/\\{\\{\\s*(city|location|area|service_area|town|county)\\s*\\}\\}/gi, locationName)
+            .replace(/\\bYour\\s+(City|Area|Town|Location|Region|County|Neighborhood)\\b/gi, locationName)
+            .replace(/\\b(the\\s+)?(local\\s+)?(your\\s+)?service\\s+area\\b/gi, locationName)
+            .replace(/\\[(city|location|area)\\]/gi, locationName);
+        }
       }
     });
 
@@ -902,4 +918,170 @@ function buildInjectionScript(params: {
   }
 })();
 `;
+}
+
+// NANP area code -> primary city/region. Covers US + Canada area codes.
+// Source: standard NANPA assignments (most populous coverage area per code).
+function lookupAreaCodeLocation(areaCode: string): string {
+  if (!areaCode || areaCode.length !== 3) return "";
+  const map: Record<string, string> = {
+    // Alabama
+    "205": "Birmingham, AL", "251": "Mobile, AL", "256": "Huntsville, AL", "334": "Montgomery, AL", "938": "Huntsville, AL", "659": "Birmingham, AL",
+    // Alaska
+    "907": "Anchorage, AK",
+    // Arizona
+    "480": "Mesa, AZ", "520": "Tucson, AZ", "602": "Phoenix, AZ", "623": "Phoenix, AZ", "928": "Flagstaff, AZ",
+    // Arkansas
+    "327": "Little Rock, AR", "479": "Fort Smith, AR", "501": "Little Rock, AR", "870": "Jonesboro, AR",
+    // California
+    "209": "Stockton, CA", "213": "Los Angeles, CA", "279": "Sacramento, CA", "310": "Los Angeles, CA", "323": "Los Angeles, CA",
+    "341": "Oakland, CA", "350": "Concord, CA", "369": "Santa Rosa, CA", "408": "San Jose, CA", "415": "San Francisco, CA",
+    "424": "Los Angeles, CA", "442": "Palm Springs, CA", "510": "Oakland, CA", "530": "Redding, CA", "559": "Fresno, CA",
+    "562": "Long Beach, CA", "619": "San Diego, CA", "626": "Pasadena, CA", "628": "San Francisco, CA", "650": "San Mateo, CA",
+    "657": "Anaheim, CA", "661": "Bakersfield, CA", "669": "San Jose, CA", "707": "Santa Rosa, CA", "714": "Anaheim, CA",
+    "747": "Burbank, CA", "760": "Oceanside, CA", "805": "Oxnard, CA", "818": "Burbank, CA", "820": "Oxnard, CA",
+    "831": "Salinas, CA", "840": "San Bernardino, CA", "858": "San Diego, CA", "909": "San Bernardino, CA", "916": "Sacramento, CA",
+    "925": "Concord, CA", "949": "Irvine, CA", "951": "Riverside, CA",
+    // Colorado
+    "303": "Denver, CO", "719": "Colorado Springs, CO", "720": "Denver, CO", "970": "Fort Collins, CO", "983": "Colorado Springs, CO",
+    // Connecticut
+    "203": "New Haven, CT", "475": "New Haven, CT", "860": "Hartford, CT", "959": "Hartford, CT",
+    // Delaware
+    "302": "Wilmington, DE",
+    // Washington DC
+    "202": "Washington, DC", "771": "Washington, DC",
+    // Florida
+    "239": "Cape Coral, FL", "305": "Miami, FL", "321": "Orlando, FL", "352": "Gainesville, FL", "386": "Daytona Beach, FL",
+    "407": "Orlando, FL", "448": "Tallahassee, FL", "561": "West Palm Beach, FL", "656": "Tampa, FL", "689": "Orlando, FL",
+    "727": "St. Petersburg, FL", "754": "Fort Lauderdale, FL", "772": "Port St. Lucie, FL", "786": "Miami, FL", "813": "Tampa, FL",
+    "850": "Tallahassee, FL", "863": "Lakeland, FL", "904": "Jacksonville, FL", "941": "Sarasota, FL", "954": "Fort Lauderdale, FL",
+    "959": "Hartford, CT",
+    // Georgia
+    "229": "Albany, GA", "404": "Atlanta, GA", "470": "Atlanta, GA", "478": "Macon, GA", "678": "Atlanta, GA",
+    "706": "Augusta, GA", "762": "Augusta, GA", "770": "Atlanta, GA", "912": "Savannah, GA", "943": "Atlanta, GA",
+    // Hawaii
+    "808": "Honolulu, HI",
+    // Idaho
+    "208": "Boise, ID", "986": "Boise, ID",
+    // Illinois
+    "217": "Springfield, IL", "224": "Chicago, IL", "309": "Peoria, IL", "312": "Chicago, IL", "331": "Aurora, IL",
+    "447": "Springfield, IL", "464": "Chicago, IL", "618": "Belleville, IL", "630": "Aurora, IL", "708": "Chicago, IL",
+    "730": "Belleville, IL", "773": "Chicago, IL", "779": "Rockford, IL", "815": "Rockford, IL", "847": "Chicago, IL",
+    "872": "Chicago, IL",
+    // Indiana
+    "219": "Gary, IN", "260": "Fort Wayne, IN", "317": "Indianapolis, IN", "463": "Indianapolis, IN", "574": "South Bend, IN",
+    "765": "Lafayette, IN", "812": "Evansville, IN", "930": "Evansville, IN",
+    // Iowa
+    "319": "Cedar Rapids, IA", "515": "Des Moines, IA", "563": "Davenport, IA", "641": "Mason City, IA", "712": "Sioux City, IA",
+    // Kansas
+    "316": "Wichita, KS", "620": "Hutchinson, KS", "785": "Topeka, KS", "913": "Kansas City, KS",
+    // Kentucky
+    "270": "Bowling Green, KY", "364": "Bowling Green, KY", "502": "Louisville, KY", "606": "Ashland, KY", "859": "Lexington, KY",
+    // Louisiana
+    "225": "Baton Rouge, LA", "318": "Shreveport, LA", "337": "Lafayette, LA", "457": "New Orleans, LA", "504": "New Orleans, LA",
+    "985": "Houma, LA",
+    // Maine
+    "207": "Portland, ME",
+    // Maryland
+    "227": "Baltimore, MD", "240": "Silver Spring, MD", "301": "Silver Spring, MD", "410": "Baltimore, MD", "443": "Baltimore, MD",
+    "667": "Baltimore, MD",
+    // Massachusetts
+    "339": "Boston, MA", "351": "Lowell, MA", "413": "Springfield, MA", "508": "Worcester, MA", "617": "Boston, MA",
+    "774": "Worcester, MA", "781": "Boston, MA", "857": "Boston, MA", "978": "Lowell, MA",
+    // Michigan
+    "231": "Muskegon, MI", "248": "Troy, MI", "269": "Kalamazoo, MI", "313": "Detroit, MI", "517": "Lansing, MI",
+    "586": "Warren, MI", "616": "Grand Rapids, MI", "734": "Ann Arbor, MI", "810": "Flint, MI", "906": "Marquette, MI",
+    "947": "Troy, MI", "989": "Saginaw, MI",
+    // Minnesota
+    "218": "Duluth, MN", "320": "St. Cloud, MN", "507": "Rochester, MN", "612": "Minneapolis, MN", "651": "St. Paul, MN",
+    "763": "Minneapolis, MN", "952": "Minneapolis, MN",
+    // Mississippi
+    "228": "Gulfport, MS", "601": "Jackson, MS", "662": "Tupelo, MS", "769": "Jackson, MS",
+    // Missouri
+    "314": "St. Louis, MO", "417": "Springfield, MO", "557": "St. Louis, MO", "573": "Columbia, MO", "636": "St. Charles, MO",
+    "660": "Sedalia, MO", "816": "Kansas City, MO", "975": "Kansas City, MO",
+    // Montana
+    "406": "Billings, MT",
+    // Nebraska
+    "308": "Grand Island, NE", "402": "Omaha, NE", "531": "Omaha, NE",
+    // Nevada
+    "702": "Las Vegas, NV", "725": "Las Vegas, NV", "775": "Reno, NV",
+    // New Hampshire
+    "603": "Manchester, NH",
+    // New Jersey
+    "201": "Jersey City, NJ", "551": "Jersey City, NJ", "609": "Trenton, NJ", "640": "Atlantic City, NJ", "732": "Toms River, NJ",
+    "848": "Toms River, NJ", "856": "Camden, NJ", "862": "Newark, NJ", "908": "Elizabeth, NJ", "973": "Newark, NJ",
+    // New Mexico
+    "505": "Albuquerque, NM", "575": "Las Cruces, NM",
+    // New York
+    "212": "New York, NY", "315": "Syracuse, NY", "329": "Albany, NY", "332": "New York, NY", "347": "New York, NY",
+    "363": "Long Island, NY", "516": "Hempstead, NY", "518": "Albany, NY", "585": "Rochester, NY", "607": "Binghamton, NY",
+    "631": "Long Island, NY", "646": "New York, NY", "680": "Syracuse, NY", "716": "Buffalo, NY", "718": "New York, NY",
+    "838": "Albany, NY", "845": "Poughkeepsie, NY", "914": "Yonkers, NY", "917": "New York, NY", "929": "New York, NY",
+    "934": "Long Island, NY",
+    // North Carolina
+    "252": "Greenville, NC", "336": "Greensboro, NC", "472": "Greensboro, NC", "704": "Charlotte, NC", "743": "Greensboro, NC",
+    "828": "Asheville, NC", "910": "Fayetteville, NC", "919": "Raleigh, NC", "980": "Charlotte, NC", "984": "Raleigh, NC",
+    // North Dakota
+    "701": "Fargo, ND",
+    // Ohio
+    "216": "Cleveland, OH", "220": "Newark, OH", "234": "Akron, OH", "283": "Cincinnati, OH", "326": "Dayton, OH",
+    "330": "Akron, OH", "380": "Columbus, OH", "419": "Toledo, OH", "436": "Cleveland, OH", "440": "Cleveland, OH",
+    "513": "Cincinnati, OH", "567": "Toledo, OH", "614": "Columbus, OH", "740": "Newark, OH", "937": "Dayton, OH",
+    // Oklahoma
+    "405": "Oklahoma City, OK", "539": "Tulsa, OK", "572": "Oklahoma City, OK", "580": "Lawton, OK", "918": "Tulsa, OK",
+    // Oregon
+    "458": "Eugene, OR", "503": "Portland, OR", "541": "Eugene, OR", "971": "Portland, OR",
+    // Pennsylvania
+    "215": "Philadelphia, PA", "223": "Harrisburg, PA", "267": "Philadelphia, PA", "272": "Scranton, PA", "412": "Pittsburgh, PA",
+    "445": "Philadelphia, PA", "484": "Allentown, PA", "570": "Scranton, PA", "582": "Erie, PA", "610": "Allentown, PA",
+    "717": "Harrisburg, PA", "724": "New Castle, PA", "814": "Erie, PA", "835": "Allentown, PA", "878": "Pittsburgh, PA",
+    // Rhode Island
+    "401": "Providence, RI",
+    // South Carolina
+    "803": "Columbia, SC", "821": "Columbia, SC", "839": "Columbia, SC", "843": "Charleston, SC", "854": "Charleston, SC",
+    "864": "Greenville, SC",
+    // South Dakota
+    "605": "Sioux Falls, SD",
+    // Tennessee
+    "423": "Chattanooga, TN", "615": "Nashville, TN", "629": "Nashville, TN", "731": "Jackson, TN", "865": "Knoxville, TN",
+    "901": "Memphis, TN", "931": "Clarksville, TN",
+    // Texas
+    "210": "San Antonio, TX", "214": "Dallas, TX", "254": "Killeen, TX", "281": "Houston, TX", "325": "Abilene, TX",
+    "346": "Houston, TX", "361": "Corpus Christi, TX", "409": "Beaumont, TX", "430": "Tyler, TX", "432": "Midland, TX",
+    "469": "Dallas, TX", "512": "Austin, TX", "682": "Fort Worth, TX", "713": "Houston, TX", "726": "San Antonio, TX",
+    "737": "Austin, TX", "806": "Lubbock, TX", "817": "Fort Worth, TX", "830": "New Braunfels, TX", "832": "Houston, TX",
+    "903": "Tyler, TX", "915": "El Paso, TX", "936": "Conroe, TX", "940": "Denton, TX", "945": "Dallas, TX",
+    "956": "Laredo, TX", "972": "Dallas, TX", "979": "College Station, TX",
+    // Utah
+    "385": "Salt Lake City, UT", "435": "St. George, UT", "801": "Salt Lake City, UT",
+    // Vermont
+    "802": "Burlington, VT",
+    // Virginia
+    "276": "Bristol, VA", "434": "Lynchburg, VA", "540": "Roanoke, VA", "571": "Arlington, VA", "578": "Richmond, VA",
+    "703": "Arlington, VA", "757": "Virginia Beach, VA", "804": "Richmond, VA", "826": "Roanoke, VA", "948": "Lynchburg, VA",
+    // Washington
+    "206": "Seattle, WA", "253": "Tacoma, WA", "360": "Vancouver, WA", "425": "Bellevue, WA", "509": "Spokane, WA",
+    "564": "Vancouver, WA",
+    // West Virginia
+    "304": "Charleston, WV", "681": "Charleston, WV",
+    // Wisconsin
+    "262": "Kenosha, WI", "274": "Green Bay, WI", "353": "Milwaukee, WI", "414": "Milwaukee, WI", "534": "Eau Claire, WI",
+    "608": "Madison, WI", "715": "Eau Claire, WI", "920": "Green Bay, WI",
+    // Wyoming
+    "307": "Cheyenne, WY",
+    // Canada (major)
+    "204": "Winnipeg, MB", "226": "London, ON", "236": "Vancouver, BC", "249": "Sudbury, ON", "250": "Victoria, BC",
+    "289": "Hamilton, ON", "306": "Saskatoon, SK", "343": "Ottawa, ON", "354": "Quebec City, QC", "365": "Hamilton, ON",
+    "367": "Quebec City, QC", "368": "Calgary, AB", "382": "London, ON", "387": "Sudbury, ON", "403": "Calgary, AB",
+    "416": "Toronto, ON", "418": "Quebec City, QC", "428": "Moncton, NB", "431": "Winnipeg, MB", "437": "Toronto, ON",
+    "438": "Montreal, QC", "450": "Montreal, QC", "468": "Quebec City, QC", "474": "Saskatoon, SK", "506": "Saint John, NB",
+    "514": "Montreal, QC", "519": "London, ON", "548": "London, ON", "579": "Montreal, QC", "581": "Quebec City, QC",
+    "584": "Winnipeg, MB", "587": "Calgary, AB", "604": "Vancouver, BC", "613": "Ottawa, ON", "639": "Saskatoon, SK",
+    "647": "Toronto, ON", "672": "Vancouver, BC", "683": "Sudbury, ON", "705": "Sudbury, ON", "709": "St. John's, NL",
+    "742": "London, ON", "753": "Ottawa, ON", "778": "Vancouver, BC", "780": "Edmonton, AB", "782": "Halifax, NS",
+    "807": "Thunder Bay, ON", "819": "Sherbrooke, QC", "825": "Calgary, AB", "867": "Yellowknife, NT", "873": "Sherbrooke, QC",
+    "879": "St. John's, NL", "902": "Halifax, NS", "905": "Hamilton, ON", "942": "Toronto, ON",
+  };
+  return map[areaCode] || "";
 }
