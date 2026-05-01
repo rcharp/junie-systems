@@ -517,10 +517,11 @@ function buildInjectionScript(params: {
   navbarBgColor: string;
   primaryColor: string;
   secondaryColor: string;
+  locationName?: string;
   skipLogoProcessing?: boolean;
   logoAlreadyTransparent?: boolean;
 }): string {
-  const { companyName, phoneNumber, rawPhone, logoUrl, navbarBgColor, primaryColor, secondaryColor, skipLogoProcessing, logoAlreadyTransparent } = params;
+  const { companyName, phoneNumber, rawPhone, logoUrl, navbarBgColor, primaryColor, secondaryColor, locationName, skipLogoProcessing, logoAlreadyTransparent } = params;
   const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n");
 
 
@@ -534,6 +535,7 @@ function buildInjectionScript(params: {
     var navbarBgColor = '${esc(navbarBgColor)}';
     var primaryColor = '${esc(primaryColor)}';
     var secondaryColor = '${esc(secondaryColor)}';
+    var locationName = '${esc(locationName || "")}';
     var skipLogoProcessing = ${skipLogoProcessing ? "true" : "false"};
     var logoAlreadyTransparent = ${logoAlreadyTransparent ? "true" : "false"};
 
