@@ -367,7 +367,7 @@ Return valid 6-digit hex codes only.` },
         console.warn("Nano Banana background removal error:", err);
       }
     }
-    const browserlessKey = settingsMap["browserless_api_key"];
+    const browserlessKey = settingsMap["browserless_api_key"] || Deno.env.get("BROWSERLESS_API_KEY");
     if (!browserlessKey) {
       return new Response(JSON.stringify({ error: "Browserless API key not configured" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
