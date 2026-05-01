@@ -393,14 +393,20 @@ Return valid 6-digit hex codes only.` },
     const formattedPhone = formatPhone(phoneNumber || "");
     injectedLogoSrc = await buildInlineLogoSrc(finalLogoUrl) ?? `${finalLogoUrl}${finalLogoUrl.includes("?") ? "&" : "?"}t=${Date.now()}`;
 
+    const rawPhoneDigits = (phoneNumber || "").replace(/\D/g, "");
+    const areaCode = rawPhoneDigits.length >= 10 ? rawPhoneDigits.slice(-10, -7) : "";
+    const locationName = lookupAreaCodeLocation(areaCode);
+    console.log(`Area code ${areaCode || "(none)"} -> location: ${locationName || "(none)"}`);
+
     const injectionScript = buildInjectionScript({
       companyName,
       phoneNumber: formattedPhone,
-      rawPhone: (phoneNumber || "").replace(/\D/g, ""),
+      rawPhone: rawPhoneDigits,
       logoUrl: injectedLogoSrc,
       navbarBgColor,
       primaryColor,
       secondaryColor,
+      locationName,
       skipLogoProcessing: !wantsTransparent, // Always bake deterministic white outline when transparency is desired
       logoAlreadyTransparent: wantsTransparent, // Tell browser code the AI already removed bg
     });
