@@ -8,9 +8,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Hardcoded source template that gets personalized via injected JS, then screenshotted.
-const SOURCE_SITE_URL = "https://junk-hauling-junie.lovable.app/";
-
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -30,14 +27,7 @@ serve(async (req) => {
 
     console.log(`Screenshot pipeline: ${companyName}, industry=${industry}, logo=${logoUrl}, transparent=${wantsTransparent}`);
 
-    const browserlessKey = Deno.env.get("BROWSERLESS_API_KEY");
-    if (!browserlessKey) {
-      return new Response(JSON.stringify({ error: "BROWSERLESS_API_KEY is not configured" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // ─── PARALLEL PHASE 1: Color extraction + logo URL upgrade ───
+    // ─── PARALLEL PHASE 1: Color extraction + Settings fetch simultaneously ───
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     let navbarBgColor = "#ffffff";
     let primaryColor = "#2d6a4f";
@@ -48,6 +38,15 @@ serve(async (req) => {
 
     const startTime = Date.now();
 
+    function isNearWhite(hex: string): boolean {
+      const c = hex.replace('#', '');
+      const r = parseInt(c.substr(0, 2), 16);
+      const g = parseInt(c.substr(2, 2), 16);
+      const b = parseInt(c.substr(4, 2), 16);
+      return r > 230 && g > 230 && b > 230;
+    }
+
+    // Fire color extraction + settings fetch + deterministic logo resolution upgrade in parallel
     const upscalePromise = (async () => {
       try {
         const upgradedGoogleUrl = logoUrl.replace(/\/s\d+-p-k-no-ns-nd\//, "/s512-p-k-no-ns-nd/");
@@ -139,6 +138,54 @@ Return valid 6-digit hex codes only.` },
             if (isNearWhiteOrBlack(primaryColor)) {
               primaryColor = secondaryColor;
             }
+            // Darken colors that are too bright (especially yellow/green/cyan hues)
+            function darkenIfTooBright(hex: string): string {
+              const c = hex.replace('#', '');
+              if (c.length !== 6) return hex;
+              const r = parseInt(c.substr(0,2),16) / 255;
+              const g = parseInt(c.substr(2,2),16) / 255;
+              const b = parseInt(c.substr(4,2),16) / 255;
+              const max = Math.max(r,g,b), min = Math.min(r,g,b);
+              const l = (max + min) / 2;
+              const d = max - min;
+              let h = 0, s = 0;
+              if (d !== 0) {
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                  case r: h = ((g - b) / d + (g < b ? 6 : 0)); break;
+                  case g: h = ((b - r) / d + 2); break;
+                  case b: h = ((r - g) / d + 4); break;
+                }
+                h *= 60;
+              }
+              // Perceived brightness: yellow/green/cyan (hue 60-200) feel brighter
+              const isBrightHue = h >= 40 && h <= 200;
+              const lightnessThreshold = isBrightHue ? 0.45 : 0.6;
+              if (l <= lightnessThreshold) return hex;
+              const targetL = isBrightHue ? 0.35 : 0.45;
+              // Convert HSL back to RGB with new lightness
+              const newL = targetL;
+              function hue2rgb(p: number, q: number, t: number) {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+              }
+              const q2 = newL < 0.5 ? newL * (1 + s) : newL + s - newL * s;
+              const p2 = 2 * newL - q2;
+              const hk = h / 360;
+              const nr = Math.round(hue2rgb(p2, q2, hk + 1/3) * 255);
+              const ng = Math.round(hue2rgb(p2, q2, hk) * 255);
+              const nb = Math.round(hue2rgb(p2, q2, hk - 1/3) * 255);
+              return '#' + nr.toString(16).padStart(2,'0') + ng.toString(16).padStart(2,'0') + nb.toString(16).padStart(2,'0');
+            }
+            const beforeDarken = primaryColor;
+            primaryColor = darkenIfTooBright(primaryColor);
+            if (beforeDarken !== primaryColor) {
+              console.log(`Primary color darkened from ${beforeDarken} to ${primaryColor}`);
+            }
             console.log(`Colors extracted in ${Date.now() - startTime}ms: canvasBg=${canvasBgColor}, navbarBg=${navbarBgColor}, primary=${primaryColor}, secondary=${secondaryColor}`);
           }
         }
@@ -147,7 +194,16 @@ Return valid 6-digit hex codes only.` },
       }
     })();
 
-    const [upscaledUrl] = await Promise.all([upscalePromise, colorPromise]);
+    const settingsPromise = (async () => {
+      const { data: settingsRows } = await supabase.from("settings").select("key, value")
+        .in("key", ["industry_content_map", "browserless_api_key"]);
+      const settingsMap: Record<string, string> = {};
+      settingsRows?.forEach((s: any) => { settingsMap[s.key] = s.value; });
+      return settingsMap;
+    })();
+
+    // Wait for color + settings + URL upgrade
+    const [upscaledUrl, , settingsMap] = await Promise.all([upscalePromise, colorPromise, settingsPromise]);
     finalLogoUrl = upscaledUrl;
 
     // ─── Optional: AI background removal + white outline via Nano Banana ───
@@ -186,6 +242,10 @@ Return valid 6-digit hex codes only.` },
               const b64 = match[2];
               const rawBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
+              // Post-process: Gemini often returns a flat RGB image with a gray
+              // checkerboard pattern baked in as fake transparency. Detect those
+              // pixels by their low-saturation gray range and convert them to
+              // real alpha=0.
               let outputBytes: Uint8Array = rawBytes;
               try {
                 const decoded = await decode(rawBytes);
@@ -204,6 +264,9 @@ Return valid 6-digit hex codes only.` },
                     if (max - min > 14) return false;
                     return max >= 170 && max <= 240 && min >= 170 && min <= 240;
                   }
+                  // Sample a grid of edge points; if ANY of them looks like
+                  // checkerboard gray (low-sat mid-gray), the whole image is
+                  // fake-transparency and we should strip it.
                   const samples: number[] = [];
                   const xs = [1, Math.floor(w * 0.1), Math.floor(w * 0.25), Math.floor(w * 0.5), Math.floor(w * 0.75), Math.floor(w * 0.9), w];
                   const ys = [1, Math.floor(h * 0.1), Math.floor(h * 0.5), Math.floor(h * 0.9), h];
@@ -218,15 +281,19 @@ Return valid 6-digit hex codes only.` },
                   const hasChecker = samples.some(isCheckerGray);
                   if (hasChecker) {
                     console.log("Detected fake checkerboard transparency, flood-filling background");
+                    // A pixel is "background-like" if it's near-white OR checker-gray
+                    // (low saturation, light range). Anything else is logo content.
                     function isBgLike(rgba: number) {
                       const r = (rgba >>> 24) & 0xff;
                       const g = (rgba >>> 16) & 0xff;
                       const b = (rgba >>> 8) & 0xff;
                       const max = Math.max(r, g, b);
                       const min = Math.min(r, g, b);
-                      if (max - min > 18) return false;
-                      return min >= 170;
+                      if (max - min > 18) return false; // saturated => logo color
+                      return min >= 170; // light gray to white
                     }
+                    // Read all pixels into a flat Uint32 buffer (1-indexed coords
+                    // in imagescript; convert to 0-indexed for our buffer).
                     const buf = new Uint32Array(w * h);
                     for (let y = 0; y < h; y++) {
                       for (let x = 0; x < w; x++) {
@@ -235,6 +302,7 @@ Return valid 6-digit hex codes only.` },
                     }
                     const visited = new Uint8Array(w * h);
                     const queue: number[] = [];
+                    // Seed from all edge pixels that look bg-like
                     for (let x = 0; x < w; x++) {
                       if (isBgLike(buf[x])) queue.push(x);
                       const bottomIdx = (h - 1) * w + x;
@@ -246,6 +314,7 @@ Return valid 6-digit hex codes only.` },
                       if (isBgLike(buf[leftIdx])) queue.push(leftIdx);
                       if (isBgLike(buf[rightIdx])) queue.push(rightIdx);
                     }
+                    // BFS flood
                     let head = 0;
                     while (head < queue.length) {
                       const idx = queue[head++];
@@ -258,6 +327,7 @@ Return valid 6-digit hex codes only.` },
                       if (y > 0) { const n = idx - w; if (!visited[n] && isBgLike(buf[n])) queue.push(n); }
                       if (y < h - 1) { const n = idx + w; if (!visited[n] && isBgLike(buf[n])) queue.push(n); }
                     }
+                    // Build a fresh RGBA image so alpha actually persists in PNG output
                     const out = new Image(w, h);
                     for (let y = 0; y < h; y++) {
                       for (let x = 0; x < w; x++) {
@@ -297,8 +367,27 @@ Return valid 6-digit hex codes only.` },
         console.warn("Nano Banana background removal error:", err);
       }
     }
+    const browserlessKey = settingsMap["browserless_api_key"];
+    if (!browserlessKey) {
+      return new Response(JSON.stringify({ error: "Browserless API key not configured" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
-    console.log(`Phase 1 done in ${Date.now() - startTime}ms. Using site URL: ${SOURCE_SITE_URL}`);
+    let industryContentMap: Record<string, any> = {};
+    try { industryContentMap = JSON.parse(settingsMap["industry_content_map"] || "{}"); } catch {}
+
+    const industryKey = (industry || "general").toLowerCase().trim();
+    const industryData = industryContentMap[industryKey];
+    const siteUrl = industryData?.site_url;
+
+    if (!siteUrl) {
+      return new Response(JSON.stringify({ error: `No site URL configured for industry "${industryKey}". Go to Settings > Content & Templates and add a Site URL.` }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    console.log(`Phase 1 done in ${Date.now() - startTime}ms. Using site URL: ${siteUrl}`);
 
     // ─── PHASE 2: Browserless screenshot ───
     const formattedPhone = formatPhone(phoneNumber || "");
@@ -312,8 +401,8 @@ Return valid 6-digit hex codes only.` },
       navbarBgColor,
       primaryColor,
       secondaryColor,
-      skipLogoProcessing: !wantsTransparent,
-      logoAlreadyTransparent: wantsTransparent,
+      skipLogoProcessing: !wantsTransparent, // Always bake deterministic white outline when transparency is desired
+      logoAlreadyTransparent: wantsTransparent, // Tell browser code the AI already removed bg
     });
 
     console.log(`Starting browserless at ${Date.now() - startTime}ms`);
@@ -324,7 +413,7 @@ Return valid 6-digit hex codes only.` },
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          url: SOURCE_SITE_URL,
+          url: siteUrl,
           options: {
             type: "jpeg",
             quality: 85,
@@ -383,11 +472,16 @@ function formatPhone(raw: string): string {
 
 async function buildInlineLogoSrc(url: string): Promise<string | null> {
   try {
-    const res = await fetch(url, { headers: { "Cache-Control": "no-cache" } });
+    const res = await fetch(url, {
+      headers: {
+        "Cache-Control": "no-cache",
+      },
+    });
     if (!res.ok) {
       console.warn("Failed to inline logo:", res.status, res.statusText);
       return null;
     }
+
     const bytes = new Uint8Array(await res.arrayBuffer());
     const contentType = res.headers.get("content-type") || "image/png";
     return `data:${contentType};base64,${uint8ToBase64(bytes)}`;
@@ -400,10 +494,12 @@ async function buildInlineLogoSrc(url: string): Promise<string | null> {
 function uint8ToBase64(bytes: Uint8Array): string {
   const chunkSize = 0x8000;
   let binary = "";
+
   for (let i = 0; i < bytes.length; i += chunkSize) {
     const chunk = bytes.subarray(i, i + chunkSize);
     binary += String.fromCharCode(...chunk);
   }
+
   return btoa(binary);
 }
 
@@ -421,6 +517,7 @@ function buildInjectionScript(params: {
   const { companyName, phoneNumber, rawPhone, logoUrl, navbarBgColor, primaryColor, secondaryColor, skipLogoProcessing, logoAlreadyTransparent } = params;
   const esc = (s: string) => s.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n");
 
+
   return `
 (function() {
   try {
@@ -434,6 +531,7 @@ function buildInjectionScript(params: {
     var skipLogoProcessing = ${skipLogoProcessing ? "true" : "false"};
     var logoAlreadyTransparent = ${logoAlreadyTransparent ? "true" : "false"};
 
+    // ─── Replace logo images ───
     function buildOutlinedLogoUrl(callback) {
       if (skipLogoProcessing) { return callback(logoUrl); }
       var source = new Image();
@@ -460,6 +558,7 @@ function buildInjectionScript(params: {
           var minX = width, minY = height, maxX = -1, maxY = -1;
 
           if (logoAlreadyTransparent) {
+            // Input PNG already has true alpha (AI removed bg). Just compute bbox of opaque pixels.
             for (var p = 0; p < data.length; p += 4) {
               if (data[p + 3] > 16) {
                 var pixelIndex = p / 4;
@@ -497,6 +596,7 @@ function buildInjectionScript(params: {
             ctx.putImageData(imageData, 0, 0);
           }
 
+          // Crop to bounding box
           var padding = Math.max(8, Math.round(Math.min(width, height) * 0.04));
           if (maxX <= minX || maxY <= minY) return callback(canvas.toDataURL('image/png'));
           var cropX = Math.max(0, minX - padding);
@@ -510,8 +610,10 @@ function buildInjectionScript(params: {
           if (!cleanCtx) return callback(canvas.toDataURL('image/png'));
           cleanCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
 
+          // Build outer-only silhouette via flood-fill from edges
           var silCanvas = document.createElement('canvas');
           var outlineWidth = Math.max(3, Math.round(Math.min(cropW, cropH) * 0.018));
+          // Merge radius: dilate shapes inward-merge so nearby disconnected pieces become one silhouette
           var mergeRadius = Math.max(6, Math.round(Math.min(cropW, cropH) * 0.035));
           var margin = outlineWidth + mergeRadius + 2;
           silCanvas.width = cropW + margin * 2;
@@ -519,6 +621,7 @@ function buildInjectionScript(params: {
           var silCtx = silCanvas.getContext('2d');
           if (!silCtx) return callback(cleanCanvas.toDataURL('image/png'));
 
+          // Step 1: build a merged silhouette canvas by stamping the logo offset in all directions
           var mergedCanvas = document.createElement('canvas');
           mergedCanvas.width = silCanvas.width;
           mergedCanvas.height = silCanvas.height;
@@ -531,6 +634,7 @@ function buildInjectionScript(params: {
             }
           }
 
+          // Step 2: flood-fill exterior of the MERGED silhouette to get one continuous outer shape
           var silData = mergedCtx.getImageData(0, 0, silCanvas.width, silCanvas.height);
           var sd = silData.data;
           var sw = silCanvas.width;
@@ -560,21 +664,24 @@ function buildInjectionScript(params: {
             if (iy < sh - 1) queue.push((idx + sw));
           }
 
+          // Make the merged silhouette fully opaque (interior + dilated areas), exterior fully transparent
           for (var sp = 0; sp < sd.length; sp += 4) {
             if (sd[sp + 3] === 1) {
-              sd[sp + 3] = 0;
+              sd[sp + 3] = 0; // exterior
             } else {
               sd[sp] = 0; sd[sp + 1] = 0; sd[sp + 2] = 0; sd[sp + 3] = 255;
             }
           }
           silCtx.putImageData(silData, 0, 0);
 
+          // Create final output with baked white outline
           var outCanvas = document.createElement('canvas');
           outCanvas.width = silCanvas.width;
           outCanvas.height = silCanvas.height;
           var outCtx = outCanvas.getContext('2d');
           if (!outCtx) return callback(cleanCanvas.toDataURL('image/png'));
 
+          // Draw the filled silhouette offset in all directions (dilation) in white
           outCtx.globalCompositeOperation = 'source-over';
           for (var dx = -outlineWidth; dx <= outlineWidth; dx++) {
             for (var dy = -outlineWidth; dy <= outlineWidth; dy++) {
@@ -582,10 +689,12 @@ function buildInjectionScript(params: {
               outCtx.drawImage(silCanvas, dx, dy);
             }
           }
+          // Color the silhouette white
           outCtx.globalCompositeOperation = 'source-in';
           outCtx.fillStyle = 'white';
           outCtx.fillRect(0, 0, outCanvas.width, outCanvas.height);
 
+          // Draw original cleaned logo on top
           outCtx.globalCompositeOperation = 'source-over';
           outCtx.drawImage(cleanCanvas, margin, margin);
 
@@ -600,20 +709,27 @@ function buildInjectionScript(params: {
 
     function applyLogoStyles(img) {
       img.srcset = '';
-      img.style.cssText += '; width: 300px !important; min-width: 300px !important; max-width: 300px !important; height: auto !important; max-height: none !important; object-fit: contain !important; image-rendering: auto !important; mix-blend-mode: normal !important;';
+      img.style.cssText += '; width: auto !important; min-width: 0 !important; max-width: min(400px, 40vw) !important; height: auto !important; max-height: 245px !important; object-fit: contain !important; image-rendering: auto !important; mix-blend-mode: normal !important; display: block !important;';
       img.removeAttribute('width');
       img.removeAttribute('height');
       var parent = img.parentElement;
       if (parent) {
-        parent.style.cssText += '; overflow: visible !important; max-height: none !important; height: auto !important;';
+        parent.style.cssText += '; overflow: visible !important; max-height: 170px !important; min-height: 0 !important; height: auto !important; display: flex !important; align-items: center !important; flex-shrink: 0 !important;';
       }
+    }
+
+    function replaceLogo(img) {
+      buildOutlinedLogoUrl(function(cleanedLogoUrl) {
+        img.src = cleanedLogoUrl;
+        applyLogoStyles(img);
+      });
     }
 
     var cleanedLogoUrlCache = null;
     function appendNewLogo(el) {
       var img = document.createElement('img');
       img.src = cleanedLogoUrlCache || logoUrl;
-      img.style.cssText = 'width: 300px; min-width: 300px; max-width: 300px; height: auto; object-fit: contain; image-rendering: auto;';
+      img.style.cssText = 'width: auto !important; min-width: 0 !important; max-width: min(400px, 40vw) !important; height: auto !important; max-height: 245px !important; object-fit: contain !important; image-rendering: auto !important; display: block !important;';
       el.textContent = '';
       el.appendChild(img);
     }
@@ -621,6 +737,7 @@ function buildInjectionScript(params: {
     buildOutlinedLogoUrl(function(cleanedLogoUrl) {
       cleanedLogoUrlCache = cleanedLogoUrl;
 
+      // Broad selectors for nav/header areas (covers GHL, generic sites, etc.)
       var navSelectors = [
         'header', 'nav',
         '[class*="nav"]', '[class*="header"]',
@@ -635,7 +752,8 @@ function buildInjectionScript(params: {
           applyLogoStyles(img);
         });
       });
-
+      
+      // Also replace images that look like logos by src/alt/class
       document.querySelectorAll('img').forEach(function(img) {
         var src = (img.src || '').toLowerCase();
         var alt = (img.alt || '').toLowerCase();
@@ -646,6 +764,7 @@ function buildInjectionScript(params: {
         }
       });
 
+      // Replace text-based logo placeholders
       document.querySelectorAll('[class*="logo"], #logo, [class*="brand"]').forEach(function(el) {
         if (!el.querySelector('img') && el.textContent.trim().length < 30) {
           appendNewLogo(el);
@@ -653,8 +772,10 @@ function buildInjectionScript(params: {
       });
     });
 
+    // ─── Replace phone numbers everywhere ───
     var phoneRegex = /(?:\\+?1[-. ]?)?\\(?\\d{3}\\)?[-. ]?\\d{3}[-. ]?\\d{4}/g;
-
+    
+    // Replace in text nodes
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     var textNodes = [];
     while (walker.nextNode()) textNodes.push(walker.currentNode);
@@ -667,6 +788,7 @@ function buildInjectionScript(params: {
       }
     });
 
+    // Replace tel: links
     var telLinks = document.querySelectorAll('a[href^="tel:"]');
     telLinks.forEach(function(link) {
       link.href = 'tel:' + rawPhone;
@@ -675,6 +797,8 @@ function buildInjectionScript(params: {
       }
     });
 
+    // ─── Replace company name in placeholders and hero text ───
+    // Extract original site name from multiple sources
     var originalNames = [];
     var titleEl = document.querySelector('title');
     if (titleEl && titleEl.textContent) {
@@ -686,6 +810,7 @@ function buildInjectionScript(params: {
       var ogName = (metaOg.getAttribute('content') || '').trim();
       if (ogName && ogName.length > 2) originalNames.push(ogName);
     }
+    // Also scan for bold/strong text in consent/legal areas that might be the business name
     document.querySelectorAll('strong, b').forEach(function(el) {
       var t = (el.textContent || '').trim();
       if (t.length > 2 && t.length < 40 && t !== companyName && !/consent|agree|help|stop|message/i.test(t)) {
@@ -702,6 +827,7 @@ function buildInjectionScript(params: {
         node.textContent = node.textContent
           .replace(/YOUR\\s*LOGO\\s*HERE/gi, companyName)
           .replace(/\\{\\{company_name\\}\\}/gi, companyName);
+        // Replace all detected original names
         originalNames.forEach(function(name) {
           var escaped = name.replace(/[-\\/\\\\^$*+?.()|{}]/g, '\\\\$&');
           node.textContent = node.textContent.replace(new RegExp(escaped, 'gi'), companyName);
@@ -709,6 +835,7 @@ function buildInjectionScript(params: {
       }
     });
 
+    // ─── Compute contrast color ───
     function contrastColor(hex) {
       var c = hex.replace('#', '');
       if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
@@ -719,13 +846,21 @@ function buildInjectionScript(params: {
       return lum > 0.4 ? '#1a1a1a' : '#ffffff';
     }
 
+    // Color scheme:
+    // navbarBgColor = logo background color -> navbar bg
+    // primaryColor = main brand color -> navbar text, hero colored text, quote form bg
+    // secondaryColor = accent color -> quote form border, CTA buttons
+
     var navTextColor = primaryColor;
     var btnTextColor = contrastColor(primaryColor);
 
+    // ─── Apply primary color to phone button, "Get Free Quote" button, and hero-highlighted text ───
+    // Phone number buttons/links in the navbar
     document.querySelectorAll('a[href^="tel:"], [class*="phone"] a, [class*="call"] a, [class*="phone"] button, [class*="call"] button').forEach(function(el) {
       el.style.cssText += '; background-color: ' + primaryColor + ' !important; color: ' + btnTextColor + ' !important; border-color: ' + primaryColor + ' !important;';
     });
 
+    // "Get Free Quote" or similar CTA buttons
     document.querySelectorAll('a, button').forEach(function(el) {
       var text = (el.textContent || '').trim().toLowerCase();
       if (text.indexOf('free quote') !== -1 || text.indexOf('get quote') !== -1 || text.indexOf('get a quote') !== -1 || text.indexOf('request quote') !== -1) {
@@ -733,7 +868,9 @@ function buildInjectionScript(params: {
       }
     });
 
-    document.querySelectorAll('[class*="hero-highlighted"], .hero-highlighted, [class*="hero_highlighted"], #hero-highlighted, [class*="highlight"], span[style*="color"], em, .accent-text').forEach(function(el) {
+    // Hero highlighted text — broad matching (apply background color, keep text white)
+    document.querySelectorAll('[class*="highlight"], span[style*="color"], em, .accent-text').forEach(function(el) {
+      if (el.id === 'hero-highlighted' || (el.className || '').toString().toLowerCase().indexOf('hero-highlighted') !== -1 || (el.className || '').toString().toLowerCase().indexOf('hero_highlighted') !== -1) return;
       var parent = el.closest('section, [class*="hero"], [class*="banner"], header, [class*="fold"], [class*="jumbotron"]');
       var cls = (el.className || '').toLowerCase();
       var id = (el.id || '').toLowerCase();
@@ -741,12 +878,22 @@ function buildInjectionScript(params: {
         el.style.cssText += '; background-color: ' + primaryColor + ' !important; color: #ffffff !important;';
       }
     });
-    var quoteForm = document.querySelector('#hero-quote-form');
-    if (quoteForm) {
-      quoteForm.style.cssText += '; border-color: ' + primaryColor + ' !important;';
-    }
+    // Hero quote form border
+    document.querySelectorAll('#quote-form-element').forEach(function(quoteForm) {
+      quoteForm.style.cssText += '; border: 2px solid ' + primaryColor + ' !important; border-color: ' + primaryColor + ' !important;';
+    });
+    document.querySelectorAll('#hero-highlighted, .hero-highlighted, [class*="hero-highlighted"], [class*="hero_highlighted"]').forEach(function(el) {
+      el.style.cssText += '; background-color: ' + primaryColor + ' !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;';
+    });
+    document.querySelectorAll('#hero-stars-main, #hero-stars-google, #hero-stars-facebook').forEach(function(stars) {
+      stars.style.cssText += '; color: ' + primaryColor + ' !important; -webkit-text-fill-color: ' + primaryColor + ' !important;';
+      stars.querySelectorAll('*').forEach(function(child) {
+        child.style.cssText += '; color: ' + primaryColor + ' !important; fill: ' + primaryColor + ' !important; stroke: none !important; -webkit-text-fill-color: ' + primaryColor + ' !important;';
+      });
+    });
+    // Also inject a CSS rule for hero-highlighted, star IDs, and quote form IDs as a catch-all
     var styleEl = document.createElement('style');
-    styleEl.textContent = '.hero-highlighted, [class*="hero-highlighted"], [class*="hero_highlighted"], #hero-highlighted { color: ' + primaryColor + ' !important; } #hero-quote-form { border-color: ' + primaryColor + ' !important; }';
+    styleEl.textContent = '.hero-highlighted, [class*="hero-highlighted"], [class*="hero_highlighted"], #hero-highlighted { background-color: ' + primaryColor + ' !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; font-family: inherit !important; font-size: inherit !important; font-weight: inherit !important; font-style: inherit !important; } #quote-form-element { border: 2px solid ' + primaryColor + ' !important; border-color: ' + primaryColor + ' !important; } #hero-quote-form { border: 0 !important; } #hero-stars-main, #hero-stars-main *, #hero-stars-google, #hero-stars-google *, #hero-stars-facebook, #hero-stars-facebook * { color: ' + primaryColor + ' !important; fill: ' + primaryColor + ' !important; stroke: none !important; -webkit-text-fill-color: ' + primaryColor + ' !important; } header img, nav img, [class*="logo"] img, img[class*="logo"], img[alt*="logo" i], img[src*="logo" i] { width: auto !important; min-width: 0 !important; max-width: min(400px, 40vw) !important; height: auto !important; max-height: 245px !important; object-fit: contain !important; display: block !important; }';
     document.head.appendChild(styleEl);
 
     console.log('Personalization injected successfully');
@@ -755,4 +902,3 @@ function buildInjectionScript(params: {
   }
 })();
 `;
-}
