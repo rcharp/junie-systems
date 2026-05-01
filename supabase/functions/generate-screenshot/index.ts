@@ -902,3 +902,4 @@ function buildInjectionScript(params: {
   }
 })();
 `;
+}
