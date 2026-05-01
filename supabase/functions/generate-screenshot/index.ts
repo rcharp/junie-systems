@@ -840,6 +840,14 @@ function buildInjectionScript(params: {
           var escaped = name.replace(/[-\\/\\\\^$*+?.()|{}]/g, '\\\\$&');
           node.textContent = node.textContent.replace(new RegExp(escaped, 'gi'), companyName);
         });
+        // Replace location placeholders with the area-code-derived city
+        if (locationName) {
+          node.textContent = node.textContent
+            .replace(/\\{\\{\\s*(city|location|area|service_area|town|county)\\s*\\}\\}/gi, locationName)
+            .replace(/\\bYour\\s+(City|Area|Town|Location|Region|County|Neighborhood)\\b/gi, locationName)
+            .replace(/\\b(the\\s+)?(local\\s+)?(your\\s+)?service\\s+area\\b/gi, locationName)
+            .replace(/\\[(city|location|area)\\]/gi, locationName);
+        }
       }
     });
 
