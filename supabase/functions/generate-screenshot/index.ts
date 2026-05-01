@@ -851,6 +851,34 @@ function buildInjectionScript(params: {
       }
     });
 
+    // ─── Force-update #hero-paragraph (and similar) with derived location ───
+    if (locationName) {
+      var heroParaSelectors = [
+        '#hero-paragraph', '.hero-paragraph', '[class*="hero-paragraph"]', '[class*="hero_paragraph"]',
+        '#hero-subheading', '#hero-subtitle', '#hero-description', '#hero-text',
+        '[class*="hero-subheading"]', '[class*="hero-subtitle"]', '[class*="hero-description"]'
+      ];
+      var heroParas = document.querySelectorAll(heroParaSelectors.join(','));
+      heroParas.forEach(function(el) {
+        var walker3 = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+        var nodes3 = [];
+        while (walker3.nextNode()) nodes3.push(walker3.currentNode);
+        nodes3.forEach(function(tn) {
+          var p = tn.parentElement;
+          if (p && ['SCRIPT','STYLE','NOSCRIPT'].indexOf(p.tagName) !== -1) return;
+          if (!tn.textContent) return;
+          var t = tn.textContent;
+          // 1) Placeholder tokens
+          t = t.replace(/\\{\\{\\s*(city|location|area|service_area|town|county|region)\\s*\\}\\}/gi, locationName)
+               .replace(/\\[(city|location|area|town|region|county)\\]/gi, locationName)
+               .replace(/\\bYour\\s+(City|Area|Town|Location|Region|County|Neighborhood)\\b/gi, locationName);
+          // 2) Existing "City, ST" pattern -> replace with new location
+          t = t.replace(/\\b[A-Z][a-zA-Z\\.\\s]{1,30},\\s*(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY|DC|AB|BC|MB|NB|NL|NS|NT|NU|ON|PE|QC|SK|YT)\\b/g, locationName);
+          tn.textContent = t;
+        });
+      });
+    }
+
     // ─── Compute contrast color ───
     function contrastColor(hex) {
       var c = hex.replace('#', '');
