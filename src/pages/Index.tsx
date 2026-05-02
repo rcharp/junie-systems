@@ -4,7 +4,6 @@ import Services from "@/components/Services";
 import Testimonials from "@/components/Testimonials";
 import IndustriesServed from "@/components/IndustriesServed";
 import Pricing from "@/components/Pricing";
-import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -19,7 +18,6 @@ const Index = () => {
         <section id="pricing">
           <Pricing />
         </section>
-        <ContactForm />
       </main>
       <Footer />
     </div>
