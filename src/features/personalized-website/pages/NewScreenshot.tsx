@@ -61,6 +61,7 @@ export default function NewScreenshot() {
 
     setSubmitting(true);
     setScreenshotUrl(null);
+    setFileSizeBytes(null);
 
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-screenshot`, {
