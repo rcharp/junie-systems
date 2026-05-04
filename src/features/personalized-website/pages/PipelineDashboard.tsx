@@ -38,6 +38,7 @@ interface DashboardRun {
   company_industry?: string;
   type: "pipeline" | "screenshot";
   screen_url?: string | null;
+  screen_file_size_bytes?: number | null;
 }
 
 export default function PipelineDashboard() {
