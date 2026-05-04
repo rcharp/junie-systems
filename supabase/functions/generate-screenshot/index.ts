@@ -448,6 +448,70 @@ Return valid 6-digit hex codes only.` },
 
     let imageBuffer = new Uint8Array(await screenshotRes.arrayBuffer());
     const MAX_BYTES = 300 * 1024;
+    console.log(`Original screenshot size: ${imageBuffer.byteLength} bytes`);
+
+    // ─── Compress via iLoveIMG API ───
+    const ILOVEIMG_PUBLIC_KEY = Deno.env.get("ILOVEIMG_PUBLIC_KEY");
+    if (imageBuffer.byteLength > MAX_BYTES && ILOVEIMG_PUBLIC_KEY) {
+      try {
+        const compressStart = Date.now();
+        // 1. Auth
+        const authRes = await fetch("https://api.ilovepdf.com/v1/auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ public_key: ILOVEIMG_PUBLIC_KEY }),
+        });
+        if (!authRes.ok) throw new Error(`iLoveIMG auth failed: ${authRes.status}`);
+        const { token } = await authRes.json();
+
+        // 2. Start task
+        const startRes = await fetch("https://api.ilovepdf.com/v1/start/compressimage", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!startRes.ok) throw new Error(`iLoveIMG start failed: ${startRes.status}`);
+        const { server, task } = await startRes.json();
+
+        // 3. Upload
+        const uploadForm = new FormData();
+        uploadForm.append("task", task);
+        uploadForm.append("file", new Blob([imageBuffer], { type: "image/jpeg" }), "screenshot.jpg");
+        const upRes = await fetch(`https://${server}/v1/upload`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: uploadForm,
+        });
+        if (!upRes.ok) throw new Error(`iLoveIMG upload failed: ${upRes.status} ${await upRes.text()}`);
+        const { server_filename } = await upRes.json();
+
+        // 4. Process (extreme compression level)
+        const procRes = await fetch(`https://${server}/v1/process`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            task,
+            tool: "compressimage",
+            compression_level: "extreme",
+            files: [{ server_filename, filename: "screenshot.jpg" }],
+          }),
+        });
+        if (!procRes.ok) throw new Error(`iLoveIMG process failed: ${procRes.status} ${await procRes.text()}`);
+
+        // 5. Download
+        const dlRes = await fetch(`https://${server}/v1/download/${task}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!dlRes.ok) throw new Error(`iLoveIMG download failed: ${dlRes.status}`);
+        const compressed = new Uint8Array(await dlRes.arrayBuffer());
+        console.log(`iLoveIMG compressed in ${Date.now() - compressStart}ms: ${imageBuffer.byteLength} -> ${compressed.byteLength} bytes`);
+        if (compressed.byteLength > 0 && compressed.byteLength < imageBuffer.byteLength) {
+          imageBuffer = compressed;
+        }
+      } catch (compressErr) {
+        console.warn("iLoveIMG compression failed, falling back to local re-encode:", compressErr);
+      }
+    }
+
+    // Fallback: local JPEG re-encode/downscale if still over limit
     if (imageBuffer.byteLength > MAX_BYTES) {
       try {
         const decoded = await decode(imageBuffer);
@@ -456,13 +520,9 @@ Return valid 6-digit hex codes only.` },
           for (const q of qualities) {
             const encoded = await decoded.encodeJPEG(q);
             console.log(`Re-encoded JPEG quality=${q} -> ${encoded.byteLength} bytes`);
-            if (encoded.byteLength <= MAX_BYTES) {
-              imageBuffer = encoded;
-              break;
-            }
             imageBuffer = encoded;
+            if (encoded.byteLength <= MAX_BYTES) break;
           }
-          // If still too large, downscale progressively
           let scaled = decoded;
           while (imageBuffer.byteLength > MAX_BYTES && scaled.width > 480) {
             scaled = scaled.resize(Math.floor(scaled.width * 0.8), Math.floor(scaled.height * 0.8));
@@ -471,7 +531,7 @@ Return valid 6-digit hex codes only.` },
           }
         }
       } catch (compressErr) {
-        console.warn("Image compression failed, uploading original:", compressErr);
+        console.warn("Fallback compression failed, uploading as-is:", compressErr);
       }
     }
     console.log(`Final screenshot size: ${imageBuffer.byteLength} bytes`);
