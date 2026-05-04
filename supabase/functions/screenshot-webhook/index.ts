@@ -68,6 +68,7 @@ serve(async (req) => {
         phone_number: phoneNumber,
         logo_url: logoUrl,
         screen_url: genData.screenshotUrl,
+        screen_file_size_bytes: typeof genData.fileSizeBytes === "number" ? genData.fileSizeBytes : null,
         status: "screenshot-done",
         primary_color: genData.colors?.primary || null,
         secondary_color: genData.colors?.secondary || null,

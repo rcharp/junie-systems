@@ -38,6 +38,7 @@ interface DashboardRun {
   company_industry?: string;
   type: "pipeline" | "screenshot";
   screen_url?: string | null;
+  screen_file_size_bytes?: number | null;
 }
 
 export default function PipelineDashboard() {
@@ -120,6 +121,7 @@ export default function PipelineDashboard() {
       company_industry: c.industry || "general",
       type: "screenshot" as const,
       screen_url: c.screen_url,
+      screen_file_size_bytes: c.screen_file_size_bytes ?? null,
     }));
 
     const all = [...pipelineRuns, ...screenshotRuns].sort(
@@ -380,6 +382,11 @@ export default function PipelineDashboard() {
                           </button>
                         ) : (
                           <div className="w-20 h-12 rounded border border-dashed border-border/40 bg-muted/30" />
+                        )}
+                        {run.type === "screenshot" && typeof run.screen_file_size_bytes === "number" && (
+                          <div className="text-[10px] text-muted-foreground mt-1 text-center w-20">
+                            {Math.round(run.screen_file_size_bytes / 1024)} KB
+                          </div>
                         )}
                       </td>
                       <td className="px-5 py-4">
