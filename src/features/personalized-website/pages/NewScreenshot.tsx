@@ -84,6 +84,7 @@ export default function NewScreenshot() {
       if (!res.ok) throw new Error(data.error || "Screenshot generation failed");
 
       setScreenshotUrl(data.screenshotUrl);
+      setFileSizeBytes(typeof data.fileSizeBytes === "number" ? data.fileSizeBytes : null);
 
       toast({ title: "Screenshot generated!", description: "Your personalized site screenshot is ready." });
 
