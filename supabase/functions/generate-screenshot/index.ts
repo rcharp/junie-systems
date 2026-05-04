@@ -487,7 +487,7 @@ Return valid 6-digit hex codes only.` },
     console.log(`Screenshot complete in ${Date.now() - startTime}ms: ${screenshotUrl}`);
 
     return new Response(
-      JSON.stringify({ success: true, screenshotUrl, colors: { navbarBg: navbarBgColor, primary: primaryColor, secondary: secondaryColor } }),
+      JSON.stringify({ success: true, screenshotUrl, fileSizeBytes: imageBuffer.byteLength, colors: { navbarBg: navbarBgColor, primary: primaryColor, secondary: secondaryColor } }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e: any) {
