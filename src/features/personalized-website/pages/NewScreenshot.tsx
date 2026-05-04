@@ -24,6 +24,7 @@ export default function NewScreenshot() {
   const [transparentLogoBg, setTransparentLogoBg] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+  const [fileSizeBytes, setFileSizeBytes] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,6 +61,7 @@ export default function NewScreenshot() {
 
     setSubmitting(true);
     setScreenshotUrl(null);
+    setFileSizeBytes(null);
 
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/generate-screenshot`, {
@@ -82,6 +84,7 @@ export default function NewScreenshot() {
       if (!res.ok) throw new Error(data.error || "Screenshot generation failed");
 
       setScreenshotUrl(data.screenshotUrl);
+      setFileSizeBytes(typeof data.fileSizeBytes === "number" ? data.fileSizeBytes : null);
 
       toast({ title: "Screenshot generated!", description: "Your personalized site screenshot is ready." });
 
@@ -257,7 +260,14 @@ export default function NewScreenshot() {
           className="glass rounded-xl p-4 space-y-3"
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Generated Screenshot</span>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">Generated Screenshot</span>
+              {fileSizeBytes !== null && (
+                <span className="text-xs text-muted-foreground">
+                  {(fileSizeBytes / 1024).toFixed(1)} KB
+                </span>
+              )}
+            </div>
             <a href={screenshotUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="gap-1">
                 <Download className="w-3 h-3" /> Download
