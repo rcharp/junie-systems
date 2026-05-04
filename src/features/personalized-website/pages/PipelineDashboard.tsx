@@ -383,6 +383,11 @@ export default function PipelineDashboard() {
                         ) : (
                           <div className="w-20 h-12 rounded border border-dashed border-border/40 bg-muted/30" />
                         )}
+                        {run.type === "screenshot" && typeof run.screen_file_size_bytes === "number" && (
+                          <div className="text-[10px] text-muted-foreground mt-1 text-center w-20">
+                            {Math.round(run.screen_file_size_bytes / 1024)} KB
+                          </div>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <span
