@@ -54,6 +54,7 @@ export type Database = {
           phone_number: string | null
           primary_color: string | null
           run_id: string | null
+          screen_file_size_bytes: number | null
           screen_url: string | null
           secondary_color: string | null
           status: string
@@ -73,6 +74,7 @@ export type Database = {
           phone_number?: string | null
           primary_color?: string | null
           run_id?: string | null
+          screen_file_size_bytes?: number | null
           screen_url?: string | null
           secondary_color?: string | null
           status?: string
@@ -92,6 +94,7 @@ export type Database = {
           phone_number?: string | null
           primary_color?: string | null
           run_id?: string | null
+          screen_file_size_bytes?: number | null
           screen_url?: string | null
           secondary_color?: string | null
           status?: string

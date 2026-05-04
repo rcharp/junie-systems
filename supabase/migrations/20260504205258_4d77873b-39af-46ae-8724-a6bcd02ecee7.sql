@@ -1,0 +1,1 @@
+ALTER TABLE public.pipeline_companies ADD COLUMN IF NOT EXISTS screen_file_size_bytes integer;
