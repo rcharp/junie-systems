@@ -24,6 +24,7 @@ export default function NewScreenshot() {
   const [transparentLogoBg, setTransparentLogoBg] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+  const [fileSizeBytes, setFileSizeBytes] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
