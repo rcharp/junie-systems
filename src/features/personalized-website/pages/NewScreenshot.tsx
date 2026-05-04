@@ -259,21 +259,26 @@ export default function NewScreenshot() {
           animate={{ opacity: 1, y: 0 }}
           className="glass rounded-xl p-4 space-y-3"
         >
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium">Generated Screenshot</span>
-              {fileSizeBytes !== null && (
-                <span className="text-xs text-muted-foreground">
-                  {(fileSizeBytes / 1024).toFixed(1)} KB
-                </span>
-              )}
-            </div>
-            <a href={screenshotUrl} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm" className="gap-1">
-                <Download className="w-3 h-3" /> Download
-              </Button>
-            </a>
-          </div>
+          {(() => {
+            const kb = fileSizeBytes !== null ? Math.round(fileSizeBytes / 1024) : null;
+            const ext = (screenshotUrl.split("?")[0].split(".").pop() || "jpg").toLowerCase();
+            const filename = kb !== null ? `screenshot-${kb}KB.${ext}` : `screenshot.${ext}`;
+            return (
+              <div className="flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">Generated Screenshot</span>
+                  {kb !== null && (
+                    <span className="text-xs text-muted-foreground">{kb} KB</span>
+                  )}
+                </div>
+                <a href={screenshotUrl} download={filename} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm" className="gap-1">
+                    <Download className="w-3 h-3" /> Download{kb !== null ? ` (${kb} KB)` : ""}
+                  </Button>
+                </a>
+              </div>
+            );
+          })()}
           <img src={screenshotUrl} alt="Generated screenshot" className="w-full rounded-lg border border-border/50" />
         </motion.div>
       )}
