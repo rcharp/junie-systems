@@ -260,7 +260,14 @@ export default function NewScreenshot() {
           className="glass rounded-xl p-4 space-y-3"
         >
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">Generated Screenshot</span>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">Generated Screenshot</span>
+              {fileSizeBytes !== null && (
+                <span className="text-xs text-muted-foreground">
+                  {(fileSizeBytes / 1024).toFixed(1)} KB
+                </span>
+              )}
+            </div>
             <a href={screenshotUrl} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="gap-1">
                 <Download className="w-3 h-3" /> Download
