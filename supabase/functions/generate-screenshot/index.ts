@@ -446,7 +446,35 @@ Return valid 6-digit hex codes only.` },
       throw new Error(`Screenshot failed: ${screenshotRes.status} - ${errText.slice(0, 300)}`);
     }
 
-    const imageBuffer = new Uint8Array(await screenshotRes.arrayBuffer());
+    let imageBuffer = new Uint8Array(await screenshotRes.arrayBuffer());
+    const MAX_BYTES = 300 * 1024;
+    if (imageBuffer.byteLength > MAX_BYTES) {
+      try {
+        const decoded = await decode(imageBuffer);
+        if (decoded instanceof Image) {
+          const qualities = [80, 70, 60, 50, 40, 30, 20];
+          for (const q of qualities) {
+            const encoded = await decoded.encodeJPEG(q);
+            console.log(`Re-encoded JPEG quality=${q} -> ${encoded.byteLength} bytes`);
+            if (encoded.byteLength <= MAX_BYTES) {
+              imageBuffer = encoded;
+              break;
+            }
+            imageBuffer = encoded;
+          }
+          // If still too large, downscale progressively
+          let scaled = decoded;
+          while (imageBuffer.byteLength > MAX_BYTES && scaled.width > 480) {
+            scaled = scaled.resize(Math.floor(scaled.width * 0.8), Math.floor(scaled.height * 0.8));
+            imageBuffer = await scaled.encodeJPEG(60);
+            console.log(`Downscaled to ${scaled.width}x${scaled.height} -> ${imageBuffer.byteLength} bytes`);
+          }
+        }
+      } catch (compressErr) {
+        console.warn("Image compression failed, uploading original:", compressErr);
+      }
+    }
+    console.log(`Final screenshot size: ${imageBuffer.byteLength} bytes`);
     const safeCompanyName = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const storagePath = `screenshots/${Date.now()}-${safeCompanyName}.jpg`;
 
