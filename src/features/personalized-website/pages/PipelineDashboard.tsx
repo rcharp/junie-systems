@@ -121,6 +121,7 @@ export default function PipelineDashboard() {
       company_industry: c.industry || "general",
       type: "screenshot" as const,
       screen_url: c.screen_url,
+      screen_file_size_bytes: c.screen_file_size_bytes ?? null,
     }));
 
     const all = [...pipelineRuns, ...screenshotRuns].sort(
