@@ -60,10 +60,10 @@ const nodes = {
     id: "pitch", phase: "STEP 3", icon: "🚀",
     title: "Send Pitch + Screenshot",
     color: C.blue, dim: C.blueDim,
-    instruction: "Sell the outcome. more booked jobs, fewer leads going to competitors. Never sell features. Always end aimed at the call.",
+    instruction: "Sell the outcome, more booked jobs, fewer leads going to competitors. Never sell features. Always end aimed at the call.",
     messages: [
-      { label: "If they HAVE a website (bad one):", text: "what's up my name is ricky. i know this is random and just tell me to kick rocks if it's a waste of your time but the way your site is set up right now is probably costing you jobs every week. people land on it and call your competitors instead. i mocked up what it'd look like fixed so you'd actually start getting those calls" },
-      { label: "If they have NO website:", text: "what's up my name is ricky. i know this is random and just tell me to kick rocks if it's a waste of your time but without a site you're losing the customers who google you before they call. they just dial whoever shows up first. i mocked one up so those jobs start landing in your phone instead of your competitors'" }
+      { label: "If they HAVE a website (bad one):", text: "what's up my name is ricky, i know this is random and just tell me to kick rocks if it's a waste of your time but the way your site is set up right now is probably costing you jobs every week, people land on it and call your competitors instead, i mocked up what it'd look like fixed so you'd actually start getting those calls" },
+      { label: "If they have NO website:", text: "what's up my name is ricky, i know this is random and just tell me to kick rocks if it's a waste of your time but without a site you're losing the customers who google you before they call, they just dial whoever shows up first, i mocked one up so those jobs start landing in your phone instead of your competitors'" }
     ],
     branches: [
       { label: "Interested / Curious / Any question", next: "push_to_book", color: C.green },
@@ -83,11 +83,11 @@ const nodes = {
     id: "push_to_book", phase: "STEP 4", icon: "📅",
     title: "Push to Book. VA Picks the Times",
     color: C.teal, dim: C.tealDim,
-    instruction: "Sell the outcome of the call. what they walk away with. then offer two specific times. Yes/no decision, not an open question.",
+    instruction: "Sell the outcome of the call, what they walk away with, then offer two specific times. Yes/no decision, not an open question.",
     vaAction: "Open Ricky's calendar right now. Find two open slots this week or early next. Use those specific times in the message below.",
     messages: [
-      { label: "Offer two specific times:", text: "awesome. 20 min on the phone and you'll see exactly how many jobs you're missing right now and what it'd take to start landing them. i've got tuesday at 10am or thursday at 2pm open. either work for you?" },
-      { label: "If they ask \"when works for you?\":", text: "i've got tuesday at 10 or thursday at 2. which one's better? worst case you walk away with a clearer picture of where leads are leaking" }
+      { label: "Offer two specific times:", text: "awesome. 20 min on the phone and you'll see exactly how many jobs you're missing right now and what it'd take to start landing them, i've got tuesday at 10am or thursday at 2pm open, either work for you?" },
+      { label: "If they ask \"when works for you?\":", text: "i've got tuesday at 10 or thursday at 2, which one's better? worst case you walk away with a clearer picture of where leads are leaking" }
     ],
     branches: [
       { label: "They pick a time / say yes", next: "book_confirmed", color: C.green },
@@ -99,9 +99,9 @@ const nodes = {
     id: "book_reschedule", phase: "BOOKING", icon: "🔄",
     title: "Neither Time Works. Offer More",
     color: C.teal, dim: C.tealDim,
-    instruction: "Pull two more open slots from Ricky's calendar. Keep offering specific times. don't hand it back to them to figure out.",
+    instruction: "Pull two more open slots from Ricky's calendar. Keep offering specific times, don't hand it back to them to figure out.",
     vaAction: "Check Ricky's calendar again. Find 2 more open slots and offer those.",
-    messages: [{ label: null, text: "no worries. i also have [day] at [time] or [day] at [time]. any of those work?" }],
+    messages: [{ label: null, text: "no worries, i also have [day] at [time] or [day] at [time], any of those work?" }],
     branches: [
       { label: "They pick one", next: "book_confirmed", color: C.green },
       { label: "🔇 Still no commitment after 24 hrs", next: "fu_booking_ghost", color: C.grayL },
@@ -113,7 +113,7 @@ const nodes = {
     color: C.green, dim: C.greenDim,
     isGoal: true,
     instruction: "Confirm the time back to them, add it to Ricky's calendar manually, then log it.",
-    messages: [{ label: "Confirm with them:", text: "perfect. locked in for [day] at [time]. you'll get a confirmation. lmk if anything changes." }],
+    messages: [{ label: "Confirm with them:", text: "perfect, locked in for [day] at [time], you'll get a confirmation, lmk if anything changes." }],
     postSteps: [
       "Add to Ricky's calendar: prospect name, number, and time",
       "Log the booking in GHL with a note",
@@ -126,7 +126,7 @@ const nodes = {
     id: "obj_catch", phase: "OBJECTION", icon: "🪝",
     title: "\"What's the catch?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "no catch. i build these because most contractors don't realize how many jobs they're losing every week before they ever pick up the phone. show you on the call, you decide if it's worth fixing. no pressure either way. tuesday at 10am or thursday at 2pm?" }],
+    messages: [{ label: null, text: "no catch, i build these because most contractors don't realize how many jobs they're losing every week before they ever pick up the phone, show you on the call, you decide if it's worth fixing, no pressure either way, tuesday at 10am or thursday at 2pm?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Curious but noncommittal", next: "push_to_book", color: C.teal },
@@ -137,7 +137,7 @@ const nodes = {
     id: "obj_cost", phase: "OBJECTION", icon: "💰",
     title: "\"How much does it cost?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "honestly the cost matters way less than what you're losing right now in missed jobs every month. on the call i'll show you exactly where the leads are leaking and what it'd take to plug it. then pricing makes sense in context. tuesday at 10 or thursday at 2?" }],
+    messages: [{ label: null, text: "honestly the cost matters way less than what you're losing right now in missed jobs every month, on the call i'll show you exactly where the leads are leaking and what it'd take to plug it, then pricing makes sense in context, tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Still wants to talk more first", next: "push_to_book", color: C.teal },
@@ -148,7 +148,7 @@ const nodes = {
     id: "obj_have_site", phase: "OBJECTION", icon: "🌐",
     title: "\"I already have a website\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "totally get it. most contractors do. the question isn't whether you have a site, it's whether it's actually turning visitors into booked jobs. 20 min and i'll show you what yours is doing vs what it could be. tuesday at 10am or thursday at 2pm?" }],
+    messages: [{ label: null, text: "totally get it, most contractors do, the question isn't whether you have a site, it's whether it's actually turning visitors into booked jobs. 20 min and i'll show you what yours is doing vs what it could be, tuesday at 10am or thursday at 2pm?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Open to it but noncommittal", next: "push_to_book", color: C.teal },
@@ -160,7 +160,7 @@ const nodes = {
     id: "obj_who", phase: "OBJECTION", icon: "🤔",
     title: "\"Who are you?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "i'm ricky. i help home service guys stop losing jobs to competitors who just happen to show up better online. saw a few things on your end that are probably costing you calls every week and figured it was worth a heads up. 20 min on the phone i'll walk you through it. tuesday at 10 or thursday at 2?" }],
+    messages: [{ label: null, text: "i'm ricky, i help home service guys stop losing jobs to competitors who just happen to show up better online, saw a few things on your end that are probably costing you calls every week and figured it was worth a heads up. 20 min on the phone i'll walk you through it, tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Open to it", next: "push_to_book", color: C.teal },
@@ -171,7 +171,7 @@ const nodes = {
     id: "obj_info", phase: "OBJECTION", icon: "📋",
     title: "\"Just send me more info\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "i could but a doc isn't gonna show you what you're actually losing every week. that's the whole point of the call. 20 min, you walk away knowing exactly where jobs are leaking. tuesday at 10am or thursday at 2pm?" }],
+    messages: [{ label: null, text: "i could but a doc isn't gonna show you what you're actually losing every week, that's the whole point of the call. 20 min, you walk away knowing exactly where jobs are leaking, tuesday at 10am or thursday at 2pm?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Still pushing for info before committing", next: "obj_info_persist", color: C.orange },
@@ -180,9 +180,9 @@ const nodes = {
   },
   obj_info_persist: {
     id: "obj_info_persist", phase: "OBJECTION", icon: "📋",
-    title: "Pushing for info. give a little, then push again",
+    title: "Pushing for info, give a little, then push again",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "fair. short version: most contractors are losing 5-15 jobs a month they don't even know about. missed calls, leads that never get a follow up, customers that bounce off the site. we plug those holes so you keep the work that's already coming your way. the call is just to show you where it's happening for you specifically. tuesday at 10 or thursday at 2?" }],
+    messages: [{ label: null, text: "fair, short version: most contractors are losing 5-15 jobs a month they don't even know about, missed calls, leads that never get a follow up, customers that bounce off the site, we plug those holes so you keep the work that's already coming your way, the call is just to show you where it's happening for you specifically, tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "🔇 Gone quiet", next: "fu_obj_ghost", color: C.grayL },
@@ -192,7 +192,7 @@ const nodes = {
     id: "obj_bot", phase: "OBJECTION", icon: "🤖",
     title: "\"Are you a bot?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "nah this is actually me lol. i look at contractor sites in the area, and when i see one that's costing the owner real jobs i reach out. 20 min on the phone i'll show you what i mean. tuesday at 10 or thursday at 2?" }],
+    messages: [{ label: null, text: "nah this is actually me lol, i look at contractor sites in the area, and when i see one that's costing the owner real jobs i reach out. 20 min on the phone i'll show you what i mean, tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Open to it", next: "push_to_book", color: C.teal },
@@ -203,7 +203,7 @@ const nodes = {
     id: "obj_time", phase: "OBJECTION", icon: "⏰",
     title: "\"No time right now\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "totally fair. every week you wait though is more jobs going to your competitors. 20 min is all it takes to see what's actually leaking. tuesday at 10am or thursday at 2pm work? if not just tell me when's better." }],
+    messages: [{ label: null, text: "totally fair, every week you wait though is more jobs going to your competitors. 20 min is all it takes to see what's actually leaking, tuesday at 10am or thursday at 2pm work? if not just tell me when's better." }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "They give a future window (\"next week\", \"after friday\")", next: "fu_time_future", color: C.teal },
@@ -214,7 +214,7 @@ const nodes = {
     id: "obj_what", phase: "OBJECTION", icon: "❓",
     title: "\"What do you do exactly?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "short version: i help home service guys land the jobs they're already losing. missed calls that never call back, leads that ghost, customers that bounce off the site. on a 20 min call i'll show you specifically where it's happening in your business. tuesday at 10 or thursday at 2?" }],
+    messages: [{ label: null, text: "short version: i help home service guys land the jobs they're already losing, missed calls that never call back, leads that ghost, customers that bounce off the site, on a 20 min call i'll show you specifically where it's happening in your business, tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Still engaged, more questions", next: "push_to_book", color: C.teal },
@@ -225,7 +225,7 @@ const nodes = {
     id: "obj_no", phase: "OBJECTION", icon: "🚫",
     title: "\"Not interested\"",
     color: C.red, dim: C.redDim,
-    messages: [{ label: null, text: "totally fair. appreciate you replying. if anything ever changes just shoot me a text. good luck out there." }],
+    messages: [{ label: null, text: "totally fair, appreciate you replying, if anything ever changes just shoot me a text, good luck out there." }],
     branches: [{ label: "Log and close →", next: "dead_not_interested", color: C.grayL }]
   },
   fu_qualifier: {
@@ -234,7 +234,7 @@ const nodes = {
     color: C.grayL, dim: C.faint,
     instruction: "They never replied to the qualifier. One follow-up, then move on.",
     sequence: [
-      { day: "Day 2", label: "FU #1. Last one", text: "hey just making sure this got through. is this still the right number for [business name]?" },
+      { day: "Day 2", label: "FU #1. Last one", text: "hey just making sure this got through, is this still the right number for [business name]?" },
     ],
     note: "If no reply after this, log and move on. Do not send a third message.",
     branches: [
@@ -246,9 +246,9 @@ const nodes = {
     id: "fu_pitch_1", phase: "FOLLOW-UP", icon: "🔇",
     title: "Ghost After Pitch. Day 3",
     color: C.grayL, dim: C.faint,
-    instruction: "They didn't reply to the pitch. Soft nudge. keep it casual.",
+    instruction: "They didn't reply to the pitch. Soft nudge, keep it casual.",
     sequence: [
-      { day: "Day 3", label: "FU #1", text: "hey just wanted to make sure you saw the site i built. lmk what you think" },
+      { day: "Day 3", label: "FU #1", text: "hey just wanted to make sure you saw the site i built, lmk what you think" },
     ],
     branches: [
       { label: "They reply with interest", next: "push_to_book", color: C.teal },
@@ -259,9 +259,9 @@ const nodes = {
     id: "fu_pitch_2", phase: "FOLLOW-UP", icon: "🔇",
     title: "Ghost After Pitch. Day 6 (Final)",
     color: C.grayL, dim: C.faint,
-    instruction: "Last follow-up. Offer two times directly. make it as easy as possible to say yes.",
+    instruction: "Last follow-up. Offer two times directly, make it as easy as possible to say yes.",
     sequence: [
-      { day: "Day 6", label: "FU #2. Final", text: "20 min on the phone you'll see exactly how many jobs you're losing right now and what it'd take to keep them. tuesday at 10am or thursday at 2pm. either one work?" },
+      { day: "Day 6", label: "FU #2. Final", text: "20 min on the phone you'll see exactly how many jobs you're losing right now and what it'd take to keep them, tuesday at 10am or thursday at 2pm, either one work?" },
     ],
     note: "If no reply after this, log and close. No more messages.",
     branches: [
@@ -274,10 +274,10 @@ const nodes = {
     id: "fu_booking_ghost", phase: "FOLLOW-UP", icon: "🔇",
     title: "Ghost After Booking Attempt",
     color: C.grayL, dim: C.faint,
-    instruction: "They were engaged, you offered specific times, they disappeared. Two follow-ups. both with specific times offered.",
+    instruction: "They were engaged, you offered specific times, they disappeared. Two follow-ups, both with specific times offered.",
     sequence: [
-      { day: "Day 2", label: "FU #1", text: "hey still got tuesday at 10 or thursday at 2 open. 20 min and you'll know exactly where jobs are leaking. just need a yes or no" },
-      { day: "Day 5", label: "FU #2. Final", text: "last time i'll bug you. if timing ever works just text me and we'll set something up. good luck out there." },
+      { day: "Day 2", label: "FU #1", text: "hey still got tuesday at 10 or thursday at 2 open. 20 min and you'll know exactly where jobs are leaking, just need a yes or no" },
+      { day: "Day 5", label: "FU #2. Final", text: "last time i'll bug you, if timing ever works just text me and we'll set something up, good luck out there." },
     ],
     note: "After FU #2 with no reply, log and close. Do not send more.",
     branches: [
@@ -292,8 +292,8 @@ const nodes = {
     color: C.grayL, dim: C.faint,
     instruction: "They replied with an objection, you handled it with two specific times, they went quiet. One more nudge, then one final close.",
     sequence: [
-      { day: "Day 2", label: "FU #1", text: "hey just circling back. every week without this fixed is more work going to your competitors. tuesday at 10am or thursday at 2pm still open, takes 20 min." },
-      { day: "Day 5", label: "FU #2. Final", text: "no worries if the timing's off. if you ever want to revisit just text me. good luck out there." },
+      { day: "Day 2", label: "FU #1", text: "hey just circling back, every week without this fixed is more work going to your competitors, tuesday at 10am or thursday at 2pm still open, takes 20 min." },
+      { day: "Day 5", label: "FU #2. Final", text: "no worries if the timing's off, if you ever want to revisit just text me, good luck out there." },
     ],
     note: "No reply after FU #2 = log as 'ghosted after objection' and close.",
     branches: [
@@ -309,7 +309,7 @@ const nodes = {
     instruction: "Set a GHL task for the date/window they mentioned. When it comes, send this with two fresh times from Ricky's calendar.",
     vaAction: "Set a GHL task reminder for when they said to reach back. Check Ricky's calendar then and offer two real open slots.",
     sequence: [
-      { day: "On their date", label: "Circle back", text: "hey ricky here. you mentioned this week might be better. i've got [day] at [time] or [day] at [time] open. either of those work?" },
+      { day: "On their date", label: "Circle back", text: "hey ricky here, you mentioned this week might be better, i've got [day] at [time] or [day] at [time] open, either of those work?" },
     ],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
@@ -435,7 +435,7 @@ function NodeCard({ node, onNavigate }) {
         {node.note && <NoteBox text={node.note} />}
         {node.postSteps && (
           <div style={{ marginTop: 14, background: "#06120d", border: `1px solid ${C.green}33`, borderRadius: 10, padding: "12px 14px" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: C.greenL, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>After booking. do this:</div>
+            <div style={{ fontSize: 10, fontWeight: 700, color: C.greenL, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>After booking, do this:</div>
             {node.postSteps.map((s, i) => (
               <div key={i} style={{ display: "flex", gap: 8, marginBottom: 5, fontSize: 12, color: C.dim }}>
                 <span style={{ color: C.greenL }}>✓</span> {s}
@@ -457,7 +457,7 @@ function NodeCard({ node, onNavigate }) {
         {node.branches && node.branches.length > 0 && (
           <div style={{ marginTop: 18 }}>
             <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>
-              {node.sequence ? "After sending. they respond with:" : "They respond with:"}
+              {node.sequence ? "After sending, they respond with:" : "They respond with:"}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               {node.branches.map((b, i) => (
@@ -540,7 +540,7 @@ function OverviewMap({ onStart }) {
         <div style={{ fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color:C.blueL, fontWeight:700, marginBottom:8 }}>Junie Systems</div>
         <div style={{ fontSize:26, fontWeight:800, color:C.text, marginBottom:6 }}>Cold Outreach Workflow</div>
         <div style={{ fontSize:13, color:C.dim, maxWidth:420, margin:"0 auto", lineHeight:1.65 }}>
-          VA owns the booking. pick the times, offer them, add to calendar. Every path ends at a booked call.
+          VA owns the booking, pick the times, offer them, add to calendar. Every path ends at a booked call.
         </div>
       </div>
       <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:"18px 16px", marginBottom:12 }}>
@@ -562,13 +562,13 @@ function OverviewMap({ onStart }) {
         </div>
       </div>
       <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:18, marginBottom:12 }}>
-        <div style={{ fontSize:10, fontWeight:700, color:C.orange, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>⚡ Objections. all offer specific times, all route to booking</div>
+        <div style={{ fontSize:10, fontWeight:700, color:C.orange, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>⚡ Objections, all offer specific times, all route to booking</div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(145px,1fr))", gap:8 }}>
           {objections.map(o => <Btn key={o.id} item={o} color={C.orange} />)}
         </div>
       </div>
       <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:18, marginBottom:14 }}>
-        <div style={{ fontSize:10, fontWeight:700, color:C.tealL, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>🔇 Follow-up sequences. for every ghost point</div>
+        <div style={{ fontSize:10, fontWeight:700, color:C.tealL, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>🔇 Follow-up sequences, for every ghost point</div>
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(175px,1fr))", gap:8 }}>
           {followups.map(o => <Btn key={o.id} item={o} color={C.tealL} />)}
         </div>
@@ -576,7 +576,7 @@ function OverviewMap({ onStart }) {
       <div style={{ background:"#080f20", border:`1px solid ${C.blue}44`, borderRadius:12, padding:"14px 18px", marginBottom:24 }}>
         <div style={{ fontSize:10, fontWeight:700, color:C.blueL, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8 }}>👤 The rule: VA books the call, not the customer</div>
         <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.65 }}>
-          Never send a calendar link and hope they click it. Check Ricky's calendar, pick two open slots, offer them in the message. It's a yes or no. not a homework assignment. If they say yes, you add it to Ricky's calendar and confirm back.
+          Never send a calendar link and hope they click it. Check Ricky's calendar, pick two open slots, offer them in the message. It's a yes or no, not a homework assignment. If they say yes, you add it to Ricky's calendar and confirm back.
         </div>
       </div>
       <div style={{ textAlign:"center" }}>
