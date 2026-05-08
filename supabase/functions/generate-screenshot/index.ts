@@ -431,11 +431,11 @@ Return valid 6-digit hex codes only.` },
             deviceScaleFactor: 2,
           },
           gotoOptions: {
-            waitUntil: "domcontentloaded",
+            waitUntil: "networkidle2",
             timeout: 45000,
           },
           addScriptTag: [{ content: injectionScript }],
-          waitForTimeout: 800,
+          waitForTimeout: 4000,
         }),
       }
     );
