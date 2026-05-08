@@ -58,12 +58,39 @@ export default function NewScreenshot() {
     reader.readAsDataURL(file);
   };
 
+  const handleGenerateLogo = async () => {
+    const name = companyName.trim();
+    if (!name) {
+      toast({ title: "Company name required", description: "Enter a company name first.", variant: "destructive" });
+      return;
+    }
+    setGeneratingLogo(true);
+    setGeneratedLogoUrl(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-logo", {
+        body: { companyName: name },
+      });
+      if (error) throw error;
+      if (!data?.logoUrl) throw new Error("No logo returned");
+      setGeneratedLogoUrl(data.logoUrl);
+      toast({ title: "Logo generated!", description: "Your AI logo is ready." });
+    } catch (err: any) {
+      toast({ title: "Logo generation failed", description: err.message || "Try again", variant: "destructive" });
+    } finally {
+      setGeneratingLogo(false);
+    }
+  };
+
   const generateScreenshot = async () => {
     const name = companyName.trim();
     if (!name || !phoneNumber.trim()) return;
 
-    let finalLogoUrl = logoUrl.trim();
-    if (logoMode === "upload" && logoFile) {
+    let finalLogoUrl = "";
+    if (logoMode === "upload") {
+      if (!logoFile) {
+        toast({ title: "Logo required", description: "Please upload a logo", variant: "destructive" });
+        return;
+      }
       const ext = logoFile.name.split(".").pop() || "png";
       const path = `logos/screenshot-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
@@ -74,10 +101,14 @@ export default function NewScreenshot() {
         return;
       }
       finalLogoUrl = `${SUPABASE_URL}/storage/v1/object/public/sites/${path}`;
+    } else if (logoMode === "url") {
+      finalLogoUrl = logoUrl.trim();
+    } else if (logoMode === "generate") {
+      finalLogoUrl = generatedLogoUrl || "";
     }
 
     if (!finalLogoUrl) {
-      toast({ title: "Logo required", description: "Please upload a logo or enter a URL", variant: "destructive" });
+      toast({ title: "Logo required", description: "Please provide or generate a logo", variant: "destructive" });
       return;
     }
 
