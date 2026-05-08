@@ -663,16 +663,6 @@ function OverviewMap({ onStart }) {
           <div>• Do not send the screenshot without the pitch message attached.</div>
           <div>• Never send more than one follow-up after no reply on the qualifier.</div>
           <div>• If someone says no, be gracious and close the loop cleanly. Don't push.</div>
-          <div>• Log every conversation in GHL — notes, tags, and stage updates after every message.</div>
-        </div>
-      </div>
-      <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:18, marginBottom:24 }}>
-        <div style={{ fontSize:10, fontWeight:700, color:C.greenL, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>🗂️ GHL logging & pipeline (after every interaction)</div>
-        <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.7, display:"flex", flexDirection:"column", gap:6 }}>
-          <div>1. Add a note summarizing what was sent and any reply received.</div>
-          <div>2. Tag the contact: <span style={{ color:C.text }}>qualifier sent · pitch sent · interested · call booked · not interested</span>.</div>
-          <div>3. Move the contact to the correct pipeline stage.</div>
-          <div>4. If a call is booked, add the appointment to Ricky's calendar and confirm with the prospect.</div>
         </div>
       </div>
       <div style={{ textAlign:"center" }}>
