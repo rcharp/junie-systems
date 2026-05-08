@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
     const industryText = industry && typeof industry === "string" && industry.trim()
       ? ` a ${industry.trim()}`
       : "";
-    const prompt = `Generate a logo for ${companyName},${industryText} company. CRITICAL REQUIREMENTS: (1) The background MUST be fully transparent alpha — no background color, no checkerboard pattern, no gray squares, no scene, no paper, no canvas, just the logo artwork on transparent PNG alpha. (2) The entire exterior silhouette of the logo MUST have a solid white outline/stroke wrapping around it like a sticker border. The white outline must hug the outermost edges of the whole logo as one continuous shape.`;
+    const prompt = `Generate a professional logo for ${companyName},${industryText} company. Clean, modern design suitable for a business brand.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
