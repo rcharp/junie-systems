@@ -106,6 +106,24 @@ export default function NewScreenshot() {
       setScreenshotUrl(data.screenshotUrl);
       setFileSizeBytes(typeof data.fileSizeBytes === "number" ? data.fileSizeBytes : null);
 
+      // Persist a record so the dashboard can list this screenshot
+      try {
+        const { error: insErr } = await supabase.from("pipeline_companies").insert({
+          run_id: "00000000-0000-0000-0000-000000000000",
+          name,
+          url: "",
+          industry: industry.trim() || "general",
+          phone_number: phoneNumber.trim(),
+          logo_url: finalLogoUrl,
+          screen_url: data.screenshotUrl,
+          screen_file_size_bytes: typeof data.fileSizeBytes === "number" ? data.fileSizeBytes : null,
+          status: "screenshot-done",
+        });
+        if (insErr) console.error("Failed to record screenshot:", insErr);
+      } catch (dbErr) {
+        console.error("Failed to record screenshot:", dbErr);
+      }
+
       toast({ title: "Screenshot generated!", description: "Your personalized site screenshot is ready." });
 
       try {
