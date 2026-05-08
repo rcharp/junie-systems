@@ -112,13 +112,6 @@ export default function PipelineDashboard() {
         });
     }
 
-    const { data: screenshotCompanies } = await supabase
-      .from("pipeline_companies")
-      .select("*")
-      .in("status", ["screenshot", "screenshot-done", "failed"])
-      .eq("run_id", "00000000-0000-0000-0000-000000000000")
-      .order("created_at", { ascending: false });
-
     const { data: screenshotCompanies } = await mainSupabase
       .from("pipeline_companies")
       .select("*")
