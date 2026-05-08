@@ -81,7 +81,7 @@ const nodes = {
   },
   push_to_book: {
     id: "push_to_book", phase: "STEP 4", icon: "📅",
-    title: "Push to Book. VA Picks the Times",
+    title: "Push to Book: VA Picks the Times",
     color: C.teal, dim: C.tealDim,
     instruction: "Sell the outcome of the call, what they walk away with, then offer two specific times. Yes/no decision, not an open question.",
     vaAction: "Open Ricky's calendar right now. Find two open slots this week or early next. Use those specific times in the message below.",
@@ -97,7 +97,7 @@ const nodes = {
   },
   book_reschedule: {
     id: "book_reschedule", phase: "BOOKING", icon: "🔄",
-    title: "Neither Time Works. Offer More",
+    title: "Neither Time Works: Offer More",
     color: C.teal, dim: C.tealDim,
     instruction: "Pull two more open slots from Ricky's calendar. Keep offering specific times, don't hand it back to them to figure out.",
     vaAction: "Check Ricky's calendar again. Find 2 more open slots and offer those.",
@@ -180,7 +180,7 @@ const nodes = {
   },
   obj_info_persist: {
     id: "obj_info_persist", phase: "OBJECTION", icon: "📋",
-    title: "Pushing for info, give a little, then push again",
+    title: "Pushing for info: give a little, then push again",
     color: C.orange, dim: C.orangeDim,
     messages: [{ label: null, text: "fair, short version: most contractors are losing 5-15 jobs a month they don't even know about, missed calls, leads that never get a follow up, customers that bounce off the site, we plug those holes so you keep the work that's already coming your way, the call is just to show you where it's happening for you specifically, tuesday at 10 or thursday at 2?" }],
     branches: [
@@ -234,7 +234,7 @@ const nodes = {
     color: C.grayL, dim: C.faint,
     instruction: "They never replied to the qualifier. One follow-up, then move on.",
     sequence: [
-      { day: "Day 2", label: "FU #1. Last one", text: "hey just making sure this got through, is this still the right number for [business name]?" },
+      { day: "Day 2", label: "FU #1 (last one)", text: "hey just making sure this got through, is this still the right number for [business name]?" },
     ],
     note: "If no reply after this, log and move on. Do not send a third message.",
     branches: [
@@ -244,7 +244,7 @@ const nodes = {
   },
   fu_pitch_1: {
     id: "fu_pitch_1", phase: "FOLLOW-UP", icon: "🔇",
-    title: "Ghost After Pitch. Day 3",
+    title: "Ghost After Pitch: Day 3",
     color: C.grayL, dim: C.faint,
     instruction: "They didn't reply to the pitch. Soft nudge, keep it casual.",
     sequence: [
@@ -257,11 +257,11 @@ const nodes = {
   },
   fu_pitch_2: {
     id: "fu_pitch_2", phase: "FOLLOW-UP", icon: "🔇",
-    title: "Ghost After Pitch. Day 6 (Final)",
+    title: "Ghost After Pitch: Day 6 (Final)",
     color: C.grayL, dim: C.faint,
     instruction: "Last follow-up. Offer two times directly, make it as easy as possible to say yes.",
     sequence: [
-      { day: "Day 6", label: "FU #2. Final", text: "20 min on the phone you'll see exactly how many jobs you're losing right now and what it'd take to keep them, tuesday at 10am or thursday at 2pm, either one work?" },
+      { day: "Day 6", label: "FU #2 (final)", text: "20 min on the phone you'll see exactly how many jobs you're losing right now and what it'd take to keep them, tuesday at 10am or thursday at 2pm, either one work?" },
     ],
     note: "If no reply after this, log and close. No more messages.",
     branches: [
@@ -277,7 +277,7 @@ const nodes = {
     instruction: "They were engaged, you offered specific times, they disappeared. Two follow-ups, both with specific times offered.",
     sequence: [
       { day: "Day 2", label: "FU #1", text: "hey still got tuesday at 10 or thursday at 2 open. 20 min and you'll know exactly where jobs are leaking, just need a yes or no" },
-      { day: "Day 5", label: "FU #2. Final", text: "last time i'll bug you, if timing ever works just text me and we'll set something up, good luck out there." },
+      { day: "Day 5", label: "FU #2 (final)", text: "last time i'll bug you, if timing ever works just text me and we'll set something up, good luck out there." },
     ],
     note: "After FU #2 with no reply, log and close. Do not send more.",
     branches: [
@@ -293,7 +293,7 @@ const nodes = {
     instruction: "They replied with an objection, you handled it with two specific times, they went quiet. One more nudge, then one final close.",
     sequence: [
       { day: "Day 2", label: "FU #1", text: "hey just circling back, every week without this fixed is more work going to your competitors, tuesday at 10am or thursday at 2pm still open, takes 20 min." },
-      { day: "Day 5", label: "FU #2. Final", text: "no worries if the timing's off, if you ever want to revisit just text me, good luck out there." },
+      { day: "Day 5", label: "FU #2 (final)", text: "no worries if the timing's off, if you ever want to revisit just text me, good luck out there." },
     ],
     note: "No reply after FU #2 = log as 'ghosted after objection' and close.",
     branches: [
@@ -318,14 +318,14 @@ const nodes = {
   },
   dead_no_reply: {
     id: "dead_no_reply", phase: "CLOSED", icon: "🗂️",
-    title: "No Reply. Closed",
+    title: "No Reply: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
     closeSteps: ["Log as 'no response' in GHL", "Tag: no-reply", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
   dead_not_interested: {
     id: "dead_not_interested", phase: "CLOSED", icon: "🗂️",
-    title: "Not Interested. Closed",
+    title: "Not Interested: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
     closeSteps: ["Log the conversation in GHL", "Tag: not-interested", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
@@ -339,7 +339,7 @@ const nodes = {
   },
   dead_fade: {
     id: "dead_fade", phase: "CLOSED", icon: "🗂️",
-    title: "Faded Out. Closed",
+    title: "Faded Out: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
     closeSteps: ["Log conversation summary in GHL", "Tag: faded", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
