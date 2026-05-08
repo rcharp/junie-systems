@@ -65,34 +65,10 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
   for (let i = 0; i < px.length; i++) alpha[i] = visited[i] ? 0 : ((px[i] & 0xff) > 12 ? 255 : 0);
 
   const out = new Image(w, h);
-  const outlineRadius = Math.max(4, Math.round(Math.min(w, h) * 0.018));
-  const outlineRadiusSq = outlineRadius * outlineRadius;
-  const outline = new Uint8Array(w * h);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const idx = y * w + x;
-      if (alpha[idx]) continue;
-      let nearLogo = false;
-      for (let dy = -outlineRadius; dy <= outlineRadius && !nearLogo; dy++) {
-        const yy = y + dy;
-        if (yy < 0 || yy >= h) continue;
-        for (let dx = -outlineRadius; dx <= outlineRadius; dx++) {
-          if (dx * dx + dy * dy > outlineRadiusSq) continue;
-          const xx = x + dx;
-          if (xx >= 0 && xx < w && alpha[yy * w + xx]) {
-            nearLogo = true;
-            break;
-          }
-        }
-      }
-      if (nearLogo) outline[idx] = 1;
-    }
-  }
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = y * w + x;
-      if (outline[idx]) out.setPixelAt(x + 1, y + 1, 0xffffffff);
-      else if (alpha[idx]) out.setPixelAt(x + 1, y + 1, px[idx] | 0xff);
+      if (alpha[idx]) out.setPixelAt(x + 1, y + 1, px[idx] | 0xff);
       else out.setPixelAt(x + 1, y + 1, 0x00000000);
     }
   }
