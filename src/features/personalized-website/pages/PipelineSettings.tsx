@@ -95,22 +95,75 @@ export default function PipelineSettings() {
     })();
   }, []);
 
+  const [industryUrls, setIndustryUrls] = useState<Record<string, string>>({});
+  const [industryMapDirty, setIndustryMapDirty] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.from("settings").select("*");
+      if (error) {
+        toast({ title: "Failed to load settings", description: error.message, variant: "destructive" });
+      } else if (data) {
+        const map: Record<string, string> = {};
+        (data as any[]).forEach((s) => {
+          map[s.key] = s.value ?? "";
+        });
+        setValues(map);
+        try {
+          const parsed = JSON.parse(map["industry_content_map"] || "{}");
+          const urls: Record<string, string> = {};
+          Object.entries(parsed).forEach(([k, v]: [string, any]) => {
+            urls[k] = v?.site_url || "";
+          });
+          setIndustryUrls(urls);
+        } catch {
+          setIndustryUrls({});
+        }
+      }
+      setLoading(false);
+    })();
+  }, []);
+
   function update(key: string, val: string) {
     setValues((v) => ({ ...v, [key]: val }));
     setDirty((d) => new Set(d).add(key));
   }
 
+  function updateIndustryUrl(industry: string, url: string) {
+    setIndustryUrls((prev) => ({ ...prev, [industry]: url }));
+    setIndustryMapDirty(true);
+  }
+
   async function save() {
-    if (dirty.size === 0) {
+    if (dirty.size === 0 && !industryMapDirty) {
       toast({ title: "No changes to save" });
       return;
     }
     setSaving(true);
     try {
       const rows = Array.from(dirty).map((key) => ({ key, value: values[key] ?? "" }));
+      if (industryMapDirty) {
+        // Merge with existing map to preserve other fields per industry
+        let existing: Record<string, any> = {};
+        try { existing = JSON.parse(values["industry_content_map"] || "{}"); } catch {}
+        const merged: Record<string, any> = { ...existing };
+        Object.entries(industryUrls).forEach(([k, url]) => {
+          if (url && url.trim()) {
+            merged[k] = { ...(existing[k] || {}), site_url: url.trim() };
+          } else if (merged[k]) {
+            const { site_url, ...rest } = merged[k];
+            if (Object.keys(rest).length === 0) delete merged[k];
+            else merged[k] = rest;
+          }
+        });
+        const json = JSON.stringify(merged);
+        rows.push({ key: "industry_content_map", value: json });
+        setValues((v) => ({ ...v, industry_content_map: json }));
+      }
       const { error } = await (supabase.from("settings") as any).upsert(rows, { onConflict: "key" });
       if (error) throw error;
       setDirty(new Set());
+      setIndustryMapDirty(false);
       toast({ title: "Settings saved" });
     } catch (err: any) {
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
