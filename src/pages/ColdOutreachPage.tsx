@@ -32,6 +32,24 @@ const C = {
 };
 
 const nodes = {
+  qualify: {
+    id: "qualify", phase: "STEP 0", icon: "🔍",
+    title: "Qualify the Website",
+    color: C.orange, dim: C.orangeDim,
+    instruction: "Before touching GHL, evaluate the lead's website. The goal is to confirm it's a 'bad' website, one that makes it hard for customers to take action. Focus on function, not aesthetics.",
+    actionSteps: [
+      "Is the phone number hyperlinked (tap-to-call)? Should be clickable, not plain text.",
+      "Is there a quote/contact form visible above the fold (without scrolling)?",
+      "Are there clear CTA buttons throughout the homepage (\"Get a Free Quote\", \"Call Now\", \"Book Online\")?",
+      "Are services and service areas listed in the navbar or easy to find within 5 seconds?",
+    ],
+    note: "A GOOD site has: tap-to-call phone in nav, CTA button in nav, quote form above the fold, and Services + Service Areas in navbar. Missing 2 or more of these → it qualifies. No website at all also qualifies, just note 'no website' in GHL.",
+    branches: [
+      { label: "✅ PASS (bad website) → start outreach", next: "qualifier", color: C.green },
+      { label: "❌ FAIL (site is solid) → skip lead", next: "dead_solid_site", color: C.red },
+      { label: "🚫 No website → still qualifies", next: "qualifier", color: C.orange },
+    ]
+  },
   qualifier: {
     id: "qualifier", phase: "STEP 1", icon: "📱",
     title: "Send Qualifier SMS",
@@ -345,6 +363,14 @@ const nodes = {
     closeSteps: ["Log conversation summary in GHL", "Tag: faded", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
+  dead_solid_site: {
+    id: "dead_solid_site", phase: "CLOSED", icon: "✅",
+    title: "Site Already Solid: Skip",
+    color: C.grayL, dim: C.faint, isDead: true,
+    instruction: "Their site already has tap-to-call, a CTA in the nav, a form above the fold, and services/service areas. The pitch won't land. Move on.",
+    closeSteps: ["Mark as 'site is solid' in GHL", "Remove from active list", "Next lead"],
+    branches: []
+  },
 };
 
 function CopyBtn({ text }) {
@@ -500,7 +526,7 @@ function NodeCard({ node, onNavigate }) {
 
 function Breadcrumb({ history, onJump }) {
   if (history.length <= 1) return null;
-  const L = { qualifier:"Qualifier",screenshot:"Screenshot",pitch:"Pitch",push_to_book:"Offer Times",book_reschedule:"Reschedule",book_confirmed:"Booked ✓",obj_catch:"Catch?",obj_cost:"Cost?",obj_have_site:"Has Site",obj_who:"Who?",obj_info:"Send Info",obj_info_persist:"Info x2",obj_bot:"Bot?",obj_time:"No Time",obj_what:"What Do You Do",obj_no:"Not Interested",fu_qualifier:"FU: Qualifier",fu_pitch_1:"FU: Pitch #1",fu_pitch_2:"FU: Pitch #2",fu_booking_ghost:"FU: Booking",fu_obj_ghost:"FU: Objection",fu_time_future:"Circle Back",dead_no_reply:"Closed",dead_not_interested:"Closed",dead_wrong_number:"Wrong #",dead_fade:"Closed" };
+  const L = { qualify:"Qualify Site",qualifier:"Qualifier",screenshot:"Screenshot",pitch:"Pitch",push_to_book:"Offer Times",book_reschedule:"Reschedule",book_confirmed:"Booked ✓",obj_catch:"Catch?",obj_cost:"Cost?",obj_have_site:"Has Site",obj_who:"Who?",obj_info:"Send Info",obj_info_persist:"Info x2",obj_bot:"Bot?",obj_time:"No Time",obj_what:"What Do You Do",obj_no:"Not Interested",fu_qualifier:"FU: Qualifier",fu_pitch_1:"FU: Pitch #1",fu_pitch_2:"FU: Pitch #2",fu_booking_ghost:"FU: Booking",fu_obj_ghost:"FU: Objection",fu_time_future:"Circle Back",dead_no_reply:"Closed",dead_not_interested:"Closed",dead_wrong_number:"Wrong #",dead_fade:"Closed",dead_solid_site:"Site OK · Skip" };
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginBottom: 18 }}>
       {history.map((id, i) => (
@@ -518,6 +544,7 @@ function Breadcrumb({ history, onJump }) {
 
 function OverviewMap({ onStart }) {
   const mainFlow = [
+    { id:"qualify",icon:"🔍",label:"Qualify Site",color:C.orange },
     { id:"qualifier",icon:"📱",label:"Qualifier",color:C.blue },
     { id:"screenshot",icon:"🖥️",label:"Screenshot",color:C.purple },
     { id:"pitch",icon:"🚀",label:"Pitch",color:C.blue },
@@ -591,14 +618,36 @@ function OverviewMap({ onStart }) {
           {followups.map(o => <Btn key={o.id} item={o} color={C.tealL} />)}
         </div>
       </div>
-      <div style={{ background:"#080f20", border:`1px solid ${C.blue}44`, borderRadius:12, padding:"14px 18px", marginBottom:24 }}>
+      <div style={{ background:"#080f20", border:`1px solid ${C.blue}44`, borderRadius:12, padding:"14px 18px", marginBottom:12 }}>
         <div style={{ fontSize:10, fontWeight:700, color:C.blueL, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8 }}>👤 The rule: VA books the call, not the customer</div>
         <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.65 }}>
           Never send a calendar link and hope they click it. Check Ricky's calendar, pick two open slots, offer them in the message. It's a yes or no, not a homework assignment. If they say yes, you add it to Ricky's calendar and confirm back.
         </div>
       </div>
+      <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:18, marginBottom:12 }}>
+        <div style={{ fontSize:10, fontWeight:700, color:C.purpleL, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>📋 Rules to always follow</div>
+        <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.7, display:"flex", flexDirection:"column", gap:6 }}>
+          <div>• Always write as Ricky. First person, casual, human.</div>
+          <div>• Never use formal language, sales-speak, or anything that sounds scripted.</div>
+          <div>• Everything fully lowercase. No extra punctuation unless naturally needed.</div>
+          <div>• Do not send the pitch until the qualifier is confirmed.</div>
+          <div>• Do not send the screenshot without the pitch message attached.</div>
+          <div>• Never send more than one follow-up after no reply on the qualifier.</div>
+          <div>• If someone says no, be gracious and close the loop cleanly. Don't push.</div>
+          <div>• Log every conversation in GHL — notes, tags, and stage updates after every message.</div>
+        </div>
+      </div>
+      <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:18, marginBottom:24 }}>
+        <div style={{ fontSize:10, fontWeight:700, color:C.greenL, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>🗂️ GHL logging & pipeline (after every interaction)</div>
+        <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.7, display:"flex", flexDirection:"column", gap:6 }}>
+          <div>1. Add a note summarizing what was sent and any reply received.</div>
+          <div>2. Tag the contact: <span style={{ color:C.text }}>qualifier sent · pitch sent · interested · call booked · not interested</span>.</div>
+          <div>3. Move the contact to the correct pipeline stage.</div>
+          <div>4. If a call is booked, add the appointment to Ricky's calendar and confirm with the prospect.</div>
+        </div>
+      </div>
       <div style={{ textAlign:"center" }}>
-        <button onClick={() => onStart("qualifier")}
+        <button onClick={() => onStart("qualify")}
           style={{ background:C.blue, border:"none", borderRadius:12, padding:"13px 34px", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", boxShadow:`0 0 28px ${C.blue}44`, transition:"all 0.15s" }}
           onMouseEnter={e => { e.currentTarget.style.background=C.blueL; e.currentTarget.style.transform="scale(1.03)"; }}
           onMouseLeave={e => { e.currentTarget.style.background=C.blue; e.currentTarget.style.transform="scale(1)"; }}
