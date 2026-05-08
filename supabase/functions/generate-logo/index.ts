@@ -64,16 +64,41 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
   const alpha = new Uint8Array(w * h);
   for (let i = 0; i < px.length; i++) alpha[i] = visited[i] ? 0 : ((px[i] & 0xff) > 12 ? 255 : 0);
 
-  const out = new Image(w, h);
+  // Find tight bounding box of opaque pixels so we can crop the transparent padding.
+  let minX = w, minY = h, maxX = -1, maxY = -1;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      const idx = y * w + x;
-      if (alpha[idx]) out.setPixelAt(x + 1, y + 1, px[idx] | 0xff);
-      else out.setPixelAt(x + 1, y + 1, 0x00000000);
+      if (alpha[y * w + x]) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) {
+    minX = 0; minY = 0; maxX = w - 1; maxY = h - 1;
+  }
+  const cropW = maxX - minX + 1;
+  const cropH = maxY - minY + 1;
+
+  const cropped = new Image(cropW, cropH);
+  for (let y = 0; y < cropH; y++) {
+    for (let x = 0; x < cropW; x++) {
+      const srcIdx = (y + minY) * w + (x + minX);
+      if (alpha[srcIdx]) cropped.setPixelAt(x + 1, y + 1, px[srcIdx] | 0xff);
+      else cropped.setPixelAt(x + 1, y + 1, 0x00000000);
     }
   }
 
-  return await out.encode(0);
+  const MAX_WIDTH = 300;
+  let finalImg: Image = cropped;
+  if (cropW > MAX_WIDTH) {
+    const newH = Math.max(1, Math.round((cropH / cropW) * MAX_WIDTH));
+    finalImg = cropped.resize(MAX_WIDTH, newH);
+  }
+
+  return await finalImg.encode(0);
 }
 
 Deno.serve(async (req) => {
