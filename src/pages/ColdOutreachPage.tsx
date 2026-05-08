@@ -373,6 +373,40 @@ const nodes = {
   },
 };
 
+const CAL_URL = "https://juniesystems.com/book";
+
+function linkify(text) {
+  if (typeof text !== "string") return text;
+  // Pattern matches: [Ricky's calendar link], [calendar link], full URLs, and bare juniesystems.com/path
+  const pattern = /(\[(?:Ricky's )?calendar link\]|https?:\/\/[^\s)]+|(?:^|(?<=\s))juniesystems\.com\/[^\s)]+)/gi;
+  const parts = [];
+  let last = 0;
+  let m;
+  let i = 0;
+  while ((m = pattern.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    const match = m[0];
+    let href = match;
+    let label = match;
+    if (match.startsWith("[")) {
+      href = CAL_URL;
+      label = "Ricky's calendar";
+    } else if (!match.startsWith("http")) {
+      href = "https://" + match;
+    }
+    parts.push(
+      <a key={`lnk-${i++}`} href={href} target="_blank" rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 2, fontWeight: 700 }}>
+        {label}
+      </a>
+    );
+    last = m.index + match.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.length ? parts : text;
+}
+
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
   const onCopy = (e) => {
