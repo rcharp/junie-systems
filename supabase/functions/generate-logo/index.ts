@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const industryText = industry && typeof industry === "string" && industry.trim()
       ? ` a ${industry.trim()}`
       : "";
-    const prompt = `generate a logo for ${companyName}${industryText} company. make sure there is no background, and always have a white sticker outline around the entire logo`;
+    const prompt = `Generate a logo for ${companyName},${industryText} company. CRITICAL REQUIREMENTS: (1) The background MUST be fully transparent — no background color, no checkerboard, no scene, just the logo on transparency. (2) The entire exterior silhouette of the logo MUST have a solid white outline/stroke wrapping around it like a sticker border. The white outline must hug the outermost edges of the whole logo as one continuous shape.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
