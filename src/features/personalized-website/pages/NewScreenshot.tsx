@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-import { Camera, Loader2, Upload, Link as LinkIcon, Download } from "lucide-react";
+import { Camera, Loader2, Upload, Link as LinkIcon, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
