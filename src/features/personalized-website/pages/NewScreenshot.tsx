@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
-import { Camera, Loader2, Upload, Link as LinkIcon, Download } from "lucide-react";
+import { Camera, Loader2, Upload, Link as LinkIcon, Download, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
@@ -35,12 +35,14 @@ export default function NewScreenshot() {
   const [companyName, setCompanyName] = useState("Junie Systems");
   const [industry, setIndustry] = useState("junk removal");
   const [phoneNumber, setPhoneNumber] = useState("9412584006");
-  const [logoMode, setLogoMode] = useState<"upload" | "url">("upload");
+  const [logoMode, setLogoMode] = useState<"upload" | "url" | "generate">("upload");
   const [logoUrl, setLogoUrl] = useState(
     "https://lh4.googleusercontent.com/-T1_Aj0WdznY/AAAAAAAAAAI/AAAAAAAAAAA/BHMk-fF3vn8/s44-p-k-no-ns-nd/photo.jpg",
   );
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [generatedLogoUrl, setGeneratedLogoUrl] = useState<string | null>(null);
+  const [generatingLogo, setGeneratingLogo] = useState(false);
   const [transparentLogoBg, setTransparentLogoBg] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
@@ -56,12 +58,39 @@ export default function NewScreenshot() {
     reader.readAsDataURL(file);
   };
 
+  const handleGenerateLogo = async () => {
+    const name = companyName.trim();
+    if (!name) {
+      toast({ title: "Company name required", description: "Enter a company name first.", variant: "destructive" });
+      return;
+    }
+    setGeneratingLogo(true);
+    setGeneratedLogoUrl(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-logo", {
+        body: { companyName: name },
+      });
+      if (error) throw error;
+      if (!data?.logoUrl) throw new Error("No logo returned");
+      setGeneratedLogoUrl(data.logoUrl);
+      toast({ title: "Logo generated!", description: "Your AI logo is ready." });
+    } catch (err: any) {
+      toast({ title: "Logo generation failed", description: err.message || "Try again", variant: "destructive" });
+    } finally {
+      setGeneratingLogo(false);
+    }
+  };
+
   const generateScreenshot = async () => {
     const name = companyName.trim();
     if (!name || !phoneNumber.trim()) return;
 
-    let finalLogoUrl = logoUrl.trim();
-    if (logoMode === "upload" && logoFile) {
+    let finalLogoUrl = "";
+    if (logoMode === "upload") {
+      if (!logoFile) {
+        toast({ title: "Logo required", description: "Please upload a logo", variant: "destructive" });
+        return;
+      }
       const ext = logoFile.name.split(".").pop() || "png";
       const path = `logos/screenshot-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
@@ -72,10 +101,14 @@ export default function NewScreenshot() {
         return;
       }
       finalLogoUrl = `${SUPABASE_URL}/storage/v1/object/public/sites/${path}`;
+    } else if (logoMode === "url") {
+      finalLogoUrl = logoUrl.trim();
+    } else if (logoMode === "generate") {
+      finalLogoUrl = generatedLogoUrl || "";
     }
 
     if (!finalLogoUrl) {
-      toast({ title: "Logo required", description: "Please upload a logo or enter a URL", variant: "destructive" });
+      toast({ title: "Logo required", description: "Please provide or generate a logo", variant: "destructive" });
       return;
     }
 
@@ -217,13 +250,16 @@ export default function NewScreenshot() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
             Logo
           </label>
-          <Tabs value={logoMode} onValueChange={(v) => setLogoMode(v as "upload" | "url")} className="mb-2">
-            <TabsList className="grid w-full grid-cols-2 h-8">
+          <Tabs value={logoMode} onValueChange={(v) => setLogoMode(v as "upload" | "url" | "generate")} className="mb-2">
+            <TabsList className="grid w-full grid-cols-3 h-8">
               <TabsTrigger value="upload" className="text-xs gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Upload className="w-3 h-3" /> Upload
               </TabsTrigger>
               <TabsTrigger value="url" className="text-xs gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <LinkIcon className="w-3 h-3" /> URL
+              </TabsTrigger>
+              <TabsTrigger value="generate" className="text-xs gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Sparkles className="w-3 h-3" /> Generate
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -251,7 +287,7 @@ export default function NewScreenshot() {
                 )}
               </Button>
             </div>
-          ) : (
+          ) : logoMode === "url" ? (
             <Input
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
@@ -259,6 +295,26 @@ export default function NewScreenshot() {
               className="bg-muted/50 border-border/50 text-base"
               disabled={submitting}
             />
+          ) : (
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleGenerateLogo}
+                disabled={generatingLogo || submitting || !companyName.trim()}
+              >
+                {generatingLogo ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating logo...</>
+                ) : (
+                  <><Sparkles className="w-4 h-4 mr-2" /> {generatedLogoUrl ? "Regenerate Logo" : "Generate Logo with AI"}</>
+                )}
+              </Button>
+              {generatedLogoUrl && (
+                <div className="flex items-center justify-center p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <img src={generatedLogoUrl} alt="Generated logo" className="max-h-24 max-w-full object-contain" />
+                </div>
+              )}
+            </div>
           )}
 
           <div className="flex items-start gap-2 mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
@@ -284,7 +340,11 @@ export default function NewScreenshot() {
             !companyName.trim() ||
             !phoneNumber.trim() ||
             submitting ||
-            (logoMode === "upload" ? !logoFile : !logoUrl.trim())
+            (logoMode === "upload"
+              ? !logoFile
+              : logoMode === "url"
+                ? !logoUrl.trim()
+                : !generatedLogoUrl)
           }
           className="w-full bg-primary text-primary-foreground hover:bg-primary/90 glow-primary"
           size="lg"
