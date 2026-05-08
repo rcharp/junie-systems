@@ -101,7 +101,7 @@ const App = () => (
             <Route path="/growth" element={<GrowthPage />} />
             <Route path="/full" element={<FullPage />} />
             <Route path="/grow" element={<GrowPage />} />
-            <Route path="/loom" element={<PipelineLayout />}>
+            <Route path="/screenshot" element={<PipelineLayout />}>
               <Route index element={<NewScreenshot />} />
               <Route path="dashboard" element={<PipelineDashboard />} />
               <Route path="new" element={<NewRun />} />
@@ -109,7 +109,7 @@ const App = () => (
               <Route path="runs/:id" element={<RunDetail />} />
               <Route path="settings" element={<PipelineSettings />} />
             </Route>
-            <Route path="/loom/render/:templateId" element={<RenderTemplate />} />
+            <Route path="/screenshot/render/:templateId" element={<RenderTemplate />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
