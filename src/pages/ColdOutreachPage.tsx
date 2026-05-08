@@ -625,7 +625,7 @@ function OverviewMap({ onStart }) {
         </div>
       </div>
       <div style={{ textAlign:"center" }}>
-        <button onClick={() => onStart("qualifier")}
+        <button onClick={() => onStart("qualify")}
           style={{ background:C.blue, border:"none", borderRadius:12, padding:"13px 34px", color:"#fff", fontSize:14, fontWeight:700, cursor:"pointer", boxShadow:`0 0 28px ${C.blue}44`, transition:"all 0.15s" }}
           onMouseEnter={e => { e.currentTarget.style.background=C.blueL; e.currentTarget.style.transform="scale(1.03)"; }}
           onMouseLeave={e => { e.currentTarget.style.background=C.blue; e.currentTarget.style.transform="scale(1)"; }}
