@@ -130,9 +130,11 @@ const Privacy = () => {
               <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Contact Us</h2>
               <p>If you have any questions about this Privacy Policy, please contact us at:</p>
               <p className="font-medium">
-                Email: <a href="mailto:ricky@juniesystems.com" className="text-primary hover:underline">ricky@juniesystems.com</a>
-                <br />
-                Location: Palmetto, FL
+                Charpentier, LLC<br />
+                5605 Trevesta Place<br />
+                Palmetto, FL 34221<br />
+                Email: <a href="mailto:ricky@juniesystems.com" className="text-primary hover:underline">ricky@juniesystems.com</a><br />
+                Phone: <a href="tel:941-258-4006" className="text-primary hover:underline">941-258-4006</a>
               </p>
             </section>
           </div>
