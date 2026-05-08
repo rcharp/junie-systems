@@ -27,7 +27,7 @@ import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
-const BASE = "/loom";
+const BASE = "/screenshot";
 
 interface DashboardRun {
   id: string;

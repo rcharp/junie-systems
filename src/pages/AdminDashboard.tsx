@@ -363,7 +363,7 @@ const AdminDashboard = () => {
               title: 'Generate Demo Screenshot',
               description: 'Capture a website screenshot for prospect demos.',
               icon: Camera,
-              onClick: () => navigate('/loom/screenshot'),
+              onClick: () => navigate('/screenshot'),
             },
             ...(user?.email === 'rickycharpentier@gmail.com'
               ? [{

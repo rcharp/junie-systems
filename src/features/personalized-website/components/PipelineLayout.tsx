@@ -3,7 +3,7 @@ import { LayoutDashboard, PlusCircle, Camera, Settings, Video, Loader2 } from "l
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
-const BASE = "/loom";
+const BASE = "/screenshot";
 
 const navItems = [
   { path: `${BASE}/screenshot`, label: "Screenshot", icon: Camera, matchExact: [BASE, `${BASE}/screenshot`] as string[] },
