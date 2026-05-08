@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, Navigate } from "react-router-dom";
-import { LayoutDashboard, PlusCircle, Camera, Settings, Video, Loader2 } from "lucide-react";
+import { LayoutDashboard, PlusCircle, Camera, Settings, Video, Loader2, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -59,6 +59,13 @@ export default function PipelineLayout() {
           </Link>
 
           <nav className="flex items-center gap-1">
+            <Link
+              to="/admin"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Admin</span>
+            </Link>
             {navItems.map((item) => {
               const isActive = "matchExact" in item
                 ? item.matchExact.includes(location.pathname)

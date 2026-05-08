@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const C = {
   bg: "#070c18",
@@ -602,6 +603,11 @@ export default function ColdOutreachPage() {
   function startAt(id: string) { setHistory([id]); setView("node"); }
   return (
     <div style={{ minHeight:"100vh", background:C.bg, color:C.text, fontFamily:"'Inter','Segoe UI',system-ui,sans-serif", padding:"22px 14px", display:"flex", flexDirection:"column", alignItems:"center" }}>
+      <div style={{ width:"100%", maxWidth:680, marginBottom:14 }}>
+        <Link to="/admin" style={{ display:"inline-flex", alignItems:"center", gap:6, background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 14px", color:C.dim, fontSize:12, textDecoration:"none" }}>
+          ← Back to Admin
+        </Link>
+      </div>
       <div style={{ width:"100%", maxWidth:680, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:22 }}>
         <button onClick={reset}
           style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 14px", color:C.dim, fontSize:12, cursor:"pointer", transition:"all 0.12s" }}
