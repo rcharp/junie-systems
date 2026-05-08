@@ -70,6 +70,7 @@ const nodes = {
     actionSteps: [
       "Go to juniesystems.com/screenshot",
       "Enter business name + phone number",
+      "Select the correct industry from the dropdown",
       "Logo: pull from their website or GBP. No logo? → ChatGPT: \"create a logo for [business name]\" → download it",
       "Generate the screenshot and save it before moving on",
     ],
