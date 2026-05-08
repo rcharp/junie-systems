@@ -1,10 +1,104 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { Image, decode } from "https://deno.land/x/imagescript@1.2.17/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 };
+
+async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint8Array> {
+  const decoded = await decode(inputBytes);
+  if (!(decoded instanceof Image)) return inputBytes;
+
+  const img = decoded;
+  const w = img.width;
+  const h = img.height;
+  const px = new Uint32Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) px[y * w + x] = img.getPixelAt(x + 1, y + 1);
+  }
+
+  const parts = (rgba: number) => ({
+    r: (rgba >>> 24) & 0xff,
+    g: (rgba >>> 16) & 0xff,
+    b: (rgba >>> 8) & 0xff,
+    a: rgba & 0xff,
+  });
+  const isBackgroundLike = (rgba: number) => {
+    const { r, g, b, a } = parts(rgba);
+    if (a < 250) return true;
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const saturation = max - min;
+    // Strip fake transparency/checkerboards and plain canvas backgrounds, but
+    // keep pure white sticker strokes unless they are already transparent.
+    return saturation <= 28 && max <= 244;
+  };
+
+  const visited = new Uint8Array(w * h);
+  const queue: number[] = [];
+  for (let x = 0; x < w; x++) {
+    if (isBackgroundLike(px[x])) queue.push(x);
+    const bottom = (h - 1) * w + x;
+    if (isBackgroundLike(px[bottom])) queue.push(bottom);
+  }
+  for (let y = 0; y < h; y++) {
+    const left = y * w;
+    const right = y * w + (w - 1);
+    if (isBackgroundLike(px[left])) queue.push(left);
+    if (isBackgroundLike(px[right])) queue.push(right);
+  }
+  for (let head = 0; head < queue.length; head++) {
+    const idx = queue[head];
+    if (visited[idx] || !isBackgroundLike(px[idx])) continue;
+    visited[idx] = 1;
+    const x = idx % w;
+    const y = (idx - x) / w;
+    if (x > 0) queue.push(idx - 1);
+    if (x < w - 1) queue.push(idx + 1);
+    if (y > 0) queue.push(idx - w);
+    if (y < h - 1) queue.push(idx + w);
+  }
+
+  const alpha = new Uint8Array(w * h);
+  for (let i = 0; i < px.length; i++) alpha[i] = visited[i] ? 0 : ((px[i] & 0xff) > 12 ? 255 : 0);
+
+  const out = new Image(w, h);
+  const outlineRadius = Math.max(4, Math.round(Math.min(w, h) * 0.018));
+  const outlineRadiusSq = outlineRadius * outlineRadius;
+  const outline = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      if (alpha[idx]) continue;
+      let nearLogo = false;
+      for (let dy = -outlineRadius; dy <= outlineRadius && !nearLogo; dy++) {
+        const yy = y + dy;
+        if (yy < 0 || yy >= h) continue;
+        for (let dx = -outlineRadius; dx <= outlineRadius; dx++) {
+          if (dx * dx + dy * dy > outlineRadiusSq) continue;
+          const xx = x + dx;
+          if (xx >= 0 && xx < w && alpha[yy * w + xx]) {
+            nearLogo = true;
+            break;
+          }
+        }
+      }
+      if (nearLogo) outline[idx] = 1;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = y * w + x;
+      if (outline[idx]) out.setPixelAt(x + 1, y + 1, 0xffffffff);
+      else if (alpha[idx]) out.setPixelAt(x + 1, y + 1, px[idx] | 0xff);
+      else out.setPixelAt(x + 1, y + 1, 0x00000000);
+    }
+  }
+
+  return await out.encode(0);
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
