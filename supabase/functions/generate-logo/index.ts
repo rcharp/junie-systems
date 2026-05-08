@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     const industryText = industry && typeof industry === "string" && industry.trim()
       ? ` a ${industry.trim()}`
       : "";
-    const prompt = `generate a logo for ${companyName}${industryText} company. make sure there is no background, and that there is a 1px white sticker outline around the logo`;
+    const prompt = `generate a logo for ${companyName}${industryText} company. make sure there is no background, and always have a white sticker outline around the entire logo`;
 
     const aiRes = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
