@@ -355,7 +355,7 @@ const nodes = {
     id: "dead_fade", phase: "CLOSED", icon: "🗂️",
     title: "Faded Out: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
-    closeSteps: ["Log conversation summary in GHL", "Tag: faded", "Move to 'Dead' pipeline stage", "Next lead"],
+    closeSteps: ["Tag: faded", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
   dead_solid_site: {
