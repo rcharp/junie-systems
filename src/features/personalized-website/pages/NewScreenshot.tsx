@@ -10,6 +10,26 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const INDUSTRIES = [
+  "Junk Removal",
+  "Plumbing",
+  "HVAC",
+  "Roofing",
+  "Electrical",
+  "Cleaning",
+  "Landscaping",
+  "Pest Control",
+  "Garage Door",
+  "Pool & Spa",
+  "Handyman",
+  "Painting",
+  "Tree Service",
+  "Moving",
+  "Auto Repair",
+  "General",
+];
 
 export default function NewScreenshot() {
   const [companyName, setCompanyName] = useState("Junie Systems");
@@ -163,13 +183,16 @@ export default function NewScreenshot() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
             Industry
           </label>
-          <Input
-            value={industry}
-            onChange={(e) => setIndustry(e.target.value)}
-            placeholder="e.g. Plumbing, Landscaping, HVAC"
-            className="bg-muted/50 border-border/50 text-base"
-            disabled={submitting}
-          />
+          <Select value={industry} onValueChange={setIndustry} disabled={submitting}>
+            <SelectTrigger className="bg-muted/50 border-border/50 text-base">
+              <SelectValue placeholder="Select an industry" />
+            </SelectTrigger>
+            <SelectContent>
+              {INDUSTRIES.map((opt) => (
+                <SelectItem key={opt} value={opt.toLowerCase()}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
