@@ -435,7 +435,7 @@ Return valid 6-digit hex codes only.` },
             timeout: 45000,
           },
           addScriptTag: [{ content: injectionScript }],
-          waitForTimeout: 4000,
+          waitForTimeout: 9000,
         }),
       }
     );
