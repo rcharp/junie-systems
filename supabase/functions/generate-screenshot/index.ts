@@ -435,7 +435,7 @@ Return valid 6-digit hex codes only.` },
             timeout: 45000,
           },
           addScriptTag: [{ content: injectionScript }],
-          waitForTimeout: 4000,
+          waitForTimeout: 9000,
         }),
       }
     );
@@ -1027,6 +1027,55 @@ function buildInjectionScript(params: {
     var styleEl = document.createElement('style');
     styleEl.textContent = '.hero-highlighted, [class*="hero-highlighted"], [class*="hero_highlighted"], #hero-highlighted { background-color: ' + primaryColor + ' !important; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; font-family: inherit !important; font-size: inherit !important; font-weight: inherit !important; font-style: inherit !important; } #quote-form-element { border: 2px solid ' + primaryColor + ' !important; border-color: ' + primaryColor + ' !important; } #hero-quote-form { border: 0 !important; } #hero-stars-main, #hero-stars-main *, #hero-stars-google, #hero-stars-google *, #hero-stars-facebook, #hero-stars-facebook * { color: ' + primaryColor + ' !important; fill: ' + primaryColor + ' !important; stroke: none !important; -webkit-text-fill-color: ' + primaryColor + ' !important; } header img, nav img, [class*="logo"] img, img[class*="logo"], img[alt*="logo" i], img[src*="logo" i] { width: auto !important; min-width: 0 !important; max-width: min(400px, 40vw) !important; height: auto !important; max-height: 245px !important; object-fit: contain !important; display: block !important; }';
     document.head.appendChild(styleEl);
+
+    // ─── Make sure the bottom-right chat widget is present in screenshots ───
+    function findChatWidgets() {
+      var selectors = [
+        'iframe[src*="leadconnector"]', 'iframe[src*="leadconnectorhq"]', 'iframe[src*="chat-widget"]',
+        '[id*="leadconnector" i]', '[class*="leadconnector" i]', '[id*="chat-widget" i]', '[class*="chat-widget" i]',
+        '[id*="lc-widget" i]', '[class*="lc-widget" i]', 'iframe[title*="chat" i]'
+      ];
+      try {
+        return Array.prototype.slice.call(document.querySelectorAll(selectors.join(','))).filter(function(el) {
+          if (el.id === 'junie-chat-widget-fallback' || el.closest('#junie-chat-widget-fallback')) return false;
+          var rect = el.getBoundingClientRect();
+          var marker = ((el.id || '') + ' ' + (el.className || '') + ' ' + (el.getAttribute('src') || '') + ' ' + (el.getAttribute('title') || '')).toLowerCase();
+          return marker.indexOf('leadconnector') !== -1 || marker.indexOf('chat') !== -1 || rect.width > 36 || rect.height > 36;
+        });
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function forceChatWidgetsVisible() {
+      var widgets = findChatWidgets();
+      if (widgets.length) {
+        var fallback = document.getElementById('junie-chat-widget-fallback');
+        if (fallback) fallback.remove();
+        widgets.forEach(function(el) {
+          el.style.cssText += '; visibility: visible !important; opacity: 1 !important; display: block !important; z-index: 2147483647 !important;';
+        });
+        return true;
+      }
+      return false;
+    }
+
+    function createChatFallback() {
+      if (document.getElementById('junie-chat-widget-fallback') || forceChatWidgetsVisible()) return;
+      var bubble = document.createElement('div');
+      bubble.id = 'junie-chat-widget-fallback';
+      bubble.setAttribute('aria-hidden', 'true');
+      bubble.style.cssText = 'position: fixed !important; right: 24px !important; bottom: 24px !important; width: 64px !important; height: 64px !important; border-radius: 999px !important; background: ' + primaryColor + ' !important; box-shadow: 0 18px 45px rgba(0,0,0,.28) !important; z-index: 2147483647 !important; display: flex !important; align-items: center !important; justify-content: center !important; opacity: 1 !important; visibility: visible !important; pointer-events: none !important;';
+      bubble.innerHTML = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M5.25 18.25C3.94 16.88 3.2 15.12 3.2 13.2C3.2 8.9 7.14 5.4 12 5.4C16.86 5.4 20.8 8.9 20.8 13.2C20.8 17.5 16.86 21 12 21C10.88 21 9.82 20.82 8.84 20.48L4.85 21.65L5.25 18.25Z" fill="white"/><circle cx="8.5" cy="13.1" r="1.15" fill="' + primaryColor + '"/><circle cx="12" cy="13.1" r="1.15" fill="' + primaryColor + '"/><circle cx="15.5" cy="13.1" r="1.15" fill="' + primaryColor + '"/></svg>';
+      document.body.appendChild(bubble);
+    }
+
+    var chatChecks = 0;
+    var chatTimer = setInterval(function() {
+      chatChecks += 1;
+      if (forceChatWidgetsVisible() || chatChecks >= 8) clearInterval(chatTimer);
+    }, 1000);
+    setTimeout(createChatFallback, 6500);
 
     console.log('Personalization injected successfully');
   } catch(err) {
