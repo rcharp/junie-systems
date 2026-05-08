@@ -31,9 +31,9 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
     const max = Math.max(r, g, b);
     const min = Math.min(r, g, b);
     const saturation = max - min;
-    // Strip fake transparency/checkerboards and plain canvas backgrounds, but
-    // keep pure white sticker strokes unless they are already transparent.
-    return saturation <= 28 && max <= 244;
+    // Strip fake transparency/checkerboards and any edge-connected plain canvas
+    // background, including white. A fresh sticker outline is added afterward.
+    return saturation <= 35 && min >= 160;
   };
 
   const visited = new Uint8Array(w * h);
