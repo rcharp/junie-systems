@@ -134,12 +134,6 @@ const nodes = {
     isGoal: true,
     instruction: "Confirm the time back to them, add it to Ricky's calendar manually, then log it.",
     messages: [{ label: "Confirm with them:", text: "perfect, locked in for [day] at [time]. you'll get a confirmation. lmk if anything changes." }],
-    postSteps: [
-      "Add to Ricky's calendar: prospect name, number, and time",
-      "Log the booking in GHL with a note",
-      "Move contact to 'Call Booked' pipeline stage",
-      "Tag contact: call-booked",
-    ],
     branches: []
   },
   obj_catch: {
