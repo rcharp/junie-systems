@@ -32,6 +32,24 @@ const C = {
 };
 
 const nodes = {
+  qualify: {
+    id: "qualify", phase: "STEP 0", icon: "🔍",
+    title: "Qualify the Website",
+    color: C.orange, dim: C.orangeDim,
+    instruction: "Before touching GHL, evaluate the lead's website. The goal is to confirm it's a 'bad' website, one that makes it hard for customers to take action. Focus on function, not aesthetics.",
+    actionSteps: [
+      "Is the phone number hyperlinked (tap-to-call)? Should be clickable, not plain text.",
+      "Is there a quote/contact form visible above the fold (without scrolling)?",
+      "Are there clear CTA buttons throughout the homepage (\"Get a Free Quote\", \"Call Now\", \"Book Online\")?",
+      "Are services and service areas listed in the navbar or easy to find within 5 seconds?",
+    ],
+    note: "A GOOD site has: tap-to-call phone in nav, CTA button in nav, quote form above the fold, and Services + Service Areas in navbar. Missing 2 or more of these → it qualifies. No website at all also qualifies, just note 'no website' in GHL.",
+    branches: [
+      { label: "✅ PASS (bad website) → start outreach", next: "qualifier", color: C.green },
+      { label: "❌ FAIL (site is solid) → skip lead", next: "dead_solid_site", color: C.red },
+      { label: "🚫 No website → still qualifies", next: "qualifier", color: C.orange },
+    ]
+  },
   qualifier: {
     id: "qualifier", phase: "STEP 1", icon: "📱",
     title: "Send Qualifier SMS",
