@@ -17,7 +17,7 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-foreground">1. Information We Collect</h2>
               <p>
-                Junie collects information you provide directly to us, such as when you create an account, set up your
+                Charpentier, LLC collects information you provide directly to us, such as when you create an account, set up your
                 AI phone assistant, or contact us for support. This may include:
               </p>
               <ul className="list-disc ml-6 space-y-2">
@@ -43,21 +43,25 @@ const Privacy = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-foreground">3. SMS/Text Messaging Privacy</h2>
               <p>
-                SMS notifications are opt-in only. To receive text messages (SMS) from us regarding your account, 
-                appointments, and service-related communications, you must actively enable SMS notifications by 
-                checking the opt-in checkbox on your Settings page. By checking this box, you expressly consent 
-                to receive text messages from us.
+                Charpentier, LLC sends both customer support and promotional messages to users who interact 
+                with the website <a href="https://juniesystems.com" className="text-primary hover:underline">https://juniesystems.com</a> chat widget. Customer care messages may include 
+                responses to support requests, ticket updates, appointment coordination, or follow-up 
+                communications related to an existing inquiry. Promotional messages may include special 
+                offers, discounts, event promotions, and service announcements.
               </p>
+
               <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">
                 Collection and Use of Mobile Phone Numbers
               </h3>
-              <p>We collect mobile phone numbers for the following purposes:</p>
-              <ul className="list-disc ml-6 space-y-2">
-                <li>To communicate with you about appointments and bookings</li>
-                <li>To provide customer service and support</li>
-                <li>To send service notifications and updates</li>
-                <li>To verify your identity and prevent fraud</li>
-              </ul>
+              <p>
+                Users visit the Charpentier, LLC website <a href="https://juniesystems.com" className="text-primary hover:underline">https://juniesystems.com</a> and interact with the chat 
+                widget. During this interaction, users may voluntarily provide their mobile phone number 
+                and independently select one or both consent checkboxes — one to receive customer care 
+                messages related to their inquiries, and one to receive promotional messages from 
+                Charpentier, LLC. Each checkbox represents a separate and distinct consent. Users may 
+                opt into either or both message types. Consent is collected directly by Charpentier, LLC 
+                and is not shared with affiliates or third parties.
+              </p>
 
               <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">Mobile Information Sharing Policy</h3>
               <p className="font-semibold">
@@ -65,17 +69,22 @@ const Privacy = () => {
                 to third parties or affiliates for marketing or promotional purposes.
               </p>
               <p>
-                Your mobile phone number will only be used by Junie for the purposes stated above. We use Twilio as our
+                Your mobile phone number will only be used by Charpentier, LLC for the purposes stated above. We use Twilio as our
                 messaging service provider to facilitate SMS communications, but your number is not shared for any
                 marketing purposes outside of our direct service to you.
               </p>
 
-              <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">Messaging Frequency and Opt-Out</h3>
-              <ul className="list-disc ml-6 space-y-2">
+              <h3 className="text-xl font-semibold mt-4 mb-2 text-foreground">Consent and Opt-Out</h3>
+              <p>
+                Each message type requires separate, explicit consent collected through independent 
+                checkboxes in the chat widget. Marketing consent is not combined with transactional 
+                consent, and neither is shared with third parties.
+              </p>
+              <ul className="list-disc ml-6 space-y-2 mt-3">
                 <li>Message frequency varies based on your activity and preferences</li>
                 <li>Standard message and data rates may apply</li>
                 <li>You can opt out of SMS messages at any time by replying STOP to any message</li>
-                <li>For help, reply HELP or contact us at <a href="mailto:admin@juniesystems.com" className="text-primary hover:underline">admin@juniesystems.com</a></li>
+                <li>For help, reply HELP or contact us at <a href="mailto:ricky@juniesystems.com" className="text-primary hover:underline">ricky@juniesystems.com</a></li>
               </ul>
             </section>
 
@@ -121,7 +130,7 @@ const Privacy = () => {
               <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Contact Us</h2>
               <p>If you have any questions about this Privacy Policy, please contact us at:</p>
               <p className="font-medium">
-                Email: <a href="mailto:admin@juniesystems.com" className="text-primary hover:underline">admin@juniesystems.com</a>
+                Email: <a href="mailto:ricky@juniesystems.com" className="text-primary hover:underline">ricky@juniesystems.com</a>
                 <br />
                 Location: Palmetto, FL
               </p>
