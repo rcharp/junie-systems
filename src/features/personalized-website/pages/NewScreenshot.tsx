@@ -250,13 +250,16 @@ export default function NewScreenshot() {
           <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1.5 block">
             Logo
           </label>
-          <Tabs value={logoMode} onValueChange={(v) => setLogoMode(v as "upload" | "url")} className="mb-2">
-            <TabsList className="grid w-full grid-cols-2 h-8">
+          <Tabs value={logoMode} onValueChange={(v) => setLogoMode(v as "upload" | "url" | "generate")} className="mb-2">
+            <TabsList className="grid w-full grid-cols-3 h-8">
               <TabsTrigger value="upload" className="text-xs gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Upload className="w-3 h-3" /> Upload
               </TabsTrigger>
               <TabsTrigger value="url" className="text-xs gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <LinkIcon className="w-3 h-3" /> URL
+              </TabsTrigger>
+              <TabsTrigger value="generate" className="text-xs gap-1 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Sparkles className="w-3 h-3" /> Generate
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -284,7 +287,7 @@ export default function NewScreenshot() {
                 )}
               </Button>
             </div>
-          ) : (
+          ) : logoMode === "url" ? (
             <Input
               value={logoUrl}
               onChange={(e) => setLogoUrl(e.target.value)}
@@ -292,6 +295,26 @@ export default function NewScreenshot() {
               className="bg-muted/50 border-border/50 text-base"
               disabled={submitting}
             />
+          ) : (
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleGenerateLogo}
+                disabled={generatingLogo || submitting || !companyName.trim()}
+              >
+                {generatingLogo ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating logo...</>
+                ) : (
+                  <><Sparkles className="w-4 h-4 mr-2" /> {generatedLogoUrl ? "Regenerate Logo" : "Generate Logo with AI"}</>
+                )}
+              </Button>
+              {generatedLogoUrl && (
+                <div className="flex items-center justify-center p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <img src={generatedLogoUrl} alt="Generated logo" className="max-h-24 max-w-full object-contain" />
+                </div>
+              )}
+            </div>
           )}
 
           <div className="flex items-start gap-2 mt-3 p-3 rounded-lg bg-muted/30 border border-border/50">
@@ -317,7 +340,11 @@ export default function NewScreenshot() {
             !companyName.trim() ||
             !phoneNumber.trim() ||
             submitting ||
-            (logoMode === "upload" ? !logoFile : !logoUrl.trim())
+            (logoMode === "upload"
+              ? !logoFile
+              : logoMode === "url"
+                ? !logoUrl.trim()
+                : !generatedLogoUrl)
           }
           className="w-full bg-primary text-primary-foreground hover:bg-primary/90 glow-primary"
           size="lg"
