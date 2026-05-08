@@ -68,7 +68,7 @@ export default function NewScreenshot() {
     setGeneratedLogoUrl(null);
     try {
       const { data, error } = await supabase.functions.invoke("generate-logo", {
-        body: { companyName: name },
+        body: { companyName: name, industry: industry.trim() || "general" },
       });
       if (error) throw error;
       if (!data?.logoUrl) throw new Error("No logo returned");
