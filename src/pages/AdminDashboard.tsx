@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut, Clock, RefreshCw } from 'lucide-react';
+import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut, Clock, RefreshCw, Globe, Camera, UserCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
@@ -343,20 +343,52 @@ const AdminDashboard = () => {
       {/* Main Content */}
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
         <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-muted-foreground mb-2">
-            Client Website Creation
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            Admin Tools
           </h2>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Monitor platform performance and manage development tasks
+            Choose a tool to get started
           </p>
         </div>
 
-        <div className="mb-4 flex justify-end">
-          <Button variant="outline" onClick={() => navigate('/customers')}>
-            View Customers
-          </Button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {[
+            {
+              title: 'Create Customer Website',
+              description: 'Provision a new client site via GoHighLevel.',
+              icon: Globe,
+              onClick: () => navigate('/ghl'),
+            },
+            {
+              title: 'Generate Demo Screenshot',
+              description: 'Capture a website screenshot for prospect demos.',
+              icon: Camera,
+              onClick: () => navigate('/loom/screenshot'),
+            },
+            ...(user?.email === 'rickycharpentier@gmail.com'
+              ? [{
+                  title: 'Junie Customers',
+                  description: 'View Stripe customer accounts and billing.',
+                  icon: UserCircle,
+                  onClick: () => navigate('/customers'),
+                }]
+              : []),
+          ].map((tile) => (
+            <Card
+              key={tile.title}
+              onClick={tile.onClick}
+              className="cursor-pointer hover:border-primary/50 transition-all"
+            >
+              <CardHeader>
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                  <tile.icon className="w-6 h-6 text-primary" />
+                </div>
+                <CardTitle>{tile.title}</CardTitle>
+                <CardDescription>{tile.description}</CardDescription>
+              </CardHeader>
+            </Card>
+          ))}
         </div>
-        <GhlAdmin />
       </main>
     </div>
   );
