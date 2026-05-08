@@ -292,7 +292,7 @@ const nodes = {
     color: C.grayL, dim: C.faint,
     instruction: "They replied with an objection, you handled it with two specific times, they went quiet. One more nudge, then one final close.",
     sequence: [
-      { day: "Day 2", label: "FU #1", text: "hey just circling back — i've got tuesday at 10am or thursday at 2pm still open if you want to take a look. takes 20 min." },
+      { day: "Day 2", label: "FU #1", text: "hey just circling back — every week without this fixed is more work going to your competitors. tuesday at 10am or thursday at 2pm still open, takes 20 min." },
       { day: "Day 5", label: "FU #2 — Final", text: "no worries if the timing's off — if you ever want to revisit just text me. good luck out there." },
     ],
     note: "No reply after FU #2 = log as 'ghosted after objection' and close.",
