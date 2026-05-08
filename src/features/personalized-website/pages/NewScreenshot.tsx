@@ -35,12 +35,14 @@ export default function NewScreenshot() {
   const [companyName, setCompanyName] = useState("Junie Systems");
   const [industry, setIndustry] = useState("junk removal");
   const [phoneNumber, setPhoneNumber] = useState("9412584006");
-  const [logoMode, setLogoMode] = useState<"upload" | "url">("upload");
+  const [logoMode, setLogoMode] = useState<"upload" | "url" | "generate">("upload");
   const [logoUrl, setLogoUrl] = useState(
     "https://lh4.googleusercontent.com/-T1_Aj0WdznY/AAAAAAAAAAI/AAAAAAAAAAA/BHMk-fF3vn8/s44-p-k-no-ns-nd/photo.jpg",
   );
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [generatedLogoUrl, setGeneratedLogoUrl] = useState<string | null>(null);
+  const [generatingLogo, setGeneratingLogo] = useState(false);
   const [transparentLogoBg, setTransparentLogoBg] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
