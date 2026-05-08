@@ -36,7 +36,7 @@ const nodes = {
     id: "qualify", phase: "STEP 0", icon: "🔍",
     title: "Qualify the Website",
     color: C.orange, dim: C.orangeDim,
-    instruction: "Before touching GHL, evaluate the lead's website. The goal is to confirm it's a 'bad' website, one that makes it hard for customers to take action. Focus on function, not aesthetics.",
+    instruction: "Before messaging the lead, evaluate their website. The goal is to confirm it's a 'bad' website, one that makes it hard for customers to take action. Focus on function, not aesthetics.",
     actionSteps: [
       "Is the phone number hyperlinked (tap-to-call)? Should be clickable, not plain text.",
       "Is there a quote/contact form visible above the fold (without scrolling)?",
