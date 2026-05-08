@@ -60,10 +60,10 @@ const nodes = {
     id: "pitch", phase: "STEP 3", icon: "🚀",
     title: "Send Pitch + Screenshot",
     color: C.blue, dim: C.blueDim,
-    instruction: "Attach the screenshot to the message before hitting send.",
+    instruction: "Sell the outcome — more booked jobs, fewer leads going to competitors. Never sell features. Always end aimed at the call.",
     messages: [
-      { label: "If they HAVE a website (bad one):", text: "what's up my name is ricky. i know this is random and just tell me to kick rocks if it's a waste of your time but i noticed you are missing a few things on your website which is probably why customers are calling your competitors instead so i went ahead and built you a new one" },
-      { label: "If they have NO website:", text: "what's up my name is ricky. i know this is random and just tell me to kick rocks if it's a waste of your time but i noticed you don't have a website which is probably why customers are calling your competitors instead so i went ahead and built you a new one" }
+      { label: "If they HAVE a website (bad one):", text: "what's up my name is ricky. i know this is random and just tell me to kick rocks if it's a waste of your time but the way your site is set up right now is probably costing you jobs every week — people land on it and call your competitors instead. i mocked up what it'd look like fixed so you'd actually start getting those calls" },
+      { label: "If they have NO website:", text: "what's up my name is ricky. i know this is random and just tell me to kick rocks if it's a waste of your time but without a site you're losing the customers who google you before they call — they just dial whoever shows up first. i mocked one up so those jobs start landing in your phone instead of your competitors'" }
     ],
     branches: [
       { label: "Interested / Curious / Any question", next: "push_to_book", color: C.green },
@@ -83,11 +83,11 @@ const nodes = {
     id: "push_to_book", phase: "STEP 4", icon: "📅",
     title: "Push to Book — VA Picks the Times",
     color: C.teal, dim: C.tealDim,
-    instruction: "Don't send a calendar link and wait. Check Ricky's calendar, find two open slots, and offer them. You're making it a yes/no decision — not an open question.",
+    instruction: "Sell the outcome of the call — what they walk away with — then offer two specific times. Yes/no decision, not an open question.",
     vaAction: "Open Ricky's calendar right now. Find two open slots this week or early next. Use those specific times in the message below.",
     messages: [
-      { label: "Offer two specific times:", text: "awesome — i've got tuesday at 10am or thursday at 2pm open this week. either of those work for you?" },
-      { label: "If they ask \"when works for you?\":", text: "i've got tuesday at 10 or thursday at 2 — which one's better?" }
+      { label: "Offer two specific times:", text: "awesome — 20 min on the phone and you'll see exactly how many jobs you're missing right now and what it'd take to start landing them. i've got tuesday at 10am or thursday at 2pm open — either work for you?" },
+      { label: "If they ask \"when works for you?\":", text: "i've got tuesday at 10 or thursday at 2 — which one's better? worst case you walk away with a clearer picture of where leads are leaking" }
     ],
     branches: [
       { label: "They pick a time / say yes", next: "book_confirmed", color: C.green },
@@ -126,7 +126,7 @@ const nodes = {
     id: "obj_catch", phase: "OBJECTION", icon: "🪝",
     title: "\"What's the catch?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "no catch. i build these to show contractors what's possible. if you like it and want to keep running with it, we hop on a call and go from there. if not, no hard feelings. i've got tuesday at 10am or thursday at 2pm if you want to see it — which works?" }],
+    messages: [{ label: null, text: "no catch. i build these because most contractors don't realize how many jobs they're losing every week before they ever pick up the phone. show you on the call, you decide if it's worth fixing — no pressure either way. tuesday at 10am or thursday at 2pm?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Curious but noncommittal", next: "push_to_book", color: C.teal },
@@ -137,7 +137,7 @@ const nodes = {
     id: "obj_cost", phase: "OBJECTION", icon: "💰",
     title: "\"How much does it cost?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "depends on what you need — the site is just the start. i also do missed call text-back, google review automation, lead follow-up sequences. easier to go through it on a 20 min call so i'm not throwing numbers at you cold. i've got tuesday at 10 or thursday at 2 — which one works?" }],
+    messages: [{ label: null, text: "honestly the cost matters way less than what you're losing right now in missed jobs every month. on the call i'll show you exactly where the leads are leaking and what it'd take to plug it — then pricing makes sense in context. tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Still wants to talk more first", next: "push_to_book", color: C.teal },
@@ -148,7 +148,7 @@ const nodes = {
     id: "obj_have_site", phase: "OBJECTION", icon: "🌐",
     title: "\"I already have a website\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "totally get it — i built the demo based on what i noticed was missing. if yours is already dialed in that's great, just thought it was worth a look. would tuesday at 10am or thursday at 2pm work to show you what i put together real quick?" }],
+    messages: [{ label: null, text: "totally get it — most contractors do. the question isn't whether you have a site, it's whether it's actually turning visitors into booked jobs. 20 min and i'll show you what yours is doing vs what it could be. tuesday at 10am or thursday at 2pm?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Open to it but noncommittal", next: "push_to_book", color: C.teal },
@@ -160,7 +160,7 @@ const nodes = {
     id: "obj_who", phase: "OBJECTION", icon: "🤔",
     title: "\"Who are you?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "i run a company called junie systems — we help home service contractors get more leads off their website and google. i was looking at contractors in your area and saw some things worth fixing so i reached out. worth a 20 min call? i've got tuesday at 10 or thursday at 2." }],
+    messages: [{ label: null, text: "i'm ricky — i help home service guys stop losing jobs to competitors who just happen to show up better online. saw a few things on your end that are probably costing you calls every week and figured it was worth a heads up. 20 min on the phone i'll walk you through it. tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Open to it", next: "push_to_book", color: C.teal },
@@ -171,7 +171,7 @@ const nodes = {
     id: "obj_info", phase: "OBJECTION", icon: "📋",
     title: "\"Just send me more info\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "i could but it's gonna be a wall of text and easier to just show you in 20 min. i've got tuesday at 10am or thursday at 2pm — which one works?" }],
+    messages: [{ label: null, text: "i could but a doc isn't gonna show you what you're actually losing every week — that's the whole point of the call. 20 min, you walk away knowing exactly where jobs are leaking. tuesday at 10am or thursday at 2pm?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Still pushing for info before committing", next: "obj_info_persist", color: C.orange },
@@ -182,7 +182,7 @@ const nodes = {
     id: "obj_info_persist", phase: "OBJECTION", icon: "📋",
     title: "Pushing for info — give a little, then push again",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "fair — we help contractors get more inbound calls through their website, missed call text-back, and google review automation. plans start at $97/mo. the call is really just to see if any of it makes sense for your business. i've got tuesday at 10 or thursday at 2 if you want the full picture." }],
+    messages: [{ label: null, text: "fair. short version: most contractors are losing 5-15 jobs a month they don't even know about — missed calls, leads that never get a follow up, customers that bounce off the site. we plug those holes so you keep the work that's already coming your way. the call is just to show you where it's happening for you specifically. tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "🔇 Gone quiet", next: "fu_obj_ghost", color: C.grayL },
@@ -192,7 +192,7 @@ const nodes = {
     id: "obj_bot", phase: "OBJECTION", icon: "🤖",
     title: "\"Are you a bot?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "nah this is actually me lol. i personally look at contractor sites in the area and reach out when i see something worth fixing. old school i know. worth a quick call? i've got tuesday at 10 or thursday at 2." }],
+    messages: [{ label: null, text: "nah this is actually me lol. i look at contractor sites in the area, and when i see one that's costing the owner real jobs i reach out. 20 min on the phone i'll show you what i mean. tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Open to it", next: "push_to_book", color: C.teal },
@@ -203,7 +203,7 @@ const nodes = {
     id: "obj_time", phase: "OBJECTION", icon: "⏰",
     title: "\"No time right now\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "totally fine — i've got tuesday at 10am or thursday at 2pm if either works this week, or just let me know when's better and i'll circle back." }],
+    messages: [{ label: null, text: "totally fair — every week you wait though is more jobs going to your competitors. 20 min is all it takes to see what's actually leaking. tuesday at 10am or thursday at 2pm work? if not just tell me when's better." }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "They give a future window (\"next week\", \"after friday\")", next: "fu_time_future", color: C.teal },
@@ -214,7 +214,7 @@ const nodes = {
     id: "obj_what", phase: "OBJECTION", icon: "❓",
     title: "\"What do you do exactly?\"",
     color: C.orange, dim: C.orangeDim,
-    messages: [{ label: null, text: "basically help home service businesses get more inbound calls — through their website, google, and automated follow-up for leads they're already losing. easiest to just show you on a 20 min call. i've got tuesday at 10 or thursday at 2 — which one works?" }],
+    messages: [{ label: null, text: "short version: i help home service guys land the jobs they're already losing — missed calls that never call back, leads that ghost, customers that bounce off the site. on a 20 min call i'll show you specifically where it's happening in your business. tuesday at 10 or thursday at 2?" }],
     branches: [
       { label: "They pick a time", next: "book_confirmed", color: C.green },
       { label: "Still engaged, more questions", next: "push_to_book", color: C.teal },
@@ -261,7 +261,7 @@ const nodes = {
     color: C.grayL, dim: C.faint,
     instruction: "Last follow-up. Offer two times directly — make it as easy as possible to say yes.",
     sequence: [
-      { day: "Day 6", label: "FU #2 — Final", text: "i've got tuesday at 10am or thursday at 2pm open if you want to hop on real quick and i'll walk you through it — no pressure either way" },
+      { day: "Day 6", label: "FU #2 — Final", text: "20 min on the phone you'll see exactly how many jobs you're losing right now and what it'd take to keep them. tuesday at 10am or thursday at 2pm — either one work?" },
     ],
     note: "If no reply after this, log and close. No more messages.",
     branches: [
@@ -276,7 +276,7 @@ const nodes = {
     color: C.grayL, dim: C.faint,
     instruction: "They were engaged, you offered specific times, they disappeared. Two follow-ups — both with specific times offered.",
     sequence: [
-      { day: "Day 2", label: "FU #1", text: "hey still got tuesday at 10 or thursday at 2 open — just need a yes or no and i'll put it on the calendar" },
+      { day: "Day 2", label: "FU #1", text: "hey still got tuesday at 10 or thursday at 2 open — 20 min and you'll know exactly where jobs are leaking. just need a yes or no" },
       { day: "Day 5", label: "FU #2 — Final", text: "last time i'll bug you — if timing ever works just text me and we'll set something up. good luck out there." },
     ],
     note: "After FU #2 with no reply, log and close. Do not send more.",
