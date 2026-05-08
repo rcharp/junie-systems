@@ -363,7 +363,7 @@ const nodes = {
     title: "Site Already Solid: Skip",
     color: C.grayL, dim: C.faint, isDead: true,
     instruction: "Their site already has tap-to-call, a CTA in the nav, a form above the fold, and services/service areas. The pitch won't land. Move on.",
-    closeSteps: ["Mark as 'site is solid' in GHL", "Remove from active list", "Next lead"],
+    closeSteps: ["Remove from active list", "Next lead"],
     branches: []
   },
 };
