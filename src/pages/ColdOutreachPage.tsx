@@ -341,7 +341,7 @@ const nodes = {
     id: "dead_not_interested", phase: "CLOSED", icon: "🗂️",
     title: "Not Interested: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
-    closeSteps: ["Log the conversation in GHL", "Tag: not-interested", "Move to 'Dead' pipeline stage", "Next lead"],
+    closeSteps: ["Tag: not-interested", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
   dead_wrong_number: {
