@@ -53,8 +53,8 @@ export default function PipelineLayout() {
               <Video className="w-4.5 h-4.5 text-primary" />
             </div>
             <span className="text-lg font-bold tracking-tight">
-              <span className="gradient-text">Loom</span>{" "}
-              <span className="text-muted-foreground font-medium">Pipeline</span>
+              <span className="gradient-text">Website Demo</span>{" "}
+              <span className="text-muted-foreground font-medium">Screenshots</span>
             </span>
           </Link>
 
