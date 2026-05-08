@@ -240,7 +240,7 @@ export default function NewScreenshot() {
             </SelectTrigger>
             <SelectContent>
               {INDUSTRIES.map((opt) => {
-                const allowed = ["junk removal", "plumbing", "hvac", "roofing", "pest control"];
+                const allowed = ["junk removal", "plumbing", "hvac", "roofing", "pest control", "painting"];
                 return (
                   <SelectItem key={opt} value={opt.toLowerCase()} disabled={!allowed.includes(opt.toLowerCase())}>
                     {opt}
