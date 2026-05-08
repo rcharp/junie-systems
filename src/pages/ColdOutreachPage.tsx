@@ -371,6 +371,7 @@ const nodes = {
     closeSteps: ["Mark as 'site is solid' in GHL", "Remove from active list", "Next lead"],
     branches: []
   },
+};
 
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
