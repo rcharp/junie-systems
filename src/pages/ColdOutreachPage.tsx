@@ -363,7 +363,14 @@ const nodes = {
     closeSteps: ["Log conversation summary in GHL", "Tag: faded", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
-};
+  dead_solid_site: {
+    id: "dead_solid_site", phase: "CLOSED", icon: "✅",
+    title: "Site Already Solid: Skip",
+    color: C.grayL, dim: C.faint, isDead: true,
+    instruction: "Their site already has tap-to-call, a CTA in the nav, a form above the fold, and services/service areas. The pitch won't land. Move on.",
+    closeSteps: ["Mark as 'site is solid' in GHL", "Remove from active list", "Next lead"],
+    branches: []
+  },
 
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
