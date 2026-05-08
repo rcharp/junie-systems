@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
     const industryText = industry && typeof industry === "string" && industry.trim()
       ? ` a ${industry.trim()}`
       : "";
-    const prompt = `Generate a logo for ${companyName},${industryText} company. CRITICAL REQUIREMENTS: (1) The background MUST be fully transparent — no background color, no checkerboard, no scene, just the logo on transparency. (2) The entire exterior silhouette of the logo MUST have a solid white outline/stroke wrapping around it like a sticker border. The white outline must hug the outermost edges of the whole logo as one continuous shape.`;
+    const prompt = `Generate a logo for ${companyName},${industryText} company. CRITICAL REQUIREMENTS: (1) The background MUST be fully transparent alpha — no background color, no checkerboard pattern, no gray squares, no scene, no paper, no canvas, just the logo artwork on transparent PNG alpha. (2) The entire exterior silhouette of the logo MUST have a solid white outline/stroke wrapping around it like a sticker border. The white outline must hug the outermost edges of the whole logo as one continuous shape.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -163,16 +163,22 @@ Deno.serve(async (req) => {
     const b64 = dataUrl.slice(commaIdx + 1);
     const contentType = meta.split(";")[0] || "image/png";
     const ext = contentType.split("/")[1] || "png";
-    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const rawBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    let bytes = rawBytes;
+    try {
+      bytes = await forceTransparentStickerLogo(rawBytes);
+    } catch (postProcessErr) {
+      console.warn("Logo transparency post-process failed, uploading raw image:", postProcessErr);
+    }
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const safeName = companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    const path = `logos/generated-${safeName}-${Date.now()}.${ext}`;
+    const path = `logos/generated-${safeName}-${Date.now()}.png`;
     const { error: upErr } = await supabase.storage.from("sites").upload(path, bytes, {
-      contentType,
+      contentType: "image/png",
       upsert: true,
     });
     if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
