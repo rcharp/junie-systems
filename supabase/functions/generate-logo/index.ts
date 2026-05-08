@@ -22,9 +22,9 @@ Deno.serve(async (req) => {
     if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
     const industryText = industry && typeof industry === "string" && industry.trim()
-      ? ` The business is in the ${industry.trim()} industry, so the logo should visually relate to that trade.`
+      ? ` a ${industry.trim()}`
       : "";
-    const prompt = `Create a logo for ${companyName}.${industryText} Make sure that it has no background and has a sticker outline around the logo.`;
+    const prompt = `generate a logo for ${companyName}${industryText} company. make sure there is no background, and that there is a sticker outline around the logo`;
 
     const aiRes = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
