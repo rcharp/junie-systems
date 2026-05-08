@@ -320,8 +320,8 @@ const nodes = {
     id: "fu_time_future", phase: "FOLLOW-UP", icon: "📆",
     title: "\"Reach me later\". Circle Back",
     color: C.teal, dim: C.tealDim,
-    instruction: "Set a GHL task for the date/window they mentioned. When it comes, send this with two fresh times from Ricky's calendar.",
-    vaAction: "Set a GHL task reminder for when they said to reach back. Check Ricky's calendar then and offer two real open slots.",
+    instruction: "Set a task reminder for the date/window they mentioned. When it comes, send this with two fresh times from Ricky's calendar.",
+    vaAction: "Set a reminder for when they said to reach back. Check Ricky's calendar then and offer two real open slots.",
     sequence: [
       { day: "On their date", label: "Circle back", text: "hey ricky here, you mentioned this week might be better, i've got [day] at [time] or [day] at [time] open, either of those work?" },
     ],
