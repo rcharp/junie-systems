@@ -544,6 +544,7 @@ function Breadcrumb({ history, onJump }) {
 
 function OverviewMap({ onStart }) {
   const mainFlow = [
+    { id:"qualify",icon:"🔍",label:"Qualify Site",color:C.orange },
     { id:"qualifier",icon:"📱",label:"Qualifier",color:C.blue },
     { id:"screenshot",icon:"🖥️",label:"Screenshot",color:C.purple },
     { id:"pitch",icon:"🚀",label:"Pitch",color:C.blue },
