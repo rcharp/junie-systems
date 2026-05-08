@@ -53,6 +53,25 @@ const FIELDS: SettingField[] = [
   { key: "speaker_keyword", label: "Speaker Keyword", type: "text", placeholder: "e.g. Acme", tab: "content", group: "Speaker" },
 ];
 
+const INDUSTRIES = [
+  "junk removal",
+  "plumbing",
+  "hvac",
+  "roofing",
+  "electrical",
+  "cleaning",
+  "landscaping",
+  "pest control",
+  "garage door",
+  "pool & spa",
+  "handyman",
+  "painting",
+  "tree service",
+  "moving",
+  "auto repair",
+  "general",
+];
+
 export default function PipelineSettings() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState<Set<string>>(new Set());
