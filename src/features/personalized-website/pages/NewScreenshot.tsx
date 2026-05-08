@@ -239,9 +239,14 @@ export default function NewScreenshot() {
               <SelectValue placeholder="Select an industry" />
             </SelectTrigger>
             <SelectContent>
-              {INDUSTRIES.map((opt) => (
-                <SelectItem key={opt} value={opt.toLowerCase()}>{opt}</SelectItem>
-              ))}
+              {INDUSTRIES.map((opt) => {
+                const allowed = ["junk removal", "plumbing", "hvac", "roofing", "pest control"];
+                return (
+                  <SelectItem key={opt} value={opt.toLowerCase()} disabled={!allowed.includes(opt.toLowerCase())}>
+                    {opt}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
