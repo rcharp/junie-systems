@@ -347,12 +347,28 @@ const nodes = {
   },
 };
 
+function CopyBtn({ text }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = (e) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1400);
+  };
+  return (
+    <button onClick={onCopy}
+      style={{ background: copied ? "#10b981" : "rgba(255,255,255,0.15)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 6, padding: "3px 8px", color: "#fff", fontSize: 10, fontWeight: 700, cursor: "pointer", letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap" }}
+    >{copied ? "✓ Copied" : "Copy"}</button>
+  );
+}
+
 function SMSBubble({ text, label }) {
   return (
     <div style={{ marginTop: 10 }}>
       {label && <div style={{ fontSize: 10, color: C.dim, marginBottom: 5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</div>}
-      <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: "16px 16px 3px 16px", padding: "11px 15px", fontSize: 13.5, color: "#fff", lineHeight: 1.6, fontStyle: "italic", boxShadow: "0 2px 14px #2563eb33" }}>
-        {text}
+      <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: "16px 16px 3px 16px", padding: "11px 15px", fontSize: 13.5, color: "#fff", lineHeight: 1.6, fontStyle: "italic", boxShadow: "0 2px 14px #2563eb33", display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <div style={{ flex: 1 }}>{text}</div>
+        <CopyBtn text={text} />
       </div>
     </div>
   );
@@ -366,8 +382,9 @@ function SequenceStep({ step }) {
       </div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{step.label}</div>
-        <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: "14px 14px 3px 14px", padding: "9px 13px", fontSize: 13, color: "#fff", lineHeight: 1.55, fontStyle: "italic", boxShadow: "0 2px 8px #2563eb22" }}>
-          {step.text}
+        <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: "14px 14px 3px 14px", padding: "9px 13px", fontSize: 13, color: "#fff", lineHeight: 1.55, fontStyle: "italic", boxShadow: "0 2px 8px #2563eb22", display: "flex", gap: 10, alignItems: "flex-start" }}>
+          <div style={{ flex: 1 }}>{step.text}</div>
+          <CopyBtn text={step.text} />
         </div>
       </div>
     </div>
