@@ -255,13 +255,7 @@ Deno.serve(async (req) => {
     const b64 = dataUrl.slice(commaIdx + 1);
     const contentType = meta.split(";")[0] || "image/png";
     const ext = contentType.split("/")[1] || "png";
-    const rawBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-    let bytes = rawBytes;
-    try {
-      bytes = await forceTransparentStickerLogo(rawBytes);
-    } catch (postProcessErr) {
-      console.warn("Logo transparency post-process failed, uploading raw image:", postProcessErr);
-    }
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
