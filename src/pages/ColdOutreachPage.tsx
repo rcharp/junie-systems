@@ -36,14 +36,14 @@ const nodes = {
     id: "qualify", phase: "STEP 0", icon: "🔍",
     title: "Qualify the Website",
     color: C.orange, dim: C.orangeDim,
-    instruction: "Before touching GHL, evaluate the lead's website. The goal is to confirm it's a 'bad' website, one that makes it hard for customers to take action. Focus on function, not aesthetics.",
+    instruction: "Before messaging the lead, evaluate their website. The goal is to confirm it's a 'bad' website, one that makes it hard for customers to take action. Focus on function, not aesthetics.",
     actionSteps: [
       "Is the phone number hyperlinked (tap-to-call)? Should be clickable, not plain text.",
       "Is there a quote/contact form visible above the fold (without scrolling)?",
       "Are there clear CTA buttons throughout the homepage (\"Get a Free Quote\", \"Call Now\", \"Book Online\")?",
       "Are services and service areas listed in the navbar or easy to find within 5 seconds?",
     ],
-    note: "A GOOD site has: tap-to-call phone in nav, CTA button in nav, quote form above the fold, and Services + Service Areas in navbar. Missing 2 or more of these → it qualifies. No website at all also qualifies, just note 'no website' in GHL.",
+    note: "A GOOD site has: tap-to-call phone in nav, CTA button in nav, quote form above the fold, and Services + Service Areas in navbar. Missing 2 or more of these → it qualifies. No website at all also qualifies, just note 'no website'.",
     branches: [
       { label: "✅ PASS (bad website) → start outreach", next: "qualifier", color: C.green },
       { label: "❌ FAIL (site is solid) → skip lead", next: "dead_solid_site", color: C.red },
@@ -134,12 +134,6 @@ const nodes = {
     isGoal: true,
     instruction: "Confirm the time back to them, add it to Ricky's calendar manually, then log it.",
     messages: [{ label: "Confirm with them:", text: "perfect, locked in for [day] at [time]. you'll get a confirmation. lmk if anything changes." }],
-    postSteps: [
-      "Add to Ricky's calendar: prospect name, number, and time",
-      "Log the booking in GHL with a note",
-      "Move contact to 'Call Booked' pipeline stage",
-      "Tag contact: call-booked",
-    ],
     branches: []
   },
   obj_catch: {
@@ -326,8 +320,8 @@ const nodes = {
     id: "fu_time_future", phase: "FOLLOW-UP", icon: "📆",
     title: "\"Reach me later\". Circle Back",
     color: C.teal, dim: C.tealDim,
-    instruction: "Set a GHL task for the date/window they mentioned. When it comes, send this with two fresh times from Ricky's calendar.",
-    vaAction: "Set a GHL task reminder for when they said to reach back. Check Ricky's calendar then and offer two real open slots.",
+    instruction: "Set a task reminder for the date/window they mentioned. When it comes, send this with two fresh times from Ricky's calendar.",
+    vaAction: "Set a reminder for when they said to reach back. Check Ricky's calendar then and offer two real open slots.",
     sequence: [
       { day: "On their date", label: "Circle back", text: "hey ricky here, you mentioned this week might be better, i've got [day] at [time] or [day] at [time] open, either of those work?" },
     ],
@@ -340,28 +334,28 @@ const nodes = {
     id: "dead_no_reply", phase: "CLOSED", icon: "🗂️",
     title: "No Reply: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
-    closeSteps: ["Log as 'no response' in GHL", "Tag: no-reply", "Move to 'Dead' pipeline stage", "Next lead"],
+    closeSteps: ["Tag: no-reply", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
   dead_not_interested: {
     id: "dead_not_interested", phase: "CLOSED", icon: "🗂️",
     title: "Not Interested: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
-    closeSteps: ["Log the conversation in GHL", "Tag: not-interested", "Move to 'Dead' pipeline stage", "Next lead"],
+    closeSteps: ["Tag: not-interested", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
   dead_wrong_number: {
     id: "dead_wrong_number", phase: "CLOSED", icon: "❌",
     title: "Wrong Number",
     color: C.red, dim: C.redDim, isDead: true,
-    closeSteps: ["Log as 'wrong number' in GHL", "Remove from lead list entirely", "Next lead"],
+    closeSteps: ["Remove from lead list entirely", "Next lead"],
     branches: []
   },
   dead_fade: {
     id: "dead_fade", phase: "CLOSED", icon: "🗂️",
     title: "Faded Out: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
-    closeSteps: ["Log conversation summary in GHL", "Tag: faded", "Move to 'Dead' pipeline stage", "Next lead"],
+    closeSteps: ["Tag: faded", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
   dead_solid_site: {
@@ -369,7 +363,7 @@ const nodes = {
     title: "Site Already Solid: Skip",
     color: C.grayL, dim: C.faint, isDead: true,
     instruction: "Their site already has tap-to-call, a CTA in the nav, a form above the fold, and services/service areas. The pitch won't land. Move on.",
-    closeSteps: ["Mark as 'site is solid' in GHL", "Remove from active list", "Next lead"],
+    closeSteps: ["Remove from active list", "Next lead"],
     branches: []
   },
 };
@@ -669,16 +663,6 @@ function OverviewMap({ onStart }) {
           <div>• Do not send the screenshot without the pitch message attached.</div>
           <div>• Never send more than one follow-up after no reply on the qualifier.</div>
           <div>• If someone says no, be gracious and close the loop cleanly. Don't push.</div>
-          <div>• Log every conversation in GHL — notes, tags, and stage updates after every message.</div>
-        </div>
-      </div>
-      <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:18, marginBottom:24 }}>
-        <div style={{ fontSize:10, fontWeight:700, color:C.greenL, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>🗂️ GHL logging & pipeline (after every interaction)</div>
-        <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.7, display:"flex", flexDirection:"column", gap:6 }}>
-          <div>1. Add a note summarizing what was sent and any reply received.</div>
-          <div>2. Tag the contact: <span style={{ color:C.text }}>qualifier sent · pitch sent · interested · call booked · not interested</span>.</div>
-          <div>3. Move the contact to the correct pipeline stage.</div>
-          <div>4. If a call is booked, add the appointment to Ricky's calendar and confirm with the prospect.</div>
         </div>
       </div>
       <div style={{ textAlign:"center" }}>
