@@ -53,6 +53,25 @@ const FIELDS: SettingField[] = [
   { key: "speaker_keyword", label: "Speaker Keyword", type: "text", placeholder: "e.g. Acme", tab: "content", group: "Speaker" },
 ];
 
+const INDUSTRIES = [
+  "junk removal",
+  "plumbing",
+  "hvac",
+  "roofing",
+  "electrical",
+  "cleaning",
+  "landscaping",
+  "pest control",
+  "garage door",
+  "pool & spa",
+  "handyman",
+  "painting",
+  "tree service",
+  "moving",
+  "auto repair",
+  "general",
+];
+
 export default function PipelineSettings() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [dirty, setDirty] = useState<Set<string>>(new Set());
@@ -76,22 +95,75 @@ export default function PipelineSettings() {
     })();
   }, []);
 
+  const [industryUrls, setIndustryUrls] = useState<Record<string, string>>({});
+  const [industryMapDirty, setIndustryMapDirty] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.from("settings").select("*");
+      if (error) {
+        toast({ title: "Failed to load settings", description: error.message, variant: "destructive" });
+      } else if (data) {
+        const map: Record<string, string> = {};
+        (data as any[]).forEach((s) => {
+          map[s.key] = s.value ?? "";
+        });
+        setValues(map);
+        try {
+          const parsed = JSON.parse(map["industry_content_map"] || "{}");
+          const urls: Record<string, string> = {};
+          Object.entries(parsed).forEach(([k, v]: [string, any]) => {
+            urls[k] = v?.site_url || "";
+          });
+          setIndustryUrls(urls);
+        } catch {
+          setIndustryUrls({});
+        }
+      }
+      setLoading(false);
+    })();
+  }, []);
+
   function update(key: string, val: string) {
     setValues((v) => ({ ...v, [key]: val }));
     setDirty((d) => new Set(d).add(key));
   }
 
+  function updateIndustryUrl(industry: string, url: string) {
+    setIndustryUrls((prev) => ({ ...prev, [industry]: url }));
+    setIndustryMapDirty(true);
+  }
+
   async function save() {
-    if (dirty.size === 0) {
+    if (dirty.size === 0 && !industryMapDirty) {
       toast({ title: "No changes to save" });
       return;
     }
     setSaving(true);
     try {
       const rows = Array.from(dirty).map((key) => ({ key, value: values[key] ?? "" }));
+      if (industryMapDirty) {
+        // Merge with existing map to preserve other fields per industry
+        let existing: Record<string, any> = {};
+        try { existing = JSON.parse(values["industry_content_map"] || "{}"); } catch {}
+        const merged: Record<string, any> = { ...existing };
+        Object.entries(industryUrls).forEach(([k, url]) => {
+          if (url && url.trim()) {
+            merged[k] = { ...(existing[k] || {}), site_url: url.trim() };
+          } else if (merged[k]) {
+            const { site_url, ...rest } = merged[k];
+            if (Object.keys(rest).length === 0) delete merged[k];
+            else merged[k] = rest;
+          }
+        });
+        const json = JSON.stringify(merged);
+        rows.push({ key: "industry_content_map", value: json });
+        setValues((v) => ({ ...v, industry_content_map: json }));
+      }
       const { error } = await (supabase.from("settings") as any).upsert(rows, { onConflict: "key" });
       if (error) throw error;
       setDirty(new Set());
+      setIndustryMapDirty(false);
       toast({ title: "Settings saved" });
     } catch (err: any) {
       toast({ title: "Save failed", description: err.message, variant: "destructive" });
@@ -171,31 +243,44 @@ export default function PipelineSettings() {
             Configure API keys and templates stored in the Junie pipeline backend.
           </p>
         </div>
-        <Button onClick={save} disabled={saving || dirty.size === 0}>
+        <Button onClick={save} disabled={saving || (dirty.size === 0 && !industryMapDirty)}>
           <Save className="w-4 h-4 mr-2" />
-          {saving ? "Saving..." : `Save${dirty.size ? ` (${dirty.size})` : ""}`}
+          {saving ? "Saving..." : `Save${dirty.size + (industryMapDirty ? 1 : 0) ? ` (${dirty.size + (industryMapDirty ? 1 : 0)})` : ""}`}
         </Button>
       </div>
 
-      <div className="glass rounded-xl p-4 text-xs text-muted-foreground flex items-start gap-2 border border-warning/30">
-        <ExternalLink className="w-4 h-4 mt-0.5 shrink-0 text-warning" />
-        <p>
-          Advanced settings (industry content map, voice cloning, lip-sync providers, usage analytics, webhook docs)
-          remain in the dedicated Junie pipeline app — those features depend on edge functions that aren't deployed in
-          this project.
-        </p>
-      </div>
-
       <Tabs defaultValue="api-keys" className="w-full">
-        <TabsList className="w-full grid grid-cols-2">
+        <TabsList className="w-full grid grid-cols-3">
           <TabsTrigger value="api-keys">API Keys</TabsTrigger>
           <TabsTrigger value="content">Content & Templates</TabsTrigger>
+          <TabsTrigger value="industries">Industry URLs</TabsTrigger>
         </TabsList>
         <TabsContent value="api-keys" className="mt-6">
           {renderTab("api-keys")}
         </TabsContent>
         <TabsContent value="content" className="mt-6">
           {renderTab("content")}
+        </TabsContent>
+        <TabsContent value="industries" className="mt-6">
+          <div className="glass rounded-xl p-6 space-y-4">
+            <div>
+              <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Site URL per Industry</h2>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                The screenshot generator will load this URL and inject the company's branding for the selected industry.
+              </p>
+            </div>
+            {INDUSTRIES.map((ind) => (
+              <div key={ind} className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground block capitalize">{ind}</label>
+                <Input
+                  value={industryUrls[ind] || ""}
+                  onChange={(e) => updateIndustryUrl(ind, e.target.value)}
+                  placeholder="https://example.com/template-page"
+                  className="bg-muted/50 border-border/50"
+                />
+              </div>
+            ))}
+          </div>
         </TabsContent>
       </Tabs>
     </div>
