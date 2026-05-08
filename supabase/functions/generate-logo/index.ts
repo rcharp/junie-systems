@@ -208,9 +208,9 @@ Deno.serve(async (req) => {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const industryText = industry && typeof industry === "string" && industry.trim()
-      ? ` a ${industry.trim()}`
-      : "";
-    const prompt = `Generate a professional logo for ${companyName},${industryText} company. Clean, modern design suitable for a business brand.`;
+      ? `${industry.trim()}`
+      : "business";
+    const prompt = `Generate a logo for ${companyName}, a ${industryText} company`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3.1-flash-image-preview",
+        model: "google/gemini-3-pro-image-preview",
         messages: [{ role: "user", content: prompt }],
         modalities: ["image", "text"],
       }),
