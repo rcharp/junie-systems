@@ -348,7 +348,7 @@ const nodes = {
     id: "dead_wrong_number", phase: "CLOSED", icon: "❌",
     title: "Wrong Number",
     color: C.red, dim: C.redDim, isDead: true,
-    closeSteps: ["Log as 'wrong number' in GHL", "Remove from lead list entirely", "Next lead"],
+    closeSteps: ["Remove from lead list entirely", "Next lead"],
     branches: []
   },
   dead_fade: {
