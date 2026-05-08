@@ -92,10 +92,65 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
   }
 
   const MAX_WIDTH = 300;
-  let finalImg: Image = cropped;
+  let resized: Image = cropped;
   if (cropW > MAX_WIDTH) {
     const newH = Math.max(1, Math.round((cropH / cropW) * MAX_WIDTH));
-    finalImg = cropped.resize(MAX_WIDTH, newH);
+    resized = cropped.resize(MAX_WIDTH, newH);
+  }
+
+  // Add white sticker outline by dilating the alpha mask. Pad canvas so the
+  // stroke isn't clipped at the edges.
+  const rW = resized.width;
+  const rH = resized.height;
+  const stroke = Math.max(3, Math.round(Math.min(rW, rH) * 0.04));
+  const pad = stroke + 2;
+  const outW = rW + pad * 2;
+  const outH = rH + pad * 2;
+
+  const srcAlpha = new Uint8Array(outW * outH);
+  const srcColor = new Uint32Array(outW * outH);
+  for (let y = 0; y < rH; y++) {
+    for (let x = 0; x < rW; x++) {
+      const c = resized.getPixelAt(x + 1, y + 1);
+      const a = c & 0xff;
+      const dst = (y + pad) * outW + (x + pad);
+      srcColor[dst] = c;
+      srcAlpha[dst] = a >= 128 ? 1 : 0;
+    }
+  }
+
+  // Two-pass dilation (horizontal then vertical) for an O(w*h*r) outline.
+  const horiz = new Uint8Array(outW * outH);
+  for (let y = 0; y < outH; y++) {
+    for (let x = 0; x < outW; x++) {
+      let hit = 0;
+      for (let dx = -stroke; dx <= stroke; dx++) {
+        const xx = x + dx;
+        if (xx >= 0 && xx < outW && srcAlpha[y * outW + xx]) { hit = 1; break; }
+      }
+      horiz[y * outW + x] = hit;
+    }
+  }
+  const dilated = new Uint8Array(outW * outH);
+  for (let x = 0; x < outW; x++) {
+    for (let y = 0; y < outH; y++) {
+      let hit = 0;
+      for (let dy = -stroke; dy <= stroke; dy++) {
+        const yy = y + dy;
+        if (yy >= 0 && yy < outH && horiz[yy * outW + x]) { hit = 1; break; }
+      }
+      dilated[y * outW + x] = hit;
+    }
+  }
+
+  const finalImg = new Image(outW, outH);
+  for (let y = 0; y < outH; y++) {
+    for (let x = 0; x < outW; x++) {
+      const idx = y * outW + x;
+      if (srcAlpha[idx]) finalImg.setPixelAt(x + 1, y + 1, srcColor[idx] | 0xff);
+      else if (dilated[idx]) finalImg.setPixelAt(x + 1, y + 1, 0xffffffff);
+      else finalImg.setPixelAt(x + 1, y + 1, 0x00000000);
+    }
   }
 
   return await finalImg.encode(0);
