@@ -204,7 +204,7 @@ export default function PipelineDashboard() {
         await supabase.from("pipeline_runs").delete().in("id", pipelineIds);
       }
       if (screenshotIds.length > 0) {
-        await supabase.from("pipeline_companies").delete().in("id", screenshotIds);
+        await mainSupabase.from("pipeline_companies").delete().in("id", screenshotIds);
       }
 
       setSelected(new Set());
