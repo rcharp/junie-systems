@@ -618,10 +618,32 @@ function OverviewMap({ onStart }) {
           {followups.map(o => <Btn key={o.id} item={o} color={C.tealL} />)}
         </div>
       </div>
-      <div style={{ background:"#080f20", border:`1px solid ${C.blue}44`, borderRadius:12, padding:"14px 18px", marginBottom:24 }}>
+      <div style={{ background:"#080f20", border:`1px solid ${C.blue}44`, borderRadius:12, padding:"14px 18px", marginBottom:12 }}>
         <div style={{ fontSize:10, fontWeight:700, color:C.blueL, textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:8 }}>👤 The rule: VA books the call, not the customer</div>
         <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.65 }}>
           Never send a calendar link and hope they click it. Check Ricky's calendar, pick two open slots, offer them in the message. It's a yes or no, not a homework assignment. If they say yes, you add it to Ricky's calendar and confirm back.
+        </div>
+      </div>
+      <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:18, marginBottom:12 }}>
+        <div style={{ fontSize:10, fontWeight:700, color:C.purpleL, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>📋 Rules to always follow</div>
+        <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.7, display:"flex", flexDirection:"column", gap:6 }}>
+          <div>• Always write as Ricky. First person, casual, human.</div>
+          <div>• Never use formal language, sales-speak, or anything that sounds scripted.</div>
+          <div>• Everything fully lowercase. No extra punctuation unless naturally needed.</div>
+          <div>• Do not send the pitch until the qualifier is confirmed.</div>
+          <div>• Do not send the screenshot without the pitch message attached.</div>
+          <div>• Never send more than one follow-up after no reply on the qualifier.</div>
+          <div>• If someone says no, be gracious and close the loop cleanly. Don't push.</div>
+          <div>• Log every conversation in GHL — notes, tags, and stage updates after every message.</div>
+        </div>
+      </div>
+      <div style={{ background:C.card, border:`1px solid ${C.border}`, borderRadius:14, padding:18, marginBottom:24 }}>
+        <div style={{ fontSize:10, fontWeight:700, color:C.greenL, letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>🗂️ GHL logging & pipeline (after every interaction)</div>
+        <div style={{ fontSize:12.5, color:C.dim, lineHeight:1.7, display:"flex", flexDirection:"column", gap:6 }}>
+          <div>1. Add a note summarizing what was sent and any reply received.</div>
+          <div>2. Tag the contact: <span style={{ color:C.text }}>qualifier sent · pitch sent · interested · call booked · not interested</span>.</div>
+          <div>3. Move the contact to the correct pipeline stage.</div>
+          <div>4. If a call is booked, add the appointment to Ricky's calendar and confirm with the prospect.</div>
         </div>
       </div>
       <div style={{ textAlign:"center" }}>
