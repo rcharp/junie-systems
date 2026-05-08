@@ -5,6 +5,7 @@ import {
   JUNIE_SUPABASE_URL,
   JUNIE_SUPABASE_PUBLISHABLE_KEY,
 } from "@/integrations/junie-pipeline/client";
+import { supabase as mainSupabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 import {
   Play,
@@ -60,8 +61,14 @@ export default function PipelineDashboard() {
       .on("postgres_changes", { event: "*", schema: "public", table: "pipeline_companies" }, () => fetchData())
       .subscribe();
 
+    const mainChannel = mainSupabase
+      .channel("dashboard-screenshots")
+      .on("postgres_changes", { event: "*", schema: "public", table: "pipeline_companies" }, () => fetchData())
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      mainSupabase.removeChannel(mainChannel);
     };
   }, []);
 
@@ -105,10 +112,9 @@ export default function PipelineDashboard() {
         });
     }
 
-    const { data: screenshotCompanies } = await supabase
+    const { data: screenshotCompanies } = await mainSupabase
       .from("pipeline_companies")
       .select("*")
-      .in("status", ["screenshot", "screenshot-done", "failed"])
       .eq("run_id", "00000000-0000-0000-0000-000000000000")
       .order("created_at", { ascending: false });
 
@@ -198,7 +204,7 @@ export default function PipelineDashboard() {
         await supabase.from("pipeline_runs").delete().in("id", pipelineIds);
       }
       if (screenshotIds.length > 0) {
-        await supabase.from("pipeline_companies").delete().in("id", screenshotIds);
+        await mainSupabase.from("pipeline_companies").delete().in("id", screenshotIds);
       }
 
       setSelected(new Set());
