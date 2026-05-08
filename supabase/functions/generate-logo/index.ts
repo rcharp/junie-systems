@@ -99,81 +99,92 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
     resized = cropped.resize(MAX_CORE_WIDTH, newH);
   }
 
-  // Add a clean white sticker outline around only the exterior silhouette.
-  // This runs after resizing, so the circular pass stays lightweight.
+  // Build a single unified sticker outline around ONLY the outer edges of
+  // the combined logo. We first close gaps between letters/icons by dilating
+  // the alpha mask, then fill any interior holes, then draw a white border
+  // around that merged silhouette only.
   const rW = resized.width;
   const rH = resized.height;
   const stroke = Math.max(4, Math.min(10, Math.round(Math.min(rW, rH) * 0.035)));
-  const pad = stroke + 2;
+  const mergeRadius = Math.max(stroke + 2, Math.round(Math.min(rW, rH) * 0.06));
+  const pad = stroke + mergeRadius + 2;
   const outW = rW + pad * 2;
   const outH = rH + pad * 2;
+  const N = outW * outH;
 
-  const srcAlpha = new Uint8Array(outW * outH);
-  const srcColor = new Uint32Array(outW * outH);
+  const srcAlpha = new Uint8Array(N);
+  const srcColor = new Uint32Array(N);
   for (let y = 0; y < rH; y++) {
     for (let x = 0; x < rW; x++) {
       const c = resized.getPixelAt(x + 1, y + 1);
-      const a = c & 0xff;
       const dst = (y + pad) * outW + (x + pad);
       srcColor[dst] = c;
-      srcAlpha[dst] = a >= 128 ? 1 : 0;
+      srcAlpha[dst] = (c & 0xff) >= 128 ? 1 : 0;
     }
   }
 
-  const outside = new Uint8Array(outW * outH);
-  const outsideQueue: number[] = [];
-  const pushOutside = (idx: number) => {
-    if (!outside[idx] && !srcAlpha[idx]) {
-      outside[idx] = 1;
-      outsideQueue.push(idx);
-    }
-  };
-  for (let x = 0; x < outW; x++) {
-    pushOutside(x);
-    pushOutside((outH - 1) * outW + x);
-  }
-  for (let y = 0; y < outH; y++) {
-    pushOutside(y * outW);
-    pushOutside(y * outW + outW - 1);
-  }
-  for (let head = 0; head < outsideQueue.length; head++) {
-    const idx = outsideQueue[head];
-    const x = idx % outW;
-    const y = (idx - x) / outW;
-    if (x > 0) pushOutside(idx - 1);
-    if (x < outW - 1) pushOutside(idx + 1);
-    if (y > 0) pushOutside(idx - outW);
-    if (y < outH - 1) pushOutside(idx + outW);
-  }
-
-  const offsets: Array<[number, number]> = [];
-  for (let dy = -stroke; dy <= stroke; dy++) {
-    for (let dx = -stroke; dx <= stroke; dx++) {
-      if (dx * dx + dy * dy <= stroke * stroke) offsets.push([dx, dy]);
-    }
-  }
-  const outline = new Uint8Array(outW * outH);
-  for (let y = 0; y < outH; y++) {
-    for (let x = 0; x < outW; x++) {
-      const idx = y * outW + x;
-      if (!outside[idx]) continue;
-      for (const [dx, dy] of offsets) {
-        const xx = x + dx;
-        const yy = y + dy;
-        if (xx >= 0 && xx < outW && yy >= 0 && yy < outH && srcAlpha[yy * outW + xx]) {
-          outline[idx] = 1;
-          break;
+  // Separable square dilation (Chebyshev): two 1D max passes. O(N * r).
+  const dilate = (src: Uint8Array, r: number): Uint8Array => {
+    const tmp = new Uint8Array(N);
+    const out = new Uint8Array(N);
+    for (let y = 0; y < outH; y++) {
+      const row = y * outW;
+      for (let x = 0; x < outW; x++) {
+        let v = 0;
+        const x0 = Math.max(0, x - r);
+        const x1 = Math.min(outW - 1, x + r);
+        for (let xx = x0; xx <= x1; xx++) {
+          if (src[row + xx]) { v = 1; break; }
         }
+        tmp[row + x] = v;
       }
     }
+    for (let x = 0; x < outW; x++) {
+      for (let y = 0; y < outH; y++) {
+        let v = 0;
+        const y0 = Math.max(0, y - r);
+        const y1 = Math.min(outH - 1, y + r);
+        for (let yy = y0; yy <= y1; yy++) {
+          if (tmp[yy * outW + x]) { v = 1; break; }
+        }
+        out[y * outW + x] = v;
+      }
+    }
+    return out;
+  };
+
+  // 1) Dilate to bridge gaps between separate logo pieces.
+  const merged = dilate(srcAlpha, mergeRadius);
+
+  // 2) Flood-fill the exterior, then fill internal holes.
+  const exterior = new Uint8Array(N);
+  const fq: number[] = [];
+  const pushExt = (idx: number) => {
+    if (!exterior[idx] && !merged[idx]) { exterior[idx] = 1; fq.push(idx); }
+  };
+  for (let x = 0; x < outW; x++) { pushExt(x); pushExt((outH - 1) * outW + x); }
+  for (let y = 0; y < outH; y++) { pushExt(y * outW); pushExt(y * outW + outW - 1); }
+  for (let head = 0; head < fq.length; head++) {
+    const idx = fq[head];
+    const x = idx % outW;
+    const y = (idx - x) / outW;
+    if (x > 0) pushExt(idx - 1);
+    if (x < outW - 1) pushExt(idx + 1);
+    if (y > 0) pushExt(idx - outW);
+    if (y < outH - 1) pushExt(idx + outW);
   }
+  const silhouette = new Uint8Array(N);
+  for (let i = 0; i < N; i++) silhouette[i] = exterior[i] ? 0 : 1;
+
+  // 3) Expand silhouette by stroke; sticker = expanded silhouette.
+  const sticker = dilate(silhouette, stroke);
 
   const finalImg = new Image(outW, outH);
   for (let y = 0; y < outH; y++) {
     for (let x = 0; x < outW; x++) {
       const idx = y * outW + x;
       if (srcAlpha[idx]) finalImg.setPixelAt(x + 1, y + 1, srcColor[idx] | 0xff);
-      else if (outline[idx]) finalImg.setPixelAt(x + 1, y + 1, 0xffffffff);
+      else if (sticker[idx]) finalImg.setPixelAt(x + 1, y + 1, 0xffffffff);
       else finalImg.setPixelAt(x + 1, y + 1, 0x00000000);
     }
   }
