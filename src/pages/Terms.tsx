@@ -26,7 +26,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-foreground">2. Description of Service</h2>
               <p>
-                Junie provides AI-powered phone assistant services that can handle customer calls, 
+                Charpentier, LLC provides AI-powered phone assistant services through Junie that can handle customer calls, 
                 schedule appointments, and manage business communications. Our service includes:
               </p>
               <ul className="list-disc ml-6 space-y-2">
@@ -70,7 +70,7 @@ const Terms = () => {
             <section>
               <h2 className="text-2xl font-semibold mb-4 text-foreground">6. Limitation of Liability</h2>
               <p>
-                Junie shall not be liable for any indirect, incidental, special, consequential, or 
+                Charpentier, LLC shall not be liable for any indirect, incidental, special, consequential, or 
                 punitive damages resulting from your use of the service. Our total liability shall 
                 not exceed the amount paid by you for the service in the preceding 12 months.
               </p>
@@ -95,12 +95,43 @@ const Terms = () => {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold mb-4 text-foreground">9. Contact Information</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">9. SMS/Text Messaging Terms</h2>
+              <p>
+                Charpentier, LLC sends both customer support and promotional messages to users who interact 
+                with the website <a href="https://juniesystems.com" className="text-primary hover:underline">https://juniesystems.com</a> chat widget. Customer care messages may include 
+                responses to support requests, ticket updates, appointment coordination, or follow-up 
+                communications related to an existing inquiry. Promotional messages may include special 
+                offers, discounts, event promotions, and service announcements.
+              </p>
+              <p className="mt-3">
+                Each message type requires separate, explicit consent collected through independent 
+                checkboxes in the chat widget. Marketing consent is not combined with transactional 
+                consent, and neither is shared with third parties.
+              </p>
+              <p className="mt-3">
+                Users visit the Charpentier, LLC website <a href="https://juniesystems.com" className="text-primary hover:underline">https://juniesystems.com</a> and interact with the chat 
+                widget. During this interaction, users may voluntarily provide their mobile phone number 
+                and independently select one or both consent checkboxes — one to receive customer care 
+                messages related to their inquiries, and one to receive promotional messages from 
+                Charpentier, LLC. Each checkbox represents a separate and distinct consent. Users may 
+                opt into either or both message types. Consent is collected directly by Charpentier, LLC 
+                and is not shared with affiliates or third parties.
+              </p>
+              <ul className="list-disc ml-6 space-y-2 mt-3">
+                <li>Message frequency varies based on your activity and preferences</li>
+                <li>Standard message and data rates may apply</li>
+                <li>You can opt out of SMS messages at any time by replying STOP to any message</li>
+                <li>For help, reply HELP or contact us at <a href="mailto:ricky@juniesystems.com" className="text-primary hover:underline">ricky@juniesystems.com</a></li>
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-2xl font-semibold mb-4 text-foreground">10. Contact Information</h2>
               <p>
                 For questions about these Terms of Service, please contact us at:
               </p>
               <p className="font-medium">
-                Email: <a href="mailto:admin@juniesystems.com" className="text-primary hover:underline">admin@juniesystems.com</a><br />
+                Email: <a href="mailto:ricky@juniesystems.com" className="text-primary hover:underline">ricky@juniesystems.com</a><br />
                 Location: Palmetto, FL
               </p>
             </section>
