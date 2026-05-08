@@ -43,7 +43,7 @@ const nodes = {
       "Are there clear CTA buttons throughout the homepage (\"Get a Free Quote\", \"Call Now\", \"Book Online\")?",
       "Are services and service areas listed in the navbar or easy to find within 5 seconds?",
     ],
-    note: "A GOOD site has: tap-to-call phone in nav, CTA button in nav, quote form above the fold, and Services + Service Areas in navbar. Missing 2 or more of these → it qualifies. No website at all also qualifies, just note 'no website' in GHL.",
+    note: "A GOOD site has: tap-to-call phone in nav, CTA button in nav, quote form above the fold, and Services + Service Areas in navbar. Missing 2 or more of these → it qualifies. No website at all also qualifies, just note 'no website'.",
     branches: [
       { label: "✅ PASS (bad website) → start outreach", next: "qualifier", color: C.green },
       { label: "❌ FAIL (site is solid) → skip lead", next: "dead_solid_site", color: C.red },
