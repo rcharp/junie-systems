@@ -92,17 +92,18 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
   }
 
   const MAX_WIDTH = 300;
+  const MAX_CORE_WIDTH = 276;
   let resized: Image = cropped;
-  if (cropW > MAX_WIDTH) {
-    const newH = Math.max(1, Math.round((cropH / cropW) * MAX_WIDTH));
-    resized = cropped.resize(MAX_WIDTH, newH);
+  if (cropW > MAX_CORE_WIDTH) {
+    const newH = Math.max(1, Math.round((cropH / cropW) * MAX_CORE_WIDTH));
+    resized = cropped.resize(MAX_CORE_WIDTH, newH);
   }
 
-  // Add white sticker outline by dilating the alpha mask. Pad canvas so the
-  // stroke isn't clipped at the edges.
+  // Add a clean white sticker outline around only the exterior silhouette.
+  // This runs after resizing, so the circular pass stays lightweight.
   const rW = resized.width;
   const rH = resized.height;
-  const stroke = Math.max(3, Math.round(Math.min(rW, rH) * 0.04));
+  const stroke = Math.max(4, Math.min(10, Math.round(Math.min(rW, rH) * 0.035)));
   const pad = stroke + 2;
   const outW = rW + pad * 2;
   const outH = rH + pad * 2;
@@ -119,27 +120,51 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
     }
   }
 
-  // Two-pass dilation (horizontal then vertical) for an O(w*h*r) outline.
-  const horiz = new Uint8Array(outW * outH);
+  const outside = new Uint8Array(outW * outH);
+  const outsideQueue: number[] = [];
+  const pushOutside = (idx: number) => {
+    if (!outside[idx] && !srcAlpha[idx]) {
+      outside[idx] = 1;
+      outsideQueue.push(idx);
+    }
+  };
+  for (let x = 0; x < outW; x++) {
+    pushOutside(x);
+    pushOutside((outH - 1) * outW + x);
+  }
   for (let y = 0; y < outH; y++) {
-    for (let x = 0; x < outW; x++) {
-      let hit = 0;
-      for (let dx = -stroke; dx <= stroke; dx++) {
-        const xx = x + dx;
-        if (xx >= 0 && xx < outW && srcAlpha[y * outW + xx]) { hit = 1; break; }
-      }
-      horiz[y * outW + x] = hit;
+    pushOutside(y * outW);
+    pushOutside(y * outW + outW - 1);
+  }
+  for (let head = 0; head < outsideQueue.length; head++) {
+    const idx = outsideQueue[head];
+    const x = idx % outW;
+    const y = (idx - x) / outW;
+    if (x > 0) pushOutside(idx - 1);
+    if (x < outW - 1) pushOutside(idx + 1);
+    if (y > 0) pushOutside(idx - outW);
+    if (y < outH - 1) pushOutside(idx + outW);
+  }
+
+  const offsets: Array<[number, number]> = [];
+  for (let dy = -stroke; dy <= stroke; dy++) {
+    for (let dx = -stroke; dx <= stroke; dx++) {
+      if (dx * dx + dy * dy <= stroke * stroke) offsets.push([dx, dy]);
     }
   }
-  const dilated = new Uint8Array(outW * outH);
-  for (let x = 0; x < outW; x++) {
-    for (let y = 0; y < outH; y++) {
-      let hit = 0;
-      for (let dy = -stroke; dy <= stroke; dy++) {
+  const outline = new Uint8Array(outW * outH);
+  for (let y = 0; y < outH; y++) {
+    for (let x = 0; x < outW; x++) {
+      const idx = y * outW + x;
+      if (!outside[idx]) continue;
+      for (const [dx, dy] of offsets) {
+        const xx = x + dx;
         const yy = y + dy;
-        if (yy >= 0 && yy < outH && horiz[yy * outW + x]) { hit = 1; break; }
+        if (xx >= 0 && xx < outW && yy >= 0 && yy < outH && srcAlpha[yy * outW + xx]) {
+          outline[idx] = 1;
+          break;
+        }
       }
-      dilated[y * outW + x] = hit;
     }
   }
 
@@ -148,7 +173,7 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
     for (let x = 0; x < outW; x++) {
       const idx = y * outW + x;
       if (srcAlpha[idx]) finalImg.setPixelAt(x + 1, y + 1, srcColor[idx] | 0xff);
-      else if (dilated[idx]) finalImg.setPixelAt(x + 1, y + 1, 0xffffffff);
+      else if (outline[idx]) finalImg.setPixelAt(x + 1, y + 1, 0xffffffff);
       else finalImg.setPixelAt(x + 1, y + 1, 0x00000000);
     }
   }
