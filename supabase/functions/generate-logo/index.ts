@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { companyName } = await req.json();
+    const { companyName, industry } = await req.json();
     if (!companyName || typeof companyName !== "string") {
       return new Response(JSON.stringify({ error: "companyName is required" }), {
         status: 400,
@@ -18,51 +18,45 @@ Deno.serve(async (req) => {
       });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+    if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured");
 
-    const prompt = `Create a logo for ${companyName}. Make sure that it has no background and has a sticker outline around the logo.`;
+    const industryText = industry && typeof industry === "string" && industry.trim()
+      ? ` The business is in the ${industry.trim()} industry, so the logo should visually relate to that trade.`
+      : "";
+    const prompt = `Create a logo for ${companyName}.${industryText} Make sure that it has no background and has a sticker outline around the logo.`;
 
-    const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiRes = await fetch("https://api.openai.com/v1/images/generations", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: prompt }],
-        modalities: ["image", "text"],
+        model: "gpt-image-1",
+        prompt,
+        size: "1024x1024",
+        background: "transparent",
+        n: 1,
       }),
     });
 
     if (!aiRes.ok) {
       const txt = await aiRes.text();
-      if (aiRes.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded, try again shortly." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (aiRes.status === 402) {
-        return new Response(JSON.stringify({ error: "AI credits exhausted. Add funds in Settings > Workspace > Usage." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      throw new Error(`AI gateway error [${aiRes.status}]: ${txt}`);
+      console.error("OpenAI error:", aiRes.status, txt);
+      return new Response(JSON.stringify({ error: `OpenAI error [${aiRes.status}]: ${txt}` }), {
+        status: aiRes.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await aiRes.json();
-    const dataUrl: string | undefined = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    if (!dataUrl) throw new Error("No image returned from AI");
+    const b64: string | undefined = data?.data?.[0]?.b64_json;
+    if (!b64) throw new Error("No image returned from OpenAI");
 
-    // Convert data URL to bytes
-    const match = dataUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
-    if (!match) throw new Error("Invalid image data URL");
-    const contentType = match[1];
-    const ext = contentType.split("/")[1].replace("+xml", "");
-    const bytes = Uint8Array.from(atob(match[2]), (c) => c.charCodeAt(0));
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const contentType = "image/png";
+    const ext = "png";
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
