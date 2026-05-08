@@ -609,11 +609,13 @@ export default function ColdOutreachPage() {
         </Link>
       </div>
       <div style={{ width:"100%", maxWidth:680, display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:22 }}>
-        <button onClick={reset}
-          style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 14px", color:C.dim, fontSize:12, cursor:"pointer", transition:"all 0.12s" }}
-          onMouseEnter={e => e.currentTarget.style.borderColor=C.grayL}
-          onMouseLeave={e => e.currentTarget.style.borderColor=C.border}
-        >← Overview</button>
+        {view === "overview" ? <div style={{ width:80 }} /> : (
+          <button onClick={reset}
+            style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"6px 14px", color:C.dim, fontSize:12, cursor:"pointer", transition:"all 0.12s" }}
+            onMouseEnter={e => e.currentTarget.style.borderColor=C.grayL}
+            onMouseLeave={e => e.currentTarget.style.borderColor=C.border}
+          >← Overview</button>
+        )}
         <div style={{ fontSize:11, color:C.dim, fontWeight:700, letterSpacing:"0.08em" }}>JUNIE SYSTEMS · OUTREACH WORKFLOW</div>
         <div style={{ width:80 }} />
       </div>
