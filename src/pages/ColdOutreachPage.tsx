@@ -334,7 +334,7 @@ const nodes = {
     id: "dead_no_reply", phase: "CLOSED", icon: "🗂️",
     title: "No Reply: Closed",
     color: C.grayL, dim: C.faint, isDead: true,
-    closeSteps: ["Log as 'no response' in GHL", "Tag: no-reply", "Move to 'Dead' pipeline stage", "Next lead"],
+    closeSteps: ["Tag: no-reply", "Move to 'Dead' pipeline stage", "Next lead"],
     branches: []
   },
   dead_not_interested: {
