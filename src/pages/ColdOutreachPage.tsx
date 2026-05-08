@@ -373,6 +373,40 @@ const nodes = {
   },
 };
 
+const CAL_URL = "https://juniesystems.com/book";
+
+function linkify(text) {
+  if (typeof text !== "string") return text;
+  // Pattern matches: [Ricky's calendar link], [calendar link], full URLs, and bare juniesystems.com/path
+  const pattern = /(\[(?:Ricky's )?calendar link\]|https?:\/\/[^\s)]+|(?:^|(?<=\s))juniesystems\.com\/[^\s)]+)/gi;
+  const parts = [];
+  let last = 0;
+  let m;
+  let i = 0;
+  while ((m = pattern.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    const match = m[0];
+    let href = match;
+    let label = match;
+    if (match.startsWith("[")) {
+      href = CAL_URL;
+      label = "Ricky's calendar";
+    } else if (!match.startsWith("http")) {
+      href = "https://" + match;
+    }
+    parts.push(
+      <a key={`lnk-${i++}`} href={href} target="_blank" rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 2, fontWeight: 700 }}>
+        {label}
+      </a>
+    );
+    last = m.index + match.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts.length ? parts : text;
+}
+
 function CopyBtn({ text }) {
   const [copied, setCopied] = useState(false);
   const onCopy = (e) => {
@@ -393,7 +427,7 @@ function SMSBubble({ text, label }) {
     <div style={{ marginTop: 10 }}>
       {label && <div style={{ fontSize: 10, color: C.dim, marginBottom: 5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</div>}
       <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: "16px 16px 3px 16px", padding: "11px 15px", fontSize: 13.5, color: "#fff", lineHeight: 1.6, fontStyle: "italic", boxShadow: "0 2px 14px #2563eb33", display: "flex", gap: 10, alignItems: "flex-start" }}>
-        <div style={{ flex: 1 }}>{text}</div>
+        <div style={{ flex: 1 }}>{linkify(text)}</div>
         <CopyBtn text={text} />
       </div>
     </div>
@@ -409,7 +443,7 @@ function SequenceStep({ step }) {
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{step.label}</div>
         <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: "14px 14px 3px 14px", padding: "9px 13px", fontSize: 13, color: "#fff", lineHeight: 1.55, fontStyle: "italic", boxShadow: "0 2px 8px #2563eb22", display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <div style={{ flex: 1 }}>{step.text}</div>
+          <div style={{ flex: 1 }}>{linkify(step.text)}</div>
           <CopyBtn text={step.text} />
         </div>
       </div>
@@ -423,7 +457,7 @@ function VABox({ text }) {
       <span style={{ fontSize: 16, marginTop: 1 }}>👤</span>
       <div>
         <div style={{ fontSize: 10, fontWeight: 700, color: C.blueL, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 3 }}>VA action</div>
-        <div style={{ fontSize: 13, color: C.dim, lineHeight: 1.5 }}>{text}</div>
+        <div style={{ fontSize: 13, color: C.dim, lineHeight: 1.5 }}>{linkify(text)}</div>
       </div>
     </div>
   );
@@ -432,7 +466,7 @@ function VABox({ text }) {
 function NoteBox({ text }) {
   return (
     <div style={{ background: "#110900", border: `1px solid ${C.orange}33`, borderRadius: 10, padding: "9px 13px", marginTop: 10, fontSize: 12, color: C.orangeL, lineHeight: 1.5 }}>
-      ⚠️ {text}
+      ⚠️ {linkify(text)}
     </div>
   );
 }
@@ -455,7 +489,7 @@ function NodeCard({ node, onNavigate }) {
       <div style={{ padding: "16px 20px" }}>
         {node.instruction && (
           <div style={{ fontSize: 12.5, color: C.dim, lineHeight: 1.6, marginBottom: 10, borderLeft: `3px solid ${node.color}55`, paddingLeft: 10 }}>
-            {node.instruction}
+            {linkify(node.instruction)}
           </div>
         )}
         {node.vaAction && <VABox text={node.vaAction} />}
@@ -464,7 +498,7 @@ function NodeCard({ node, onNavigate }) {
             {node.actionSteps.map((s, i) => (
               <div key={i} style={{ display: "flex", gap: 10, marginBottom: 8, alignItems: "flex-start" }}>
                 <div style={{ minWidth: 22, height: 22, borderRadius: "50%", background: C.purple, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>{i + 1}</div>
-                <div style={{ fontSize: 13, color: C.dim, lineHeight: 1.5, paddingTop: 2 }}>{s}</div>
+                <div style={{ fontSize: 13, color: C.dim, lineHeight: 1.5, paddingTop: 2 }}>{linkify(s)}</div>
               </div>
             ))}
           </div>
@@ -482,7 +516,7 @@ function NodeCard({ node, onNavigate }) {
             <div style={{ fontSize: 10, fontWeight: 700, color: C.greenL, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>After booking, do this:</div>
             {node.postSteps.map((s, i) => (
               <div key={i} style={{ display: "flex", gap: 8, marginBottom: 5, fontSize: 12, color: C.dim }}>
-                <span style={{ color: C.greenL }}>✓</span> {s}
+                <span style={{ color: C.greenL }}>✓</span> {linkify(s)}
               </div>
             ))}
           </div>
@@ -493,7 +527,7 @@ function NodeCard({ node, onNavigate }) {
             {node.closeSteps.map((s, i) => (
               <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                 <span style={{ color: C.greenL, fontSize: 13 }}>✓</span>
-                <span style={{ fontSize: 13, color: C.dim, lineHeight: 1.4 }}>{s}</span>
+                <span style={{ fontSize: 13, color: C.dim, lineHeight: 1.4 }}>{linkify(s)}</span>
               </div>
             ))}
           </div>
