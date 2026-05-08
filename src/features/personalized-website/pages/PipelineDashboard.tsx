@@ -253,7 +253,7 @@ export default function PipelineDashboard() {
           <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 glow-primary">
             <Link to={`${BASE}/new`}>
               <PlusCircle className="w-4 h-4 mr-2" />
-              New Run
+              New Video
             </Link>
           </Button>
         </div>

@@ -7,7 +7,7 @@ const BASE = "/screenshot";
 
 const navItems = [
   { path: `${BASE}/screenshot`, label: "Screenshot", icon: Camera, matchExact: [BASE, `${BASE}/screenshot`] as string[] },
-  { path: `${BASE}/new`, label: "New Run", icon: PlusCircle },
+  { path: `${BASE}/new`, label: "New Video", icon: PlusCircle },
   { path: `${BASE}/dashboard`, label: "Dashboard", icon: LayoutDashboard },
   { path: `${BASE}/settings`, label: "Settings", icon: Settings },
 ];
