@@ -514,6 +514,8 @@ function NodeCard({ node, onNavigate }) {
                 <figcaption style={{ fontSize: 12, color: C.dim, padding: "8px 12px", borderTop: `1px solid ${C.border}`, fontWeight: 600 }}>{img.caption}</figcaption>
               </figure>
             ))}
+          </div>
+        )}
         {node.messages && node.messages.map((m, i) => <SMSBubble key={i} text={m.text} label={m.label} />)}
         {node.sequence && (
           <div style={{ marginTop: 12 }}>
