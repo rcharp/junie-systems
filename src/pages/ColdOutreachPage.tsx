@@ -474,12 +474,67 @@ function NoteBox({ text }) {
   );
 }
 
+const BOOKING_NODES = new Set([
+  "push_to_book","book_reschedule",
+  "obj_catch","obj_cost","obj_have_site","obj_who","obj_info","obj_info_persist","obj_bot","obj_time","obj_what",
+  "fu_pitch_2","fu_booking_ghost","fu_obj_ghost","fu_time_future",
+]);
+
+function BookingCalendar() {
+  useEffect(() => {
+    const existing = document.querySelector('script[src="https://api.juniesystems.com/js/form_embed.js"]');
+    if (existing) return;
+    const s = document.createElement('script');
+    s.src = 'https://api.juniesystems.com/js/form_embed.js';
+    s.type = 'text/javascript';
+    s.async = true;
+    document.body.appendChild(s);
+  }, []);
+  return (
+    <div style={{ marginTop: 18, background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 11, fontWeight: 700, color: C.tealL, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        📅 Ricky's calendar — pick two open slots to offer
+      </div>
+      <iframe
+        src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
+        style={{ width: "100%", border: "none", overflow: "hidden", minHeight: 700, display: "block" }}
+        scrolling="no"
+        title="Booking Calendar"
+      />
+    </div>
+  );
+}
+
+function ImageLightbox({ src, caption, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [onClose]);
+  return (
+    <div onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.88)", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, cursor: "zoom-out" }}>
+      <button onClick={onClose}
+        style={{ position: "absolute", top: 18, right: 22, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: 8, color: "#fff", fontSize: 14, padding: "6px 14px", cursor: "pointer" }}>
+        ✕ Close
+      </button>
+      <img src={src} alt={caption} onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: "95vw", maxHeight: "85vh", objectFit: "contain", borderRadius: 8, boxShadow: "0 20px 60px rgba(0,0,0,0.5)", cursor: "default" }} />
+      {caption && <div style={{ marginTop: 14, color: "#e2e8f0", fontSize: 14, fontWeight: 600, textAlign: "center", maxWidth: "90vw" }}>{caption}</div>}
+    </div>
+  );
+}
+
 function NodeCard({ node, onNavigate }) {
   const isGoal = node.isGoal;
   const isDead = node.isDead;
   const isFU = node.id.startsWith("fu_");
+  const [lightbox, setLightbox] = useState(null);
   return (
     <div style={{ background: C.card, border: `1.5px solid ${node.color}33`, borderRadius: 18, overflow: "hidden", boxShadow: isGoal ? `0 0 48px ${C.green}28` : `0 0 20px ${node.color}12`, maxWidth: 580, width: "100%" }}>
+      {lightbox && <ImageLightbox src={lightbox.src} caption={lightbox.caption} onClose={() => setLightbox(null)} />}
       <div style={{ background: isGoal ? `linear-gradient(135deg,${C.greenDim},#083320)` : isDead ? "linear-gradient(135deg,#0d0d0d,#111)" : `linear-gradient(135deg,${node.dim},${node.color}1a)`, borderBottom: `1px solid ${node.color}30`, padding: "14px 20px", display: "flex", alignItems: "center", gap: 12 }}>
         <span style={{ fontSize: 26 }}>{node.icon}</span>
         <div style={{ flex: 1 }}>
