@@ -1,6 +1,9 @@
 // @ts-nocheck
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import qualifyQuoteForm from "@/assets/qualify-quote-form.png";
+import qualifyReviews from "@/assets/qualify-reviews.png";
+import qualifyReadyStarted from "@/assets/qualify-ready-started.png";
 
 const C = {
   bg: "#070c18",
@@ -44,6 +47,11 @@ const nodes = {
       "Are services and service areas listed in the navbar or easy to find within 5 seconds?",
     ],
     note: "A GOOD site has: tap-to-call phone in nav, CTA button in nav, quote form above the fold, and Services + Service Areas in navbar. Missing 2 or more of these → it qualifies. No website at all also qualifies, just note 'no website'.",
+    images: [
+      { src: qualifyQuoteForm, caption: "Is there a quote form above the fold?" },
+      { src: qualifyReviews, caption: "Are there customer reviews on the homepage?" },
+      { src: qualifyReadyStarted, caption: "Is there a clear 'ready to get started' CTA section?" },
+    ],
     branches: [
       { label: "✅ PASS (bad website) → start outreach", next: "qualifier", color: C.green },
       { label: "❌ FAIL (site is solid) → skip lead", next: "dead_solid_site", color: C.red },
@@ -495,6 +503,16 @@ function NodeCard({ node, onNavigate }) {
                 <div style={{ minWidth: 22, height: 22, borderRadius: "50%", background: C.purple, color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>{i + 1}</div>
                 <div style={{ fontSize: 13, color: C.dim, lineHeight: 1.5, paddingTop: 2 }}>{linkify(s)}</div>
               </div>
+            ))}
+          </div>
+        )}
+        {node.images && (
+          <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
+            {node.images.map((img, i) => (
+              <figure key={i} style={{ margin: 0, background: C.card2, border: `1px solid ${node.color}33`, borderRadius: 10, overflow: "hidden" }}>
+                <img src={img.src} alt={img.caption} style={{ width: "100%", display: "block" }} />
+                <figcaption style={{ fontSize: 12, color: C.dim, padding: "8px 12px", borderTop: `1px solid ${C.border}`, fontWeight: 600 }}>{img.caption}</figcaption>
+              </figure>
             ))}
           </div>
         )}
