@@ -565,7 +565,10 @@ function NodeCard({ node, onNavigate }) {
           <div style={{ marginTop: 14, display: "grid", gap: 12 }}>
             {node.images.map((img, i) => (
               <figure key={i} style={{ margin: 0, background: C.card2, border: `1px solid ${node.color}33`, borderRadius: 10, overflow: "hidden" }}>
-                <img src={img.src} alt={img.caption} style={{ width: "100%", display: "block" }} />
+                <button type="button" onClick={() => setLightbox(img)}
+                  style={{ display: "block", width: "100%", padding: 0, border: "none", background: "transparent", cursor: "zoom-in" }}>
+                  <img src={img.src} alt={img.caption} style={{ width: "100%", display: "block" }} />
+                </button>
                 <figcaption style={{ fontSize: 12, color: C.dim, padding: "8px 12px", borderTop: `1px solid ${C.border}`, fontWeight: 600 }}>{img.caption}</figcaption>
               </figure>
             ))}
