@@ -686,6 +686,10 @@ export default function ColdOutreachPage() {
   function jumpTo(i: number) { setHistory(h => h.slice(0, i + 1)); }
   function reset() { setHistory([]); setView("overview"); }
   function startAt(id: string) { setHistory([id]); setView("node"); }
+  function goBack() {
+    if (history.length <= 1) { reset(); return; }
+    setHistory(h => h.slice(0, -1));
+  }
   return (
     <div style={{ minHeight:"100vh", background:C.bg, color:C.text, fontFamily:"'Inter','Segoe UI',system-ui,sans-serif", padding:"22px 14px", display:"flex", flexDirection:"column", alignItems:"center" }}>
       <div style={{ width:"100%", maxWidth:680, marginBottom:14 }}>
@@ -710,10 +714,13 @@ export default function ColdOutreachPage() {
         <div style={{ maxWidth:580, width:"100%" }}>
           <Breadcrumb history={history} onJump={jumpTo} />
           {currentNode && <NodeCard node={currentNode} onNavigate={navigate} />}
-          <div style={{ marginTop:16, textAlign:"center" }}>
+          <div style={{ marginTop:16, display:"flex", justifyContent:"center", gap:10, flexWrap:"wrap" }}>
+            <button onClick={goBack}
+              style={{ background:C.blueDim, border:`1px solid ${C.blue}66`, borderRadius:8, padding:"8px 20px", color:C.blueL, fontSize:13, fontWeight:600, cursor:"pointer" }}
+            >← Previous step</button>
             <button onClick={reset}
               style={{ background:"transparent", border:`1px solid ${C.border}`, borderRadius:8, padding:"8px 20px", color:C.dim, fontSize:13, cursor:"pointer" }}
-            >← Back to overview</button>
+            >Back to overview</button>
           </div>
         </div>
       )}
