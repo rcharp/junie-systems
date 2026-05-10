@@ -60,6 +60,16 @@ const AdminDashboard = () => {
     }
   }, [user, isAdmin, loading, navigate]);
 
+  useEffect(() => {
+    const existing = document.querySelector('script[src="https://api.juniesystems.com/js/form_embed.js"]');
+    if (existing) return;
+    const s = document.createElement('script');
+    s.src = 'https://api.juniesystems.com/js/form_embed.js';
+    s.type = 'text/javascript';
+    s.async = true;
+    document.body.appendChild(s);
+  }, []);
+
   const fetchRecentActivity = async () => {
     try {
       const { data: callMessages, error } = await supabase
@@ -351,7 +361,7 @@ const AdminDashboard = () => {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {[
             {
               title: 'Create Customer Website',
@@ -394,6 +404,21 @@ const AdminDashboard = () => {
               </CardHeader>
             </Card>
           ))}
+        </div>
+
+        <div className="mt-8">
+          <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Book a Call</h3>
+          <Card>
+            <CardContent className="p-2 sm:p-4">
+              <iframe
+                src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
+                style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: '700px' }}
+                scrolling="no"
+                id="fBlaNQM6Ay3RD1FiID1Z_1778453821972"
+                title="Booking Calendar"
+              />
+            </CardContent>
+          </Card>
         </div>
       </main>
     </div>
