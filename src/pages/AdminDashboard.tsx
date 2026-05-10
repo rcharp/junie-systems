@@ -395,6 +395,21 @@ const AdminDashboard = () => {
             </Card>
           ))}
         </div>
+
+        <div className="mt-8">
+          <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Book a Call</h3>
+          <Card>
+            <CardContent className="p-2 sm:p-4">
+              <iframe
+                src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
+                style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: '700px' }}
+                scrolling="no"
+                id="fBlaNQM6Ay3RD1FiID1Z_1778453821972"
+                title="Booking Calendar"
+              />
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
