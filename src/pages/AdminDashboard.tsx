@@ -60,6 +60,16 @@ const AdminDashboard = () => {
     }
   }, [user, isAdmin, loading, navigate]);
 
+  useEffect(() => {
+    const existing = document.querySelector('script[src="https://api.juniesystems.com/js/form_embed.js"]');
+    if (existing) return;
+    const s = document.createElement('script');
+    s.src = 'https://api.juniesystems.com/js/form_embed.js';
+    s.type = 'text/javascript';
+    s.async = true;
+    document.body.appendChild(s);
+  }, []);
+
   const fetchRecentActivity = async () => {
     try {
       const { data: callMessages, error } = await supabase
