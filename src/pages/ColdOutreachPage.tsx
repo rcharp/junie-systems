@@ -686,6 +686,10 @@ export default function ColdOutreachPage() {
   function jumpTo(i: number) { setHistory(h => h.slice(0, i + 1)); }
   function reset() { setHistory([]); setView("overview"); }
   function startAt(id: string) { setHistory([id]); setView("node"); }
+  function goBack() {
+    if (history.length <= 1) { reset(); return; }
+    setHistory(h => h.slice(0, -1));
+  }
   return (
     <div style={{ minHeight:"100vh", background:C.bg, color:C.text, fontFamily:"'Inter','Segoe UI',system-ui,sans-serif", padding:"22px 14px", display:"flex", flexDirection:"column", alignItems:"center" }}>
       <div style={{ width:"100%", maxWidth:680, marginBottom:14 }}>
