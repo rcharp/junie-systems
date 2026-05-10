@@ -1,6 +1,9 @@
 // @ts-nocheck
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import qualifyQuoteForm from "@/assets/qualify-quote-form.png";
+import qualifyReviews from "@/assets/qualify-reviews.png";
+import qualifyReadyStarted from "@/assets/qualify-ready-started.png";
 
 const C = {
   bg: "#070c18",
