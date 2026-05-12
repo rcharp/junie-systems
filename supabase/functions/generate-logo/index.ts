@@ -153,38 +153,12 @@ async function forceTransparentStickerLogo(inputBytes: Uint8Array): Promise<Uint
     return out;
   };
 
-  // 1) Dilate to bridge gaps between separate logo pieces.
-  const merged = dilate(srcAlpha, mergeRadius);
-
-  // 2) Flood-fill the exterior, then fill internal holes.
-  const exterior = new Uint8Array(N);
-  const fq: number[] = [];
-  const pushExt = (idx: number) => {
-    if (!exterior[idx] && !merged[idx]) { exterior[idx] = 1; fq.push(idx); }
-  };
-  for (let x = 0; x < outW; x++) { pushExt(x); pushExt((outH - 1) * outW + x); }
-  for (let y = 0; y < outH; y++) { pushExt(y * outW); pushExt(y * outW + outW - 1); }
-  for (let head = 0; head < fq.length; head++) {
-    const idx = fq[head];
-    const x = idx % outW;
-    const y = (idx - x) / outW;
-    if (x > 0) pushExt(idx - 1);
-    if (x < outW - 1) pushExt(idx + 1);
-    if (y > 0) pushExt(idx - outW);
-    if (y < outH - 1) pushExt(idx + outW);
-  }
-  const silhouette = new Uint8Array(N);
-  for (let i = 0; i < N; i++) silhouette[i] = exterior[i] ? 0 : 1;
-
-  // 3) Expand silhouette by stroke; sticker = expanded silhouette.
-  const sticker = dilate(silhouette, stroke);
-
+  // Output the logo with a fully transparent background (no white sticker outline).
   const finalImg = new Image(outW, outH);
   for (let y = 0; y < outH; y++) {
     for (let x = 0; x < outW; x++) {
       const idx = y * outW + x;
       if (srcAlpha[idx]) finalImg.setPixelAt(x + 1, y + 1, srcColor[idx] | 0xff);
-      else if (sticker[idx]) finalImg.setPixelAt(x + 1, y + 1, 0xffffffff);
       else finalImg.setPixelAt(x + 1, y + 1, 0x00000000);
     }
   }
