@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
     const industryText = industry && typeof industry === "string" && industry.trim()
       ? `${industry.trim()}`
       : "business";
-    const prompt = `Generate a logo for ${companyName}, a ${industryText} company`;
+    const prompt = `Generate a clean logo for ${companyName}, a ${industryText} company. The logo must be on a plain solid white background with no scenery, no shadows, no frames, and no decorative elements — just the logo itself centered on white. The background will be removed to make it transparent.`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
