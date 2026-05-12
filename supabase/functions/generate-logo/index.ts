@@ -229,7 +229,14 @@ Deno.serve(async (req) => {
     const b64 = dataUrl.slice(commaIdx + 1);
     const contentType = meta.split(";")[0] || "image/png";
     const ext = contentType.split("/")[1] || "png";
-    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const rawBytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    let bytes: Uint8Array;
+    try {
+      bytes = await forceTransparentStickerLogo(rawBytes);
+    } catch (e) {
+      console.error("Background removal failed, using raw image:", e);
+      bytes = rawBytes;
+    }
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
