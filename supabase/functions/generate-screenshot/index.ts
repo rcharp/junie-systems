@@ -447,7 +447,8 @@ Return valid 6-digit hex codes only.` },
     }
 
     let imageBuffer = new Uint8Array(await screenshotRes.arrayBuffer());
-    const MAX_BYTES = 300 * 1024;
+    const MAX_BYTES = 400 * 1024;
+    let iLoveImgSucceeded = false;
     console.log(`Original screenshot size: ${imageBuffer.byteLength} bytes`);
 
     // ─── Compress via iLoveIMG API ───
