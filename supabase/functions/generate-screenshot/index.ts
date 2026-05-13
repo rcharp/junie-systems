@@ -506,14 +506,15 @@ Return valid 6-digit hex codes only.` },
         console.log(`iLoveIMG compressed in ${Date.now() - compressStart}ms: ${imageBuffer.byteLength} -> ${compressed.byteLength} bytes`);
         if (compressed.byteLength > 0 && compressed.byteLength < imageBuffer.byteLength) {
           imageBuffer = compressed;
+          iLoveImgSucceeded = true;
         }
       } catch (compressErr) {
         console.warn("iLoveIMG compression failed, falling back to local re-encode:", compressErr);
       }
     }
 
-    // Fallback: local JPEG re-encode/downscale if still over limit
-    if (imageBuffer.byteLength > MAX_BYTES) {
+    // Fallback: local JPEG re-encode/downscale if still over limit (skip if iLoveIMG already compressed - too CPU expensive)
+    if (imageBuffer.byteLength > MAX_BYTES && !iLoveImgSucceeded) {
       try {
         const decoded = await decode(imageBuffer);
         if (decoded instanceof Image) {
