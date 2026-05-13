@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import qualifyQuoteForm from "@/assets/qualify-quote-form.png";
 import qualifyReviews from "@/assets/qualify-reviews.png";
 import qualifyReadyStarted from "@/assets/qualify-ready-started.png";
+import screenshotGenerateLogo from "@/assets/cold-outreach-generate-logo.png";
 
 const C = {
   bg: "#070c18",
@@ -79,8 +80,11 @@ const nodes = {
       "Go to juniesystems.com/screenshot",
       "Enter business name + phone number",
       "Select the correct industry from the dropdown",
-      "Logo: pull from their website or GBP. No logo? → ChatGPT: \"create a logo for [business name]\" → download it",
+      "Logo: pull from their website or GBP. No website/logo? → click the \"Generate\" tab and hit \"Generate Logo with AI\"",
       "Generate the screenshot and save it before moving on",
+    ],
+    images: [
+      { src: screenshotGenerateLogo, caption: "Step 4: If they don't have a website/logo, use the Generate tab to create one with AI" },
     ],
     branches: [{ label: "Screenshot is ready →", next: "pitch", color: C.purple }]
   },
