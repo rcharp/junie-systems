@@ -64,7 +64,7 @@ const nodes = {
     title: "Send Qualifier SMS",
     color: C.blue, dim: C.blueDim,
     instruction: "Before anything, confirm you have the right number. One short message.",
-    messages: [{ label: null, text: "hey is this still the right number for [business name]?" }],
+    messages: [{ label: null, text: "hey, is this the right number for [business name]?" }],
     branches: [
       { label: "✅ Yes / Confirmed", next: "screenshot", color: C.green },
       { label: "❌ Wrong number", next: "dead_wrong_number", color: C.red },
