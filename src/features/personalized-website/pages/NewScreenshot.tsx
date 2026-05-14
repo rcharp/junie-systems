@@ -33,7 +33,7 @@ const INDUSTRIES = [
 
 export default function NewScreenshot() {
   const [companyName, setCompanyName] = useState("Junie Systems");
-  const [industry, setIndustry] = useState("junk removal");
+  const [industry, setIndustry] = useState("hvac");
   const [phoneNumber, setPhoneNumber] = useState("9412584006");
   const [logoMode, setLogoMode] = useState<"upload" | "url" | "generate">("upload");
   const [logoUrl, setLogoUrl] = useState(
