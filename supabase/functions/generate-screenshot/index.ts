@@ -453,7 +453,7 @@ Return valid 6-digit hex codes only.` },
 
     // ─── Compress via iLoveIMG API ───
     const ILOVEIMG_PUBLIC_KEY = Deno.env.get("ILOVEIMG_PUBLIC_KEY");
-    if (imageBuffer.byteLength > MAX_BYTES && ILOVEIMG_PUBLIC_KEY) {
+    if (ILOVEIMG_PUBLIC_KEY) {
       try {
         const compressStart = Date.now();
         // 1. Auth
