@@ -433,7 +433,7 @@ function SMSBubble({ text, label }) {
   return (
     <div style={{ marginTop: 10 }}>
       {label && <div style={{ fontSize: 10, color: C.dim, marginBottom: 5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</div>}
-      <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: "16px 16px 3px 16px", padding: "11px 15px", fontSize: 13.5, color: "#fff", lineHeight: 1.6, fontStyle: "italic", boxShadow: "0 2px 14px #2563eb33", display: "flex", gap: 10, alignItems: "flex-start" }}>
+      <div style={{ background: "linear-gradient(135deg,#1d4ed8,#2563eb)", borderRadius: "16px 16px 3px 16px", padding: "11px 15px", fontSize: 13.5, color: "#fff", lineHeight: 1.6, fontStyle: "italic", boxShadow: "0 2px 14px #2563eb33", display: "flex", gap: 10, alignItems: "flex-start", whiteSpace: "pre-wrap" }}>
         <div style={{ flex: 1 }}>{linkify(text)}</div>
         <CopyBtn text={text} />
       </div>
