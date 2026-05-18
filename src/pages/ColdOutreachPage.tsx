@@ -94,8 +94,8 @@ const nodes = {
     color: C.blue, dim: C.blueDim,
     instruction: "Sell the outcome, more booked jobs, fewer leads going to competitors. Never sell features. Always end aimed at the call.",
     messages: [
-      { label: "If they HAVE a website (bad one):", text: "hey [BUSINESS NAME], i know this is random but i went to your website and noticed a few things that are missing. people are probably landing on it and call your competitors instead.\n\ni mocked up what it'd look like fixed so you'd actually start getting more calls coming in. love to know what you think" },
-      { label: "If they have NO website:", text: "hey [BUSINESS NAME], i know this is random but i noticed yall dont have a website which probably means people are calling your competitors so i went ahead and built one for you. love to know what you think" }
+      { label: "If they HAVE a website (bad one):", text: "\n\nhey [BUSINESS NAME], i know this is random but i went to your website and noticed a few things that are missing. people are probably landing on it and call your competitors instead.\n\ni mocked up what it'd look like fixed so you'd actually start getting more calls coming in. love to know what you think\n\n" },
+      { label: "If they have NO website:", text: "\n\nhey [BUSINESS NAME], i know this is random but i noticed yall dont have a website which probably means people are calling your competitors so i went ahead and built one for you. love to know what you think\n\n" }
     ],
     branches: [
       { label: "Interested / Curious / Any question", next: "push_to_book", color: C.green },
