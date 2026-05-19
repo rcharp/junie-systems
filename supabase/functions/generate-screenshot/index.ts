@@ -514,7 +514,7 @@ Return valid 6-digit hex codes only.` },
     }
 
     // Fallback: local JPEG re-encode/downscale if still over limit (skip if iLoveIMG already compressed - too CPU expensive)
-    if (imageBuffer.byteLength > MAX_BYTES && !iLoveImgSucceeded) {
+    if (imageBuffer.byteLength > MAX_BYTES) {
       try {
         const decoded = await decode(imageBuffer);
         if (decoded instanceof Image) {
