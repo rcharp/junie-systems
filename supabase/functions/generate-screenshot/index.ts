@@ -422,12 +422,12 @@ Return valid 6-digit hex codes only.` },
           url: siteUrl,
           options: {
             type: "jpeg",
-            quality: 75,
+            quality: 60,
             fullPage: false,
           },
           viewport: {
-            width: 1440,
-            height: 900,
+            width: 1080,
+            height: 675,
             deviceScaleFactor: 1,
           },
           gotoOptions: {
