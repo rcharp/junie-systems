@@ -377,11 +377,30 @@ export default function NewScreenshot() {
                     <span className="text-xs text-muted-foreground">{kb} KB</span>
                   )}
                 </div>
-                <a href={screenshotUrl} download={filename} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <Download className="w-3 h-3" /> Download{kb !== null ? ` (${kb} KB)` : ""}
-                  </Button>
-                </a>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(screenshotUrl, { mode: "cors" });
+                      if (!res.ok) throw new Error("Fetch failed");
+                      const blob = await res.blob();
+                      const url = window.URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = filename;
+                      document.body.appendChild(a);
+                      a.click();
+                      a.remove();
+                      window.URL.revokeObjectURL(url);
+                    } catch {
+                      toast({ title: "Download failed", description: "Could not download the image.", variant: "destructive" });
+                    }
+                  }}
+                >
+                  <Download className="w-3 h-3" /> Download{kb !== null ? ` (${kb} KB)` : ""}
+                </Button>
               </div>
             );
           })()}
