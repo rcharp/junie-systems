@@ -536,6 +536,26 @@ Return valid 6-digit hex codes only.` },
         console.warn("Fallback compression failed, uploading as-is:", compressErr);
       }
     }
+
+    // ─── Always downscale pixel dimensions ───
+    // Even if the JPEG is small, the browser "Copy Image" action puts a raw PNG
+    // bitmap on the clipboard sized to the image's natural pixel dimensions.
+    // Keeping natural dims small (~1080w) ensures the clipboard PNG also stays
+    // small (~300-400KB) instead of ballooning to ~1MB at 1440x900.
+    const TARGET_WIDTH = 1080;
+    try {
+      const decoded = await decode(imageBuffer);
+      if (decoded instanceof Image && decoded.width > TARGET_WIDTH) {
+        const ratio = TARGET_WIDTH / decoded.width;
+        const resized = decoded.resize(TARGET_WIDTH, Math.round(decoded.height * ratio));
+        const reencoded = await resized.encodeJPEG(70);
+        console.log(`Final downscale to ${resized.width}x${resized.height} -> ${reencoded.byteLength} bytes`);
+        imageBuffer = reencoded;
+      }
+    } catch (resizeErr) {
+      console.warn("Final downscale failed, uploading as-is:", resizeErr);
+    }
+
     console.log(`Final screenshot size: ${imageBuffer.byteLength} bytes`);
     const safeCompanyName = companyName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const storagePath = `screenshots/${Date.now()}-${safeCompanyName}.jpg`;
