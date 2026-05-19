@@ -426,8 +426,8 @@ Return valid 6-digit hex codes only.` },
             fullPage: false,
           },
           viewport: {
-            width: 1080,
-            height: 675,
+            width: 1440,
+            height: 900,
             deviceScaleFactor: 1,
           },
           gotoOptions: {
