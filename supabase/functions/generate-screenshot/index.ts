@@ -422,12 +422,12 @@ Return valid 6-digit hex codes only.` },
           url: siteUrl,
           options: {
             type: "jpeg",
-            quality: 75,
+            quality: 60,
             fullPage: false,
           },
           viewport: {
-            width: 1440,
-            height: 900,
+            width: 1080,
+            height: 675,
             deviceScaleFactor: 1,
           },
           gotoOptions: {
@@ -447,7 +447,7 @@ Return valid 6-digit hex codes only.` },
     }
 
     let imageBuffer = new Uint8Array(await screenshotRes.arrayBuffer());
-    const MAX_BYTES = 400 * 1024;
+    const MAX_BYTES = 280 * 1024;
     let iLoveImgSucceeded = false;
     console.log(`Original screenshot size: ${imageBuffer.byteLength} bytes`);
 
@@ -514,7 +514,7 @@ Return valid 6-digit hex codes only.` },
     }
 
     // Fallback: local JPEG re-encode/downscale if still over limit (skip if iLoveIMG already compressed - too CPU expensive)
-    if (imageBuffer.byteLength > MAX_BYTES && !iLoveImgSucceeded) {
+    if (imageBuffer.byteLength > MAX_BYTES) {
       try {
         const decoded = await decode(imageBuffer);
         if (decoded instanceof Image) {
