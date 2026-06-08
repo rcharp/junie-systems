@@ -152,7 +152,7 @@ const nodes = {
       { label: "Then offer the meeting:", text: "Gotcha. Would you be against me showing you how other contractors are generating opportunities consistently without relying completely on [REFERRALS / THUMBTACK / ANGI / YELP / WORD OF MOUTH / FACEBOOK POSTS]?\n\nWorst case, you get a couple ideas you can use in your business. And if it's a complete waste of your time, I'll buy you lunch. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "🛑 Objection", next: "objections_hub", color: C.orange },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
@@ -235,7 +235,7 @@ const nodes = {
       { label: "After they answer:", text: "Gotcha. Look, I'm not trying to get married here or have you commit to anything.\n\nI just want to show you how other contractors are generating opportunities consistently without relying completely on [referrals / Thumbtack / Angi / Yelp / word of mouth / Facebook posts].\n\nWorst case, you get a couple ideas you can use in your business. And if it's a complete waste of your time, I'll buy you lunch. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
   },
@@ -249,7 +249,7 @@ const nodes = {
       { label: "After they answer:", text: "Gotcha. Look, I'm not trying to get married here or have you commit to anything.\n\nI'm just asking for 15 minutes to see if there's even a conversation worth having. Worst case, you tell me I'm full of crap and we both move on. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "📆 \"Call me back\"", next: "obj_callback", color: C.orange },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
@@ -264,7 +264,7 @@ const nodes = {
       { label: "After they answer:", text: "Gotcha. Look, I'm not trying to get married here or have you commit to anything.\n\nI'm just asking for 15 minutes to see if there's even a conversation worth having. Worst case, you tell me I'm full of crap and we both move on. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
   },
@@ -278,7 +278,7 @@ const nodes = {
       { label: "First response:", text: "That's a great question. Honestly, we don't know enough about your business yet to answer that accurately. That would be like you giving me an estimate without seeing the job first.\n\nLook, I'm not trying to get married here or have you commit to anything. I'm just asking for 15 minutes to see if there's even a conversation worth having. Worst case, you tell me I'm full of crap and we both move on. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "🔁 They push again on price", next: "obj_cost_persist", color: C.orange },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
@@ -289,7 +289,7 @@ const nodes = {
     color: C.orange, dim: C.orangeDim,
     lines: [{ label: null, text: "Totally fair. Honestly, some of our clients spend a few hundred bucks a month and some spend quite a bit more. It really depends on the business, the market, and what they're trying to accomplish.\n\nThat's why I don't want to throw out a number that may not even apply to you. Would you be against taking 15 minutes just to see if it even makes sense first?" }],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
   },
@@ -300,7 +300,7 @@ const nodes = {
     color: C.orange, dim: C.orangeDim,
     lines: [{ label: null, text: "Great question.\n\nThe simple version is we help contractors get in front of more potential customers and follow up with them faster. Most guys are great at the work. The challenge is getting enough opportunities consistently.\n\nThat's really what the meeting is for. We'll take a look at what you're doing now, where you want to go, and see if there's even a fit.\n\nLook, I'm not trying to get married here or have you commit to anything. I'm just asking for 15 minutes to see if there's even a conversation worth having. Worst case, you tell me I'm full of crap and we both move on. Fair enough?" }],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
   },
@@ -314,7 +314,7 @@ const nodes = {
       { label: "After they answer:", text: "Gotcha. Listen, to be honest, we both know how this usually goes. I send over some information, you get busy running jobs, a bunch of other emails come in, and it ends up buried in your inbox.\n\nLook, I'm not trying to get married here or have you commit to anything. I'm just asking for 15 minutes to see if there's even a conversation worth having. Worst case, you tell me I'm full of crap and we both move on. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "❌ Still wants info only", next: "dead_not_interested", color: C.red },
     ],
   },
@@ -329,7 +329,7 @@ const nodes = {
       { label: "Then close for the meeting:", text: "Look, I'm not trying to get married here or have you commit to anything. I'm just asking for 15 minutes to see if there's even a conversation worth having. Worst case, you tell me I'm full of crap and we both move on. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "❌ Hard no → close it out", next: "dead_not_interested", color: C.red },
     ],
   },
@@ -343,7 +343,7 @@ const nodes = {
       { label: "After they answer:", text: "Gotcha. The only reason I ask is because most contractors tell me to call them back in a few months, and then a few months turns into six months, then a year, and nothing really changes.\n\nLook, I'm not trying to get married here or have you commit to anything. I'm just asking for 15 minutes to see if there's even a conversation worth having. Worst case, you tell me I'm full of crap and we both move on. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it now", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it now", next: "book_timezone", color: C.green },
       { label: "📆 Mark Callback Requested", next: "dead_callback", color: C.teal },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
@@ -358,7 +358,7 @@ const nodes = {
       { label: "After they answer:", text: "Gotcha. Look, I'm not trying to get married here or have you commit to anything. I'm just asking for 15 minutes to see if there's even a conversation worth having. Worst case, you tell me I'm full of crap and we both move on. Fair enough?" },
     ],
     branches: [
-      { label: "✅ Yes → book it", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it", next: "book_timezone", color: C.green },
       { label: "🙅 \"No, I really need to talk to them first\"", next: "obj_partner_persist", color: C.orange },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
@@ -369,7 +369,7 @@ const nodes = {
     color: C.orange, dim: C.orangeDim,
     lines: [{ label: null, text: "Makes sense. Would it be easier if your partner joined the call as well? That way everyone gets the same information and nobody has to play telephone afterward." }],
     branches: [
-      { label: "✅ Yes → book it with both", next: "book_offer", color: C.green },
+      { label: "✅ Yes → book it with both", next: "book_timezone", color: C.green },
       { label: "📆 Callback to set with partner", next: "dead_callback", color: C.teal },
       { label: "❌ Hard no", next: "dead_not_interested", color: C.red },
     ],
