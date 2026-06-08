@@ -1,9 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const bodySchema = z.object({
+  query: z.string().trim().min(2).max(200).regex(/^[\w\s\-.,'&#()]+$/i, { message: 'Invalid characters in query' }),
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,14 +22,16 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const { query } = await req.json();
-
-    if (!query || query.trim().length < 2) {
+    let raw: unknown;
+    try { raw = await req.json(); } catch { raw = {}; }
+    const parsed = bodySchema.safeParse(raw);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ predictions: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ predictions: [], error: 'Invalid query', details: parsed.error.flatten().fieldErrors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    const { query } = parsed.data;
 
     const apiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
     if (!apiKey) {

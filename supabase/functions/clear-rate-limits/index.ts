@@ -1,10 +1,16 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.55.0";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const bodySchema = z.object({
+  email: z.string().trim().toLowerCase().email({ message: 'Invalid email' }).max(255),
+  action_type: z.enum(['password_reset', 'login_attempt']).optional(),
+});
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -28,30 +34,22 @@ serve(async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Parse JSON body safely
-    let email: string | undefined;
-    let action_type: string | undefined;
-    
-    try {
-      const body = await req.json();
-      email = body.email;
-      action_type = body.action_type;
-    } catch (jsonError) {
-      // If no body or invalid JSON, continue without it
-      console.log("No valid JSON body provided");
-    }
-
-    if (!email) {
+    // Parse JSON body
+    let raw: unknown;
+    try { raw = await req.json(); } catch { raw = {}; }
+    const parsed = bodySchema.safeParse(raw);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: "Email is required" }),
+        JSON.stringify({ error: 'Invalid input', details: parsed.error.flatten().fieldErrors }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+    const { email, action_type } = parsed.data;
 
     const { error } = await supabase
       .from("rate_limit_logs")
       .delete()
-      .eq("identifier", email.toLowerCase())
+      .eq("identifier", email)
       .eq("action_type", action_type || "password_reset");
 
     if (error) {
