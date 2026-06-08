@@ -620,6 +620,7 @@ function OverviewMap({ onStart }) {
     { id: "opener", icon: "📞", label: "Opener", color: C.blue },
     { id: "transition", icon: "🌉", label: "Transition", color: C.blue },
     { id: "grow_yes", icon: "✨", label: "Magic Wand", color: C.green },
+    { id: "book_timezone", icon: "🌎", label: "Time Zone", color: C.teal },
     { id: "book_offer", icon: "📅", label: "Offer Times", color: C.teal },
     { id: "book_confirm", icon: "🎉", label: "Booked", color: C.green },
   ];
