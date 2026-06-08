@@ -692,7 +692,7 @@ function OverviewMap({ onStart }) {
     <div style={{ maxWidth:680, width:"100%" }}>
       <div style={{ textAlign:"center", marginBottom:28 }}>
         <div style={{ fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color:C.blueL, fontWeight:700, marginBottom:8 }}>Junie Systems</div>
-        <div style={{ fontSize:26, fontWeight:800, color:C.text, marginBottom:6 }}>Cold Outreach Workflow</div>
+        <div style={{ fontSize:26, fontWeight:800, color:C.text, marginBottom:6 }}>Cold SMS Workflow</div>
         <div style={{ fontSize:13, color:C.dim, maxWidth:420, margin:"0 auto", lineHeight:1.65 }}>
           VA owns the booking, pick the times, offer them, add to calendar. Every path ends at a booked call.
         </div>
@@ -785,7 +785,7 @@ export default function ColdOutreachPage() {
             onMouseLeave={e => e.currentTarget.style.borderColor=C.border}
           >← Overview</button>
         )}
-        <div style={{ fontSize:11, color:C.dim, fontWeight:700, letterSpacing:"0.08em" }}>JUNIE SYSTEMS · OUTREACH WORKFLOW</div>
+        <div style={{ fontSize:11, color:C.dim, fontWeight:700, letterSpacing:"0.08em" }}>JUNIE SYSTEMS · COLD SMS WORKFLOW</div>
         <div style={{ width:80 }} />
       </div>
       {view === "overview" ? (

@@ -47,6 +47,7 @@ import RunDetail from "./features/personalized-website/pages/RunDetail";
 import PipelineSettings from "./features/personalized-website/pages/PipelineSettings";
 import RenderTemplate from "./features/personalized-website/pages/RenderTemplate";
 import ColdOutreachPage from "./pages/ColdOutreachPage";
+import ColdCallingPage from "./pages/ColdCallingPage";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,8 @@ const App = () => (
             </Route>
             <Route path="/screenshot/render/:templateId" element={<RenderTemplate />} />
             <Route path="/cold-outreach" element={<ColdOutreachPage />} />
+            <Route path="/cold-sms" element={<ColdOutreachPage />} />
+            <Route path="/cold-calling" element={<ColdCallingPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

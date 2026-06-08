@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut, Clock, RefreshCw, Globe, Camera, UserCircle, MessageSquare } from 'lucide-react';
+import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut, Clock, RefreshCw, Globe, Camera, UserCircle, MessageSquare, PhoneCall } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
@@ -376,10 +376,16 @@ const AdminDashboard = () => {
               onClick: () => navigate('/screenshot'),
             },
             {
-              title: 'Cold Outreach Workflow',
+              title: 'Cold SMS Workflow',
               description: 'SMS scripts, objections, and follow-up flows for VAs.',
               icon: MessageSquare,
               onClick: () => navigate('/cold-outreach'),
+            },
+            {
+              title: 'Cold Calling Workflow',
+              description: 'Appointment setter script, objections, and lead statuses.',
+              icon: PhoneCall,
+              onClick: () => navigate('/cold-calling'),
             },
             ...(user?.email === 'rickycharpentier@gmail.com'
               ? [{
