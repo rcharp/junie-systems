@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail, MapPin } from "lucide-react";
-import junieBot from "@/assets/junie-bot.png.asset.json";
+import junieBot from "@/assets/junie-bot.png";
 
 const Footer = () => {
   return (
