@@ -95,7 +95,7 @@ const Header = ({ showNav = true }: HeaderProps) => {
               className="sm:text-base"
               onClick={() => navigate("/grow")}
             >
-              <span className="hidden sm:inline">Get Started For Free</span>
+              <span className="hidden sm:inline">Get Started Today</span>
               <span className="sm:hidden">Get Started</span>
               <ArrowRight className="w-4 h-4 ml-1" />
             </Button>

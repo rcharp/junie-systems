@@ -62,7 +62,7 @@ const Hero = () => {
                 size="lg"
                 className="group min-w-[180px] h-14 text-base"
               >
-                Get Started For Free
+                Get Started Today
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
