@@ -544,6 +544,7 @@ const LBL = {
   transition: "Transition",
   grow_yes: "Magic Wand",
   soft_close: "Soft Close",
+  book_timezone: "Time Zone",
   book_offer: "Offer Times",
   book_confirm: "Booked ✓",
   objections_hub: "Objections",
