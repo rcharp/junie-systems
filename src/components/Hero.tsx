@@ -93,7 +93,7 @@ const Hero = () => {
             <div className="relative max-w-md lg:max-w-lg xl:max-w-xl w-full">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(var(--primary-glow))_0%,transparent_70%)] opacity-40 blur-2xl" />
               <img
-                src={junieRobot.url}
+                src={junieRobot}
                 alt="Junie — the Job Engine for contractors"
                 className="relative w-full h-auto drop-shadow-2xl"
               />
