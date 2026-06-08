@@ -561,6 +561,38 @@ function Breadcrumb({ history, onJump }) {
   );
 }
 
+const BOOKING_NODES = new Set([
+  "grow_yes", "book_offer",
+  "obj_were_good", "obj_too_busy", "obj_have_marketing",
+  "obj_cost", "obj_cost_persist", "obj_how_works", "obj_send_info",
+  "obj_not_interested", "obj_callback", "obj_partner", "obj_partner_persist",
+]);
+
+function BookingCalendar() {
+  useEffect(() => {
+    const existing = document.querySelector('script[src="https://api.juniesystems.com/js/form_embed.js"]');
+    if (existing) return;
+    const s = document.createElement('script');
+    s.src = 'https://api.juniesystems.com/js/form_embed.js';
+    s.type = 'text/javascript';
+    s.async = true;
+    document.body.appendChild(s);
+  }, []);
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: "hidden" }}>
+      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.border}`, fontSize: 11, fontWeight: 700, color: C.tealL, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        📅 Ricky's calendar — pick open slots to offer
+      </div>
+      <iframe
+        src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
+        style={{ width: "100%", border: "none", overflow: "hidden", minHeight: 700, display: "block" }}
+        scrolling="no"
+        title="Booking Calendar"
+      />
+    </div>
+  );
+}
+
 function OverviewMap({ onStart }) {
   const mainFlow = [
     { id: "shift_prep", icon: "🧰", label: "Prep", color: C.purple },
@@ -716,22 +748,32 @@ export default function ColdCallingPage() {
       </div>
       {view === "overview" ? (
         <OverviewMap onStart={startAt} />
-      ) : (
-        <div style={{ maxWidth: 620, width: "100%" }}>
-          <Breadcrumb history={history} onJump={jumpTo} />
-          {currentNode && <NodeCard node={currentNode} onNavigate={navigate} />}
-          <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
-            <button onClick={goBack}
-              style={{ background: C.blueDim, border: `1px solid ${C.blue}66`, borderRadius: 8, padding: "8px 20px", color: C.blueL, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-              ← Previous step
-            </button>
-            <button onClick={reset}
-              style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 20px", color: C.dim, fontSize: 13, cursor: "pointer" }}>
-              Back to overview
-            </button>
+      ) : (() => {
+        const showCal = currentNode && BOOKING_NODES.has(currentNode.id);
+        return (
+          <div style={{ width: "100%", maxWidth: showCal ? 1280 : 620, display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap", justifyContent: "center" }}>
+            <div style={{ flex: showCal ? "1 1 580px" : "0 1 620px", maxWidth: 620, width: "100%" }}>
+              <Breadcrumb history={history} onJump={jumpTo} />
+              {currentNode && <NodeCard node={currentNode} onNavigate={navigate} />}
+              <div style={{ marginTop: 16, display: "flex", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
+                <button onClick={goBack}
+                  style={{ background: C.blueDim, border: `1px solid ${C.blue}66`, borderRadius: 8, padding: "8px 20px", color: C.blueL, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  ← Previous step
+                </button>
+                <button onClick={reset}
+                  style={{ background: "transparent", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 20px", color: C.dim, fontSize: 13, cursor: "pointer" }}>
+                  Back to overview
+                </button>
+              </div>
+            </div>
+            {showCal && (
+              <div style={{ flex: "1 1 560px", maxWidth: 640, width: "100%", position: "sticky", top: 16 }}>
+                <BookingCalendar />
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
