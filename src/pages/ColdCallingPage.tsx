@@ -583,7 +583,7 @@ function Breadcrumb({ history, onJump }) {
 }
 
 const BOOKING_NODES = new Set([
-  "grow_yes", "book_offer", "book_confirm",
+  "grow_yes", "book_timezone", "book_offer", "book_confirm",
   "obj_were_good", "obj_too_busy", "obj_have_marketing",
   "obj_cost", "obj_cost_persist", "obj_how_works", "obj_send_info",
   "obj_not_interested", "obj_callback", "obj_partner", "obj_partner_persist",
