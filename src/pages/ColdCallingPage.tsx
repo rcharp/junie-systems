@@ -171,8 +171,28 @@ const nodes = {
   },
 
   // ===== BOOKING =====
+  book_timezone: {
+    id: "book_timezone", phase: "STEP 4", icon: "🌎",
+    title: "Confirm Their Time Zone",
+    color: C.teal, dim: C.tealDim,
+    instruction: "Before offering times, ALWAYS ask what time zone they're in. Then change the time zone selector on the calendar (top of the embed →) so the slots you offer match their local time. Never offer a time without doing this first.",
+    lines: [
+      { label: "Ask:", text: "Real quick before we lock in a time — what time zone are you in?" },
+      { label: "Confirm back:", text: "Got it, [TIME ZONE]. Let me pull up some times that work for you." },
+    ],
+    postSteps: [
+      "On the calendar widget, click the time zone dropdown at the top.",
+      "Switch it to the customer's time zone (Eastern / Central / Mountain / Pacific / etc.).",
+      "Verify the available slots have refreshed to their local time.",
+      "Now pick the two days / windows you'll offer them.",
+    ],
+    branches: [
+      { label: "✅ Time zone set on calendar → offer times", next: "book_offer", color: C.green },
+    ],
+  },
+
   book_offer: {
-    id: "book_offer", phase: "STEP 4", icon: "📅",
+    id: "book_offer", phase: "STEP 5", icon: "📅",
     title: "Offer Two Days, Then Two Windows",
     color: C.teal, dim: C.tealDim,
     instruction: "Tight binary choices. Don't ask \"when's good?\" — give them two days, then two windows.",
