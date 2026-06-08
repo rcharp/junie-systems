@@ -492,7 +492,7 @@ function NodeCard({ node, onNavigate }) {
         )}
         {node.branches && node.branches.length > 0 && (
           <div style={{ marginTop: 18 }}>
-            <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>What happens next:</div>
+            <div style={{ fontSize: 10, color: C.dim, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>The customer responds with:</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               {node.branches.map((b, i) => (
                 <button key={i} onClick={() => onNavigate(b.next)}
