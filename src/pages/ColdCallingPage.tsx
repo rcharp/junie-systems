@@ -424,7 +424,7 @@ function ScriptLine({ text, label }) {
       <div style={{ background: "linear-gradient(135deg,#0b1830,#0e1f3e)", border: `1px solid ${C.blue}55`, borderRadius: 12, padding: "12px 15px", fontSize: 14, color: C.text, lineHeight: 1.65, display: "flex", gap: 10, alignItems: "flex-start", whiteSpace: "pre-wrap" }}>
         <span style={{ fontSize: 16, marginTop: 1 }}>🎙️</span>
         <div style={{ flex: 1 }}>{text}</div>
-        <CopyBtn text={text} />
+        
       </div>
     </div>
   );
