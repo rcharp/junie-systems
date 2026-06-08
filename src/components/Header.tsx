@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Menu, ArrowRight } from "lucide-react";
+import junieBot from "@/assets/junie-bot.png.asset.json";
 import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
@@ -49,9 +50,9 @@ const Header = ({ showNav = true }: HeaderProps) => {
           
           <Link to="/" className="flex items-center gap-2">
             <img 
-              src="/favicon.png" 
+              src={junieBot.url} 
               alt="Junie Systems Logo" 
-              className="h-8 w-8 sm:h-10 sm:w-10"
+              className="h-9 w-9 sm:h-11 sm:w-11 object-contain"
             />
             <span className="hidden sm:block text-3xl font-bold text-foreground">
               Junie Systems

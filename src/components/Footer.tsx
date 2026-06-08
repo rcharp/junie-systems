@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail, MapPin } from "lucide-react";
+import junieBot from "@/assets/junie-bot.png.asset.json";
 
 const Footer = () => {
   return (
@@ -9,9 +10,9 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img 
-                src="/favicon.png" 
+                src={junieBot.url} 
                 alt="Junie Systems Logo" 
-                className="w-10 h-10"
+                className="w-11 h-11 object-contain"
               />
               <span className="text-xl font-bold text-primary-foreground">Junie Systems</span>
             </div>
