@@ -1,9 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const bodySchema = z.object({
+  email: z.string().trim().toLowerCase().email({ message: 'Invalid email' }).max(255),
+});
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -12,17 +17,16 @@ serve(async (req) => {
   }
 
   try {
-    const { email } = await req.json();
-    
-    if (!email) {
+    let raw: unknown;
+    try { raw = await req.json(); } catch { raw = {}; }
+    const parsed = bodySchema.safeParse(raw);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: 'Email is required' }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        JSON.stringify({ error: 'Invalid email', details: parsed.error.flatten().fieldErrors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    const { email } = parsed.data;
 
     const kitApiKey = Deno.env.get('KIT_API_KEY');
     
