@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Star } from "lucide-react";
-import junieRobot from "@/assets/junie-bot.png.asset.json";
+import junieRobot from "@/assets/junie-bot.png";
 import headshot1 from "@/assets/headshot-1.jpg";
 import headshot2 from "@/assets/headshot-2.jpg";
 import headshot3 from "@/assets/headshot-3.jpg";
@@ -93,7 +93,7 @@ const Hero = () => {
             <div className="relative max-w-md lg:max-w-lg xl:max-w-xl w-full">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,hsl(var(--primary-glow))_0%,transparent_70%)] opacity-40 blur-2xl" />
               <img
-                src={junieRobot.url}
+                src={junieRobot}
                 alt="Junie — the Job Engine for contractors"
                 className="relative w-full h-auto drop-shadow-2xl"
               />
