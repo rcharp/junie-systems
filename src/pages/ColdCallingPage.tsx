@@ -585,8 +585,8 @@ function BookingCalendar() {
       </div>
       <iframe
         src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
-        style={{ width: "100%", border: "none", overflow: "hidden", minHeight: 700, display: "block" }}
-        scrolling="no"
+        style={{ width: "100%", border: "none", height: "80vh", minHeight: 700, display: "block" }}
+        scrolling="yes"
         title="Booking Calendar"
       />
     </div>
