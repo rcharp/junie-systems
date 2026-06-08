@@ -22,14 +22,16 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const { query } = await req.json();
-
-    if (!query || query.trim().length < 2) {
+    let raw: unknown;
+    try { raw = await req.json(); } catch { raw = {}; }
+    const parsed = bodySchema.safeParse(raw);
+    if (!parsed.success) {
       return new Response(
-        JSON.stringify({ predictions: [] }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ predictions: [], error: 'Invalid query', details: parsed.error.flatten().fieldErrors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    const { query } = parsed.data;
 
     const apiKey = Deno.env.get('GOOGLE_PLACES_API_KEY');
     if (!apiKey) {
