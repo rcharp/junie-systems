@@ -175,13 +175,13 @@ const nodes = {
     id: "book_timezone", phase: "STEP 4", icon: "🌎",
     title: "Confirm Their Time Zone",
     color: C.teal, dim: C.tealDim,
-    instruction: "Before offering times, ALWAYS ask what time zone they're in. Then change the time zone selector on the calendar (top of the embed →) so the slots you offer match their local time. Never offer a time without doing this first.",
+    instruction: "Before offering times, ALWAYS ask what time zone they're in. Then scroll to the bottom of the calendar embed and change the time zone selector so the slots you offer match their local time. Never offer a time without doing this first.",
     lines: [
       { label: "Ask:", text: "Real quick before we lock in a time — what time zone are you in?" },
       { label: "Confirm back:", text: "Got it, [TIME ZONE]. Let me pull up some times that work for you." },
     ],
     postSteps: [
-      "On the calendar widget, click the time zone dropdown at the top.",
+      "Scroll to the bottom of the calendar widget and click the time zone dropdown.",
       "Switch it to the customer's time zone (Eastern / Central / Mountain / Pacific / etc.).",
       "Verify the available slots have refreshed to their local time.",
       "Now pick the two days / windows you'll offer them.",
