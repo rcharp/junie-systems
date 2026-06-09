@@ -15,7 +15,7 @@ const features = [
 
 const Pricing = () => {
   const handleGetStarted = () => {
-    window.open("https://buy.stripe.com/7sYeVc1VpeiedFMbrF8g003", "_blank");
+    window.open("https://api.juniesystems.com/payment-link/6a1449533f4eb69bef72fb1f", "_blank");
   };
 
   return (
