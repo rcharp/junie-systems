@@ -67,9 +67,11 @@ const SalesCallPage = () => {
         <Section title="Phase 1: Build Rapport" subtitle="2–3 minutes. Keep it casual. Let them talk.">
           <Bullets
             items={[
+              "What are you looking to get out of this meeting?",
               "How long have you been in business?",
               "What type of work do you specialize in?",
               "What areas do you service?",
+              "Are you a sole owner, or do you have a team?",
               "How did you get started doing this?",
             ]}
           />
@@ -82,7 +84,9 @@ const SalesCallPage = () => {
               "If you had to estimate, what percentage comes from referrals vs marketing?",
               "How many leads do you typically get each month?",
               "How many of those actually turn into estimates?",
-              "How many jobs do you close?",
+              "What's your close rate — how many jobs do you actually win?",
+              "What's your average job size?",
+              "Who handles sales right now — you or someone on your team?",
             ]}
           />
           <p className="font-semibold pt-2">Then:</p>
@@ -93,6 +97,7 @@ const SalesCallPage = () => {
             ]}
           />
         </Section>
+
 
         <Section title="Phase 3: Uncover Pain" subtitle="This is where the sale happens.">
           <Bullets
@@ -156,7 +161,12 @@ const SalesCallPage = () => {
           </Quote>
           <p className="italic">Pause.</p>
           <Quote>"The good news is that's exactly what we solve."</Quote>
+          <p className="pt-2">Then ask permission to present:</p>
+          <Quote>
+            "Is it ok if I move forward and show you exactly how I can help you?"
+          </Quote>
         </Section>
+
 
         <Section title="Present The Offer" subtitle="Don't lead with features. Lead with money.">
           <Quote>
@@ -203,25 +213,8 @@ const SalesCallPage = () => {
           </p>
         </Section>
 
-        <Section title="Sales Call Questions" subtitle="Quick discovery checklist">
-          <Bullets
-            items={[
-              "What are you looking to get out of this meeting?",
-              "How long have you been in business?",
-              "How are you currently getting leads?",
-              "How much is your average job?",
-              "Are you a sole owner, or team?",
-              "Do you have a side job?",
-              "What is your close rate?",
-              "Who does your sales?",
-              "Is it ok if I move forward and show you exactly how I can help you?",
-            ]}
-          />
-          <p className="pt-2">Then use the PowerPoint as a framework.</p>
-          <p>Focus on their specific pain point (lead generation, Google presence, etc).</p>
-        </Section>
-
         <Section title="Verbatim Close">
+
           <Quote>
             "Hey John, just be honest with me. If one job was the cost of this investment and
             everything else was profit, would this make sense for you?"
