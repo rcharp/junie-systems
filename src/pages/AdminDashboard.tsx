@@ -352,87 +352,94 @@ const AdminDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-full overflow-x-hidden">
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-            Admin Tools
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Choose a tool to get started
-          </p>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start">
+          {/* Left: Admin Tools */}
+          <div>
+            <div className="mb-6">
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+                Admin Tools
+              </h2>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Choose a tool to get started
+              </p>
+            </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-          {[
-            {
-              title: 'Create Customer Website',
-              description: 'Provision a new client site via GoHighLevel.',
-              icon: Globe,
-              onClick: () => navigate('/ghl'),
-            },
-            {
-              title: 'Generate Demo Screenshot',
-              description: 'Capture a website screenshot for prospect demos.',
-              icon: Camera,
-              onClick: () => navigate('/screenshot'),
-            },
-            {
-              title: 'Cold SMS Workflow',
-              description: 'SMS scripts, objections, and follow-up flows for VAs.',
-              icon: MessageSquare,
-              onClick: () => navigate('/cold-outreach'),
-            },
-            {
-              title: 'Cold Calling Workflow',
-              description: 'Appointment setter script, objections, and lead statuses.',
-              icon: PhoneCall,
-              onClick: () => navigate('/cold-calling'),
-            },
-            {
-              title: 'Sales Call Playbook',
-              description: 'Discovery framework, pain questions, and closing scripts.',
-              icon: Handshake,
-              onClick: () => navigate('/sales-call'),
-            },
-            ...(user?.email === 'rickycharpentier@gmail.com'
-              ? [{
-                  title: 'Junie Customers',
-                  description: 'View Stripe customer accounts and billing.',
-                  icon: UserCircle,
-                  onClick: () => navigate('/customers'),
-                }]
-              : []),
-          ].map((tile) => (
-            <Card
-              key={tile.title}
-              onClick={tile.onClick}
-              className="cursor-pointer hover:border-primary/50 transition-all"
-            >
-              <CardHeader>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-                  <tile.icon className="w-6 h-6 text-primary" />
-                </div>
-                <CardTitle>{tile.title}</CardTitle>
-                <CardDescription>{tile.description}</CardDescription>
-              </CardHeader>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              {[
+                {
+                  title: 'Create Customer Website',
+                  description: 'Provision a new client site via GoHighLevel.',
+                  icon: Globe,
+                  onClick: () => navigate('/ghl'),
+                },
+                {
+                  title: 'Generate Demo Screenshot',
+                  description: 'Capture a website screenshot for prospect demos.',
+                  icon: Camera,
+                  onClick: () => navigate('/screenshot'),
+                },
+                {
+                  title: 'Cold SMS Workflow',
+                  description: 'SMS scripts, objections, and follow-up flows for VAs.',
+                  icon: MessageSquare,
+                  onClick: () => navigate('/cold-outreach'),
+                },
+                {
+                  title: 'Cold Calling Workflow',
+                  description: 'Appointment setter script, objections, and lead statuses.',
+                  icon: PhoneCall,
+                  onClick: () => navigate('/cold-calling'),
+                },
+                {
+                  title: 'Sales Call Playbook',
+                  description: 'Discovery framework, pain questions, and closing scripts.',
+                  icon: Handshake,
+                  onClick: () => navigate('/sales-call'),
+                },
+                ...(user?.email === 'rickycharpentier@gmail.com'
+                  ? [{
+                      title: 'Junie Customers',
+                      description: 'View Stripe customer accounts and billing.',
+                      icon: UserCircle,
+                      onClick: () => navigate('/customers'),
+                    }]
+                  : []),
+              ].map((tile) => (
+                <Card
+                  key={tile.title}
+                  onClick={tile.onClick}
+                  className="cursor-pointer hover:border-primary/50 transition-all"
+                >
+                  <CardHeader>
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
+                      <tile.icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <CardTitle>{tile.title}</CardTitle>
+                    <CardDescription>{tile.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Booking Calendar */}
+          <div className="lg:sticky lg:top-4">
+            <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Book a Call</h3>
+            <Card>
+              <CardContent className="p-2 sm:p-4">
+                <iframe
+                  src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
+                  style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: '700px' }}
+                  scrolling="no"
+                  id="fBlaNQM6Ay3RD1FiID1Z_1778453821972"
+                  title="Booking Calendar"
+                />
+              </CardContent>
             </Card>
-          ))}
-        </div>
-
-        <div className="mt-8">
-          <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">Book a Call</h3>
-          <Card>
-            <CardContent className="p-2 sm:p-4">
-              <iframe
-                src="https://api.juniesystems.com/widget/booking/fBlaNQM6Ay3RD1FiID1Z"
-                style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: '700px' }}
-                scrolling="no"
-                id="fBlaNQM6Ay3RD1FiID1Z_1778453821972"
-                title="Booking Calendar"
-              />
-            </CardContent>
-          </Card>
+          </div>
         </div>
       </main>
+
     </div>
   );
 };
