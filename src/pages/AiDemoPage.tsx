@@ -15,6 +15,7 @@ const AiDemoPage = () => {
   const [activeUrl, setActiveUrl] = useState('https://juniesystems.com');
   const [widgetCode, setWidgetCode] = useState(DEFAULT_WIDGET);
   const [activeWidget, setActiveWidget] = useState(DEFAULT_WIDGET);
+  const [widgetOpen, setWidgetOpen] = useState(false);
 
   const widgetSrcDoc = useMemo(() => `
 <!doctype html>
@@ -134,13 +135,34 @@ const AiDemoPage = () => {
                   />
                 )}
 
-                {/* Chat widget overlay - starts as a small bubble, expands on hover/focus/click so the chat can open */}
+                {/* Chat widget overlay - click bubble to expand, X to collapse */}
                 {activeWidget && (
-                  <iframe
-                    title="Chat Widget"
-                    srcDoc={widgetSrcDoc}
-                    className="absolute bottom-0 right-0 z-20 h-[90px] w-[90px] border-0 bg-transparent transition-all duration-200 hover:h-[520px] hover:w-[320px] focus:h-[520px] focus:w-[320px] active:h-[520px] active:w-[320px]"
-                  />
+                  <>
+                    <iframe
+                      title="Chat Widget"
+                      srcDoc={widgetSrcDoc}
+                      className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-all duration-200 ${widgetOpen ? 'h-[520px] w-[320px]' : 'h-[90px] w-[90px]'}`}
+                    />
+                    {!widgetOpen && (
+                      <button
+                        type="button"
+                        aria-label="Open chat"
+                        onClick={() => setWidgetOpen(true)}
+                        className="absolute bottom-0 right-0 z-30 h-[90px] w-[90px] rounded-full bg-transparent"
+                      />
+                    )}
+                    {widgetOpen && (
+                      <button
+                        type="button"
+                        aria-label="Close chat"
+                        onClick={() => setWidgetOpen(false)}
+                        className="absolute z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white text-xs"
+                        style={{ bottom: 530, right: 8 }}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
