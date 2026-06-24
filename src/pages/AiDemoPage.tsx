@@ -15,6 +15,7 @@ const AiDemoPage = () => {
   const [activeUrl, setActiveUrl] = useState('https://juniesystems.com');
   const [widgetCode, setWidgetCode] = useState(DEFAULT_WIDGET);
   const [activeWidget, setActiveWidget] = useState(DEFAULT_WIDGET);
+  const [widgetOpen, setWidgetOpen] = useState(false);
 
   const widgetSrcDoc = useMemo(() => `
 <!doctype html>
