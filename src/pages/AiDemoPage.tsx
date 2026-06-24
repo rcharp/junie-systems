@@ -46,7 +46,8 @@ const AiDemoPage = () => {
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 <style>
   html,body{margin:0;padding:0;background:transparent;height:100%;width:100%;overflow:hidden;}
-  chat-widget[data-active="true"]{ transform: scale(0.82); transform-origin: bottom right; }
+  chat-widget{ transform: scale(0.78); transform-origin: bottom right; }
+  chat-widget[data-active="true"]{ transform: scale(0.78); transform-origin: bottom right; }
 </style>
 <script>${identity}</script>
 </head><body>${activeWidget}
