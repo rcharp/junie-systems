@@ -24,6 +24,9 @@ const AGENT_NAME_PREFIX = 'Demo Agent · ';
 const cache = new Map<string, { ts: number; payload: any }>();
 
 const SKIP_EXT = /\.(pdf|jpg|jpeg|png|gif|webp|svg|ico|mp4|mp3|wav|zip|rar|css|js|woff2?|ttf|eot|xml|json)$/i;
+const BLOG_PATH = /(^|\/)(blog|blogs|news|articles?|posts?|insights?|stories|press|category|categories|tag|tags|author|authors|archive|archives)(\/|$)/i;
+const isBlogUrl = (u: string) => { try { return BLOG_PATH.test(new URL(u).pathname); } catch { return false; } };
+
 
 const stripHtml = (html: string) =>
   html
