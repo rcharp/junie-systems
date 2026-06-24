@@ -158,14 +158,42 @@ const AiDemoPage = () => {
     }
   };
 
-  // Auto-train when contact_id (and optionally website) are passed via URL.
+  // Load an existing session by contact_id/website without re-training.
+  const loadExisting = async () => {
+    try {
+      setStep('loading');
+      const qs = new URLSearchParams();
+      if (presetContactId) qs.set('contact_id', presetContactId);
+      if (presetWebsite) qs.set('website', normalizeUrl(presetWebsite));
+      const base = (import.meta as any).env?.VITE_SUPABASE_URL;
+      const anon = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const res = await fetch(`${base}/functions/v1/train-ai-demo-widget?${qs.toString()}`, {
+        method: 'GET',
+        headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.ok) throw new Error(data?.error || 'Session not found');
+      setActiveUrl(data.url);
+      setActiveContactId(data.contactId || '');
+      setActiveWidget(WIDGET_SCRIPT);
+      setStep('ready');
+      return true;
+    } catch (e: any) {
+      setStep('idle');
+      return false;
+    }
+  };
+
+  // Auto-load (or fall back to auto-train) when query params are present.
   const autoStartedRef = useRef(false);
   useEffect(() => {
     if (autoStartedRef.current) return;
     if (!presetContactId && !presetWebsite) return;
-    if (!urlInput) return;
     autoStartedRef.current = true;
-    train();
+    (async () => {
+      const loaded = await loadExisting();
+      if (!loaded && urlInput) train();
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
