@@ -196,12 +196,12 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
     body: JSON.stringify({
       locationId,
       name,
-      version: 2,
-      chatType: 'liveChat',
+      version: 1,
+      chatType: 'all_in_one',
       default: false,
       deleted: false,
       settings: {
-        chatType: 'liveChat',
+        chatType: 'all_in_one',
         chatIcon: 'messageChatCircle',
         heading: name,
         subHeading: 'We are here to help.',
@@ -219,6 +219,20 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
   });
   if (!r.ok) throw new Error(`Widget create failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
   const id = pickId(r.body);
+
+  // Attach the conversation AI agent to the widget via PATCH.
+  if (id && agentId) {
+    try {
+      await ghlFetch(`/chat-widget/data/${locationId}/${id}`, {
+        method: 'PATCH',
+        headers: { Version: 'v3' },
+        body: JSON.stringify({ botId: agentId }),
+      });
+    } catch (e) {
+      console.warn('Widget agent attach failed (non-fatal):', e);
+    }
+  }
+
   const embed =
     r.body?.embedScript ||
     r.body?.embed_script ||
@@ -227,6 +241,7 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
     (id ? `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="${id}"></script>` : '');
   if (!id && !embed) throw new Error(`Widget create returned no id/embed: ${JSON.stringify(r.body).slice(0, 400)}`);
   return { id, embed };
+
 };
 
 Deno.serve(async (req) => {
