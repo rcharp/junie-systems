@@ -279,17 +279,17 @@ const AiDemoPage = () => {
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-30" />
               <div className="relative w-full h-full bg-white rounded-[2.3rem] overflow-hidden">
                 {/* Status bar spacer to clear the notch */}
-                <div className="absolute top-0 left-0 right-0 h-9 bg-white z-10" />
+                <div className="absolute top-0 left-0 right-0 h-9 bg-gray-200 z-10" />
                 {activeUrl && (
-                  <div className="absolute inset-0 pt-9 overflow-hidden">
+                  <div className="absolute inset-0 pt-9 overflow-hidden bg-gray-200">
                     <iframe
                       src={activeUrl}
                       title="Website Preview"
                       className="block border-0"
                       style={{
                         width: '390px',
-                        height: 'calc(100% / 0.9897)',
-                        transform: 'scale(0.9897)',
+                        height: 'calc(100% / 0.81)',
+                        transform: 'scale(0.81)',
                         transformOrigin: 'top left',
                       }}
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
