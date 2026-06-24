@@ -96,7 +96,7 @@ const AiDemoPage = () => {
   setInterval(detect, 1000);
 })();
 </script></body></html>`;
-  }, [activeWidget]);
+  }, [activeWidget, activeContactId]);
 
   useEffect(() => {
     const handle = (e: MessageEvent) => {
