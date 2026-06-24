@@ -364,66 +364,63 @@ Deno.serve(async (req) => {
 
     // 2) Summarize into knowledge doc
     const { doc, businessName } = await summarizeWithAi(pages, url);
-    const labelBase = `${businessName || fallbackName} ${new Date().toISOString().slice(0, 16)}`;
     const t2 = Date.now();
 
-    // 3) Agent with knowledge embedded in instructions.
-    // Name the agent (our embedded "knowledge base") with the passed-in contact_id for traceability.
-    const agentName = requestedContactId || `Demo Agent · ${labelBase}`;
-    const agentId = await createAgent({
-      locationId,
-      name: agentName,
-      knowledgeDoc: doc,
-      businessName: businessName || fallbackName,
-      websiteUrl: url,
+    // 3) Create KB in GHL named with the passed-in contact_id, populated with scraped content.
+    const kbName = requestedContactId || `Demo KB · ${businessName || fallbackName}`;
+    const kbCreate = await ghlFetch('/conversation-ai/knowledge-bases', {
+      method: 'POST',
+      body: JSON.stringify({
+        locationId,
+        name: kbName,
+        description: `Scraped knowledge base for ${businessName || fallbackName} (${url})`,
+      }),
     });
+    if (!kbCreate.ok) throw new Error(`KB create failed ${kbCreate.status}: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
+    const kbId = pickId(kbCreate.body);
+    if (!kbId) throw new Error(`KB create returned no id: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
+
+    // 4) Add a document to the KB with the scraped + summarized content.
+    const docRes = await ghlFetch(`/conversation-ai/knowledge-bases/${kbId}/documents`, {
+      method: 'POST',
+      body: JSON.stringify({
+        locationId,
+        name: `${businessName || fallbackName} — Website`,
+        type: 'text',
+        content: doc.slice(0, 200000),
+        sourceUrl: url,
+      }),
+    });
+    if (!docRes.ok) console.warn('KB document add failed:', docRes.status, JSON.stringify(docRes.body).slice(0, 400));
     const t3 = Date.now();
 
-    // 4) Widget with agent attached
-    const widget = await createChatWidget({
-      locationId,
-      name: `Demo Widget · ${labelBase}`,
-      agentId,
-    });
-    const t4 = Date.now();
-
-    // 5) Fresh demo contact + persist
-    const contactCreate = await createDemoContact(locationId, businessName || fallbackName);
-    const contactId = contactCreate.id;
-    const t5 = Date.now();
-
-    const sessionRows = [contactId, requestedContactId]
-      .filter((id, i, all) => id && all.indexOf(id) === i)
-      .map((id) => ({
-        ghl_contact_id: id,
-        ghl_agent_id: agentId,
-        ghl_kb_id: null,
-        ghl_widget_id: widget.id || null,
-        widget_embed: widget.embed,
-        ghl_location_id: locationId,
-        prospect_url: url,
-        business_name: businessName || fallbackName,
-        knowledge_doc: doc,
-      }));
-
-    if (sessionRows.length) {
+    // 5) Persist session keyed by contact_id (no agent / widget creation).
+    if (requestedContactId) {
       const { error: sessionError } = await supa
         .from('demo_sessions')
-        .upsert(sessionRows, { onConflict: 'ghl_contact_id' });
+        .upsert([{
+          ghl_contact_id: requestedContactId,
+          ghl_agent_id: null,
+          ghl_kb_id: kbId,
+          ghl_widget_id: null,
+          widget_embed: null,
+          ghl_location_id: locationId,
+          prospect_url: url,
+          business_name: businessName || fallbackName,
+          knowledge_doc: doc,
+        }], { onConflict: 'ghl_contact_id' });
       if (sessionError) throw sessionError;
     }
 
     return new Response(JSON.stringify({
       ok: true,
       businessName: businessName || fallbackName,
-      agentId,
-      widgetId: widget.id,
-      widgetEmbed: widget.embed,
-      contactId,
+      kbId,
+      contactId: requestedContactId || null,
       locationId,
       knowledgeDoc: doc,
       pagesCrawled: pages.length,
-      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, agentMs: t3 - t2, widgetMs: t4 - t3, contactMs: t5 - t4, totalMs: t5 - t0 },
+      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, kbMs: t3 - t2, totalMs: t3 - t0 },
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
