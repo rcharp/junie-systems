@@ -225,16 +225,17 @@ Deno.serve(async (req) => {
     const { doc, businessName } = await summarizeWithAi(pages, url);
     const t2 = Date.now();
 
-    const kbName = `Auto-trained: ${businessName} (${new URL(url).hostname})`;
-    const kb = await createKnowledgeBase(locationId, kbName, doc, url);
+    // Clean up prior demo agents on this location so each run gets a fresh, primary agent.
+    const existing = await listAgents(locationId);
+    const stale = existing.filter((a) => typeof a?.name === 'string' && a.name.startsWith(AGENT_NAME_PREFIX));
+    const deletions = await Promise.all(stale.map((a) => deleteAgent(a.id || a._id).catch((e) => ({ ok: false, error: String(e) }))));
     const t3 = Date.now();
 
     const agent = await createConversationAgent({
-      locationId,
-      name: `Demo Agent · ${businessName}`,
+      name: `${AGENT_NAME_PREFIX}${businessName}`,
       businessName,
-      knowledgeBaseId: kb.ok ? kb.id : undefined,
-      calendarId: calendarId || undefined,
+      knowledgeDoc: doc,
+      websiteUrl: url,
     });
     const t4 = Date.now();
 
@@ -244,9 +245,9 @@ Deno.serve(async (req) => {
       pagesCrawled: pages.map((p) => ({ url: p.url, title: p.title })),
       knowledgePreview: doc.slice(0, 800),
       knowledgeLength: doc.length,
-      kb,
+      cleanedUp: { count: stale.length, deletions },
       agent,
-      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, kbMs: t3 - t2, agentMs: t4 - t3, totalMs: t4 - t0 },
+      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, cleanupMs: t3 - t2, agentMs: t4 - t3, totalMs: t4 - t0 },
     };
     cache.set(url, { ts: Date.now(), payload });
 
