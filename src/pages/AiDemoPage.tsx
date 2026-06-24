@@ -11,8 +11,6 @@ const DEFAULT_WIDGET = `<script src="https://widgets.leadconnectorhq.com/loader.
 
 const AiDemoPage = () => {
   const navigate = useNavigate();
-const AiDemoPage = () => {
-  const navigate = useNavigate();
   const [urlInput, setUrlInput] = useState('https://imprintconstruction.com');
   const [activeUrl, setActiveUrl] = useState('https://imprintconstruction.com');
   const [widgetCode, setWidgetCode] = useState(DEFAULT_WIDGET);
