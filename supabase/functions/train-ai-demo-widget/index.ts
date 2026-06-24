@@ -287,7 +287,7 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
     if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
   }
 
-  const urlsToTrain = discoveredUrls.slice(0, 25);
+  const urlsToTrain = discoveredUrls;
   const trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
     method: 'POST',
     body: JSON.stringify({ knowledgeBaseId: kbId, locationId, urls: urlsToTrain }),
