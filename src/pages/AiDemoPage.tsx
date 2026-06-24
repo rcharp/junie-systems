@@ -134,30 +134,14 @@ const AiDemoPage = () => {
                   />
                 )}
 
-                {/* Widget overlay - small bubble by default, expands when clicked so the rest of the phone stays scrollable */}
+                {/* Chat widget overlay */}
                 {activeWidget && (
-                  <div
-                    className="absolute bottom-3 right-3 z-20 transition-all"
-                    style={{
-                      width: widgetExpanded ? '300px' : '70px',
-                      height: widgetExpanded ? '480px' : '70px',
-                    }}
-                  >
-                    <iframe
-                      title="Chat Widget"
-                      srcDoc={widgetSrcDoc}
-                      className="w-full h-full border-0"
-                      style={{ background: 'transparent' }}
-                    />
-                    {/* Toggle handle */}
-                    <button
-                      onClick={() => setWidgetExpanded((v) => !v)}
-                      className="absolute -top-3 -left-3 w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-lg z-30"
-                      title={widgetExpanded ? 'Collapse widget' : 'Expand widget'}
-                    >
-                      {widgetExpanded ? '–' : '+'}
-                    </button>
-                  </div>
+                  <iframe
+                    title="Chat Widget"
+                    srcDoc={widgetSrcDoc}
+                    className="absolute bottom-0 right-0 border-0 z-20"
+                    style={{ width: '320px', height: '520px', background: 'transparent' }}
+                  />
                 )}
               </div>
             </div>
