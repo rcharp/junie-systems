@@ -40,7 +40,7 @@ const AiDemoPage = () => {
   const widgetFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const widgetSrcDoc = useMemo(() => {
-    if (!activeWidget) return '';
+    const embed = buildWidgetScript('6a3be0987de81c3360287a78');
     const identity = activeContactId
       ? `window.leadConnector = window.leadConnector || {}; window.leadConnector.contactId = ${JSON.stringify(activeContactId)}; window.LCWidget = window.LCWidget || {}; window.LCWidget.contactId = ${JSON.stringify(activeContactId)};`
       : '';
@@ -54,7 +54,7 @@ const AiDemoPage = () => {
   chat-widget[data-active="true"]{ transform: scale(0.78); transform-origin: bottom right; }
 </style>
 <script>${identity}</script>
-</head><body>${activeWidget}
+</head><body>${embed}
 
 <script>
 (() => {
@@ -339,14 +339,12 @@ const AiDemoPage = () => {
                   </div>
 
                 )}
-                {activeWidget && (
-                  <iframe
-                    ref={widgetFrameRef}
-                    title="Chat Widget"
-                    srcDoc={widgetSrcDoc}
-                    className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
-                  />
-                )}
+                <iframe
+                  ref={widgetFrameRef}
+                  title="Chat Widget"
+                  srcDoc={widgetSrcDoc}
+                  className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
+                />
               </div>
             </div>
           </div>
