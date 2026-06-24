@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.screenshot-webhook]
 verify_jwt = false
+
+[functions.train-ai-demo-widget]
+verify_jwt = false
