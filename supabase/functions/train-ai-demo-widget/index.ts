@@ -307,6 +307,28 @@ Deno.serve(async (req) => {
     });
     const t4 = Date.now();
 
+    // If a prior demo session exists for this URL, delete its GHL contact first so we
+    // can recreate a clean one (and its conversation history is gone).
+    try {
+      const supaCleanup = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      const { data: priorRows } = await supaCleanup
+        .from('demo_sessions')
+        .select('ghl_contact_id')
+        .eq('prospect_url', url);
+      const priorIds = (priorRows || []).map((r: any) => r.ghl_contact_id).filter(Boolean);
+      await Promise.all(
+        priorIds.map((cid: string) =>
+          ghlFetch(`/contacts/${encodeURIComponent(cid)}`, { method: 'DELETE' }).catch(() => null),
+        ),
+      );
+      if (priorIds.length) {
+        await supaCleanup.from('demo_sessions').delete().in('ghl_contact_id', priorIds);
+      }
+    } catch (_) { /* best-effort */ }
+
     // Always create a fresh GHL contact for this demo so the chatbot conversation is new.
     const contactCreateRes = await ghlFetch('/contacts/', {
       method: 'POST',
@@ -318,6 +340,7 @@ Deno.serve(async (req) => {
         tags: ['ai-demo'],
       }),
     });
+
     const contactId: string =
       contactCreateRes?.body?.contact?.id ||
       contactCreateRes?.body?.contact?._id ||
