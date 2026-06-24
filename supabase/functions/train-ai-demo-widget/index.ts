@@ -307,6 +307,25 @@ Deno.serve(async (req) => {
     });
     const t4 = Date.now();
 
+    // Always create a fresh GHL contact for this demo so the chatbot conversation is new.
+    const contactCreateRes = await ghlFetch('/contacts/', {
+      method: 'POST',
+      body: JSON.stringify({
+        locationId,
+        firstName: 'Demo',
+        lastName: `${businessName} ${Date.now()}`,
+        source: 'AI Demo Widget',
+        tags: ['ai-demo'],
+      }),
+    });
+    const contactId: string =
+      contactCreateRes?.body?.contact?.id ||
+      contactCreateRes?.body?.contact?._id ||
+      contactCreateRes?.body?.id ||
+      contactCreateRes?.body?._id ||
+      '';
+    const t4 = Date.now();
+
     const agentId =
       agentRes?.body?.agent?.id ||
       agentRes?.body?.agent?._id ||
@@ -314,18 +333,9 @@ Deno.serve(async (req) => {
       agentRes?.body?._id ||
       null;
 
-    // Bridge: contactId -> agentId. Caller must supply contactId; we never create one.
-    const contactId: string | null = parsed.data.contactId || null;
-    const contactRes: any = null;
-    if (agentId) {
+    const contactRes: any = contactCreateRes;
+    if (agentId && contactId) {
 
-      if (contactId) {
-        // Clear any prior conversations for this contact so each new demo starts fresh.
-        try {
-          const convRes = await ghlFetch(
-            `/conversations/search?locationId=${encodeURIComponent(locationId)}&contactId=${encodeURIComponent(contactId)}&limit=100`,
-            { method: 'GET' },
-          );
           const convs = (convRes?.body?.conversations || convRes?.body?.data || []) as any[];
           await Promise.all(
             (Array.isArray(convs) ? convs : [])
