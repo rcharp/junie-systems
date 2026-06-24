@@ -388,18 +388,8 @@ Deno.serve(async (req) => {
     const { doc, businessName } = await summarizeWithAi(pages, url);
     const t2 = Date.now();
 
-    // Clean up prior demo agents on this location so each run gets a fresh, primary agent.
-    const existing = await listAgents(locationId);
-    const stale = existing.filter((a) => typeof a?.name === 'string' && a.name.startsWith(AGENT_NAME_PREFIX));
-    const deletions = await Promise.all(stale.map((a) => deleteAgent(a.id || a._id).catch((e) => ({ ok: false, error: String(e) }))));
+    // GHL conversation-ai agent disabled — the webhook answers from the Supabase KB.
     const t3 = Date.now();
-
-    const agentRes = await createConversationAgent({
-      name: `${AGENT_NAME_PREFIX}${businessName}`,
-      businessName,
-      knowledgeDoc: doc,
-      websiteUrl: url,
-    });
     const t4 = Date.now();
 
     // Always create a fresh demo contact on POST so every training run starts clean.
@@ -407,23 +397,15 @@ Deno.serve(async (req) => {
     const contactId: string = extractContactId(contactCreateRes);
     const t4b = Date.now();
 
-
-    const agentId =
-      agentRes?.body?.agent?.id ||
-      agentRes?.body?.agent?._id ||
-      agentRes?.body?.id ||
-      agentRes?.body?._id ||
-      null;
-
     const contactRes: any = contactCreateRes;
-    if (agentId && contactId) {
+    if (contactId) {
       const supa = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       );
       await supa.from('demo_sessions').upsert({
         ghl_contact_id: contactId,
-        ghl_agent_id: agentId,
+        ghl_agent_id: null,
         ghl_location_id: locationId,
         prospect_url: url,
         business_name: businessName,
@@ -431,6 +413,11 @@ Deno.serve(async (req) => {
       }, { onConflict: 'ghl_contact_id' });
     }
     const t5 = Date.now();
+    const agentRes: any = { ok: true, skipped: true };
+    const agentId: string | null = null;
+    const stale: any[] = [];
+    const deletions: any[] = [];
+
 
 
     const payload = {
