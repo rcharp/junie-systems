@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,13 +15,83 @@ const AiDemoPage = () => {
   const [activeUrl, setActiveUrl] = useState('https://juniesystems.com');
   const [widgetCode, setWidgetCode] = useState(DEFAULT_WIDGET);
   const [activeWidget, setActiveWidget] = useState(DEFAULT_WIDGET);
-  const [widgetOpen, setWidgetOpen] = useState(false);
+  const [widgetExpanded, setWidgetExpanded] = useState(false);
+  const widgetFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const widgetSrcDoc = useMemo(() => `
 <!doctype html>
 <html><head><meta charset="utf-8"/>
 <style>html,body{margin:0;padding:0;background:transparent;height:100%;width:100%;overflow:hidden;}</style>
-</head><body>${activeWidget}</body></html>`, [activeWidget]);
+</head><body>${activeWidget}
+<script>
+(() => {
+  const TYPE = 'junie-chat-widget-state';
+  let lastState = null;
+
+  const visible = (element) => {
+    const style = window.getComputedStyle(element);
+    const rect = element.getBoundingClientRect();
+    return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+  };
+
+  const detect = () => {
+    const candidates = Array.from(document.querySelectorAll('iframe, [role="dialog"], [aria-label], [title], [class]'));
+    const expanded = candidates.some((element) => {
+      if (!visible(element)) return false;
+      const rect = element.getBoundingClientRect();
+      const label = [element.getAttribute('aria-label'), element.getAttribute('title'), element.className]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return (label.includes('close') && (label.includes('chat') || label.includes('widget'))) || (rect.width > 180 && rect.height > 180);
+    });
+
+    if (expanded !== lastState) {
+      lastState = expanded;
+      window.parent.postMessage({ type: TYPE, expanded }, '*');
+    }
+  };
+
+  const scheduleDetect = () => {
+    window.requestAnimationFrame(detect);
+    window.setTimeout(detect, 100);
+    window.setTimeout(detect, 400);
+  };
+
+  new MutationObserver(scheduleDetect).observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class', 'style', 'aria-label', 'title'],
+  });
+
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(scheduleDetect).observe(document.body);
+  }
+
+  window.addEventListener('click', scheduleDetect, true);
+  window.addEventListener('message', scheduleDetect);
+  window.addEventListener('load', scheduleDetect);
+  scheduleDetect();
+  window.setInterval(detect, 1000);
+})();
+</script></body></html>`, [activeWidget]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.source !== widgetFrameRef.current?.contentWindow) return;
+      if (event.data?.type === 'junie-chat-widget-state') {
+        setWidgetExpanded(Boolean(event.data.expanded));
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  useEffect(() => {
+    setWidgetExpanded(false);
+  }, [activeWidget]);
 
   const normalizeUrl = (u: string) => {
     if (!u) return '';
@@ -32,6 +102,7 @@ const AiDemoPage = () => {
   const loadDemo = () => {
     setActiveUrl(normalizeUrl(urlInput));
     setActiveWidget(widgetCode);
+    setWidgetExpanded(false);
   };
 
   return (
@@ -135,34 +206,14 @@ const AiDemoPage = () => {
                   />
                 )}
 
-                {/* Chat widget overlay - click bubble to expand, X to collapse */}
+                {/* Chat widget overlay */}
                 {activeWidget && (
-                  <>
-                    <iframe
-                      title="Chat Widget"
-                      srcDoc={widgetSrcDoc}
-                      className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-all duration-200 ${widgetOpen ? 'h-[520px] w-[320px]' : 'h-[90px] w-[90px]'}`}
-                    />
-                    {!widgetOpen && (
-                      <button
-                        type="button"
-                        aria-label="Open chat"
-                        onClick={() => setWidgetOpen(true)}
-                        className="absolute bottom-0 right-0 z-30 h-[90px] w-[90px] rounded-full bg-transparent"
-                      />
-                    )}
-                    {widgetOpen && (
-                      <button
-                        type="button"
-                        aria-label="Close chat"
-                        onClick={() => setWidgetOpen(false)}
-                        className="absolute z-30 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white text-xs"
-                        style={{ bottom: 530, right: 8 }}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </>
+                  <iframe
+                    ref={widgetFrameRef}
+                    title="Chat Widget"
+                    srcDoc={widgetSrcDoc}
+                    className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
+                  />
                 )}
               </div>
             </div>
