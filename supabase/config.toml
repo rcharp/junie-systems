@@ -8,3 +8,7 @@ verify_jwt = false
 
 [functions.train-ai-demo-widget]
 verify_jwt = false
+
+[functions.ghl-chat-webhook]
+verify_jwt = false
+

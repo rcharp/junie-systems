@@ -25,6 +25,7 @@ const AiDemoPage = () => {
   const [urlInput, setUrlInput] = useState('https://ksjunkguy.com');
   const [activeUrl, setActiveUrl] = useState<string>('');
   const [activeWidget, setActiveWidget] = useState<string>('');
+  const [activeContactId, setActiveContactId] = useState<string>('');
   const [widgetExpanded, setWidgetExpanded] = useState(false);
   const [step, setStep] = useState<Step>('idle');
   const [error, setError] = useState<string>('');
@@ -33,19 +34,20 @@ const AiDemoPage = () => {
 
   const widgetSrcDoc = useMemo(() => {
     if (!activeWidget) return '';
+    const identity = activeContactId
+      ? `window.leadConnector = window.leadConnector || {}; window.leadConnector.contactId = ${JSON.stringify(activeContactId)}; window.LCWidget = window.LCWidget || {}; window.LCWidget.contactId = ${JSON.stringify(activeContactId)};`
+      : '';
     return `
 <!doctype html>
 <html><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 <style>
   html,body{margin:0;padding:0;background:transparent;height:100%;width:100%;overflow:hidden;}
-  /* Scale the open chat panel so it fits inside the phone screen */
-  chat-widget[data-active="true"]{
-    transform: scale(0.82);
-    transform-origin: bottom right;
-  }
+  chat-widget[data-active="true"]{ transform: scale(0.82); transform-origin: bottom right; }
 </style>
+<script>${identity}</script>
 </head><body>${activeWidget}
+
 <script>
 (() => {
   const TYPE = 'junie-chat-widget-state';
@@ -94,7 +96,7 @@ const AiDemoPage = () => {
   setInterval(detect, 1000);
 })();
 </script></body></html>`;
-  }, [activeWidget]);
+  }, [activeWidget, activeContactId]);
 
   useEffect(() => {
     const handle = (e: MessageEvent) => {
@@ -115,13 +117,13 @@ const AiDemoPage = () => {
     setError('');
     setResult(null);
     setActiveWidget('');
+    setActiveContactId('');
     setWidgetExpanded(false);
     const url = normalizeUrl(urlInput);
     if (!url) return;
     setActiveUrl(url);
 
     setStep('crawling');
-    // Visual stagger so users see progress while the function runs
     const stageTimer = setTimeout(() => setStep('training'), 1500);
     const stageTimer2 = setTimeout(() => setStep('pushing'), 6000);
 
@@ -137,10 +139,11 @@ const AiDemoPage = () => {
 
       setResult(data);
       setStep('loading');
-      // Mount the trained widget
       setTimeout(() => {
+        if (data.contactId) setActiveContactId(data.contactId);
         setActiveWidget(WIDGET_SCRIPT);
         setStep('ready');
+
       }, 600);
     } catch (e: any) {
       clearTimeout(stageTimer);

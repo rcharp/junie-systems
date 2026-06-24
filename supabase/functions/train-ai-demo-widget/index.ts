@@ -1,6 +1,8 @@
 // @ts-nocheck
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
+import { createClient } from 'npm:@supabase/supabase-js@2';
 import { z } from 'npm:zod@3.23.8';
+
 
 const BodySchema = z.object({
   url: z.string().url(),
@@ -231,13 +233,57 @@ Deno.serve(async (req) => {
     const deletions = await Promise.all(stale.map((a) => deleteAgent(a.id || a._id).catch((e) => ({ ok: false, error: String(e) }))));
     const t3 = Date.now();
 
-    const agent = await createConversationAgent({
+    const agentRes = await createConversationAgent({
       name: `${AGENT_NAME_PREFIX}${businessName}`,
       businessName,
       knowledgeDoc: doc,
       websiteUrl: url,
     });
     const t4 = Date.now();
+
+    const agentId =
+      agentRes?.body?.agent?.id ||
+      agentRes?.body?.agent?._id ||
+      agentRes?.body?.id ||
+      agentRes?.body?._id ||
+      null;
+
+    // Create a dedicated GHL contact so the widget visitor can be pre-identified.
+    // This contactId is the bridge: webhook -> contactId -> agentId.
+    let contactId: string | null = null;
+    let contactRes: any = null;
+    if (agentId) {
+      const hostname = (() => { try { return new URL(url).hostname; } catch { return 'demo'; } })();
+      const stamp = Date.now().toString(36);
+      contactRes = await ghlFetch('/contacts/', {
+        method: 'POST',
+        body: JSON.stringify({
+          locationId,
+          firstName: 'Demo',
+          lastName: businessName.slice(0, 60),
+          email: `demo+${stamp}@${hostname}`.toLowerCase(),
+          source: 'AI Demo Widget',
+          tags: ['ai-demo', `agent:${agentId}`],
+          customFields: [],
+        }),
+      });
+      contactId = contactRes?.body?.contact?.id || contactRes?.body?.id || null;
+
+      if (contactId) {
+        const supa = createClient(
+          Deno.env.get('SUPABASE_URL')!,
+          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+        );
+        await supa.from('demo_sessions').upsert({
+          ghl_contact_id: contactId,
+          ghl_agent_id: agentId,
+          ghl_location_id: locationId,
+          prospect_url: url,
+          business_name: businessName,
+        }, { onConflict: 'ghl_contact_id' });
+      }
+    }
+    const t5 = Date.now();
 
     const payload = {
       ok: true,
@@ -246,10 +292,14 @@ Deno.serve(async (req) => {
       knowledgePreview: doc.slice(0, 800),
       knowledgeLength: doc.length,
       cleanedUp: { count: stale.length, deletions },
-      agent,
-      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, cleanupMs: t3 - t2, agentMs: t4 - t3, totalMs: t4 - t0 },
+      agent: agentRes,
+      agentId,
+      contactId,
+      contact: contactRes,
+      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, cleanupMs: t3 - t2, agentMs: t4 - t3, contactMs: t5 - t4, totalMs: t5 - t0 },
     };
     cache.set(url, { ts: Date.now(), payload });
+
 
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

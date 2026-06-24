@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      demo_sessions: {
+        Row: {
+          business_name: string | null
+          created_at: string
+          expires_at: string
+          ghl_agent_id: string
+          ghl_contact_id: string
+          ghl_location_id: string
+          id: string
+          prospect_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          business_name?: string | null
+          created_at?: string
+          expires_at?: string
+          ghl_agent_id: string
+          ghl_contact_id: string
+          ghl_location_id: string
+          id?: string
+          prospect_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          business_name?: string | null
+          created_at?: string
+          expires_at?: string
+          ghl_agent_id?: string
+          ghl_contact_id?: string
+          ghl_location_id?: string
+          id?: string
+          prospect_url?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ghl_setup_checklist: {
         Row: {
           completed: boolean
