@@ -188,64 +188,45 @@ const createAgent = async (params: { locationId: string; name: string; knowledge
   return id;
 };
 
+const TEMPLATE_WIDGET_ID = Deno.env.get('AI_DEMO_TEMPLATE_WIDGET_ID') || '6a3be0987de81c3360287a78';
+
 const createChatWidget = async (params: { locationId: string; name: string; agentId: string }) => {
   const { locationId, name, agentId } = params;
-  const r = await ghlFetch('/chat-widget/', {
+
+  // 1) Clone the template widget.
+  const cloneRes = await ghlFetch(`/chat-widget/clone/${locationId}/${TEMPLATE_WIDGET_ID}`, {
     method: 'POST',
     headers: { Version: '2021-07-28' },
-    body: JSON.stringify({
-      locationId,
-      name,
-      version: 2,
-      chatType: 'allInOneChat',
-      default: false,
-      deleted: false,
-      settings: {
-        chatType: 'allInOneChat',
-        chatIcon: 'messageChatCircle',
-        heading: name,
-        subHeading: 'How can we help?',
-        liveChatIntroMsg: 'Hi! How can we help you today?',
-        liveChatAckMsg: 'Thanks for reaching out. We will respond shortly.',
-        promptMsg: 'Need help? Chat with us.',
-        sendActionText: 'Send',
-        showPrompt: true,
-        showAgencyBranding: false,
-        showConsentCheckbox: false,
-        advanceSettings: {
-          allInOneChatTypes: ['liveChat'],
-          allInOneInitialMsg: 'Choose a chat option to get started.',
-          voiceAiAgent: { agentId },
-        },
-      },
-    }),
+    body: JSON.stringify({ name }),
   });
-  if (!r.ok) throw new Error(`Widget create failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
-  const id = pickId(r.body);
+  if (!cloneRes.ok) throw new Error(`Widget clone failed ${cloneRes.status}: ${JSON.stringify(cloneRes.body).slice(0, 400)}`);
+  const id = pickId(cloneRes.body);
+  if (!id) throw new Error(`Widget clone returned no id: ${JSON.stringify(cloneRes.body).slice(0, 400)}`);
 
-  // Attach the conversation AI agent to the widget via PATCH (fallback path).
-  if (id && agentId) {
-    try {
-      await ghlFetch(`/chat-widget/data/${locationId}/${id}`, {
-        method: 'PATCH',
-        headers: { Version: '2021-07-28' },
-        body: JSON.stringify({
-          settings: { advanceSettings: { voiceAiAgent: { agentId } } },
-          botId: agentId,
-        }),
-      });
-    } catch (e) {
-      console.warn('Widget agent attach failed (non-fatal):', e);
-    }
+  // 2) Rename + attach agent via PATCH.
+  try {
+    await ghlFetch(`/chat-widget/data/${locationId}/${id}`, {
+      method: 'PATCH',
+      headers: { Version: '2021-07-28' },
+      body: JSON.stringify({
+        name,
+        settings: {
+          heading: name,
+          advanceSettings: { voiceAiAgent: { agentId } },
+        },
+        botId: agentId,
+      }),
+    });
+  } catch (e) {
+    console.warn('Widget patch failed (non-fatal):', e);
   }
 
   const embed =
-    r.body?.embedScript ||
-    r.body?.embed_script ||
-    r.body?.widget?.embedScript ||
-    r.body?.data?.embedScript ||
-    (id ? `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="${id}"></script>` : '');
-  if (!id && !embed) throw new Error(`Widget create returned no id/embed: ${JSON.stringify(r.body).slice(0, 400)}`);
+    cloneRes.body?.embedScript ||
+    cloneRes.body?.embed_script ||
+    cloneRes.body?.widget?.embedScript ||
+    cloneRes.body?.data?.embedScript ||
+    `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="${id}"></script>`;
   return { id, embed };
 };
 
