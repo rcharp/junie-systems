@@ -271,8 +271,9 @@ const AiDemoPage = () => {
                 )}
                 {!activeUrl && (
                   <div className="absolute inset-0 pt-9 flex items-center justify-center text-muted-foreground text-sm p-6 text-center">
-                    Enter a website and tap "Train widget" to see your AI employee live.
+                    Your personalized demo is loading…
                   </div>
+
                 )}
                 {activeWidget && (
                   <iframe
