@@ -307,7 +307,7 @@ Deno.serve(async (req) => {
               ghl_location_id: existing.ghl_location_id,
               prospect_url: existing.prospect_url,
               business_name: existing.business_name,
-              knowledge_doc: null,
+              knowledge_doc: existing.knowledge_doc,
             }, { onConflict: 'ghl_contact_id' });
           }
           return new Response(JSON.stringify({
