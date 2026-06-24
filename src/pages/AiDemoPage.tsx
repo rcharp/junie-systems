@@ -191,8 +191,7 @@ const AiDemoPage = () => {
     if (!presetContactId && !presetWebsite) return;
     autoStartedRef.current = true;
     (async () => {
-      const loaded = await loadExisting();
-      if (!loaded && urlInput) train();
+      await loadExisting();
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
