@@ -394,6 +394,8 @@ Deno.serve(async (req) => {
       widgetId: widget.id,
       widgetEmbed: widget.embed,
       contactId,
+      locationId,
+      knowledgeDoc: doc,
       pagesCrawled: pages.length,
       timings: { crawlMs: t1 - t0, aiMs: t2 - t1, agentMs: t3 - t2, widgetMs: t4 - t3, contactMs: t5 - t4, totalMs: t5 - t0 },
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
