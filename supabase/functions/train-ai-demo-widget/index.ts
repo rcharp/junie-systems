@@ -259,6 +259,33 @@ Deno.serve(async (req) => {
       });
     }
 
+    // If a session already exists for this contactId + url, return it without recreating the agent.
+    if (parsed.data.contactId) {
+      const supa = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      const { data: existingRows } = await supa
+        .from('demo_sessions')
+        .select('*')
+        .eq('ghl_contact_id', parsed.data.contactId)
+        .eq('prospect_url', url)
+        .order('created_at', { ascending: false })
+        .limit(1);
+      const existing = existingRows?.[0];
+      if (existing?.ghl_agent_id) {
+        return new Response(JSON.stringify({
+          ok: true,
+          reused: true,
+          businessName: existing.business_name,
+          agentId: existing.ghl_agent_id,
+          contactId: existing.ghl_contact_id,
+          locationId: existing.ghl_location_id,
+          url: existing.prospect_url,
+        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+    }
+
     const t0 = Date.now();
     const pages = await crawl(url);
     const t1 = Date.now();
