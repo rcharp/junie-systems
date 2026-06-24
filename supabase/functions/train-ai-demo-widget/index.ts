@@ -171,7 +171,7 @@ const createConversationAgent = async (params: {
     businessName,
     mode: 'auto-pilot',
     channels: ['WebChat', 'Live_Chat'],
-    isPrimary: true,
+    isPrimary: false,
     waitTime: 1,
     waitTimeUnit: 'seconds',
     sleepEnabled: false,
