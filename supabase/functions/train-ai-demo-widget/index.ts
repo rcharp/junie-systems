@@ -323,27 +323,32 @@ Deno.serve(async (req) => {
       }
     }
 
-    const businessName = (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Demo'; } })();
-    const labelBase = `${businessName} ${new Date().toISOString().slice(0, 16)}`;
-
+    const fallbackName = (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Demo'; } })();
     const t0 = Date.now();
 
-    // 1) KB
-    const kbId = await createKnowledgeBase(locationId, `Demo KB · ${labelBase}`);
-    // 2) Crawl + wait
-    await startKbCrawl(kbId, url);
-    const crawlStatus = await pollKbCrawl(kbId);
+    // 1) Crawl prospect site
+    const pages = await crawl(url);
+    if (!pages.length) {
+      return new Response(JSON.stringify({ error: 'Could not crawl any pages from this URL.' }), {
+        status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const t1 = Date.now();
 
-    // 3) Agent with KB attached
+    // 2) Summarize into knowledge doc
+    const { doc, businessName } = await summarizeWithAi(pages, url);
+    const labelBase = `${businessName || fallbackName} ${new Date().toISOString().slice(0, 16)}`;
+    const t2 = Date.now();
+
+    // 3) Agent with knowledge embedded in instructions
     const agentId = await createAgent({
       locationId,
       name: `Demo Agent · ${labelBase}`,
-      kbId,
-      businessName,
+      knowledgeDoc: doc,
+      businessName: businessName || fallbackName,
       websiteUrl: url,
     });
-    const t2 = Date.now();
+    const t3 = Date.now();
 
     // 4) Widget with agent attached
     const widget = await createChatWidget({
@@ -351,25 +356,25 @@ Deno.serve(async (req) => {
       name: `Demo Widget · ${labelBase}`,
       agentId,
     });
-    const t3 = Date.now();
+    const t4 = Date.now();
 
     // 5) Fresh demo contact + persist
-    const contactCreate = await createDemoContact(locationId, businessName);
+    const contactCreate = await createDemoContact(locationId, businessName || fallbackName);
     const contactId = contactCreate.id;
-    const t4 = Date.now();
+    const t5 = Date.now();
 
     const sessionRows = [contactId, requestedContactId]
       .filter((id, i, all) => id && all.indexOf(id) === i)
       .map((id) => ({
         ghl_contact_id: id,
         ghl_agent_id: agentId,
-        ghl_kb_id: kbId,
+        ghl_kb_id: null,
         ghl_widget_id: widget.id || null,
         widget_embed: widget.embed,
         ghl_location_id: locationId,
         prospect_url: url,
-        business_name: businessName,
-        knowledge_doc: null,
+        business_name: businessName || fallbackName,
+        knowledge_doc: doc,
       }));
 
     if (sessionRows.length) {
@@ -381,14 +386,13 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({
       ok: true,
-      businessName,
-      kbId,
+      businessName: businessName || fallbackName,
       agentId,
       widgetId: widget.id,
       widgetEmbed: widget.embed,
       contactId,
-      crawlStatus,
-      timings: { kbMs: t1 - t0, agentMs: t2 - t1, widgetMs: t3 - t2, contactMs: t4 - t3, totalMs: t4 - t0 },
+      pagesCrawled: pages.length,
+      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, agentMs: t3 - t2, widgetMs: t4 - t3, contactMs: t5 - t4, totalMs: t5 - t0 },
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
