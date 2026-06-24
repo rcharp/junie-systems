@@ -1,0 +1,1 @@
+ALTER TABLE public.demo_sessions DROP CONSTRAINT IF EXISTS demo_sessions_ghl_contact_id_key;
