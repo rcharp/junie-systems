@@ -64,7 +64,9 @@ const discoverLinks = (html: string, origin: string): string[] => {
       const u = new URL(href, origin);
       if (u.origin !== origin) continue;
       if (SKIP_EXT.test(u.pathname)) continue;
+      if (BLOG_PATH.test(u.pathname)) continue;
       links.add(u.toString().split('#')[0]);
+
     } catch (_) { /* ignore */ }
   }
   return Array.from(links);
@@ -102,15 +104,16 @@ const collectSitemapUrls = async (origin: string, deadline: number): Promise<str
       // Page URLs
       for (const m of xml.matchAll(/<url>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/url>/gi)) {
         const u = m[1].trim();
-        if (u.startsWith(origin) && !SKIP_EXT.test(u)) out.add(u.split('#')[0]);
+        if (u.startsWith(origin) && !SKIP_EXT.test(u) && !isBlogUrl(u)) out.add(u.split('#')[0]);
       }
       // Bare <loc> fallback
       if (!xml.includes('<url>') && !xml.includes('<sitemap>')) {
         for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/gi)) {
           const u = m[1].trim();
-          if (u.startsWith(origin) && !SKIP_EXT.test(u)) out.add(u.split('#')[0]);
+          if (u.startsWith(origin) && !SKIP_EXT.test(u) && !isBlogUrl(u)) out.add(u.split('#')[0]);
         }
       }
+
     } catch (_) { /* ignore */ }
   }
   return Array.from(out);
