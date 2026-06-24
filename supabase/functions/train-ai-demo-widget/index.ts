@@ -11,8 +11,113 @@ const BodySchema = z.object({
 
 const GHL_BASE = 'https://services.leadconnectorhq.com';
 const GHL_VERSION = '2021-04-15';
-const CRAWL_POLL_MS = 3000;
-const CRAWL_POLL_MAX = 40; // ~120s
+
+// ---- Site crawl + AI summarize (KB embedded into agent instructions) ----
+const MAX_PAGES = 500;
+const FETCH_TIMEOUT_MS = 10000;
+const PER_PAGE_CHARS = 18000;
+const CRAWL_BUDGET_MS = 90_000;
+const CONCURRENCY = 8;
+const SKIP_EXT = /\.(pdf|jpg|jpeg|png|gif|webp|svg|ico|mp4|mp3|wav|zip|rar|css|js|woff2?|ttf|eot|xml|json)$/i;
+const BLOG_PATH = /(^|\/)(blog|blogs|news|articles?|posts?|insights?|stories|press|category|categories|tag|tags|author|authors|archive|archives)(\/|$)/i;
+const isBlogUrl = (u: string) => { try { return BLOG_PATH.test(new URL(u).pathname); } catch { return false; } };
+
+const stripHtml = (html: string) =>
+  html.replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const fetchWithTimeout = async (url: string, timeout = FETCH_TIMEOUT_MS) => {
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), timeout);
+  try {
+    return await fetch(url, {
+      signal: controller.signal,
+      headers: { 'user-agent': 'JunieAiDemoBot/1.0 (+https://juniesystems.com)' },
+      redirect: 'follow',
+    });
+  } finally { clearTimeout(t); }
+};
+
+const discoverLinks = (html: string, origin: string): string[] => {
+  const links = new Set<string>();
+  const re = /<a[^>]+href=["']([^"']+)["']/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    try {
+      const href = m[1];
+      if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) continue;
+      const u = new URL(href, origin);
+      if (u.origin !== origin) continue;
+      if (SKIP_EXT.test(u.pathname)) continue;
+      if (BLOG_PATH.test(u.pathname)) continue;
+      links.add(u.toString().split('#')[0]);
+    } catch (_) {}
+  }
+  return Array.from(links);
+};
+
+const crawl = async (startUrl: string) => {
+  const start = new URL(startUrl);
+  const origin = start.origin;
+  const deadline = Date.now() + CRAWL_BUDGET_MS;
+  const pages: { url: string; title: string; text: string }[] = [];
+  const visited = new Set<string>();
+  const queued = new Set<string>();
+  const queue: string[] = [];
+  const enqueue = (u: string) => { if (!queued.has(u) && !visited.has(u)) { queued.add(u); queue.push(u); } };
+  enqueue(start.toString());
+
+  const fetchOne = async (next: string) => {
+    visited.add(next);
+    try {
+      const res = await fetchWithTimeout(next);
+      if (!res.ok) return;
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('text/html')) return;
+      const html = await res.text();
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      const title = titleMatch ? titleMatch[1].trim() : next;
+      pages.push({ url: next, title, text: stripHtml(html).slice(0, PER_PAGE_CHARS) });
+      for (const link of discoverLinks(html, origin)) enqueue(link);
+    } catch (_) {}
+  };
+
+  while (queue.length && pages.length < MAX_PAGES && Date.now() < deadline) {
+    const batch: string[] = [];
+    while (batch.length < CONCURRENCY && queue.length && pages.length + batch.length < MAX_PAGES) batch.push(queue.shift()!);
+    await Promise.all(batch.map(fetchOne));
+  }
+  return pages;
+};
+
+const summarizeWithAi = async (pages: { url: string; title: string; text: string }[], targetUrl: string) => {
+  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
+  if (!lovableKey) throw new Error('LOVABLE_API_KEY missing');
+  const corpus = pages.map((p) => `# ${p.title}\nURL: ${p.url}\n${p.text}`).join('\n\n---\n\n').slice(0, 220000);
+  const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Lovable-API-Key': lovableKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-pro',
+      messages: [
+        { role: 'system', content: 'You build exhaustive knowledge-base documents for AI chat widgets that represent local home-service businesses. Preserve every concrete detail. Never invent facts. Begin with a single line: BUSINESS_NAME: <name>.' },
+        { role: 'user', content: `Source website: ${targetUrl}\n\nUsing ONLY the content below, produce a detailed markdown knowledge base (2,500-5,000 words) covering: Business Overview; Services (one sub-section each with what's included, process, materials, timeline, pricing if mentioned); Service Area; Pricing/Quotes/Financing; Guarantees/Warranties/Licensing/Insurance; Hours & Emergency availability; Booking & Contact (phone, email, address); 20-30 FAQs; Reviews/Testimonials (verbatim); Brand Voice. If something isn't covered, write "Not specified on the website — offer to have a team member follow up." Do not invent.\n\nCONTENT:\n${corpus}` },
+      ],
+    }),
+  });
+  if (!res.ok) throw new Error(`AI gateway ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const data = await res.json();
+  const summary = data.choices?.[0]?.message?.content ?? '';
+  const nameMatch = summary.match(/BUSINESS_NAME:\s*(.+)/i);
+  const businessName = (nameMatch?.[1] || new URL(targetUrl).hostname.replace(/^www\./, '')).trim();
+  const rawAppendix = `\n\n=== RAW WEBSITE CONTENT (verbatim, for fact lookup) ===\n${corpus}`;
+  return { doc: `${summary}${rawAppendix}`, businessName };
+};
 
 const ghlFetch = async (path: string, init: RequestInit) => {
   const pit = Deno.env.get('AI_DEMO_PIT');
