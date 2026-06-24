@@ -348,9 +348,12 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
   if (sessionError) throw sessionError;
 
   const training = await trainKnowledgeBaseWebsite(kbId, url, locationId);
+  const doc = training.trained
+    ? `Knowledge base trained from ${url}. Ingested ${training.trainedUrls.length} page(s):\n- ${training.trainedUrls.join('\n- ')}`
+    : `Knowledge base created for ${url}; training did not complete.`;
   await supa
     .from('demo_sessions')
-    .update({ knowledge_doc: training.trained ? `Knowledge base trained from ${url}.` : `Knowledge base created for ${url}; training did not complete.` })
+    .update({ knowledge_doc: doc })
     .eq('ghl_kb_id', kbId);
 };
 
