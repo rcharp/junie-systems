@@ -398,19 +398,23 @@ Deno.serve(async (req) => {
     const t4b = Date.now();
 
     const contactRes: any = contactCreateRes;
-    if (contactId) {
-      const supa = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      );
-      await supa.from('demo_sessions').upsert({
-        ghl_contact_id: contactId,
+    const sessionRows = [contactId, requestedContactId]
+      .filter((id, index, all) => id && all.indexOf(id) === index)
+      .map((id) => ({
+        ghl_contact_id: id,
         ghl_agent_id: null,
         ghl_location_id: locationId,
         prospect_url: url,
         business_name: businessName,
         knowledge_doc: doc,
-      }, { onConflict: 'ghl_contact_id' });
+      }));
+
+    if (contactId) {
+      const supa = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      await supa.from('demo_sessions').upsert(sessionRows, { onConflict: 'ghl_contact_id' });
     }
     const t5 = Date.now();
     const agentRes: any = { ok: true, skipped: true };
