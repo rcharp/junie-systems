@@ -396,17 +396,11 @@ Deno.serve(async (req) => {
     });
     const t4 = Date.now();
 
-    // Preserve old demo session rows so any posted contactId can still resolve
-    // to the matching trained knowledge base. If a caller provides contactId,
-    // bind the KB to that contact instead of creating a replacement contact.
-    const canReuseRequestedContact = requestedContactId && await contactExists(requestedContactId);
-    const contactCreateRes = canReuseRequestedContact
-      ? { ok: true, status: 200, body: { reused: true, id: requestedContactId } }
-      : await createDemoContact(locationId, businessName);
-
-    const contactId: string =
-      (canReuseRequestedContact ? requestedContactId : '') || extractContactId(contactCreateRes);
+    // Always create a fresh demo contact on POST so every training run starts clean.
+    const contactCreateRes = await createDemoContact(locationId, businessName);
+    const contactId: string = extractContactId(contactCreateRes);
     const t4b = Date.now();
+
 
     const agentId =
       agentRes?.body?.agent?.id ||
