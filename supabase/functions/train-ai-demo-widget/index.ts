@@ -11,8 +11,10 @@ const BodySchema = z.object({
   contactId: z.string().optional(),
 });
 
-const MAX_PAGES = 8;
-const FETCH_TIMEOUT_MS = 8000;
+const MAX_PAGES = 25;
+const FETCH_TIMEOUT_MS = 10000;
+const PER_PAGE_CHARS = 18000;
+
 const GHL_BASE = 'https://services.leadconnectorhq.com';
 const GHL_VERSION = '2021-04-15';
 const AGENT_NAME_PREFIX = 'Demo Agent · ';
@@ -88,7 +90,7 @@ const crawl = async (startUrl: string) => {
       const html = await res.text();
       const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
       const title = titleMatch ? titleMatch[1].trim() : next;
-      const text = stripHtml(html).slice(0, 6000);
+      const text = stripHtml(html).slice(0, PER_PAGE_CHARS);
       pages.push({ url: next, title, text });
       if (pages.length === 1) {
         const found = discoverLinks(html, origin);
@@ -103,26 +105,31 @@ const summarizeWithAi = async (pages: { url: string; title: string; text: string
   const lovableKey = Deno.env.get('LOVABLE_API_KEY');
   if (!lovableKey) throw new Error('LOVABLE_API_KEY missing');
 
-  const corpus = pages.map((p) => `# ${p.title}\nURL: ${p.url}\n${p.text}`).join('\n\n---\n\n').slice(0, 60000);
+  const corpus = pages.map((p) => `# ${p.title}\nURL: ${p.url}\n${p.text}`).join('\n\n---\n\n').slice(0, 220000);
 
   const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
     headers: { 'Lovable-API-Key': lovableKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'google/gemini-3-flash-preview',
+      model: 'google/gemini-2.5-pro',
       messages: [
-        { role: 'system', content: 'You build knowledge-base documents for AI chat widgets that represent local home-service businesses. Produce a concise, factual, well-structured markdown doc the bot can quote from. Never invent facts. Begin with a single line: BUSINESS_NAME: <name>.' },
-        { role: 'user', content: `Source website: ${targetUrl}\n\nUsing only the content below, produce a knowledge-base document with these sections:\n- Business Overview\n- Services Offered\n- Service Area / Locations\n- Pricing or Quoting Notes (only if mentioned)\n- FAQs (8-12 Q&A pairs)\n- Booking & Contact Instructions\n- Brand Voice & Tone Guidelines\n\nCONTENT:\n${corpus}` },
+        { role: 'system', content: 'You build exhaustive knowledge-base documents for AI chat widgets that represent local home-service businesses. Preserve every concrete detail from the source: exact service names, sub-services, materials, brands, equipment, certifications, license numbers, insurance, warranties, guarantees, response times, service areas (cities/zip codes), hours, phone, email, address, owner/team names, years in business, awards, financing, payment methods, named pricing or quote ranges, promotions, and direct customer quotes. Do not summarize away specifics. Never invent facts. Begin with a single line: BUSINESS_NAME: <name>.' },
+        { role: 'user', content: `Source website: ${targetUrl}\n\nUsing ONLY the content below, produce a long, detailed markdown knowledge base (target 2,500-5,000 words). Use these sections and add sub-headings as needed:\n\n1. Business Overview (history, mission, owner, team, years in business, differentiators)\n2. Services Offered — one sub-section per service. For each: what it is, what's included, typical process/steps, materials/brands/equipment used, who it's for, typical timeline, and any pricing/quote info mentioned.\n3. Service Area / Locations (list every city, town, neighborhood, county, or zip code mentioned)\n4. Pricing, Quotes & Financing (any explicit prices, ranges, minimums, free-quote policy, financing partners, payment methods)\n5. Guarantees, Warranties, Licensing & Insurance\n6. Hours of Operation & Emergency / After-Hours Availability\n7. Booking & Contact Instructions (phone, email, address, forms, scheduling links)\n8. FAQs — produce 20-30 Q&A pairs covering services, pricing, scheduling, service area, emergencies, materials, warranties, payment, and anything else a real customer would ask. Pull answers directly from the content.\n9. Customer Reviews / Testimonials (include verbatim quotes and reviewer names when present)\n10. Brand Voice & Tone Guidelines (how the bot should speak)\n\nIf the source doesn't cover something, write \"Not specified on the website — offer to have a team member follow up.\" Do not invent answers.\n\nCONTENT:\n${corpus}` },
       ],
     }),
   });
   if (!res.ok) throw new Error(`AI gateway ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
-  const doc = data.choices?.[0]?.message?.content ?? '';
-  const nameMatch = doc.match(/BUSINESS_NAME:\s*(.+)/i);
+  const summary = data.choices?.[0]?.message?.content ?? '';
+  const nameMatch = summary.match(/BUSINESS_NAME:\s*(.+)/i);
   const businessName = (nameMatch?.[1] || new URL(targetUrl).hostname).trim();
+  // Append the raw crawled corpus so the chat model can quote specifics the
+  // summarizer may have compressed away.
+  const rawAppendix = `\n\n=== RAW WEBSITE CONTENT (verbatim, for fact lookup) ===\n${corpus}`;
+  const doc = `${summary}${rawAppendix}`;
   return { doc, businessName };
 };
+
 
 const ghlFetch = async (path: string, init: RequestInit) => {
   const pit = Deno.env.get('AI_DEMO_PIT');
