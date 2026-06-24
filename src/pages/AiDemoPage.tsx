@@ -30,6 +30,9 @@ const AiDemoPage = () => {
   const [activeUrl, setActiveUrl] = useState<string>('');
   const [activeWidget, setActiveWidget] = useState<string>('');
   const [activeContactId, setActiveContactId] = useState<string>('');
+  const [knowledgeDoc, setKnowledgeDoc] = useState<string>('');
+  const [locationId, setLocationId] = useState<string>('');
+  const [agentId, setAgentId] = useState<string>('');
   const [widgetExpanded, setWidgetExpanded] = useState(false);
   const [step, setStep] = useState<Step>('idle');
   const [error, setError] = useState<string>('');
