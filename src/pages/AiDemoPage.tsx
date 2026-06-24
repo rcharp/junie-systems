@@ -134,16 +134,20 @@ const AiDemoPage = () => {
                   />
                 )}
 
-                {/* Widget overlay iframe */}
+                {/* Widget overlay iframe - confined to bottom-right so the rest of the page stays clickable/scrollable */}
                 {activeWidget && (
                   <iframe
                     title="Chat Widget"
                     srcDoc={widgetSrcDoc}
-                    className="absolute inset-0 w-full h-full border-0 pointer-events-none"
-                    style={{ background: 'transparent' }}
-                    onLoad={(e) => {
-                      // Re-enable pointer events so users can interact with the widget bubble
-                      (e.currentTarget as HTMLIFrameElement).style.pointerEvents = 'auto';
+                    className="absolute border-0"
+                    style={{
+                      bottom: 0,
+                      right: 0,
+                      width: '320px',
+                      height: '560px',
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      background: 'transparent',
                     }}
                   />
                 )}
