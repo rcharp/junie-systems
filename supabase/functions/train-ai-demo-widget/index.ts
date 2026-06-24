@@ -324,6 +324,24 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
 
   const fallbackName = getFallbackBusinessName(url);
   const kbName = requestedContactId || `Demo KB - ${fallbackName} - ${new Date().toISOString()}`;
+
+  // If a KB with the same name already exists in this location, delete it first.
+  try {
+    const list = await ghlFetch(`/knowledge-base/?locationId=${locationId}&limit=100`, { method: 'GET' });
+    const items: any[] =
+      list.body?.knowledgeBases || list.body?.data?.knowledgeBases ||
+      list.body?.data || list.body?.items || [];
+    const existing = Array.isArray(items) ? items.filter((k) => (k?.name || '').trim() === kbName.trim()) : [];
+    for (const k of existing) {
+      const existingId = k.id || k._id;
+      if (!existingId) continue;
+      const del = await ghlFetch(`/knowledge-base/${existingId}?locationId=${locationId}`, { method: 'DELETE' });
+      console.log(`Deleted existing KB ${existingId} (${kbName}):`, del.status);
+    }
+  } catch (e) {
+    console.warn('KB lookup/delete failed (non-fatal):', e);
+  }
+
   const kbCreate = await ghlFetch('/knowledge-base/', {
     method: 'POST',
     body: JSON.stringify({ locationId, name: kbName }),
