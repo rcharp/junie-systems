@@ -247,38 +247,23 @@ Deno.serve(async (req) => {
         });
       }
 
-      if (data.ghl_contact_id && !(await contactExists(data.ghl_contact_id))) {
-        const contactRes = await createDemoContact(data.ghl_location_id, data.business_name || 'Demo');
-        const newContactId = extractContactId(contactRes);
-        if (newContactId) {
-          await supa.from('demo_sessions').upsert({
-            ghl_contact_id: newContactId,
-            ghl_agent_id: data.ghl_agent_id,
-            ghl_location_id: data.ghl_location_id,
-            prospect_url: data.prospect_url,
-            business_name: data.business_name,
-            knowledge_doc: data.knowledge_doc,
-          }, { onConflict: 'ghl_contact_id' });
-          data = { ...data, ghl_contact_id: newContactId };
-        }
+      // Every page load should start a brand-new conversation, which in GHL
+      // means a brand-new contact (contacts own conversation history). Mint a
+      // fresh contact and bind it to the same trained KB/agent.
+      const contactRes = await createDemoContact(data.ghl_location_id, data.business_name || 'Demo');
+      const newContactId = extractContactId(contactRes);
+      if (newContactId) {
+        await supa.from('demo_sessions').upsert({
+          ghl_contact_id: newContactId,
+          ghl_agent_id: data.ghl_agent_id,
+          ghl_location_id: data.ghl_location_id,
+          prospect_url: data.prospect_url,
+          business_name: data.business_name,
+          knowledge_doc: data.knowledge_doc,
+        }, { onConflict: 'ghl_contact_id' });
+        data = { ...data, ghl_contact_id: newContactId };
       }
 
-      // Clear prior conversations for this contact so each page load starts a fresh chat.
-      if (data.ghl_contact_id && data.ghl_location_id) {
-        try {
-          const convRes = await ghlFetch(
-            `/conversations/search?locationId=${encodeURIComponent(data.ghl_location_id)}&contactId=${encodeURIComponent(data.ghl_contact_id)}&limit=100`,
-            { method: 'GET' },
-          );
-          const convs = (convRes?.body?.conversations || convRes?.body?.data || []) as any[];
-          await Promise.all(
-            (Array.isArray(convs) ? convs : [])
-              .map((c) => c?.id || c?._id)
-              .filter(Boolean)
-              .map((cid) => ghlFetch(`/conversations/${encodeURIComponent(cid)}`, { method: 'DELETE' }).catch(() => null)),
-          );
-        } catch (_) { /* best-effort */ }
-      }
 
       return new Response(JSON.stringify({
         ok: true,
