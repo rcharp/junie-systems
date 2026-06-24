@@ -39,6 +39,11 @@ const AiDemoPage = () => {
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 <style>
   html,body{margin:0;padding:0;background:transparent;height:100%;width:100%;overflow:hidden;}
+  /* Scale the open chat panel so it fits inside the phone screen */
+  chat-widget[data-active="true"]{
+    transform: scale(0.82);
+    transform-origin: bottom right;
+  }
 </style>
 </head><body>${activeWidget}
 <script>
