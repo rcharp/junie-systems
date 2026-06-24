@@ -11,7 +11,8 @@ const BodySchema = z.object({
 const MAX_PAGES = 8;
 const FETCH_TIMEOUT_MS = 8000;
 const GHL_BASE = 'https://services.leadconnectorhq.com';
-const GHL_VERSION = '2021-07-28';
+const GHL_VERSION = '2021-04-15';
+const AGENT_NAME_PREFIX = 'Demo Agent · ';
 
 const cache = new Map<string, { ts: number; payload: any }>();
 
@@ -139,59 +140,49 @@ const ghlFetch = async (path: string, init: RequestInit) => {
   return { ok: res.ok, status: res.status, body };
 };
 
-const createKnowledgeBase = async (locationId: string, name: string, content: string, sourceUrl: string) => {
-  // Try multiple known/likely GHL KB endpoints in order; return first success.
-  const attempts: { path: string; body: any }[] = [
-    {
-      path: '/conversations/ai-agents/knowledge-base',
-      body: { locationId, name, documents: [{ title: name, content, sourceUrl }] },
-    },
-    {
-      path: '/conversations/knowledge-base',
-      body: { locationId, name, documents: [{ title: name, content, sourceUrl }] },
-    },
-    {
-      path: '/conversations/ai-agents/knowledge-base/documents',
-      body: { locationId, title: name, content, sourceUrl },
-    },
-  ];
-  const errors: any[] = [];
-  for (const a of attempts) {
-    const r = await ghlFetch(a.path, { method: 'POST', body: JSON.stringify(a.body) });
-    if (r.ok) {
-      const kb = r.body;
-      const id = kb?.id || kb?.knowledgeBaseId || kb?.knowledgeBase?.id || kb?.data?.id;
-      return { ok: true, id, raw: kb, endpoint: a.path };
-    }
-    errors.push({ endpoint: a.path, status: r.status, body: r.body });
-  }
-  return { ok: false, errors };
+// Find prior demo agents on this location so we can clean them up.
+const listAgents = async (locationId: string) => {
+  // GHL list agents is GET /conversation-ai/agents?locationId=... — best-effort.
+  const r = await ghlFetch(`/conversation-ai/agents?locationId=${encodeURIComponent(locationId)}&limit=100`, { method: 'GET' });
+  if (!r.ok) return [];
+  const list = (r.body?.agents || r.body?.data || r.body || []) as any[];
+  return Array.isArray(list) ? list : [];
+};
+
+const deleteAgent = async (agentId: string) => {
+  return await ghlFetch(`/conversation-ai/agents/${encodeURIComponent(agentId)}`, { method: 'DELETE' });
 };
 
 const createConversationAgent = async (params: {
-  locationId: string;
   name: string;
   businessName: string;
-  knowledgeBaseId?: string;
-  calendarId?: string;
+  knowledgeDoc: string;
+  websiteUrl: string;
 }) => {
-  const { locationId, name, businessName, knowledgeBaseId, calendarId } = params;
-  const body: any = {
-    locationId,
+  const { name, businessName, knowledgeDoc, websiteUrl } = params;
+  // GHL `instructions` is the most reliable place to put trained content because the
+  // public KB-create endpoint isn't exposed. Cap to ~30k chars to stay well under limits.
+  const knowledge = knowledgeDoc.slice(0, 30000);
+  const body = {
     name,
-    status: 'active',
+    businessName,
+    mode: 'auto-pilot',
+    channels: ['WebChat', 'Live_Chat'],
     isPrimary: true,
-    channels: ['live_chat'],
-    botMode: 'autopilot',
-    responseDelay: 1,
-    maxMessages: 20,
-    botGoal: `You are a helpful AI assistant for ${businessName}. Answer questions about the business using ONLY the linked knowledge base, qualify leads, and book appointments when asked. Be friendly, concise, and professional. If you don't know something, say so and offer to connect the visitor with a team member.`,
+    waitTime: 1,
+    waitTimeUnit: 'seconds',
+    sleepEnabled: false,
+    personality: 'Warm, friendly, concise, and professional. Speaks like a knowledgeable front-desk teammate at a local home-service business.',
+    goal: `Help website visitors of ${businessName} get accurate answers about services, pricing, and service area, and capture leads or book appointments.`,
+    instructions: `You are the live-chat AI assistant for ${businessName} (website: ${websiteUrl}). Answer using ONLY the knowledge below. If something isn't covered, say you'll have a team member follow up and ask for the visitor's name, phone, and email. Be brief (2-4 sentences). Never invent prices, hours, or guarantees.\n\n=== BUSINESS KNOWLEDGE ===\n${knowledge}\n=== END KNOWLEDGE ===`,
+    autoPilotMaxMessages: 75,
+    respondToImages: false,
+    respondToAudio: false,
   };
-  if (knowledgeBaseId) body.knowledgeBaseId = knowledgeBaseId;
-  if (calendarId) body.appointmentBooking = { enabled: true, calendarId };
 
   return await ghlFetch('/conversation-ai/agents', { method: 'POST', body: JSON.stringify(body) });
 };
+
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -234,16 +225,17 @@ Deno.serve(async (req) => {
     const { doc, businessName } = await summarizeWithAi(pages, url);
     const t2 = Date.now();
 
-    const kbName = `Auto-trained: ${businessName} (${new URL(url).hostname})`;
-    const kb = await createKnowledgeBase(locationId, kbName, doc, url);
+    // Clean up prior demo agents on this location so each run gets a fresh, primary agent.
+    const existing = await listAgents(locationId);
+    const stale = existing.filter((a) => typeof a?.name === 'string' && a.name.startsWith(AGENT_NAME_PREFIX));
+    const deletions = await Promise.all(stale.map((a) => deleteAgent(a.id || a._id).catch((e) => ({ ok: false, error: String(e) }))));
     const t3 = Date.now();
 
     const agent = await createConversationAgent({
-      locationId,
-      name: `Demo Agent · ${businessName}`,
+      name: `${AGENT_NAME_PREFIX}${businessName}`,
       businessName,
-      knowledgeBaseId: kb.ok ? kb.id : undefined,
-      calendarId: calendarId || undefined,
+      knowledgeDoc: doc,
+      websiteUrl: url,
     });
     const t4 = Date.now();
 
@@ -253,9 +245,9 @@ Deno.serve(async (req) => {
       pagesCrawled: pages.map((p) => ({ url: p.url, title: p.title })),
       knowledgePreview: doc.slice(0, 800),
       knowledgeLength: doc.length,
-      kb,
+      cleanedUp: { count: stale.length, deletions },
       agent,
-      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, kbMs: t3 - t2, agentMs: t4 - t3, totalMs: t4 - t0 },
+      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, cleanupMs: t3 - t2, agentMs: t4 - t3, totalMs: t4 - t0 },
     };
     cache.set(url, { ts: Date.now(), payload });
 
