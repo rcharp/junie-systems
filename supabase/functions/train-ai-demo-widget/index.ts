@@ -253,6 +253,7 @@ Deno.serve(async (req) => {
         locationId: data.ghl_location_id,
         url: data.prospect_url,
         businessName: data.business_name,
+        knowledgeDoc: data.knowledge_doc,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     } catch (e) {
       return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
@@ -306,7 +307,7 @@ Deno.serve(async (req) => {
               ghl_location_id: existing.ghl_location_id,
               prospect_url: existing.prospect_url,
               business_name: existing.business_name,
-              knowledge_doc: null,
+              knowledge_doc: existing.knowledge_doc,
             }, { onConflict: 'ghl_contact_id' });
           }
           return new Response(JSON.stringify({
@@ -318,6 +319,8 @@ Deno.serve(async (req) => {
             widgetId: existing.ghl_widget_id,
             widgetEmbed: existing.widget_embed,
             contactId: existing.ghl_contact_id,
+            locationId: existing.ghl_location_id,
+            knowledgeDoc: existing.knowledge_doc,
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
       }
@@ -391,6 +394,8 @@ Deno.serve(async (req) => {
       widgetId: widget.id,
       widgetEmbed: widget.embed,
       contactId,
+      locationId,
+      knowledgeDoc: doc,
       pagesCrawled: pages.length,
       timings: { crawlMs: t1 - t0, aiMs: t2 - t1, agentMs: t3 - t2, widgetMs: t4 - t3, contactMs: t5 - t4, totalMs: t5 - t0 },
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

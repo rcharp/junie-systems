@@ -30,6 +30,9 @@ const AiDemoPage = () => {
   const [activeUrl, setActiveUrl] = useState<string>('');
   const [activeWidget, setActiveWidget] = useState<string>('');
   const [activeContactId, setActiveContactId] = useState<string>('');
+  const [knowledgeDoc, setKnowledgeDoc] = useState<string>('');
+  const [locationId, setLocationId] = useState<string>('');
+  const [agentId, setAgentId] = useState<string>('');
   const [widgetExpanded, setWidgetExpanded] = useState(false);
   const [step, setStep] = useState<Step>('idle');
   const [error, setError] = useState<string>('');
@@ -146,6 +149,9 @@ const AiDemoPage = () => {
       setStep('loading');
       setTimeout(() => {
         if (data.contactId) setActiveContactId(data.contactId);
+        if (data.knowledgeDoc) setKnowledgeDoc(data.knowledgeDoc);
+        if (data.locationId) setLocationId(data.locationId);
+        if (data.agentId) setAgentId(data.agentId);
         const embed = data.widgetEmbed || (data.widgetId ? buildWidgetScript(data.widgetId) : '');
         if (!embed) throw new Error('No widget embed returned');
         setActiveWidget(embed);
@@ -177,6 +183,9 @@ const AiDemoPage = () => {
       if (!res.ok || !data?.ok) throw new Error(data?.error || 'Session not found');
       setActiveUrl(data.url);
       setActiveContactId(data.contactId || '');
+      if (data.knowledgeDoc) setKnowledgeDoc(data.knowledgeDoc);
+      if (data.locationId) setLocationId(data.locationId);
+      if (data.agentId) setAgentId(data.agentId);
       const embed = data.widgetEmbed || (data.widgetId ? buildWidgetScript(data.widgetId) : '');
       if (!embed) throw new Error('No widget embed for this session');
       setActiveWidget(embed);
@@ -248,7 +257,57 @@ const AiDemoPage = () => {
                 <span>{error}</span>
               </div>
             )}
+
+            {step === 'ready' && (knowledgeDoc || agentId) && (
+              <Card className="border-primary/30">
+                <CardContent className="p-4 space-y-3">
+                  <div className="text-sm font-semibold text-foreground">
+                    Finish setup in GHL
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Copy the generated knowledge doc and paste it into the agent's Knowledge Base in GHL.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(knowledgeDoc || '');
+                          toast({ title: 'Copied', description: 'Knowledge doc copied to clipboard.' });
+                        } catch {
+                          toast({ title: 'Copy failed', variant: 'destructive' });
+                        }
+                      }}
+                      disabled={!knowledgeDoc}
+                    >
+                      Copy knowledge doc
+                    </Button>
+                    {locationId && agentId && (
+                      <a
+                        href={`https://app.gohighlevel.com/v2/location/${locationId}/conversation-ai/agents/${agentId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button size="sm">Open agent in GHL</Button>
+                      </a>
+                    )}
+                    {locationId && (
+                      <a
+                        href={`https://app.gohighlevel.com/v2/location/${locationId}/knowledge-base`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Button size="sm" variant="secondary">Open Knowledge Base</Button>
+                      </a>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
+
+
 
 
           <div className="flex justify-center lg:sticky lg:top-8">
