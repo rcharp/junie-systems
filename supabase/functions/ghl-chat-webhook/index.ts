@@ -133,6 +133,7 @@ Deno.serve(async (req) => {
 
     return respond({ ok: true, reply, sent });
   } catch (e) {
-    return respond({ ok: false, error: String((e as Error)?.message ?? e) }, 500);
+    console.error('ghl-chat-webhook error', e);
+    return respond({ ok: false, error: String((e as Error)?.message ?? e), stack: (e as Error)?.stack }, 500);
   }
 });
