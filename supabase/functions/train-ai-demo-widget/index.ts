@@ -234,7 +234,7 @@ const getFallbackBusinessName = (url: string) => {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Demo'; }
 };
 
-const findExistingSession = async (supa: any, contactId: string, url: string) => {
+const findExistingSession = async (supa: any, contactId: string, url: string, includeUrlFallback = true) => {
   if (contactId) {
     const { data } = await supa
       .from('demo_sessions')
@@ -244,6 +244,8 @@ const findExistingSession = async (supa: any, contactId: string, url: string) =>
       .limit(1);
     if (data?.[0]) return data[0];
   }
+
+  if (!includeUrlFallback) return null;
 
   const { data } = await supa
     .from('demo_sessions')
@@ -293,7 +295,7 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string) => {
 const processDemoKnowledgeBase = async (params: { url: string; locationId: string; requestedContactId: string }) => {
   const { url, locationId, requestedContactId } = params;
   const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-  const existing = await findExistingSession(supa, requestedContactId, url);
+  const existing = await findExistingSession(supa, requestedContactId, url, false);
   if (existing?.ghl_kb_id) return;
 
   const fallbackName = getFallbackBusinessName(url);
@@ -407,7 +409,7 @@ Deno.serve(async (req) => {
     const requestedContactId = (parsed.data.contactId || '').trim();
 
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const existing = await findExistingSession(supa, requestedContactId, url);
+    const existing = await findExistingSession(supa, requestedContactId, url, !requestedContactId);
     if (existing?.ghl_kb_id) {
       return new Response(JSON.stringify({
         ok: true,
