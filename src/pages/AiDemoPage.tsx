@@ -157,6 +157,17 @@ const AiDemoPage = () => {
     }
   };
 
+  // Auto-train when contact_id (and optionally website) are passed via URL.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (autoStartedRef.current) return;
+    if (!presetContactId && !presetWebsite) return;
+    if (!urlInput) return;
+    autoStartedRef.current = true;
+    train();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const isWorking = ['crawling', 'training', 'pushing', 'loading'].includes(step);
   const currentIdx = STEP_FLOW.findIndex((s) => s.key === step);
 
