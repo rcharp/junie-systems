@@ -45,12 +45,11 @@ const AiDemoPage = () => {
     ];
     const expanded = candidates.some((element) => {
       if (!visible(element)) return false;
-      const rect = element.getBoundingClientRect();
       const label = [element.getAttribute('aria-label'), element.getAttribute('title'), element.className]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
-      return (label.includes('close') && (label.includes('chat') || label.includes('widget'))) || (rect.width > 180 && rect.height > 180);
+      return label.includes('close chat') || label.includes('close the chat') || label.includes('select to close the chat widget');
     }) || Boolean(shadowActive);
 
     if (expanded !== lastState) {
@@ -70,7 +69,7 @@ const AiDemoPage = () => {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: ['class', 'style', 'aria-label', 'title'],
+    attributeFilter: ['class', 'style', 'aria-label', 'title', 'data-active'],
   });
 
   const watchShadowRoot = () => {
