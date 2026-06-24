@@ -175,20 +175,12 @@ Deno.serve(async (req) => {
       message: String(messageBody),
     });
 
-    // Post the reply back into the GHL conversation so the prospect sees it in the widget.
-    const sendBody: any = {
-      type,
-      message: reply,
-      contactId,
-    };
-    if (conversationId) sendBody.conversationId = conversationId;
+    // Return the reply for the GHL workflow to send. Do NOT post to
+    // /conversations/messages here — the workflow already sends the returned
+    // reply, and posting again causes the widget to show two identical bot
+    // messages back-to-back.
+    return respond({ ok: true, reply, matchedBy, sessionContactId: session.ghl_contact_id });
 
-    const sent = await ghlFetch('/conversations/messages', {
-      method: 'POST',
-      body: JSON.stringify(sendBody),
-    });
-
-    return respond({ ok: true, reply, matchedBy, sessionContactId: session.ghl_contact_id, sent });
   } catch (e) {
     console.error('ghl-chat-webhook error', e);
     return respond({ ok: false, error: String((e as Error)?.message ?? e), stack: (e as Error)?.stack }, 500);
