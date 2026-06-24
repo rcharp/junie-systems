@@ -270,15 +270,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const cached = cache.get(url);
-    if (cached && Date.now() - cached.ts < 60_000) {
-      return new Response(JSON.stringify({ ...cached.payload, cached: true }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
-    // Note: we intentionally do NOT reuse an existing session here. Each POST creates a
-    // fresh GHL contact + agent so the chatbot conversation starts clean every time.
+    const requestedContactId = (parsed.data.contactId || '').trim();
 
 
     const t0 = Date.now();
@@ -307,41 +299,24 @@ Deno.serve(async (req) => {
     });
     const t4 = Date.now();
 
-    // If a prior demo session exists for this URL, delete its GHL contact first so we
-    // can recreate a clean one (and its conversation history is gone).
-    try {
-      const supaCleanup = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      );
-      const { data: priorRows } = await supaCleanup
-        .from('demo_sessions')
-        .select('ghl_contact_id')
-        .eq('prospect_url', url);
-      const priorIds = (priorRows || []).map((r: any) => r.ghl_contact_id).filter(Boolean);
-      await Promise.all(
-        priorIds.map((cid: string) =>
-          ghlFetch(`/contacts/${encodeURIComponent(cid)}`, { method: 'DELETE' }).catch(() => null),
-        ),
-      );
-      if (priorIds.length) {
-        await supaCleanup.from('demo_sessions').delete().in('ghl_contact_id', priorIds);
-      }
-    } catch (_) { /* best-effort */ }
-
-    // Always create a fresh GHL contact for this demo so the chatbot conversation is new.
-    const contactCreateRes = await ghlFetch('/contacts/', {
-      method: 'POST',
-      body: JSON.stringify({
-        locationId,
-        firstName: 'Demo',
-        lastName: `${businessName} ${Date.now()}`,
-        source: 'AI Demo Widget',
-        tags: ['ai-demo'],
-      }),
-    });
+    // Preserve old demo session rows so any posted contactId can still resolve
+    // to the matching trained knowledge base. If a caller provides contactId,
+    // bind the KB to that contact instead of creating a replacement contact.
+    const contactCreateRes = requestedContactId
+      ? { ok: true, status: 200, body: { reused: true, id: requestedContactId } }
+      : await ghlFetch('/contacts/', {
+          method: 'POST',
+          body: JSON.stringify({
+            locationId,
+            firstName: 'Demo',
+            lastName: `${businessName} ${Date.now()}`,
+            source: 'AI Demo Widget',
+            tags: ['ai-demo'],
+          }),
+        });
 
     const contactId: string =
+      requestedContactId ||
       contactCreateRes?.body?.contact?.id ||
       contactCreateRes?.body?.contact?._id ||
       contactCreateRes?.body?.id ||
@@ -387,9 +362,6 @@ Deno.serve(async (req) => {
       contact: contactRes,
       timings: { crawlMs: t1 - t0, aiMs: t2 - t1, cleanupMs: t3 - t2, agentMs: t4 - t3, contactMs: t5 - t4, totalMs: t5 - t0 },
     };
-    cache.set(url, { ts: Date.now(), payload });
-
-
     return new Response(JSON.stringify(payload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

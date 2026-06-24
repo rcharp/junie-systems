@@ -86,6 +86,19 @@ const loadDemoSession = async (supa: any, contactId: string, locationId?: string
   if (exactErr) throw exactErr;
   if (exact?.knowledge_doc) return { session: exact, matchedBy: 'contact_id' };
 
+  if (exact?.prospect_url) {
+    const { data: sameUrlRows, error: sameUrlErr } = await supa
+      .from('demo_sessions')
+      .select(columns)
+      .eq('prospect_url', exact.prospect_url)
+      .not('knowledge_doc', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (sameUrlErr) throw sameUrlErr;
+    const sameUrl = Array.isArray(sameUrlRows) ? sameUrlRows[0] : null;
+    if (sameUrl) return { session: sameUrl, matchedBy: 'latest_same_website' };
+  }
+
   // The embedded GHL widget can create a fresh visitor contact instead of using
   // the pre-created demo contact. In that case, answer from the newest trained
   // demo KB for this demo location so the chat never returns blank.
