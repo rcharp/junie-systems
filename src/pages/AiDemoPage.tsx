@@ -36,10 +36,9 @@ const AiDemoPage = () => {
     return `
 <!doctype html>
 <html><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 <style>
   html,body{margin:0;padding:0;background:transparent;height:100%;width:100%;overflow:hidden;}
-  chat-widget{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;}
-  chat-widget *{max-width:100%!important;}
 </style>
 </head><body>${activeWidget}
 <script>
@@ -74,21 +73,12 @@ const AiDemoPage = () => {
   const sched = () => { requestAnimationFrame(detect); setTimeout(detect, 100); setTimeout(detect, 400); };
   const obs = new MutationObserver(sched);
   obs.observe(document.documentElement, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style','aria-label','title','data-active'] });
-  const SHADOW_CSS = ':host,:host>*{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;}.lc_text-widget,.lc_text-widget--open,[class*="widget"],[class*="Widget"]{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;right:0!important;bottom:0!important;left:0!important;top:0!important;border-radius:0!important;}';
-  const injectShadowStyle = (r) => {
-    if (!r || r.__junieStyled) return;
-    r.__junieStyled = true;
-    const s = document.createElement('style');
-    s.textContent = SHADOW_CSS;
-    r.appendChild(s);
-  };
   const watchSR = () => {
     const r = document.querySelector('chat-widget')?.shadowRoot;
     if (r && !r.__junieWatched) {
       r.__junieWatched = true;
       obs.observe(r, { childList:true, subtree:true, attributes:true, attributeFilter:['class','style','aria-label','title','data-active'] });
     }
-    injectShadowStyle(r);
   };
   if ('ResizeObserver' in window) new ResizeObserver(sched).observe(document.body);
   window.addEventListener('click', sched, true);
