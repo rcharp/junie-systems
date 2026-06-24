@@ -11,10 +11,13 @@ const DEFAULT_WIDGET = `<script src="https://widgets.leadconnectorhq.com/loader.
 
 const AiDemoPage = () => {
   const navigate = useNavigate();
+const AiDemoPage = () => {
+  const navigate = useNavigate();
   const [urlInput, setUrlInput] = useState('https://imprintconstruction.com');
   const [activeUrl, setActiveUrl] = useState('https://imprintconstruction.com');
   const [widgetCode, setWidgetCode] = useState(DEFAULT_WIDGET);
   const [activeWidget, setActiveWidget] = useState(DEFAULT_WIDGET);
+  const [widgetExpanded, setWidgetExpanded] = useState(false);
 
   const widgetSrcDoc = useMemo(() => `
 <!doctype html>
@@ -134,22 +137,30 @@ const AiDemoPage = () => {
                   />
                 )}
 
-                {/* Widget overlay iframe - confined to bottom-right so the rest of the page stays clickable/scrollable */}
+                {/* Widget overlay - small bubble by default, expands when clicked so the rest of the phone stays scrollable */}
                 {activeWidget && (
-                  <iframe
-                    title="Chat Widget"
-                    srcDoc={widgetSrcDoc}
-                    className="absolute border-0"
+                  <div
+                    className="absolute bottom-3 right-3 z-20 transition-all"
                     style={{
-                      bottom: 0,
-                      right: 0,
-                      width: '320px',
-                      height: '560px',
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      background: 'transparent',
+                      width: widgetExpanded ? '300px' : '70px',
+                      height: widgetExpanded ? '480px' : '70px',
                     }}
-                  />
+                  >
+                    <iframe
+                      title="Chat Widget"
+                      srcDoc={widgetSrcDoc}
+                      className="w-full h-full border-0"
+                      style={{ background: 'transparent' }}
+                    />
+                    {/* Toggle handle */}
+                    <button
+                      onClick={() => setWidgetExpanded((v) => !v)}
+                      className="absolute -top-3 -left-3 w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-lg z-30"
+                      title={widgetExpanded ? 'Collapse widget' : 'Expand widget'}
+                    >
+                      {widgetExpanded ? '–' : '+'}
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
