@@ -376,16 +376,28 @@ Deno.serve(async (req) => {
     const kbId = pickId(kbCreate.body);
     if (!kbId) throw new Error(`KB create returned no id: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
 
-    // 4) Submit the prospect URL to the KB web crawler, then trigger training.
-    const crawlRes = await ghlFetch(`/knowledge-base/${kbId}/crawl`, {
+    // 4) Discover → poll status → train (homepage only for the demo).
+    const discoverRes = await ghlFetch(`/knowledge-base/${kbId}/website/discover`, {
       method: 'POST',
-      body: JSON.stringify({ locationId, url }),
+      body: JSON.stringify({ url }),
     });
-    if (!crawlRes.ok) console.warn('KB crawl submit failed:', crawlRes.status, JSON.stringify(crawlRes.body).slice(0, 400));
+    if (!discoverRes.ok) console.warn('KB discover failed:', discoverRes.status, JSON.stringify(discoverRes.body).slice(0, 400));
 
-    const trainRes = await ghlFetch(`/knowledge-base/${kbId}/crawl/train`, {
+    // Poll status up to ~30s.
+    let discoveredUrls: string[] = [];
+    for (let i = 0; i < 15; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      const statusRes = await ghlFetch(`/knowledge-base/${kbId}/website/status`, { method: 'GET' });
+      const b: any = statusRes.body || {};
+      const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
+      const urls: string[] = b.urls || b.pages || b.discoveredUrls || b.data?.urls || [];
+      if (urls.length) discoveredUrls = urls;
+      if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
+    }
+
+    const trainRes = await ghlFetch(`/knowledge-base/${kbId}/website/train`, {
       method: 'POST',
-      body: JSON.stringify({ locationId }),
+      body: JSON.stringify({ urls: [url] }), // Option A: homepage only.
     });
     if (!trainRes.ok) console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
     const t3 = Date.now();
