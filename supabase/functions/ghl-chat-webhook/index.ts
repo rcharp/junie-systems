@@ -82,8 +82,9 @@ Deno.serve(async (req) => {
     const rawBody =
       (typeof payload.body === 'string' ? payload.body : '') ||
       (typeof payload.message === 'string' ? payload.message : '') ||
+      payload.customer_message || payload.customerMessage ||
       payload.messageBody || payload.text || payload.body_text ||
-      msg.body || msg.text || msg.message || evt.body || evt.text || '';
+      msg.body || msg.text || msg.message || evt.body || evt.text || evt.customer_message || '';
     const messageBody = String(rawBody || '').trim();
     const direction = payload.direction || payload.messageDirection || msg.direction;
     const type = payload.type || payload.messageType || msg.type || 'Chat';
