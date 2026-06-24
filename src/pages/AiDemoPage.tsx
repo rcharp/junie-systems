@@ -36,7 +36,11 @@ const AiDemoPage = () => {
     return `
 <!doctype html>
 <html><head><meta charset="utf-8"/>
-<style>html,body{margin:0;padding:0;background:transparent;height:100%;width:100%;overflow:hidden;}</style>
+<style>
+  html,body{margin:0;padding:0;background:transparent;height:100%;width:100%;overflow:hidden;}
+  chat-widget{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;}
+  chat-widget *{max-width:100%!important;}
+</style>
 </head><body>${activeWidget}
 <script>
 (() => {
