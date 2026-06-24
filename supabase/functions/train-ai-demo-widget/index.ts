@@ -292,29 +292,10 @@ Deno.serve(async (req) => {
       agentRes?.body?._id ||
       null;
 
-    // Bridge: contactId -> agentId. Prefer a caller-supplied contactId (live use:
-    // landing-page query param identifies a known prospect). Otherwise create a
-    // fresh demo contact so the widget visitor can still be pre-identified.
-    let contactId: string | null = parsed.data.contactId || null;
-    let contactRes: any = null;
+    // Bridge: contactId -> agentId. Caller must supply contactId; we never create one.
+    const contactId: string | null = parsed.data.contactId || null;
+    const contactRes: any = null;
     if (agentId) {
-      if (!contactId) {
-        const hostname = (() => { try { return new URL(url).hostname; } catch { return 'demo'; } })();
-        const stamp = Date.now().toString(36);
-        contactRes = await ghlFetch('/contacts/', {
-          method: 'POST',
-          body: JSON.stringify({
-            locationId,
-            firstName: 'Demo',
-            lastName: businessName.slice(0, 60),
-            email: `demo+${stamp}@${hostname}`.toLowerCase(),
-            source: 'AI Demo Widget',
-            tags: ['ai-demo', `agent:${agentId}`],
-            customFields: [],
-          }),
-        });
-        contactId = contactRes?.body?.contact?.id || contactRes?.body?.id || null;
-      }
 
       if (contactId) {
         // Clear any prior conversations for this contact so each new demo starts fresh.
