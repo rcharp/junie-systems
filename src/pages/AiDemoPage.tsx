@@ -276,7 +276,7 @@ const AiDemoPage = () => {
           </div>
 
           <div className="flex justify-center lg:sticky lg:top-8">
-            <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl" style={{ width: '374px', height: '770px' }}>
+            <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl" style={{ width: '393px', height: '809px' }}>
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-30" />
               <div className="relative w-full h-full bg-white rounded-[2.3rem] overflow-hidden">
                 {/* Status bar spacer to clear the notch */}
@@ -289,8 +289,8 @@ const AiDemoPage = () => {
                       className="block border-0"
                       style={{
                         width: '390px',
-                        height: 'calc(100% / 0.897)',
-                        transform: 'scale(0.897)',
+                        height: 'calc(100% / 0.946)',
+                        transform: 'scale(0.946)',
                         transformOrigin: 'top left',
                       }}
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
