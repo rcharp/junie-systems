@@ -300,7 +300,6 @@ Deno.serve(async (req) => {
       }));
 
     if (sessionRows.length) {
-      const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
       const { error: sessionError } = await supa
         .from('demo_sessions')
         .upsert(sessionRows, { onConflict: 'ghl_contact_id' });
