@@ -192,12 +192,29 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
   const { locationId, name, agentId } = params;
   const r = await ghlFetch('/chat-widget/', {
     method: 'POST',
+    headers: { Version: 'v3' },
     body: JSON.stringify({
       locationId,
       name,
-      widgetType: 'live_chat',
-      enableConversationAi: true,
-      conversationAiBotId: agentId,
+      version: 2,
+      chatType: 'liveChat',
+      default: false,
+      deleted: false,
+      settings: {
+        chatType: 'liveChat',
+        chatIcon: 'messageChatCircle',
+        heading: name,
+        subHeading: 'We are here to help.',
+        liveChatIntroMsg: 'Hi! How can we help you today?',
+        liveChatAckMsg: 'Thanks for reaching out. We will respond shortly.',
+        promptMsg: 'Need help? Chat with us.',
+        sendActionText: 'Send',
+        showPrompt: true,
+        showAgencyBranding: false,
+        showConsentCheckbox: false,
+        enableContactForm: true,
+        widgetPrimaryColor: '#2B8CEE',
+      },
     }),
   });
   if (!r.ok) throw new Error(`Widget create failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
