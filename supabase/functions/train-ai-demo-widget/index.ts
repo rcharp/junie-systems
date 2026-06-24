@@ -168,12 +168,9 @@ const createAgent = async (params: { locationId: string; name: string; knowledge
   const r = await ghlFetch('/conversation-ai/agents', {
     method: 'POST',
     body: JSON.stringify({
-      locationId,
       name,
       businessName,
       channels: ['Live_Chat', 'WebChat'],
-      status: 'active',
-      botMode: 'autopilot',
       mode: 'auto-pilot',
       isPrimary: false,
       waitTime: 1,
