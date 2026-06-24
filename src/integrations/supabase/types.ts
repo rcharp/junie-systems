@@ -21,11 +21,14 @@ export type Database = {
           expires_at: string
           ghl_agent_id: string | null
           ghl_contact_id: string
+          ghl_kb_id: string | null
           ghl_location_id: string
+          ghl_widget_id: string | null
           id: string
           knowledge_doc: string | null
           prospect_url: string | null
           updated_at: string
+          widget_embed: string | null
         }
         Insert: {
           business_name?: string | null
@@ -33,11 +36,14 @@ export type Database = {
           expires_at?: string
           ghl_agent_id?: string | null
           ghl_contact_id: string
+          ghl_kb_id?: string | null
           ghl_location_id: string
+          ghl_widget_id?: string | null
           id?: string
           knowledge_doc?: string | null
           prospect_url?: string | null
           updated_at?: string
+          widget_embed?: string | null
         }
         Update: {
           business_name?: string | null
@@ -45,11 +51,14 @@ export type Database = {
           expires_at?: string
           ghl_agent_id?: string | null
           ghl_contact_id?: string
+          ghl_kb_id?: string | null
           ghl_location_id?: string
+          ghl_widget_id?: string | null
           id?: string
           knowledge_doc?: string | null
           prospect_url?: string | null
           updated_at?: string
+          widget_embed?: string | null
         }
         Relationships: []
       }

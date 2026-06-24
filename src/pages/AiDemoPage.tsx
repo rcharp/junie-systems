@@ -8,7 +8,8 @@ import { ArrowLeft, Globe, Sparkles, Check, Loader2, AlertCircle } from 'lucide-
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const WIDGET_SCRIPT = `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="6a3be0987de81c3360287a78"></script>`;
+const buildWidgetScript = (widgetId: string) =>
+  `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="${widgetId}"></script>`;
 
 type Step = 'idle' | 'crawling' | 'training' | 'pushing' | 'loading' | 'ready' | 'error';
 
@@ -145,9 +146,10 @@ const AiDemoPage = () => {
       setStep('loading');
       setTimeout(() => {
         if (data.contactId) setActiveContactId(data.contactId);
-        setActiveWidget(WIDGET_SCRIPT);
+        const embed = data.widgetEmbed || (data.widgetId ? buildWidgetScript(data.widgetId) : '');
+        if (!embed) throw new Error('No widget embed returned');
+        setActiveWidget(embed);
         setStep('ready');
-
       }, 600);
     } catch (e: any) {
       clearTimeout(stageTimer);
@@ -175,7 +177,9 @@ const AiDemoPage = () => {
       if (!res.ok || !data?.ok) throw new Error(data?.error || 'Session not found');
       setActiveUrl(data.url);
       setActiveContactId(data.contactId || '');
-      setActiveWidget(WIDGET_SCRIPT);
+      const embed = data.widgetEmbed || (data.widgetId ? buildWidgetScript(data.widgetId) : '');
+      if (!embed) throw new Error('No widget embed for this session');
+      setActiveWidget(embed);
       setStep('ready');
       return true;
     } catch (e: any) {
