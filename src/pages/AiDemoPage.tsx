@@ -22,7 +22,7 @@ const STEP_FLOW: { key: Step; label: string }[] = [
 const AiDemoPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [urlInput, setUrlInput] = useState('https://juniesystems.com');
+  const [urlInput, setUrlInput] = useState('https://ksjunkguy.com');
   const [activeUrl, setActiveUrl] = useState<string>('');
   const [activeWidget, setActiveWidget] = useState<string>('');
   const [widgetExpanded, setWidgetExpanded] = useState(false);
