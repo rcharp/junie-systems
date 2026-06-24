@@ -160,49 +160,17 @@ const createDemoContact = async (locationId: string, businessName: string) => {
   return { res: r, id };
 };
 
-// --- KB / Agent / Widget creation (per user-supplied flow) ---
+// --- Agent / Widget creation ---
 
-const createKnowledgeBase = async (locationId: string, name: string) => {
-  const r = await ghlFetch('/knowledge-base/', {
-    method: 'POST',
-    body: JSON.stringify({ locationId, name }),
-  });
-  if (!r.ok) throw new Error(`KB create failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
-  const id = pickId(r.body);
-  if (!id) throw new Error(`KB create returned no id: ${JSON.stringify(r.body).slice(0, 400)}`);
-  return id;
-};
-
-const startKbCrawl = async (kbId: string, url: string) => {
-  const r = await ghlFetch(`/knowledge-base/${encodeURIComponent(kbId)}/crawl`, {
-    method: 'POST',
-    body: JSON.stringify({ url }),
-  });
-  if (!r.ok) throw new Error(`KB crawl start failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
-  return r.body;
-};
-
-const pollKbCrawl = async (kbId: string) => {
-  for (let i = 0; i < CRAWL_POLL_MAX; i++) {
-    const r = await ghlFetch(`/knowledge-base/${encodeURIComponent(kbId)}/crawl/status`, { method: 'GET' });
-    const status = String(r.body?.status || r.body?.state || '').toLowerCase();
-    if (status === 'completed' || status === 'trained' || status === 'success' || status === 'done') return r.body;
-    if (status === 'failed' || status === 'error') throw new Error(`KB crawl failed: ${JSON.stringify(r.body).slice(0, 300)}`);
-    await new Promise((res) => setTimeout(res, CRAWL_POLL_MS));
-  }
-  // Don't hard-fail — return last state; agent will pick up KB as docs index.
-  return { status: 'timeout' };
-};
-
-const createAgent = async (params: { locationId: string; name: string; kbId: string; businessName: string; websiteUrl: string }) => {
-  const { locationId, name, kbId, businessName, websiteUrl } = params;
+const createAgent = async (params: { locationId: string; name: string; knowledgeDoc: string; businessName: string; websiteUrl: string }) => {
+  const { locationId, name, knowledgeDoc, businessName, websiteUrl } = params;
+  const knowledge = (knowledgeDoc || '').slice(0, 30000);
   const r = await ghlFetch('/conversation-ai/agents', {
     method: 'POST',
     body: JSON.stringify({
       locationId,
       name,
       businessName,
-      knowledgeBaseId: kbId,
       channels: ['Live_Chat', 'WebChat'],
       status: 'active',
       botMode: 'autopilot',
@@ -212,7 +180,7 @@ const createAgent = async (params: { locationId: string; name: string; kbId: str
       waitTimeUnit: 'seconds',
       personality: 'Warm, friendly, concise, professional. Speaks like a knowledgeable front-desk teammate at a local home-service business.',
       goal: `Help website visitors of ${businessName} (${websiteUrl}) get accurate answers about services, pricing, and service area, and capture leads or book appointments.`,
-      instructions: `You are the live-chat AI assistant for ${businessName} (${websiteUrl}). Answer using the attached knowledge base. If something isn't covered, offer to have a team member follow up and ask for the visitor's name, phone, and email. Be brief (2-4 sentences). Never invent prices, hours, or guarantees.`,
+      instructions: `You are the live-chat AI assistant for ${businessName} (${websiteUrl}). Answer using ONLY the knowledge below. If something isn't covered, say you'll have a team member follow up and ask for the visitor's name, phone, and email. Be brief (2-4 sentences). Never invent prices, hours, or guarantees.\n\n=== BUSINESS KNOWLEDGE ===\n${knowledge}\n=== END KNOWLEDGE ===`,
       respondToImages: false,
       respondToAudio: false,
     }),
