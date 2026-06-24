@@ -8,6 +8,7 @@ const BodySchema = z.object({
   url: z.string().url(),
   locationId: z.string().optional(),
   calendarId: z.string().optional(),
+  contactId: z.string().optional(),
 });
 
 const MAX_PAGES = 8;
