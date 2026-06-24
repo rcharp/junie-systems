@@ -287,17 +287,35 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
     if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
   }
 
+  const urlsToTrain = discoveredUrls.slice(0, 25);
   const trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
     method: 'POST',
-    body: JSON.stringify({ knowledgeBaseId: kbId, locationId, urls: discoveredUrls.slice(0, 25) }),
+    body: JSON.stringify({ knowledgeBaseId: kbId, locationId, urls: urlsToTrain }),
   });
   if (!trainRes.ok) {
     console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
-    return { discovered: true, trained: false };
+    return { discovered: true, trained: false, trainedUrls: [] as string[] };
   }
-  console.log('KB train ok, urls:', discoveredUrls.length);
+  console.log('KB train ok, requested urls:', urlsToTrain.length);
 
-  return { discovered: true, trained: true };
+  // Poll trained URLs to confirm ingestion completed.
+  let trainedUrls: string[] = [];
+  for (let i = 0; i < 30; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const urlsRes = await ghlFetch(
+      `/knowledge-bases/crawler/urls?knowledgeBaseId=${kbId}&locationId=${locationId}`,
+      { method: 'GET' },
+    );
+    const b: any = urlsRes.body || {};
+    const list: any[] = b.urls || b.data?.urls || b.data || [];
+    trainedUrls = Array.isArray(list)
+      ? list.map((u) => (typeof u === 'string' ? u : u?.url)).filter(Boolean)
+      : [];
+    console.log(`KB trained urls poll ${i + 1}: ${trainedUrls.length}/${urlsToTrain.length}`);
+    if (trainedUrls.length >= urlsToTrain.length) break;
+  }
+
+  return { discovered: true, trained: true, trainedUrls };
 };
 
 const processDemoKnowledgeBase = async (params: { url: string; locationId: string; requestedContactId: string }) => {
