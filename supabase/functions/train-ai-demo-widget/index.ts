@@ -217,6 +217,24 @@ Deno.serve(async (req) => {
           status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+
+      // Clear prior conversations for this contact so each page load starts a fresh chat.
+      if (data.ghl_contact_id && data.ghl_location_id) {
+        try {
+          const convRes = await ghlFetch(
+            `/conversations/search?locationId=${encodeURIComponent(data.ghl_location_id)}&contactId=${encodeURIComponent(data.ghl_contact_id)}&limit=100`,
+            { method: 'GET' },
+          );
+          const convs = (convRes?.body?.conversations || convRes?.body?.data || []) as any[];
+          await Promise.all(
+            (Array.isArray(convs) ? convs : [])
+              .map((c) => c?.id || c?._id)
+              .filter(Boolean)
+              .map((cid) => ghlFetch(`/conversations/${encodeURIComponent(cid)}`, { method: 'DELETE' }).catch(() => null)),
+          );
+        } catch (_) { /* best-effort */ }
+      }
+
       return new Response(JSON.stringify({
         ok: true,
         loaded: true,
