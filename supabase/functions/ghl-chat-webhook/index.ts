@@ -51,7 +51,7 @@ const askAi = async (params: {
 Answer using ONLY the knowledge below. If something isn't covered, say a team member will follow up and ask for the visitor's name, phone, and email. Keep replies to 2-4 sentences. Never invent prices, hours, or guarantees.
 
 === BUSINESS KNOWLEDGE ===
-${(params.knowledge || '').slice(0, 60000)}
+${(params.knowledge || '').slice(0, 250000)}
 === END KNOWLEDGE ===`;
 
   const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
