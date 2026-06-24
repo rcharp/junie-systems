@@ -268,8 +268,13 @@ const AiDemoPage = () => {
                     <iframe
                       src={activeUrl}
                       title="Website Preview"
-                      className="block h-full border-0"
-                      style={{ width: 'calc(100% + 18px)' }}
+                      className="block border-0"
+                      style={{
+                        width: '390px',
+                        height: 'calc(100% / 0.806)',
+                        transform: 'scale(0.806)',
+                        transformOrigin: 'top left',
+                      }}
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                     />
                   </div>
