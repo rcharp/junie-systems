@@ -27,6 +27,18 @@ const ghlFetch = async (path: string, init: RequestInit) => {
   return { ok: res.ok, status: res.status, body };
 };
 
+const normalizeMessageType = (value: unknown) => {
+  const normalized = String(value || '').trim().toLowerCase().replace(/[-\s]/g, '_');
+  if (normalized === 'sms') return 'SMS';
+  if (normalized === 'email') return 'Email';
+  if (normalized === 'whatsapp') return 'WhatsApp';
+  if (normalized === 'ig' || normalized === 'instagram') return 'IG';
+  if (normalized === 'fb' || normalized === 'facebook') return 'FB';
+  if (normalized === 'custom') return 'Custom';
+  if (normalized === 'internalcomment' || normalized === 'internal_comment') return 'InternalComment';
+  return 'Live_Chat';
+};
+
 const askAi = async (params: {
   businessName: string;
   websiteUrl: string;
@@ -88,7 +100,7 @@ Deno.serve(async (req) => {
       msg.body || msg.text || msg.message || evt.body || evt.text || evt.customer_message || '';
     const messageBody = String(rawBody || '').trim();
     const direction = payload.direction || payload.messageDirection || msg.direction;
-    const type = payload.type || payload.messageType || msg.type || 'Chat';
+    const type = normalizeMessageType(payload.type || payload.messageType || msg.type || 'Live_Chat');
 
     console.log('ghl-chat-webhook payload', JSON.stringify(evt).slice(0, 2000));
 
