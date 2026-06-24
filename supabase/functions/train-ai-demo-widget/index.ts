@@ -367,10 +367,12 @@ Deno.serve(async (req) => {
     const labelBase = `${businessName || fallbackName} ${new Date().toISOString().slice(0, 16)}`;
     const t2 = Date.now();
 
-    // 3) Agent with knowledge embedded in instructions
+    // 3) Agent with knowledge embedded in instructions.
+    // Name the agent (our embedded "knowledge base") with the passed-in contact_id for traceability.
+    const agentName = requestedContactId || `Demo Agent · ${labelBase}`;
     const agentId = await createAgent({
       locationId,
-      name: `Demo Agent · ${labelBase}`,
+      name: agentName,
       knowledgeDoc: doc,
       businessName: businessName || fallbackName,
       websiteUrl: url,
