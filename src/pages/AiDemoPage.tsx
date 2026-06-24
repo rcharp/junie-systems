@@ -305,6 +305,9 @@ const AiDemoPage = () => {
                 </CardContent>
               </Card>
             )}
+          </div>
+
+
 
 
           <div className="flex justify-center lg:sticky lg:top-8">
