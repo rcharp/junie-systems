@@ -319,6 +319,8 @@ Deno.serve(async (req) => {
             widgetId: existing.ghl_widget_id,
             widgetEmbed: existing.widget_embed,
             contactId: existing.ghl_contact_id,
+            locationId: existing.ghl_location_id,
+            knowledgeDoc: existing.knowledge_doc,
           }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
         }
       }
