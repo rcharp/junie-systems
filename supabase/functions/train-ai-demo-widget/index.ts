@@ -3,199 +3,16 @@ import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 import { z } from 'npm:zod@3.23.8';
 
-
 const BodySchema = z.object({
   url: z.string().url(),
   locationId: z.string().optional(),
-  calendarId: z.string().optional(),
   contactId: z.string().optional(),
 });
 
-const MAX_PAGES = 500;
-const FETCH_TIMEOUT_MS = 10000;
-const PER_PAGE_CHARS = 18000;
-const CRAWL_BUDGET_MS = 90_000;
-const CONCURRENCY = 8;
-
 const GHL_BASE = 'https://services.leadconnectorhq.com';
 const GHL_VERSION = '2021-04-15';
-const AGENT_NAME_PREFIX = 'Demo Agent · ';
-
-const cache = new Map<string, { ts: number; payload: any }>();
-
-const SKIP_EXT = /\.(pdf|jpg|jpeg|png|gif|webp|svg|ico|mp4|mp3|wav|zip|rar|css|js|woff2?|ttf|eot|xml|json)$/i;
-const BLOG_PATH = /(^|\/)(blog|blogs|news|articles?|posts?|insights?|stories|press|category|categories|tag|tags|author|authors|archive|archives)(\/|$)/i;
-const isBlogUrl = (u: string) => { try { return BLOG_PATH.test(new URL(u).pathname); } catch { return false; } };
-
-
-const stripHtml = (html: string) =>
-  html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
-    .replace(/<!--[\s\S]*?-->/g, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const fetchWithTimeout = async (url: string, timeout = FETCH_TIMEOUT_MS, init?: RequestInit) => {
-  const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), timeout);
-  try {
-    return await fetch(url, {
-      signal: controller.signal,
-      headers: { 'user-agent': 'JunieAiDemoBot/1.0 (+https://juniesystems.com)' },
-      redirect: 'follow',
-      ...init,
-    });
-  } finally {
-    clearTimeout(t);
-  }
-};
-
-const discoverLinks = (html: string, origin: string): string[] => {
-  const links = new Set<string>();
-  const re = /<a[^>]+href=["']([^"']+)["']/gi;
-  let m;
-  while ((m = re.exec(html)) !== null) {
-    try {
-      const href = m[1];
-      if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) continue;
-      const u = new URL(href, origin);
-      if (u.origin !== origin) continue;
-      if (SKIP_EXT.test(u.pathname)) continue;
-      if (BLOG_PATH.test(u.pathname)) continue;
-      links.add(u.toString().split('#')[0]);
-
-    } catch (_) { /* ignore */ }
-  }
-  return Array.from(links);
-};
-
-const collectSitemapUrls = async (origin: string, deadline: number): Promise<string[]> => {
-  const out = new Set<string>();
-  const seen = new Set<string>();
-  const queue: string[] = [
-    `${origin}/sitemap.xml`,
-    `${origin}/sitemap_index.xml`,
-    `${origin}/sitemap-index.xml`,
-  ];
-  // Try robots.txt for additional sitemaps.
-  try {
-    const r = await fetchWithTimeout(`${origin}/robots.txt`, 4000);
-    if (r.ok) {
-      const txt = await r.text();
-      for (const m of txt.matchAll(/Sitemap:\s*(\S+)/gi)) queue.push(m[1].trim());
-    }
-  } catch (_) { /* ignore */ }
-
-  while (queue.length && Date.now() < deadline) {
-    const sm = queue.shift()!;
-    if (seen.has(sm)) continue;
-    seen.add(sm);
-    try {
-      const res = await fetchWithTimeout(sm, 6000);
-      if (!res.ok) continue;
-      const xml = await res.text();
-      // Nested sitemaps
-      for (const m of xml.matchAll(/<sitemap>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/sitemap>/gi)) {
-        queue.push(m[1].trim());
-      }
-      // Page URLs
-      for (const m of xml.matchAll(/<url>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/url>/gi)) {
-        const u = m[1].trim();
-        if (u.startsWith(origin) && !SKIP_EXT.test(u) && !isBlogUrl(u)) out.add(u.split('#')[0]);
-      }
-      // Bare <loc> fallback
-      if (!xml.includes('<url>') && !xml.includes('<sitemap>')) {
-        for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/gi)) {
-          const u = m[1].trim();
-          if (u.startsWith(origin) && !SKIP_EXT.test(u) && !isBlogUrl(u)) out.add(u.split('#')[0]);
-        }
-      }
-
-    } catch (_) { /* ignore */ }
-  }
-  return Array.from(out);
-};
-
-const crawl = async (startUrl: string) => {
-  const start = new URL(startUrl);
-  const origin = start.origin;
-  const deadline = Date.now() + CRAWL_BUDGET_MS;
-  const pages: { url: string; title: string; text: string }[] = [];
-  const visited = new Set<string>();
-  const queued = new Set<string>();
-  const queue: string[] = [];
-
-  const enqueue = (url: string) => {
-    if (queued.has(url) || visited.has(url)) return;
-    queued.add(url);
-    queue.push(url);
-  };
-
-  enqueue(start.toString());
-  const sitemapUrls = await collectSitemapUrls(origin, Math.min(deadline, Date.now() + 15_000));
-  for (const u of sitemapUrls) enqueue(u);
-
-  const fetchOne = async (next: string) => {
-    visited.add(next);
-    try {
-      const res = await fetchWithTimeout(next);
-      if (!res.ok) return;
-      const ct = res.headers.get('content-type') || '';
-      if (!ct.includes('text/html')) return;
-      const html = await res.text();
-      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-      const title = titleMatch ? titleMatch[1].trim() : next;
-      const text = stripHtml(html).slice(0, PER_PAGE_CHARS);
-      pages.push({ url: next, title, text });
-      // Discover links from EVERY page, not just the first.
-      for (const link of discoverLinks(html, origin)) enqueue(link);
-    } catch (_) { /* ignore */ }
-  };
-
-  while (queue.length && pages.length < MAX_PAGES && Date.now() < deadline) {
-    const batch: string[] = [];
-    while (batch.length < CONCURRENCY && queue.length && pages.length + batch.length < MAX_PAGES) {
-      batch.push(queue.shift()!);
-    }
-    await Promise.all(batch.map(fetchOne));
-  }
-  return pages;
-};
-
-
-
-const summarizeWithAi = async (pages: { url: string; title: string; text: string }[], targetUrl: string) => {
-  const lovableKey = Deno.env.get('LOVABLE_API_KEY');
-  if (!lovableKey) throw new Error('LOVABLE_API_KEY missing');
-
-  const corpus = pages.map((p) => `# ${p.title}\nURL: ${p.url}\n${p.text}`).join('\n\n---\n\n').slice(0, 220000);
-
-  const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Lovable-API-Key': lovableKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'google/gemini-2.5-pro',
-      messages: [
-        { role: 'system', content: 'You build exhaustive knowledge-base documents for AI chat widgets that represent local home-service businesses. Preserve every concrete detail from the source: exact service names, sub-services, materials, brands, equipment, certifications, license numbers, insurance, warranties, guarantees, response times, service areas (cities/zip codes), hours, phone, email, address, owner/team names, years in business, awards, financing, payment methods, named pricing or quote ranges, promotions, and direct customer quotes. Do not summarize away specifics. Never invent facts. Begin with a single line: BUSINESS_NAME: <name>.' },
-        { role: 'user', content: `Source website: ${targetUrl}\n\nUsing ONLY the content below, produce a long, detailed markdown knowledge base (target 2,500-5,000 words). Use these sections and add sub-headings as needed:\n\n1. Business Overview (history, mission, owner, team, years in business, differentiators)\n2. Services Offered — one sub-section per service. For each: what it is, what's included, typical process/steps, materials/brands/equipment used, who it's for, typical timeline, and any pricing/quote info mentioned.\n3. Service Area / Locations (list every city, town, neighborhood, county, or zip code mentioned)\n4. Pricing, Quotes & Financing (any explicit prices, ranges, minimums, free-quote policy, financing partners, payment methods)\n5. Guarantees, Warranties, Licensing & Insurance\n6. Hours of Operation & Emergency / After-Hours Availability\n7. Booking & Contact Instructions (phone, email, address, forms, scheduling links)\n8. FAQs — produce 20-30 Q&A pairs covering services, pricing, scheduling, service area, emergencies, materials, warranties, payment, and anything else a real customer would ask. Pull answers directly from the content.\n9. Customer Reviews / Testimonials (include verbatim quotes and reviewer names when present)\n10. Brand Voice & Tone Guidelines (how the bot should speak)\n\nIf the source doesn't cover something, write \"Not specified on the website — offer to have a team member follow up.\" Do not invent answers.\n\nCONTENT:\n${corpus}` },
-      ],
-    }),
-  });
-  if (!res.ok) throw new Error(`AI gateway ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  const data = await res.json();
-  const summary = data.choices?.[0]?.message?.content ?? '';
-  const nameMatch = summary.match(/BUSINESS_NAME:\s*(.+)/i);
-  const businessName = (nameMatch?.[1] || new URL(targetUrl).hostname).trim();
-  // Append the raw crawled corpus so the chat model can quote specifics the
-  // summarizer may have compressed away.
-  const rawAppendix = `\n\n=== RAW WEBSITE CONTENT (verbatim, for fact lookup) ===\n${corpus}`;
-  const doc = `${summary}${rawAppendix}`;
-  return { doc, businessName };
-};
-
+const CRAWL_POLL_MS = 3000;
+const CRAWL_POLL_MAX = 40; // ~120s
 
 const ghlFetch = async (path: string, init: RequestInit) => {
   const pit = Deno.env.get('AI_DEMO_PIT');
@@ -203,10 +20,10 @@ const ghlFetch = async (path: string, init: RequestInit) => {
   const res = await fetch(`${GHL_BASE}${path}`, {
     ...init,
     headers: {
-      'Authorization': `Bearer ${pit}`,
-      'Version': GHL_VERSION,
+      Authorization: `Bearer ${pit}`,
+      Version: GHL_VERSION,
       'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Accept: 'application/json',
       ...(init.headers || {}),
     },
   });
@@ -216,25 +33,15 @@ const ghlFetch = async (path: string, init: RequestInit) => {
   return { ok: res.ok, status: res.status, body };
 };
 
-const extractContactId = (res: any): string =>
-  res?.body?.contact?.id ||
-  res?.body?.contact?._id ||
-  res?.body?.id ||
-  res?.body?._id ||
-  '';
+const pickId = (body: any): string =>
+  body?.id || body?._id ||
+  body?.knowledgeBase?.id || body?.knowledgeBase?._id ||
+  body?.agent?.id || body?.agent?._id ||
+  body?.widget?.id || body?.widget?._id ||
+  body?.data?.id || body?.data?._id || '';
 
-const contactExists = async (contactId: string) => {
-  if (!contactId) return false;
-  try {
-    const res = await ghlFetch(`/contacts/${encodeURIComponent(contactId)}`, { method: 'GET' });
-    return Boolean(res.ok);
-  } catch (_) {
-    return false;
-  }
-};
-
-const createDemoContact = async (locationId: string, businessName: string) =>
-  await ghlFetch('/contacts/', {
+const createDemoContact = async (locationId: string, businessName: string) => {
+  const r = await ghlFetch('/contacts/', {
     method: 'POST',
     body: JSON.stringify({
       locationId,
@@ -244,56 +51,101 @@ const createDemoContact = async (locationId: string, businessName: string) =>
       tags: ['ai-demo'],
     }),
   });
-
-// Find prior demo agents on this location so we can clean them up.
-const listAgents = async (locationId: string) => {
-  // GHL list agents is GET /conversation-ai/agents?locationId=... — best-effort.
-  const r = await ghlFetch(`/conversation-ai/agents?locationId=${encodeURIComponent(locationId)}&limit=100`, { method: 'GET' });
-  if (!r.ok) return [];
-  const list = (r.body?.agents || r.body?.data || r.body || []) as any[];
-  return Array.isArray(list) ? list : [];
+  const id = r.body?.contact?.id || r.body?.contact?._id || pickId(r.body);
+  return { res: r, id };
 };
 
-const deleteAgent = async (agentId: string) => {
-  return await ghlFetch(`/conversation-ai/agents/${encodeURIComponent(agentId)}`, { method: 'DELETE' });
+// --- KB / Agent / Widget creation (per user-supplied flow) ---
+
+const createKnowledgeBase = async (locationId: string, name: string) => {
+  const r = await ghlFetch('/knowledge-base/', {
+    method: 'POST',
+    body: JSON.stringify({ locationId, name }),
+  });
+  if (!r.ok) throw new Error(`KB create failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
+  const id = pickId(r.body);
+  if (!id) throw new Error(`KB create returned no id: ${JSON.stringify(r.body).slice(0, 400)}`);
+  return id;
 };
 
-const createConversationAgent = async (params: {
-  name: string;
-  businessName: string;
-  knowledgeDoc: string;
-  websiteUrl: string;
-}) => {
-  const { name, businessName, knowledgeDoc, websiteUrl } = params;
-  // GHL `instructions` is the most reliable place to put trained content because the
-  // public KB-create endpoint isn't exposed. Cap to ~30k chars to stay well under limits.
-  const knowledge = knowledgeDoc.slice(0, 30000);
-  const body = {
-    name,
-    businessName,
-    mode: 'auto-pilot',
-    channels: ['WebChat', 'Live_Chat'],
-    isPrimary: false,
-    waitTime: 1,
-    waitTimeUnit: 'seconds',
-    sleepEnabled: false,
-    personality: 'Warm, friendly, concise, and professional. Speaks like a knowledgeable front-desk teammate at a local home-service business.',
-    goal: `Help website visitors of ${businessName} get accurate answers about services, pricing, and service area, and capture leads or book appointments.`,
-    instructions: `You are the live-chat AI assistant for ${businessName} (website: ${websiteUrl}). Answer using ONLY the knowledge below. If something isn't covered, say you'll have a team member follow up and ask for the visitor's name, phone, and email. Be brief (2-4 sentences). Never invent prices, hours, or guarantees.\n\n=== BUSINESS KNOWLEDGE ===\n${knowledge}\n=== END KNOWLEDGE ===`,
-    autoPilotMaxMessages: 75,
-    respondToImages: false,
-    respondToAudio: false,
-  };
-
-  return await ghlFetch('/conversation-ai/agents', { method: 'POST', body: JSON.stringify(body) });
+const startKbCrawl = async (kbId: string, url: string) => {
+  const r = await ghlFetch(`/knowledge-base/${encodeURIComponent(kbId)}/crawl`, {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  });
+  if (!r.ok) throw new Error(`KB crawl start failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
+  return r.body;
 };
 
+const pollKbCrawl = async (kbId: string) => {
+  for (let i = 0; i < CRAWL_POLL_MAX; i++) {
+    const r = await ghlFetch(`/knowledge-base/${encodeURIComponent(kbId)}/crawl/status`, { method: 'GET' });
+    const status = String(r.body?.status || r.body?.state || '').toLowerCase();
+    if (status === 'completed' || status === 'trained' || status === 'success' || status === 'done') return r.body;
+    if (status === 'failed' || status === 'error') throw new Error(`KB crawl failed: ${JSON.stringify(r.body).slice(0, 300)}`);
+    await new Promise((res) => setTimeout(res, CRAWL_POLL_MS));
+  }
+  // Don't hard-fail — return last state; agent will pick up KB as docs index.
+  return { status: 'timeout' };
+};
+
+const createAgent = async (params: { locationId: string; name: string; kbId: string; businessName: string; websiteUrl: string }) => {
+  const { locationId, name, kbId, businessName, websiteUrl } = params;
+  const r = await ghlFetch('/conversation-ai/agents', {
+    method: 'POST',
+    body: JSON.stringify({
+      locationId,
+      name,
+      businessName,
+      knowledgeBaseId: kbId,
+      channels: ['Live_Chat', 'WebChat'],
+      status: 'active',
+      botMode: 'autopilot',
+      mode: 'auto-pilot',
+      isPrimary: false,
+      waitTime: 1,
+      waitTimeUnit: 'seconds',
+      personality: 'Warm, friendly, concise, professional. Speaks like a knowledgeable front-desk teammate at a local home-service business.',
+      goal: `Help website visitors of ${businessName} (${websiteUrl}) get accurate answers about services, pricing, and service area, and capture leads or book appointments.`,
+      instructions: `You are the live-chat AI assistant for ${businessName} (${websiteUrl}). Answer using the attached knowledge base. If something isn't covered, offer to have a team member follow up and ask for the visitor's name, phone, and email. Be brief (2-4 sentences). Never invent prices, hours, or guarantees.`,
+      respondToImages: false,
+      respondToAudio: false,
+    }),
+  });
+  if (!r.ok) throw new Error(`Agent create failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
+  const id = pickId(r.body);
+  if (!id) throw new Error(`Agent create returned no id: ${JSON.stringify(r.body).slice(0, 400)}`);
+  return id;
+};
+
+const createChatWidget = async (params: { locationId: string; name: string; agentId: string }) => {
+  const { locationId, name, agentId } = params;
+  const r = await ghlFetch('/chat-widget/', {
+    method: 'POST',
+    body: JSON.stringify({
+      locationId,
+      name,
+      widgetType: 'live_chat',
+      enableConversationAi: true,
+      conversationAiBotId: agentId,
+    }),
+  });
+  if (!r.ok) throw new Error(`Widget create failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
+  const id = pickId(r.body);
+  const embed =
+    r.body?.embedScript ||
+    r.body?.embed_script ||
+    r.body?.widget?.embedScript ||
+    r.body?.data?.embedScript ||
+    (id ? `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="${id}"></script>` : '');
+  if (!id && !embed) throw new Error(`Widget create returned no id/embed: ${JSON.stringify(r.body).slice(0, 400)}`);
+  return { id, embed };
+};
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
-  // GET: load an existing demo session by contact_id (and/or website).
-  // Used by the /ai-demo page to hydrate the widget without re-training.
+  // GET: load an existing session by contact_id or website.
   if (req.method === 'GET') {
     try {
       const u = new URL(req.url);
@@ -304,46 +156,27 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      const supa = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      );
+      const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
       let q = supa.from('demo_sessions').select('*').order('created_at', { ascending: false }).limit(1);
       if (contactId) q = q.eq('ghl_contact_id', contactId);
       else q = q.eq('prospect_url', website);
       const { data: rows, error } = await q;
       if (error) throw error;
-      let data = rows?.[0];
+      const data = rows?.[0];
       if (!data) {
         return new Response(JSON.stringify({ ok: false, error: 'session not found' }), {
           status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
 
-      // Every page load should start a brand-new conversation, which in GHL
-      // means a brand-new contact (contacts own conversation history). Mint a
-      // fresh contact and bind it to the same trained KB/agent.
-      const contactRes = await createDemoContact(data.ghl_location_id, data.business_name || 'Demo');
-      const newContactId = extractContactId(contactRes);
-      if (newContactId) {
-        const { error: cloneError } = await supa.from('demo_sessions').upsert({
-          ghl_contact_id: newContactId,
-          ghl_agent_id: data.ghl_agent_id,
-          ghl_location_id: data.ghl_location_id,
-          prospect_url: data.prospect_url,
-          business_name: data.business_name,
-          knowledge_doc: data.knowledge_doc,
-        }, { onConflict: 'ghl_contact_id' });
-        if (cloneError) throw cloneError;
-        data = { ...data, ghl_contact_id: newContactId };
-      }
-
-
       return new Response(JSON.stringify({
         ok: true,
         loaded: true,
         contactId: data.ghl_contact_id,
         agentId: data.ghl_agent_id,
+        kbId: data.ghl_kb_id,
+        widgetId: data.ghl_widget_id,
+        widgetEmbed: data.widget_embed,
         locationId: data.ghl_location_id,
         url: data.prospect_url,
         businessName: data.business_name,
@@ -366,82 +199,81 @@ Deno.serve(async (req) => {
 
     const { url } = parsed.data;
     const locationId = parsed.data.locationId || Deno.env.get('AI_DEMO_LOCATION_ID') || '';
-    const calendarId = parsed.data.calendarId || Deno.env.get('AI_DEMO_CALENDAR_ID') || '';
-
     if (!locationId) {
       return new Response(JSON.stringify({ error: 'AI_DEMO_LOCATION_ID not configured' }), {
         status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
     const requestedContactId = (parsed.data.contactId || '').trim();
 
+    const businessName = (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Demo'; } })();
+    const labelBase = `${businessName} ${new Date().toISOString().slice(0, 16)}`;
 
     const t0 = Date.now();
-    const pages = await crawl(url);
-    const t1 = Date.now();
-    if (!pages.length) {
-      return new Response(JSON.stringify({ error: 'Could not crawl any pages from this URL.' }), {
-        status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
-    const { doc, businessName } = await summarizeWithAi(pages, url);
+    // 1) KB
+    const kbId = await createKnowledgeBase(locationId, `Demo KB · ${labelBase}`);
+    // 2) Crawl + wait
+    await startKbCrawl(kbId, url);
+    const crawlStatus = await pollKbCrawl(kbId);
+    const t1 = Date.now();
+
+    // 3) Agent with KB attached
+    const agentId = await createAgent({
+      locationId,
+      name: `Demo Agent · ${labelBase}`,
+      kbId,
+      businessName,
+      websiteUrl: url,
+    });
     const t2 = Date.now();
 
-    // GHL conversation-ai agent disabled — the webhook answers from the Supabase KB.
+    // 4) Widget with agent attached
+    const widget = await createChatWidget({
+      locationId,
+      name: `Demo Widget · ${labelBase}`,
+      agentId,
+    });
     const t3 = Date.now();
+
+    // 5) Fresh demo contact + persist
+    const contactCreate = await createDemoContact(locationId, businessName);
+    const contactId = contactCreate.id;
     const t4 = Date.now();
 
-    // Always create a fresh demo contact on POST so every training run starts clean.
-    const contactCreateRes = await createDemoContact(locationId, businessName);
-    const contactId: string = extractContactId(contactCreateRes);
-    const t4b = Date.now();
-
-    const contactRes: any = contactCreateRes;
     const sessionRows = [contactId, requestedContactId]
-      .filter((id, index, all) => id && all.indexOf(id) === index)
+      .filter((id, i, all) => id && all.indexOf(id) === i)
       .map((id) => ({
         ghl_contact_id: id,
-        ghl_agent_id: null,
+        ghl_agent_id: agentId,
+        ghl_kb_id: kbId,
+        ghl_widget_id: widget.id || null,
+        widget_embed: widget.embed,
         ghl_location_id: locationId,
         prospect_url: url,
         business_name: businessName,
-        knowledge_doc: doc,
+        knowledge_doc: null,
       }));
 
     if (sessionRows.length) {
-      const supa = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      );
-      const { error: sessionError } = await supa.from('demo_sessions').upsert(sessionRows, { onConflict: 'ghl_contact_id' });
+      const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+      const { error: sessionError } = await supa
+        .from('demo_sessions')
+        .upsert(sessionRows, { onConflict: 'ghl_contact_id' });
       if (sessionError) throw sessionError;
     }
-    const t5 = Date.now();
-    const agentRes: any = { ok: true, skipped: true };
-    const agentId: string | null = null;
-    const stale: any[] = [];
-    const deletions: any[] = [];
 
-
-
-    const payload = {
+    return new Response(JSON.stringify({
       ok: true,
       businessName,
-      pagesCrawled: pages.map((p) => ({ url: p.url, title: p.title })),
-      knowledgePreview: doc.slice(0, 800),
-      knowledgeLength: doc.length,
-      cleanedUp: { count: stale.length, deletions },
-      agent: agentRes,
+      kbId,
       agentId,
+      widgetId: widget.id,
+      widgetEmbed: widget.embed,
       contactId,
-      contact: contactRes,
-      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, cleanupMs: t3 - t2, agentMs: t4 - t3, contactMs: t5 - t4, totalMs: t5 - t0 },
-    };
-    return new Response(JSON.stringify(payload), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      crawlStatus,
+      timings: { kbMs: t1 - t0, agentMs: t2 - t1, widgetMs: t3 - t2, contactMs: t4 - t3, totalMs: t4 - t0 },
+    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
