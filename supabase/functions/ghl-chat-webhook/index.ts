@@ -74,19 +74,26 @@ Deno.serve(async (req) => {
   try {
     const evt = await req.json().catch(() => ({}));
     const payload = evt?.data ?? evt ?? {};
+    const msg = payload.message ?? evt.message ?? {};
     const contactId =
-      payload.contactId || payload.contact_id || payload.contact?.id || evt.contactId;
+      payload.contactId || payload.contact_id || payload.contact?.id || evt.contactId || msg.contactId;
     const conversationId =
-      payload.conversationId || payload.conversation_id || payload.conversation?.id;
-    const messageBody =
-      payload.body || payload.message || payload.messageBody || payload.text || '';
-    const direction = payload.direction || payload.messageDirection;
-    const type = payload.type || payload.messageType || 'Chat';
+      payload.conversationId || payload.conversation_id || payload.conversation?.id || msg.conversationId;
+    const rawBody =
+      (typeof payload.body === 'string' ? payload.body : '') ||
+      (typeof payload.message === 'string' ? payload.message : '') ||
+      payload.messageBody || payload.text || payload.body_text ||
+      msg.body || msg.text || msg.message || evt.body || evt.text || '';
+    const messageBody = String(rawBody || '').trim();
+    const direction = payload.direction || payload.messageDirection || msg.direction;
+    const type = payload.type || payload.messageType || msg.type || 'Chat';
+
+    console.log('ghl-chat-webhook payload', JSON.stringify(evt).slice(0, 2000));
 
     const isInbound = !direction || String(direction).toLowerCase() === 'inbound';
     if (!isInbound) return respond({ ok: true, skipped: 'not inbound' });
     if (!contactId || !messageBody) {
-      return respond({ ok: true, skipped: 'missing fields', got: { contactId, conversationId, hasBody: Boolean(messageBody) } });
+      return respond({ ok: true, skipped: 'missing fields', got: { contactId, conversationId, hasBody: Boolean(messageBody), keys: Object.keys(payload) } });
     }
 
     const supa = createClient(
