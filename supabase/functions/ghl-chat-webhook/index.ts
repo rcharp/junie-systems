@@ -1,6 +1,7 @@
 // @ts-nocheck
-// Public webhook receiver for GHL InboundMessage events. Routes each demo
-// visitor's message to their own trained Conversation AI agent.
+// Public webhook receiver for GHL InboundMessage events.
+// Pulls the demo's stored knowledge base from Supabase, asks Claude to answer
+// as that business's chatbot, and posts the reply back into the GHL conversation.
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors';
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -26,10 +27,44 @@ const ghlFetch = async (path: string, init: RequestInit) => {
   return { ok: res.ok, status: res.status, body };
 };
 
+const askClaude = async (params: {
+  businessName: string;
+  websiteUrl: string;
+  knowledge: string;
+  message: string;
+}) => {
+  const key = Deno.env.get('ANTHROPIC_API_KEY');
+  if (!key) throw new Error('ANTHROPIC_API_KEY not configured');
+  const system = `You are the live-chat assistant for ${params.businessName} (website: ${params.websiteUrl}).
+Answer using ONLY the knowledge below. If something isn't covered, say a team member will follow up and ask for the visitor's name, phone, and email. Keep replies to 2-4 sentences. Never invent prices, hours, or guarantees.
+
+=== BUSINESS KNOWLEDGE ===
+${(params.knowledge || '').slice(0, 60000)}
+=== END KNOWLEDGE ===`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-sonnet-latest',
+      max_tokens: 600,
+      system,
+      messages: [{ role: 'user', content: params.message }],
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Claude ${res.status}: ${JSON.stringify(data).slice(0, 300)}`);
+  const text = (data?.content || []).map((c: any) => c?.text || '').join('').trim();
+  return text || "Thanks for reaching out — a team member will follow up shortly.";
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
-  // Always ack fast so GHL doesn't retry
   const respond = (data: any, status = 200) =>
     new Response(JSON.stringify(data), {
       status,
@@ -38,7 +73,6 @@ Deno.serve(async (req) => {
 
   try {
     const evt = await req.json().catch(() => ({}));
-    // Accept a few shapes: top-level or { data: {...} }
     const payload = evt?.data ?? evt ?? {};
     const contactId =
       payload.contactId || payload.contact_id || payload.contact?.id || evt.contactId;
@@ -47,12 +81,11 @@ Deno.serve(async (req) => {
     const messageBody =
       payload.body || payload.message || payload.messageBody || payload.text || '';
     const direction = payload.direction || payload.messageDirection;
-    const type = payload.type || payload.messageType;
+    const type = payload.type || payload.messageType || 'Chat';
 
-    // Only respond to inbound chat-like messages
     const isInbound = !direction || String(direction).toLowerCase() === 'inbound';
     if (!isInbound) return respond({ ok: true, skipped: 'not inbound' });
-    if (!contactId || !conversationId || !messageBody) {
+    if (!contactId || !messageBody) {
       return respond({ ok: true, skipped: 'missing fields', got: { contactId, conversationId, hasBody: Boolean(messageBody) } });
     }
 
@@ -63,39 +96,34 @@ Deno.serve(async (req) => {
 
     const { data: session, error: dbErr } = await supa
       .from('demo_sessions')
-      .select('ghl_agent_id, ghl_location_id, business_name')
+      .select('ghl_location_id, business_name, prospect_url, knowledge_doc')
       .eq('ghl_contact_id', contactId)
       .maybeSingle();
 
     if (dbErr) return respond({ ok: false, error: dbErr.message }, 500);
     if (!session) return respond({ ok: true, skipped: 'no demo session for contact' });
 
-    // Tell GHL's own AI to respond using the trained agent.
-    const gen = await ghlFetch('/conversation-ai/generate', {
-      method: 'POST',
-      body: JSON.stringify({
-        locationId: session.ghl_location_id,
-        conversationId,
-        agentId: session.ghl_agent_id,
-        message: messageBody,
-        type: type || 'Chat',
-      }),
+    const reply = await askClaude({
+      businessName: session.business_name || 'our team',
+      websiteUrl: session.prospect_url || '',
+      knowledge: session.knowledge_doc || '',
+      message: String(messageBody),
     });
 
-    // Fallback: if generate isn't available on this PIT, post a static message
-    if (!gen.ok) {
-      const fallback = await ghlFetch(`/conversations/messages`, {
-        method: 'POST',
-        body: JSON.stringify({
-          type: 'Chat',
-          conversationId,
-          message: `Thanks! A team member from ${session.business_name || 'our team'} will be right with you.`,
-        }),
-      });
-      return respond({ ok: true, generate: gen, fallback });
-    }
+    // Post the reply back into the GHL conversation so the prospect sees it in the widget.
+    const sendBody: any = {
+      type,
+      message: reply,
+      contactId,
+    };
+    if (conversationId) sendBody.conversationId = conversationId;
 
-    return respond({ ok: true, generate: gen });
+    const sent = await ghlFetch('/conversations/messages', {
+      method: 'POST',
+      body: JSON.stringify(sendBody),
+    });
+
+    return respond({ ok: true, reply, sent });
   } catch (e) {
     return respond({ ok: false, error: String((e as Error)?.message ?? e) }, 500);
   }

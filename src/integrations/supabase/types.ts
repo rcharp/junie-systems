@@ -23,6 +23,7 @@ export type Database = {
           ghl_contact_id: string
           ghl_location_id: string
           id: string
+          knowledge_doc: string | null
           prospect_url: string | null
           updated_at: string
         }
@@ -34,6 +35,7 @@ export type Database = {
           ghl_contact_id: string
           ghl_location_id: string
           id?: string
+          knowledge_doc?: string | null
           prospect_url?: string | null
           updated_at?: string
         }
@@ -45,6 +47,7 @@ export type Database = {
           ghl_contact_id?: string
           ghl_location_id?: string
           id?: string
+          knowledge_doc?: string | null
           prospect_url?: string | null
           updated_at?: string
         }

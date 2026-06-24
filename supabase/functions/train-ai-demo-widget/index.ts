@@ -368,6 +368,7 @@ Deno.serve(async (req) => {
         ghl_location_id: locationId,
         prospect_url: url,
         business_name: businessName,
+        knowledge_doc: doc,
       }, { onConflict: 'ghl_contact_id' });
     }
     const t5 = Date.now();
