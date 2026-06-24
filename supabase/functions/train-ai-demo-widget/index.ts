@@ -351,9 +351,43 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
   const doc = training.trained
     ? `Knowledge base trained from ${url}. Ingested ${training.trainedUrls.length} page(s):\n- ${training.trainedUrls.join('\n- ')}`
     : `Knowledge base created for ${url}; training did not complete.`;
+
+  // Create an agent that references this KB, then clone + attach the chat widget.
+  let agentId: string | null = null;
+  let widgetId: string | null = null;
+  let widgetEmbed: string | null = null;
+  try {
+    agentId = await createAgent({
+      locationId,
+      name: `Demo Agent - ${fallbackName}`,
+      knowledgeDoc: doc,
+      businessName: fallbackName,
+      websiteUrl: url,
+    });
+  } catch (e) {
+    console.warn('Agent create failed (non-fatal):', e);
+  }
+
+  try {
+    const widget = await createChatWidget({
+      locationId,
+      name: requestedContactId || `Demo Widget - ${fallbackName}`,
+      agentId: agentId || '',
+    });
+    widgetId = widget.id;
+    widgetEmbed = widget.embed;
+  } catch (e) {
+    console.warn('Widget create failed (non-fatal):', e);
+  }
+
   await supa
     .from('demo_sessions')
-    .update({ knowledge_doc: doc })
+    .update({
+      knowledge_doc: doc,
+      ghl_agent_id: agentId,
+      ghl_widget_id: widgetId,
+      widget_embed: widgetEmbed,
+    })
     .eq('ghl_kb_id', kbId);
 };
 
