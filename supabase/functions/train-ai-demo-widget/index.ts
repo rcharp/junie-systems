@@ -330,12 +330,10 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
   if (sessionError) throw sessionError;
 
   const training = await trainKnowledgeBaseWebsite(kbId, url, locationId);
-  if (requestedContactId) {
-    await supa
-      .from('demo_sessions')
-      .update({ knowledge_doc: training.trained ? `Knowledge base trained from ${url}.` : `Knowledge base created for ${url}; training did not complete.` })
-      .eq('ghl_contact_id', requestedContactId);
-  }
+  await supa
+    .from('demo_sessions')
+    .update({ knowledge_doc: training.trained ? `Knowledge base trained from ${url}.` : `Knowledge base created for ${url}; training did not complete.` })
+    .eq('ghl_kb_id', kbId);
 };
 
 Deno.serve(async (req) => {
