@@ -280,9 +280,9 @@ const AiDemoPage = () => {
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-30" />
               <div className="relative w-full h-full bg-white rounded-[2.3rem] overflow-hidden">
                 {/* Status bar spacer to clear the notch */}
-                <div className="absolute top-0 left-0 right-0 h-9 bg-gray-200 z-10" />
+                <div className="absolute top-0 left-0 right-0 h-9 bg-black z-10" />
                 {activeUrl && (
-                  <div className="absolute inset-0 pt-9 overflow-hidden bg-gray-200">
+                  <div className="absolute inset-0 pt-9 overflow-hidden bg-black">
                     <iframe
                       src={activeUrl}
                       title="Website Preview"
