@@ -324,7 +324,7 @@ Deno.serve(async (req) => {
       contactCreateRes?.body?.id ||
       contactCreateRes?.body?._id ||
       '';
-    const t4 = Date.now();
+    const t4b = Date.now();
 
     const agentId =
       agentRes?.body?.agent?.id ||
@@ -335,30 +335,20 @@ Deno.serve(async (req) => {
 
     const contactRes: any = contactCreateRes;
     if (agentId && contactId) {
-
-          const convs = (convRes?.body?.conversations || convRes?.body?.data || []) as any[];
-          await Promise.all(
-            (Array.isArray(convs) ? convs : [])
-              .map((c) => c?.id || c?._id)
-              .filter(Boolean)
-              .map((cid) => ghlFetch(`/conversations/${encodeURIComponent(cid)}`, { method: 'DELETE' }).catch(() => null)),
-          );
-        } catch (_) { /* best-effort */ }
-
-        const supa = createClient(
-          Deno.env.get('SUPABASE_URL')!,
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-        );
-        await supa.from('demo_sessions').upsert({
-          ghl_contact_id: contactId,
-          ghl_agent_id: agentId,
-          ghl_location_id: locationId,
-          prospect_url: url,
-          business_name: businessName,
-        }, { onConflict: 'ghl_contact_id' });
-      }
+      const supa = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      await supa.from('demo_sessions').upsert({
+        ghl_contact_id: contactId,
+        ghl_agent_id: agentId,
+        ghl_location_id: locationId,
+        prospect_url: url,
+        business_name: businessName,
+      }, { onConflict: 'ghl_contact_id' });
     }
     const t5 = Date.now();
+
 
     const payload = {
       ok: true,
