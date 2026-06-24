@@ -115,17 +115,6 @@ const AiDemoPage = () => {
     return () => window.removeEventListener('message', handle);
   }, []);
 
-  // Always embed the GHL chat widget on the page itself when loaded.
-  useEffect(() => {
-    const WIDGET_ID = '6a3be0987de81c3360287a78';
-    if (document.querySelector(`script[data-widget-id="${WIDGET_ID}"]`)) return;
-    const s = document.createElement('script');
-    s.src = 'https://widgets.leadconnectorhq.com/loader.js';
-    s.setAttribute('data-resources-url', 'https://widgets.leadconnectorhq.com/chat-widget/loader.js');
-    s.setAttribute('data-widget-id', WIDGET_ID);
-    s.async = true;
-    document.body.appendChild(s);
-  }, []);
 
   const normalizeUrl = (u: string) => {
     if (!u) return '';
