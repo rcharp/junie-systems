@@ -277,32 +277,9 @@ Deno.serve(async (req) => {
       });
     }
 
-    // If a session already exists for this contactId + url, return it without recreating the agent.
-    if (parsed.data.contactId) {
-      const supa = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-      );
-      const { data: existingRows } = await supa
-        .from('demo_sessions')
-        .select('*')
-        .eq('ghl_contact_id', parsed.data.contactId)
-        .eq('prospect_url', url)
-        .order('created_at', { ascending: false })
-        .limit(1);
-      const existing = existingRows?.[0];
-      if (existing?.ghl_agent_id) {
-        return new Response(JSON.stringify({
-          ok: true,
-          reused: true,
-          businessName: existing.business_name,
-          agentId: existing.ghl_agent_id,
-          contactId: existing.ghl_contact_id,
-          locationId: existing.ghl_location_id,
-          url: existing.prospect_url,
-        }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-    }
+    // Note: we intentionally do NOT reuse an existing session here. Each POST creates a
+    // fresh GHL contact + agent so the chatbot conversation starts clean every time.
+
 
     const t0 = Date.now();
     const pages = await crawl(url);
@@ -330,6 +307,25 @@ Deno.serve(async (req) => {
     });
     const t4 = Date.now();
 
+    // Always create a fresh GHL contact for this demo so the chatbot conversation is new.
+    const contactCreateRes = await ghlFetch('/contacts/', {
+      method: 'POST',
+      body: JSON.stringify({
+        locationId,
+        firstName: 'Demo',
+        lastName: `${businessName} ${Date.now()}`,
+        source: 'AI Demo Widget',
+        tags: ['ai-demo'],
+      }),
+    });
+    const contactId: string =
+      contactCreateRes?.body?.contact?.id ||
+      contactCreateRes?.body?.contact?._id ||
+      contactCreateRes?.body?.id ||
+      contactCreateRes?.body?._id ||
+      '';
+    const t4b = Date.now();
+
     const agentId =
       agentRes?.body?.agent?.id ||
       agentRes?.body?.agent?._id ||
@@ -337,41 +333,22 @@ Deno.serve(async (req) => {
       agentRes?.body?._id ||
       null;
 
-    // Bridge: contactId -> agentId. Caller must supply contactId; we never create one.
-    const contactId: string | null = parsed.data.contactId || null;
-    const contactRes: any = null;
-    if (agentId) {
-
-      if (contactId) {
-        // Clear any prior conversations for this contact so each new demo starts fresh.
-        try {
-          const convRes = await ghlFetch(
-            `/conversations/search?locationId=${encodeURIComponent(locationId)}&contactId=${encodeURIComponent(contactId)}&limit=100`,
-            { method: 'GET' },
-          );
-          const convs = (convRes?.body?.conversations || convRes?.body?.data || []) as any[];
-          await Promise.all(
-            (Array.isArray(convs) ? convs : [])
-              .map((c) => c?.id || c?._id)
-              .filter(Boolean)
-              .map((cid) => ghlFetch(`/conversations/${encodeURIComponent(cid)}`, { method: 'DELETE' }).catch(() => null)),
-          );
-        } catch (_) { /* best-effort */ }
-
-        const supa = createClient(
-          Deno.env.get('SUPABASE_URL')!,
-          Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-        );
-        await supa.from('demo_sessions').upsert({
-          ghl_contact_id: contactId,
-          ghl_agent_id: agentId,
-          ghl_location_id: locationId,
-          prospect_url: url,
-          business_name: businessName,
-        }, { onConflict: 'ghl_contact_id' });
-      }
+    const contactRes: any = contactCreateRes;
+    if (agentId && contactId) {
+      const supa = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      await supa.from('demo_sessions').upsert({
+        ghl_contact_id: contactId,
+        ghl_agent_id: agentId,
+        ghl_location_id: locationId,
+        prospect_url: url,
+        business_name: businessName,
+      }, { onConflict: 'ghl_contact_id' });
     }
     const t5 = Date.now();
+
 
     const payload = {
       ok: true,
