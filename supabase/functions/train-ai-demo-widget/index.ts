@@ -206,11 +206,12 @@ Deno.serve(async (req) => {
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       );
-      let q = supa.from('demo_sessions').select('*').limit(1);
+      let q = supa.from('demo_sessions').select('*').order('created_at', { ascending: false }).limit(1);
       if (contactId) q = q.eq('ghl_contact_id', contactId);
       else q = q.eq('prospect_url', website);
-      const { data, error } = await q.maybeSingle();
+      const { data: rows, error } = await q;
       if (error) throw error;
+      const data = rows?.[0];
       if (!data) {
         return new Response(JSON.stringify({ ok: false, error: 'session not found' }), {
           status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
