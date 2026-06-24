@@ -206,6 +206,50 @@ Deno.serve(async (req) => {
     }
     const requestedContactId = (parsed.data.contactId || '').trim();
 
+    const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+
+    // Reuse existing demo for this contact_id or prospect_url instead of provisioning new GHL resources.
+    {
+      const filters: string[] = [];
+      if (requestedContactId) filters.push(`ghl_contact_id.eq.${requestedContactId}`);
+      if (url) filters.push(`prospect_url.eq.${url}`);
+      if (filters.length) {
+        const { data: existingRows } = await supa
+          .from('demo_sessions')
+          .select('*')
+          .or(filters.join(','))
+          .order('created_at', { ascending: false })
+          .limit(1);
+        const existing = existingRows?.[0];
+        if (existing && existing.ghl_widget_id) {
+          // If the lookup was by url only, make sure the requested contact is also bound to this demo.
+          if (requestedContactId && requestedContactId !== existing.ghl_contact_id) {
+            await supa.from('demo_sessions').upsert({
+              ghl_contact_id: requestedContactId,
+              ghl_agent_id: existing.ghl_agent_id,
+              ghl_kb_id: existing.ghl_kb_id,
+              ghl_widget_id: existing.ghl_widget_id,
+              widget_embed: existing.widget_embed,
+              ghl_location_id: existing.ghl_location_id,
+              prospect_url: existing.prospect_url,
+              business_name: existing.business_name,
+              knowledge_doc: null,
+            }, { onConflict: 'ghl_contact_id' });
+          }
+          return new Response(JSON.stringify({
+            ok: true,
+            reused: true,
+            businessName: existing.business_name,
+            kbId: existing.ghl_kb_id,
+            agentId: existing.ghl_agent_id,
+            widgetId: existing.ghl_widget_id,
+            widgetEmbed: existing.widget_embed,
+            contactId: existing.ghl_contact_id,
+          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      }
+    }
+
     const businessName = (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Demo'; } })();
     const labelBase = `${businessName} ${new Date().toISOString().slice(0, 16)}`;
 
@@ -256,7 +300,6 @@ Deno.serve(async (req) => {
       }));
 
     if (sessionRows.length) {
-      const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
       const { error: sessionError } = await supa
         .from('demo_sessions')
         .upsert(sessionRows, { onConflict: 'ghl_contact_id' });
