@@ -275,7 +275,7 @@ const AiDemoPage = () => {
           </div>
 
           <div className="flex justify-center lg:sticky lg:top-8">
-            <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl" style={{ width: '410px', height: '844px' }}>
+            <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl" style={{ width: '340px', height: '700px' }}>
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-30" />
               <div className="relative w-full h-full bg-white rounded-[2.3rem] overflow-hidden">
                 {/* Status bar spacer to clear the notch */}
