@@ -333,7 +333,7 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
     if (sessionError) throw sessionError;
   }
 
-  const training = await trainKnowledgeBaseWebsite(kbId, url);
+  const training = await trainKnowledgeBaseWebsite(kbId, url, locationId);
   if (requestedContactId) {
     await supa
       .from('demo_sessions')
