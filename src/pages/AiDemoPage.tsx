@@ -39,11 +39,10 @@ const AiDemoPage = () => {
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 <style>
   html,body{margin:0;padding:0;background:transparent;height:100%;width:100%;overflow:hidden;}
-  /* Scale the open chat panel so it fits inside the phone screen */
-  chat-widget[data-active="true"]{
-    transform: scale(0.82);
-    transform-origin: bottom right;
-  }
+  chat-widget{max-width:100vw!important;max-height:100vh!important;}
+  chat-widget[data-active="true"]{transform:scale(.92);transform-origin:bottom right;}
+  *{scrollbar-width:none;}
+  *::-webkit-scrollbar{width:0;height:0;display:none;}
 </style>
 </head><body>${activeWidget}
 <script>
@@ -258,7 +257,10 @@ const AiDemoPage = () => {
           </div>
 
           <div className="flex justify-center lg:sticky lg:top-8">
-            <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl" style={{ width: '340px', height: '700px' }}>
+            <div
+              className="relative bg-black rounded-[3rem] p-3 shadow-2xl w-full max-w-[414px]"
+              style={{ height: 'min(820px, calc(100vh - 112px))', minHeight: '720px' }}
+            >
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-30" />
               <div className="relative w-full h-full bg-white rounded-[2.3rem] overflow-hidden">
                 {/* Status bar spacer to clear the notch */}
@@ -284,7 +286,7 @@ const AiDemoPage = () => {
                     ref={widgetFrameRef}
                     title="Chat Widget"
                     srcDoc={widgetSrcDoc}
-                    className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
+                    className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'top-9 h-auto w-full' : 'h-[104px] w-[104px]'}`}
                   />
                 )}
               </div>
