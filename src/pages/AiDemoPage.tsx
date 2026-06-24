@@ -117,13 +117,13 @@ const AiDemoPage = () => {
     setError('');
     setResult(null);
     setActiveWidget('');
+    setActiveContactId('');
     setWidgetExpanded(false);
     const url = normalizeUrl(urlInput);
     if (!url) return;
     setActiveUrl(url);
 
     setStep('crawling');
-    // Visual stagger so users see progress while the function runs
     const stageTimer = setTimeout(() => setStep('training'), 1500);
     const stageTimer2 = setTimeout(() => setStep('pushing'), 6000);
 
@@ -139,10 +139,11 @@ const AiDemoPage = () => {
 
       setResult(data);
       setStep('loading');
-      // Mount the trained widget
       setTimeout(() => {
+        if (data.contactId) setActiveContactId(data.contactId);
         setActiveWidget(WIDGET_SCRIPT);
         setStep('ready');
+
       }, 600);
     } catch (e: any) {
       clearTimeout(stageTimer);
