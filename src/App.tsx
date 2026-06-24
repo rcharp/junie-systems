@@ -49,6 +49,7 @@ import RenderTemplate from "./features/personalized-website/pages/RenderTemplate
 import ColdOutreachPage from "./pages/ColdOutreachPage";
 import ColdCallingPage from "./pages/ColdCallingPage";
 import SalesCallPage from "./pages/SalesCallPage";
+import AiDemoPage from "./pages/AiDemoPage";
 
 const queryClient = new QueryClient();
 
@@ -117,6 +118,7 @@ const App = () => (
             <Route path="/cold-sms" element={<ColdOutreachPage />} />
             <Route path="/cold-calling" element={<ColdCallingPage />} />
             <Route path="/sales-call" element={<SalesCallPage />} />
+            <Route path="/ai-demo" element={<AiDemoPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

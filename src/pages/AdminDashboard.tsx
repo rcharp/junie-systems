@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
-import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut, Clock, RefreshCw, Globe, Camera, UserCircle, MessageSquare, PhoneCall, Handshake } from 'lucide-react';
+import { Users, Phone, Calendar, TrendingUp, Shield, Activity, ArrowLeft, Settings, Bell, LogOut, Clock, RefreshCw, Globe, Camera, UserCircle, MessageSquare, PhoneCall, Handshake, Smartphone } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { WebhookMonitor } from '@/components/WebhookMonitor';
@@ -395,6 +395,12 @@ const AdminDashboard = () => {
                   description: 'Discovery framework, pain questions, and closing scripts.',
                   icon: Handshake,
                   onClick: () => navigate('/sales-call'),
+                },
+                {
+                  title: 'AI Demo Builder',
+                  description: 'Overlay an AI chat widget on any prospect website in an iPhone frame.',
+                  icon: Smartphone,
+                  onClick: () => navigate('/ai-demo'),
                 },
                 ...(user?.email === 'rickycharpentier@gmail.com'
                   ? [{
