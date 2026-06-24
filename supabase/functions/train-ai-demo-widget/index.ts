@@ -265,7 +265,7 @@ const scheduleBackground = (promise: Promise<unknown>) => {
 const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: string) => {
   const discoverRes = await ghlFetch(`/knowledge-bases/crawler`, {
     method: 'POST',
-    body: JSON.stringify({ knowledgeBaseId: kbId, url, locationId }),
+    body: JSON.stringify({ knowledgeBaseId: kbId, url, locationId, option: 'Domain' }),
   });
   if (!discoverRes.ok) {
     console.warn('KB discover failed:', discoverRes.status, JSON.stringify(discoverRes.body).slice(0, 400));
