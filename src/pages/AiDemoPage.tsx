@@ -40,7 +40,7 @@ const AiDemoPage = () => {
   const widgetFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const widgetSrcDoc = useMemo(() => {
-    if (!activeWidget) return '';
+    const embed = buildWidgetScript('6a3be0987de81c3360287a78');
     const identity = activeContactId
       ? `window.leadConnector = window.leadConnector || {}; window.leadConnector.contactId = ${JSON.stringify(activeContactId)}; window.LCWidget = window.LCWidget || {}; window.LCWidget.contactId = ${JSON.stringify(activeContactId)};`
       : '';
