@@ -215,92 +215,37 @@ const AiDemoPage = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           <div className="space-y-6">
-            <div>
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-sm font-semibold px-3 py-1 rounded-full mb-3">
-                <Sparkles className="w-3.5 h-3.5" />
-                Personalized Demo Preview
+            <h2 className="text-5xl font-extrabold text-foreground leading-tight">
+              Meet Your <span className="text-primary">AI Employee</span>
+            </h2>
+
+            <p className="text-lg text-foreground">
+              <span className="text-primary font-semibold">Chat</span> with it.{' '}
+              <span className="text-primary font-semibold">Talk</span> to it.
+            </p>
+
+            <p className="text-base text-foreground">
+              Role-play real customer conversations for your business, right now.
+            </p>
+
+            <p className="text-base text-foreground">
+              Tap the phone to choose <strong>Chat</strong> or <strong>Voice</strong> and{' '}
+              <em>experience</em> your AI employee in action.
+            </p>
+
+            <p className="text-sm text-muted-foreground italic">
+              This is a personalized demo preview. Live AI employees are fully trained on your
+              business, services, FAQs, and booking system.
+            </p>
+
+            {step === 'error' && (
+              <div className="flex items-start gap-2 text-sm text-destructive">
+                <AlertCircle className="w-4 h-4 mt-0.5" />
+                <span>{error}</span>
               </div>
-              <h2 className="text-4xl font-extrabold text-foreground leading-tight">
-                Meet Your <span className="text-primary">AI Employee</span>
-              </h2>
-              <p className="text-muted-foreground mt-3">
-                Enter your website. We crawl it, train an AI chat + voice widget on your business, and drop it
-                live inside the phone preview.
-              </p>
-            </div>
-
-            <Card>
-              <CardContent className="p-5 space-y-4">
-                <div>
-                  <label className="text-sm font-semibold flex items-center gap-2 mb-2">
-                    <Globe className="w-4 h-4 text-primary" /> Website URL
-                  </label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      placeholder="https://example.com"
-                      disabled={isWorking}
-                    />
-                    <Button onClick={train} disabled={isWorking || !urlInput}>
-                      {isWorking ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Train widget'}
-                    </Button>
-                  </div>
-                </div>
-
-                {(isWorking || step === 'ready' || step === 'error') && (
-                  <div className="space-y-2 pt-2 border-t">
-                    {STEP_FLOW.map((s, idx) => {
-                      const done = step === 'ready' || (currentIdx > idx);
-                      const active = step === s.key;
-                      return (
-                        <div key={s.key} className="flex items-center gap-2 text-sm">
-                          {done ? (
-                            <Check className="w-4 h-4 text-green-600" />
-                          ) : active ? (
-                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full border border-muted" />
-                          )}
-                          <span className={done ? 'text-foreground' : active ? 'text-foreground font-medium' : 'text-muted-foreground'}>
-                            {s.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {step === 'error' && (
-                      <div className="flex items-start gap-2 text-sm text-destructive pt-1">
-                        <AlertCircle className="w-4 h-4 mt-0.5" />
-                        <span>{error}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {result && (
-              <Card>
-                <CardContent className="p-5 space-y-3 text-sm">
-                  <div className="font-semibold">Knowledge base trained on {result.pagesCrawled?.length ?? 0} pages</div>
-                  <ul className="list-disc list-inside text-xs text-muted-foreground space-y-0.5 max-h-32 overflow-auto">
-                    {result.pagesCrawled?.map((p: any) => (
-                      <li key={p.url} className="truncate">{p.title}</li>
-                    ))}
-                  </ul>
-                  {result.ghl?.ok === false && !result.ghl?.skipped && (
-                    <p className="text-xs text-amber-600">
-                      GHL push returned {result.ghl?.status}: {typeof result.ghl?.body === 'string' ? result.ghl.body.slice(0, 200) : JSON.stringify(result.ghl?.body)?.slice(0, 200)}
-                    </p>
-                  )}
-                  <details className="text-xs">
-                    <summary className="cursor-pointer text-primary">Preview generated knowledge</summary>
-                    <pre className="whitespace-pre-wrap mt-2 p-2 bg-muted rounded text-xs max-h-48 overflow-auto">{result.knowledgePreview}</pre>
-                  </details>
-                </CardContent>
-              </Card>
             )}
           </div>
+
 
           <div className="flex justify-center lg:sticky lg:top-8">
             <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl" style={{ width: '393px', height: '809px' }}>
@@ -326,8 +271,9 @@ const AiDemoPage = () => {
                 )}
                 {!activeUrl && (
                   <div className="absolute inset-0 pt-9 flex items-center justify-center text-muted-foreground text-sm p-6 text-center">
-                    Enter a website and tap "Train widget" to see your AI employee live.
+                    Your personalized demo is loading…
                   </div>
+
                 )}
                 {activeWidget && (
                   <iframe
