@@ -19,7 +19,7 @@ export type Database = {
           business_name: string | null
           created_at: string
           expires_at: string
-          ghl_agent_id: string
+          ghl_agent_id: string | null
           ghl_contact_id: string
           ghl_location_id: string
           id: string
@@ -31,7 +31,7 @@ export type Database = {
           business_name?: string | null
           created_at?: string
           expires_at?: string
-          ghl_agent_id: string
+          ghl_agent_id?: string | null
           ghl_contact_id: string
           ghl_location_id: string
           id?: string
@@ -43,7 +43,7 @@ export type Database = {
           business_name?: string | null
           created_at?: string
           expires_at?: string
-          ghl_agent_id?: string
+          ghl_agent_id?: string | null
           ghl_contact_id?: string
           ghl_location_id?: string
           id?: string

@@ -1,0 +1,1 @@
+ALTER TABLE public.demo_sessions ALTER COLUMN ghl_agent_id DROP NOT NULL;
