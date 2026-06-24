@@ -275,29 +275,25 @@ const AiDemoPage = () => {
           </div>
 
           <div className="flex justify-center lg:sticky lg:top-8">
-            <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl" style={{ width: '410px', height: '844px' }}>
+            <div className="relative bg-black rounded-[3rem] p-3 shadow-2xl" style={{ width: '414px', height: '868px' }}>
               <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-7 bg-black rounded-b-2xl z-30" />
               <div className="relative w-full h-full bg-white rounded-[2.3rem] overflow-hidden">
-                {/* Status bar spacer to clear the notch */}
-                <div className="absolute top-0 left-0 right-0 h-9 bg-white z-10" />
                 {activeUrl && (
-                  <div className="absolute inset-0 pt-9 overflow-hidden">
+                  <div className="absolute inset-0 overflow-hidden">
                     <iframe
                       src={activeUrl}
                       title="Website Preview"
-                      className="block border-0"
+                      className="block w-full h-full border-0"
                       style={{
                         width: '390px',
-                        height: 'calc(100% / 0.9897)',
-                        transform: 'scale(0.9897)',
-                        transformOrigin: 'top left',
+                        height: '844px',
                       }}
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                     />
                   </div>
                 )}
                 {!activeUrl && (
-                  <div className="absolute inset-0 pt-9 flex items-center justify-center text-muted-foreground text-sm p-6 text-center">
+                  <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm p-6 text-center">
                     Enter a website and tap "Train widget" to see your AI employee live.
                   </div>
                 )}
