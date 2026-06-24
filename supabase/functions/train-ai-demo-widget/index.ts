@@ -366,32 +366,28 @@ Deno.serve(async (req) => {
     const { doc, businessName } = await summarizeWithAi(pages, url);
     const t2 = Date.now();
 
-    // 3) Create KB in GHL named with the passed-in contact_id, populated with scraped content.
+    // 3) Create KB in GHL named with the passed-in contact_id.
     const kbName = requestedContactId || `Demo KB · ${businessName || fallbackName}`;
-    const kbCreate = await ghlFetch('/conversation-ai/knowledge-bases', {
+    const kbCreate = await ghlFetch('/knowledge-base/', {
       method: 'POST',
-      body: JSON.stringify({
-        locationId,
-        name: kbName,
-        description: `Scraped knowledge base for ${businessName || fallbackName} (${url})`,
-      }),
+      body: JSON.stringify({ locationId, name: kbName }),
     });
     if (!kbCreate.ok) throw new Error(`KB create failed ${kbCreate.status}: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
     const kbId = pickId(kbCreate.body);
     if (!kbId) throw new Error(`KB create returned no id: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
 
-    // 4) Add a document to the KB with the scraped + summarized content.
-    const docRes = await ghlFetch(`/conversation-ai/knowledge-bases/${kbId}/documents`, {
+    // 4) Submit the prospect URL to the KB web crawler, then trigger training.
+    const crawlRes = await ghlFetch(`/knowledge-base/${kbId}/crawl`, {
       method: 'POST',
-      body: JSON.stringify({
-        locationId,
-        name: `${businessName || fallbackName} — Website`,
-        type: 'text',
-        content: doc.slice(0, 200000),
-        sourceUrl: url,
-      }),
+      body: JSON.stringify({ locationId, url }),
     });
-    if (!docRes.ok) console.warn('KB document add failed:', docRes.status, JSON.stringify(docRes.body).slice(0, 400));
+    if (!crawlRes.ok) console.warn('KB crawl submit failed:', crawlRes.status, JSON.stringify(crawlRes.body).slice(0, 400));
+
+    const trainRes = await ghlFetch(`/knowledge-base/${kbId}/crawl/train`, {
+      method: 'POST',
+      body: JSON.stringify({ locationId }),
+    });
+    if (!trainRes.ok) console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
     const t3 = Date.now();
 
     // 5) Persist session keyed by contact_id (no agent / widget creation).
