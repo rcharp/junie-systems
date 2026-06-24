@@ -146,9 +146,10 @@ const AiDemoPage = () => {
       setStep('loading');
       setTimeout(() => {
         if (data.contactId) setActiveContactId(data.contactId);
-        setActiveWidget(WIDGET_SCRIPT);
+        const embed = data.widgetEmbed || (data.widgetId ? buildWidgetScript(data.widgetId) : '');
+        if (!embed) throw new Error('No widget embed returned');
+        setActiveWidget(embed);
         setStep('ready');
-
       }, 600);
     } catch (e: any) {
       clearTimeout(stageTimer);
