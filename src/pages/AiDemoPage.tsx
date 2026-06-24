@@ -134,13 +134,12 @@ const AiDemoPage = () => {
                   />
                 )}
 
-                {/* Chat widget overlay - small bubble that expands on hover so the rest of the phone stays scrollable */}
+                {/* Chat widget overlay - starts as a small bubble, expands on hover/focus/click so the chat can open */}
                 {activeWidget && (
                   <iframe
                     title="Chat Widget"
                     srcDoc={widgetSrcDoc}
-                    className="absolute bottom-0 right-0 border-0 z-20 transition-all duration-200 hover:w-[320px] hover:h-[520px]"
-                    style={{ width: '90px', height: '90px', background: 'transparent' }}
+                    className="absolute bottom-0 right-0 z-20 h-[90px] w-[90px] border-0 bg-transparent transition-all duration-200 hover:h-[520px] hover:w-[320px] focus:h-[520px] focus:w-[320px] active:h-[520px] active:w-[320px]"
                   />
                 )}
               </div>
