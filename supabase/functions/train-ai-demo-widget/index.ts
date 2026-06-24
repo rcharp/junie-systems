@@ -11,15 +11,19 @@ const BodySchema = z.object({
   contactId: z.string().optional(),
 });
 
-const MAX_PAGES = 25;
+const MAX_PAGES = 500;
 const FETCH_TIMEOUT_MS = 10000;
 const PER_PAGE_CHARS = 18000;
+const CRAWL_BUDGET_MS = 90_000;
+const CONCURRENCY = 8;
 
 const GHL_BASE = 'https://services.leadconnectorhq.com';
 const GHL_VERSION = '2021-04-15';
 const AGENT_NAME_PREFIX = 'Demo Agent · ';
 
 const cache = new Map<string, { ts: number; payload: any }>();
+
+const SKIP_EXT = /\.(pdf|jpg|jpeg|png|gif|webp|svg|ico|mp4|mp3|wav|zip|rar|css|js|woff2?|ttf|eot|xml|json)$/i;
 
 const stripHtml = (html: string) =>
   html
@@ -53,53 +57,109 @@ const discoverLinks = (html: string, origin: string): string[] => {
   while ((m = re.exec(html)) !== null) {
     try {
       const href = m[1];
-      if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) continue;
+      if (href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) continue;
       const u = new URL(href, origin);
-      if (u.origin === origin) links.add(u.toString().split('#')[0]);
+      if (u.origin !== origin) continue;
+      if (SKIP_EXT.test(u.pathname)) continue;
+      links.add(u.toString().split('#')[0]);
     } catch (_) { /* ignore */ }
-    if (links.size > 50) break;
   }
   return Array.from(links);
+};
+
+const collectSitemapUrls = async (origin: string, deadline: number): Promise<string[]> => {
+  const out = new Set<string>();
+  const seen = new Set<string>();
+  const queue: string[] = [
+    `${origin}/sitemap.xml`,
+    `${origin}/sitemap_index.xml`,
+    `${origin}/sitemap-index.xml`,
+  ];
+  // Try robots.txt for additional sitemaps.
+  try {
+    const r = await fetchWithTimeout(`${origin}/robots.txt`, 4000);
+    if (r.ok) {
+      const txt = await r.text();
+      for (const m of txt.matchAll(/Sitemap:\s*(\S+)/gi)) queue.push(m[1].trim());
+    }
+  } catch (_) { /* ignore */ }
+
+  while (queue.length && Date.now() < deadline) {
+    const sm = queue.shift()!;
+    if (seen.has(sm)) continue;
+    seen.add(sm);
+    try {
+      const res = await fetchWithTimeout(sm, 6000);
+      if (!res.ok) continue;
+      const xml = await res.text();
+      // Nested sitemaps
+      for (const m of xml.matchAll(/<sitemap>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/sitemap>/gi)) {
+        queue.push(m[1].trim());
+      }
+      // Page URLs
+      for (const m of xml.matchAll(/<url>[\s\S]*?<loc>([^<]+)<\/loc>[\s\S]*?<\/url>/gi)) {
+        const u = m[1].trim();
+        if (u.startsWith(origin) && !SKIP_EXT.test(u)) out.add(u.split('#')[0]);
+      }
+      // Bare <loc> fallback
+      if (!xml.includes('<url>') && !xml.includes('<sitemap>')) {
+        for (const m of xml.matchAll(/<loc>([^<]+)<\/loc>/gi)) {
+          const u = m[1].trim();
+          if (u.startsWith(origin) && !SKIP_EXT.test(u)) out.add(u.split('#')[0]);
+        }
+      }
+    } catch (_) { /* ignore */ }
+  }
+  return Array.from(out);
 };
 
 const crawl = async (startUrl: string) => {
   const start = new URL(startUrl);
   const origin = start.origin;
+  const deadline = Date.now() + CRAWL_BUDGET_MS;
   const pages: { url: string; title: string; text: string }[] = [];
   const visited = new Set<string>();
+  const queued = new Set<string>();
+  const queue: string[] = [];
 
-  let queue: string[] = [start.toString()];
-  try {
-    const smRes = await fetchWithTimeout(`${origin}/sitemap.xml`, 4000);
-    if (smRes.ok) {
-      const xml = await smRes.text();
-      const locs = Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/g)).map((m) => m[1]);
-      if (locs.length) queue = [start.toString(), ...locs.filter((u) => u.startsWith(origin))];
-    }
-  } catch (_) { /* ignore */ }
+  const enqueue = (url: string) => {
+    if (queued.has(url) || visited.has(url)) return;
+    queued.add(url);
+    queue.push(url);
+  };
 
-  while (queue.length && pages.length < MAX_PAGES) {
-    const next = queue.shift()!;
-    if (visited.has(next)) continue;
+  enqueue(start.toString());
+  const sitemapUrls = await collectSitemapUrls(origin, Math.min(deadline, Date.now() + 15_000));
+  for (const u of sitemapUrls) enqueue(u);
+
+  const fetchOne = async (next: string) => {
     visited.add(next);
     try {
       const res = await fetchWithTimeout(next);
-      if (!res.ok) continue;
+      if (!res.ok) return;
       const ct = res.headers.get('content-type') || '';
-      if (!ct.includes('text/html')) continue;
+      if (!ct.includes('text/html')) return;
       const html = await res.text();
       const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
       const title = titleMatch ? titleMatch[1].trim() : next;
       const text = stripHtml(html).slice(0, PER_PAGE_CHARS);
       pages.push({ url: next, title, text });
-      if (pages.length === 1) {
-        const found = discoverLinks(html, origin);
-        for (const link of found) if (!visited.has(link)) queue.push(link);
-      }
+      // Discover links from EVERY page, not just the first.
+      for (const link of discoverLinks(html, origin)) enqueue(link);
     } catch (_) { /* ignore */ }
+  };
+
+  while (queue.length && pages.length < MAX_PAGES && Date.now() < deadline) {
+    const batch: string[] = [];
+    while (batch.length < CONCURRENCY && queue.length && pages.length + batch.length < MAX_PAGES) {
+      batch.push(queue.shift()!);
+    }
+    await Promise.all(batch.map(fetchOne));
   }
   return pages;
 };
+
+
 
 const summarizeWithAi = async (pages: { url: string; title: string; text: string }[], targetUrl: string) => {
   const lovableKey = Deno.env.get('LOVABLE_API_KEY');
