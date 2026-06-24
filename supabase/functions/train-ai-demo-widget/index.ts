@@ -190,6 +190,48 @@ const createConversationAgent = async (params: {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
+  // GET: load an existing demo session by contact_id (and/or website).
+  // Used by the /ai-demo page to hydrate the widget without re-training.
+  if (req.method === 'GET') {
+    try {
+      const u = new URL(req.url);
+      const contactId = u.searchParams.get('contact_id') || u.searchParams.get('contactId') || '';
+      const website = u.searchParams.get('website') || u.searchParams.get('url') || '';
+      if (!contactId && !website) {
+        return new Response(JSON.stringify({ error: 'contact_id or website required' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      const supa = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      );
+      let q = supa.from('demo_sessions').select('*').limit(1);
+      if (contactId) q = q.eq('ghl_contact_id', contactId);
+      else q = q.eq('prospect_url', website);
+      const { data, error } = await q.maybeSingle();
+      if (error) throw error;
+      if (!data) {
+        return new Response(JSON.stringify({ ok: false, error: 'session not found' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({
+        ok: true,
+        loaded: true,
+        contactId: data.ghl_contact_id,
+        agentId: data.ghl_agent_id,
+        locationId: data.ghl_location_id,
+        url: data.prospect_url,
+        businessName: data.business_name,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    } catch (e) {
+      return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+  }
+
   try {
     const json = await req.json();
     const parsed = BodySchema.safeParse(json);
