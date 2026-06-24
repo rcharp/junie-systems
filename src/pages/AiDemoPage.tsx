@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Globe, MessageSquare, Sparkles } from 'lucide-react';
 
-const DEFAULT_WIDGET = `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="69bf21e6e6fe2a0cdde0ad28"></script>`;
+const DEFAULT_WIDGET = `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="6a3bde195ccb4c81af648ac7"></script>`;
 
 const AiDemoPage = () => {
   const navigate = useNavigate();
