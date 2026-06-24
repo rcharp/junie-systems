@@ -10,7 +10,7 @@ const BodySchema = z.object({
 });
 
 const GHL_BASE = 'https://services.leadconnectorhq.com';
-const GHL_VERSION = '2021-04-15';
+const GHL_VERSION = '2021-07-28';
 
 // ---- Site crawl + AI summarize (KB embedded into agent instructions) ----
 const MAX_PAGES = 500;
@@ -230,6 +230,108 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
   return { id, embed };
 };
 
+const getFallbackBusinessName = (url: string) => {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Demo'; }
+};
+
+const findExistingSession = async (supa: any, contactId: string, url: string) => {
+  if (contactId) {
+    const { data } = await supa
+      .from('demo_sessions')
+      .select('*')
+      .eq('ghl_contact_id', contactId)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    if (data?.[0]) return data[0];
+  }
+
+  const { data } = await supa
+    .from('demo_sessions')
+    .select('*')
+    .eq('prospect_url', url)
+    .order('created_at', { ascending: false })
+    .limit(1);
+  return data?.[0] || null;
+};
+
+const scheduleBackground = (promise: Promise<unknown>) => {
+  promise.catch((e) => console.error('AI demo background job failed:', e));
+  const edgeRuntime = (globalThis as any).EdgeRuntime;
+  if (edgeRuntime?.waitUntil) edgeRuntime.waitUntil(promise);
+};
+
+const trainKnowledgeBaseWebsite = async (kbId: string, url: string) => {
+  const discoverRes = await ghlFetch(`/knowledge-base/${kbId}/website/discover`, {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  });
+  if (!discoverRes.ok) {
+    console.warn('KB discover failed:', discoverRes.status, JSON.stringify(discoverRes.body).slice(0, 400));
+    return { discovered: false, trained: false };
+  }
+
+  for (let i = 0; i < 15; i++) {
+    await new Promise((r) => setTimeout(r, 2000));
+    const statusRes = await ghlFetch(`/knowledge-base/${kbId}/website/status`, { method: 'GET' });
+    const b: any = statusRes.body || {};
+    const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
+    if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
+  }
+
+  const trainRes = await ghlFetch(`/knowledge-base/${kbId}/website/train`, {
+    method: 'POST',
+    body: JSON.stringify({ urls: [url] }),
+  });
+  if (!trainRes.ok) {
+    console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
+    return { discovered: true, trained: false };
+  }
+
+  return { discovered: true, trained: true };
+};
+
+const processDemoKnowledgeBase = async (params: { url: string; locationId: string; requestedContactId: string }) => {
+  const { url, locationId, requestedContactId } = params;
+  const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+  const existing = await findExistingSession(supa, requestedContactId, url);
+  if (existing?.ghl_kb_id) return;
+
+  const fallbackName = getFallbackBusinessName(url);
+  const kbName = requestedContactId || `Demo KB - ${fallbackName}`;
+  const kbCreate = await ghlFetch('/knowledge-base/', {
+    method: 'POST',
+    body: JSON.stringify({ locationId, name: kbName }),
+  });
+  if (!kbCreate.ok) throw new Error(`KB create failed ${kbCreate.status}: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
+  const kbId = pickId(kbCreate.body);
+  if (!kbId) throw new Error(`KB create returned no id: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
+
+  if (requestedContactId) {
+    const { error: sessionError } = await supa
+      .from('demo_sessions')
+      .upsert([{
+        ghl_contact_id: requestedContactId,
+        ghl_agent_id: null,
+        ghl_kb_id: kbId,
+        ghl_widget_id: null,
+        widget_embed: null,
+        ghl_location_id: locationId,
+        prospect_url: url,
+        business_name: fallbackName,
+        knowledge_doc: 'Knowledge base created; website training queued.',
+      }], { onConflict: 'ghl_contact_id' });
+    if (sessionError) throw sessionError;
+  }
+
+  const training = await trainKnowledgeBaseWebsite(kbId, url);
+  if (requestedContactId) {
+    await supa
+      .from('demo_sessions')
+      .update({ knowledge_doc: training.trained ? `Knowledge base trained from ${url}.` : `Knowledge base created for ${url}; training did not complete.` })
+      .eq('ghl_contact_id', requestedContactId);
+  }
+};
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
@@ -305,130 +407,28 @@ Deno.serve(async (req) => {
     const requestedContactId = (parsed.data.contactId || '').trim();
 
     const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-
-    // Reuse existing demo for this contact_id or prospect_url instead of provisioning new GHL resources.
-    {
-      const filters: string[] = [];
-      if (requestedContactId) filters.push(`ghl_contact_id.eq.${requestedContactId}`);
-      if (url) filters.push(`prospect_url.eq.${url}`);
-      if (filters.length) {
-        const { data: existingRows } = await supa
-          .from('demo_sessions')
-          .select('*')
-          .or(filters.join(','))
-          .order('created_at', { ascending: false })
-          .limit(1);
-        const existing = existingRows?.[0];
-        if (existing && existing.ghl_widget_id) {
-          // If the lookup was by url only, make sure the requested contact is also bound to this demo.
-          if (requestedContactId && requestedContactId !== existing.ghl_contact_id) {
-            await supa.from('demo_sessions').upsert({
-              ghl_contact_id: requestedContactId,
-              ghl_agent_id: existing.ghl_agent_id,
-              ghl_kb_id: existing.ghl_kb_id,
-              ghl_widget_id: existing.ghl_widget_id,
-              widget_embed: existing.widget_embed,
-              ghl_location_id: existing.ghl_location_id,
-              prospect_url: existing.prospect_url,
-              business_name: existing.business_name,
-              knowledge_doc: existing.knowledge_doc,
-            }, { onConflict: 'ghl_contact_id' });
-          }
-          return new Response(JSON.stringify({
-            ok: true,
-            reused: true,
-            businessName: existing.business_name,
-            kbId: existing.ghl_kb_id,
-            agentId: existing.ghl_agent_id,
-            widgetId: existing.ghl_widget_id,
-            widgetEmbed: existing.widget_embed,
-            contactId: existing.ghl_contact_id,
-            locationId: existing.ghl_location_id,
-            knowledgeDoc: existing.knowledge_doc,
-          }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-        }
-      }
+    const existing = await findExistingSession(supa, requestedContactId, url);
+    if (existing?.ghl_kb_id) {
+      return new Response(JSON.stringify({
+        ok: true,
+        reused: true,
+        businessName: existing.business_name,
+        kbId: existing.ghl_kb_id,
+        contactId: existing.ghl_contact_id,
+        locationId: existing.ghl_location_id,
+        url: existing.prospect_url,
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    const fallbackName = (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return 'Demo'; } })();
-    const t0 = Date.now();
-
-    // 1) Crawl prospect site
-    const pages = await crawl(url);
-    if (!pages.length) {
-      return new Response(JSON.stringify({ error: 'Could not crawl any pages from this URL.' }), {
-        status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-    const t1 = Date.now();
-
-    // 2) Summarize into knowledge doc
-    const { doc, businessName } = await summarizeWithAi(pages, url);
-    const t2 = Date.now();
-
-    // 3) Create KB in GHL named with the passed-in contact_id.
-    const kbName = requestedContactId || `Demo KB · ${businessName || fallbackName}`;
-    const kbCreate = await ghlFetch('/knowledge-base/', {
-      method: 'POST',
-      body: JSON.stringify({ locationId, name: kbName }),
-    });
-    if (!kbCreate.ok) throw new Error(`KB create failed ${kbCreate.status}: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
-    const kbId = pickId(kbCreate.body);
-    if (!kbId) throw new Error(`KB create returned no id: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
-
-    // 4) Discover → poll status → train (homepage only for the demo).
-    const discoverRes = await ghlFetch(`/knowledge-base/${kbId}/website/discover`, {
-      method: 'POST',
-      body: JSON.stringify({ url }),
-    });
-    if (!discoverRes.ok) console.warn('KB discover failed:', discoverRes.status, JSON.stringify(discoverRes.body).slice(0, 400));
-
-    // Poll status up to ~30s.
-    let discoveredUrls: string[] = [];
-    for (let i = 0; i < 15; i++) {
-      await new Promise((r) => setTimeout(r, 2000));
-      const statusRes = await ghlFetch(`/knowledge-base/${kbId}/website/status`, { method: 'GET' });
-      const b: any = statusRes.body || {};
-      const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
-      const urls: string[] = b.urls || b.pages || b.discoveredUrls || b.data?.urls || [];
-      if (urls.length) discoveredUrls = urls;
-      if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
-    }
-
-    const trainRes = await ghlFetch(`/knowledge-base/${kbId}/website/train`, {
-      method: 'POST',
-      body: JSON.stringify({ urls: [url] }), // Option A: homepage only.
-    });
-    if (!trainRes.ok) console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
-    const t3 = Date.now();
-
-    // 5) Persist session keyed by contact_id (no agent / widget creation).
-    if (requestedContactId) {
-      const { error: sessionError } = await supa
-        .from('demo_sessions')
-        .upsert([{
-          ghl_contact_id: requestedContactId,
-          ghl_agent_id: null,
-          ghl_kb_id: kbId,
-          ghl_widget_id: null,
-          widget_embed: null,
-          ghl_location_id: locationId,
-          prospect_url: url,
-          business_name: businessName || fallbackName,
-          knowledge_doc: doc,
-        }], { onConflict: 'ghl_contact_id' });
-      if (sessionError) throw sessionError;
-    }
+    scheduleBackground(processDemoKnowledgeBase({ url, locationId, requestedContactId }));
 
     return new Response(JSON.stringify({
       ok: true,
-      businessName: businessName || fallbackName,
-      kbId,
+      queued: true,
       contactId: requestedContactId || null,
       locationId,
-      knowledgeDoc: doc,
-      pagesCrawled: pages.length,
-      timings: { crawlMs: t1 - t0, aiMs: t2 - t1, kbMs: t3 - t2, totalMs: t3 - t0 },
+      url,
+      message: 'Knowledge base creation and website training queued.',
     }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e) {
     return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
