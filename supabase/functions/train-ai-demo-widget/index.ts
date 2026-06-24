@@ -326,7 +326,7 @@ Deno.serve(async (req) => {
       const contactRes = await createDemoContact(data.ghl_location_id, data.business_name || 'Demo');
       const newContactId = extractContactId(contactRes);
       if (newContactId) {
-        await supa.from('demo_sessions').upsert({
+        const { error: cloneError } = await supa.from('demo_sessions').upsert({
           ghl_contact_id: newContactId,
           ghl_agent_id: data.ghl_agent_id,
           ghl_location_id: data.ghl_location_id,
@@ -334,6 +334,7 @@ Deno.serve(async (req) => {
           business_name: data.business_name,
           knowledge_doc: data.knowledge_doc,
         }, { onConflict: 'ghl_contact_id' });
+        if (cloneError) throw cloneError;
         data = { ...data, ghl_contact_id: newContactId };
       }
 
@@ -409,12 +410,13 @@ Deno.serve(async (req) => {
         knowledge_doc: doc,
       }));
 
-    if (contactId) {
+    if (sessionRows.length) {
       const supa = createClient(
         Deno.env.get('SUPABASE_URL')!,
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
       );
-      await supa.from('demo_sessions').upsert(sessionRows, { onConflict: 'ghl_contact_id' });
+      const { error: sessionError } = await supa.from('demo_sessions').upsert(sessionRows, { onConflict: 'ghl_contact_id' });
+      if (sessionError) throw sessionError;
     }
     const t5 = Date.now();
     const agentRes: any = { ok: true, skipped: true };
