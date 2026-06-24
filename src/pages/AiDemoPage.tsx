@@ -25,7 +25,7 @@ const AiDemoPage = () => {
   const [searchParams] = useSearchParams();
   const presetContactId = searchParams.get('contact_id') || searchParams.get('contactId') || '';
   const presetWebsite = searchParams.get('website') || searchParams.get('url') || '';
-  const [urlInput, setUrlInput] = useState(presetWebsite || 'https://ksjunkguy.com');
+  const [urlInput, setUrlInput] = useState(presetWebsite || '');
   const [activeUrl, setActiveUrl] = useState<string>('');
   const [activeWidget, setActiveWidget] = useState<string>('');
   const [activeContactId, setActiveContactId] = useState<string>('');
