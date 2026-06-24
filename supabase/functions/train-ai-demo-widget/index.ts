@@ -192,19 +192,19 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
   const { locationId, name, agentId } = params;
   const r = await ghlFetch('/chat-widget/', {
     method: 'POST',
-    headers: { Version: 'v3' },
+    headers: { Version: '2021-07-28' },
     body: JSON.stringify({
       locationId,
       name,
-      version: 1,
-      chatType: 'all_in_one',
+      version: 2,
+      chatType: 'allInOneChat',
       default: false,
       deleted: false,
       settings: {
-        chatType: 'all_in_one',
+        chatType: 'allInOneChat',
         chatIcon: 'messageChatCircle',
         heading: name,
-        subHeading: 'We are here to help.',
+        subHeading: 'How can we help?',
         liveChatIntroMsg: 'Hi! How can we help you today?',
         liveChatAckMsg: 'Thanks for reaching out. We will respond shortly.',
         promptMsg: 'Need help? Chat with us.',
@@ -212,21 +212,27 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
         showPrompt: true,
         showAgencyBranding: false,
         showConsentCheckbox: false,
-        enableContactForm: true,
-        widgetPrimaryColor: '#2B8CEE',
+        advanceSettings: {
+          allInOneChatTypes: ['liveChat'],
+          allInOneInitialMsg: 'Choose a chat option to get started.',
+          voiceAiAgent: { agentId },
+        },
       },
     }),
   });
   if (!r.ok) throw new Error(`Widget create failed ${r.status}: ${JSON.stringify(r.body).slice(0, 400)}`);
   const id = pickId(r.body);
 
-  // Attach the conversation AI agent to the widget via PATCH.
+  // Attach the conversation AI agent to the widget via PATCH (fallback path).
   if (id && agentId) {
     try {
       await ghlFetch(`/chat-widget/data/${locationId}/${id}`, {
         method: 'PATCH',
-        headers: { Version: 'v3' },
-        body: JSON.stringify({ botId: agentId }),
+        headers: { Version: '2021-07-28' },
+        body: JSON.stringify({
+          settings: { advanceSettings: { voiceAiAgent: { agentId } } },
+          botId: agentId,
+        }),
       });
     } catch (e) {
       console.warn('Widget agent attach failed (non-fatal):', e);
@@ -241,7 +247,6 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
     (id ? `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="${id}"></script>` : '');
   if (!id && !embed) throw new Error(`Widget create returned no id/embed: ${JSON.stringify(r.body).slice(0, 400)}`);
   return { id, embed };
-
 };
 
 Deno.serve(async (req) => {
