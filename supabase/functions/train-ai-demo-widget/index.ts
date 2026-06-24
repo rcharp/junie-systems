@@ -305,7 +305,7 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
   const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   const fallbackName = getFallbackBusinessName(url);
-  const kbName = `Demo KB - ${fallbackName} - ${new Date().toISOString()}`;
+  const kbName = requestedContactId || `Demo KB - ${fallbackName} - ${new Date().toISOString()}`;
   const kbCreate = await ghlFetch('/knowledge-base/', {
     method: 'POST',
     body: JSON.stringify({ locationId, name: kbName }),
