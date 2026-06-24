@@ -253,6 +253,7 @@ Deno.serve(async (req) => {
         locationId: data.ghl_location_id,
         url: data.prospect_url,
         businessName: data.business_name,
+        knowledgeDoc: data.knowledge_doc,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     } catch (e) {
       return new Response(JSON.stringify({ error: String((e as Error)?.message ?? e) }), {
