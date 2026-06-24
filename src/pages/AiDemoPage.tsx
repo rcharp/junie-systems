@@ -132,7 +132,7 @@ const AiDemoPage = () => {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('train-ai-demo-widget', {
-        body: { url },
+        body: { url, ...(presetContactId ? { contactId: presetContactId } : {}) },
       });
       clearTimeout(stageTimer);
       clearTimeout(stageTimer2);
