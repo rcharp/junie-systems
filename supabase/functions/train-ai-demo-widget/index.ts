@@ -262,32 +262,40 @@ const scheduleBackground = (promise: Promise<unknown>) => {
   if (edgeRuntime?.waitUntil) edgeRuntime.waitUntil(promise);
 };
 
-const trainKnowledgeBaseWebsite = async (kbId: string, url: string) => {
-  const discoverRes = await ghlFetch(`/knowledge-base/${kbId}/website/discover`, {
+const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: string) => {
+  const discoverRes = await ghlFetch(`/knowledge-bases/crawler`, {
     method: 'POST',
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ knowledgeBaseId: kbId, url, locationId }),
   });
   if (!discoverRes.ok) {
     console.warn('KB discover failed:', discoverRes.status, JSON.stringify(discoverRes.body).slice(0, 400));
     return { discovered: false, trained: false };
   }
+  console.log('KB discover ok:', JSON.stringify(discoverRes.body).slice(0, 400));
 
-  for (let i = 0; i < 15; i++) {
+  let discoveredUrls: string[] = [url];
+  for (let i = 0; i < 20; i++) {
     await new Promise((r) => setTimeout(r, 2000));
-    const statusRes = await ghlFetch(`/knowledge-base/${kbId}/website/status`, { method: 'GET' });
+    const statusRes = await ghlFetch(
+      `/knowledge-bases/crawler/status?knowledgeBaseId=${kbId}&locationId=${locationId}`,
+      { method: 'GET' },
+    );
     const b: any = statusRes.body || {};
     const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
+    const urls: string[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls || [];
+    if (Array.isArray(urls) && urls.length) discoveredUrls = urls;
     if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
   }
 
-  const trainRes = await ghlFetch(`/knowledge-base/${kbId}/website/train`, {
+  const trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
     method: 'POST',
-    body: JSON.stringify({ urls: [url] }),
+    body: JSON.stringify({ knowledgeBaseId: kbId, locationId, urls: discoveredUrls.slice(0, 25) }),
   });
   if (!trainRes.ok) {
     console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
     return { discovered: true, trained: false };
   }
+  console.log('KB train ok, urls:', discoveredUrls.length);
 
   return { discovered: true, trained: true };
 };
@@ -325,7 +333,7 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
     if (sessionError) throw sessionError;
   }
 
-  const training = await trainKnowledgeBaseWebsite(kbId, url);
+  const training = await trainKnowledgeBaseWebsite(kbId, url, locationId);
   if (requestedContactId) {
     await supa
       .from('demo_sessions')
