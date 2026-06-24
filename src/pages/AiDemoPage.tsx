@@ -289,8 +289,8 @@ const AiDemoPage = () => {
                       className="block border-0"
                       style={{
                         width: '390px',
-                        height: 'calc(100% / 0.81)',
-                        transform: 'scale(0.81)',
+                        height: 'calc(100% / 0.897)',
+                        transform: 'scale(0.897)',
                         transformOrigin: 'top left',
                       }}
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
