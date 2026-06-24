@@ -177,7 +177,9 @@ const AiDemoPage = () => {
       if (!res.ok || !data?.ok) throw new Error(data?.error || 'Session not found');
       setActiveUrl(data.url);
       setActiveContactId(data.contactId || '');
-      setActiveWidget(WIDGET_SCRIPT);
+      const embed = data.widgetEmbed || (data.widgetId ? buildWidgetScript(data.widgetId) : '');
+      if (!embed) throw new Error('No widget embed for this session');
+      setActiveWidget(embed);
       setStep('ready');
       return true;
     } catch (e: any) {
