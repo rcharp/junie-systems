@@ -8,6 +8,7 @@ const BodySchema = z.object({
   url: z.string().url(),
   locationId: z.string().optional(),
   calendarId: z.string().optional(),
+  contactId: z.string().optional(),
 });
 
 const MAX_PAGES = 8;
@@ -248,26 +249,29 @@ Deno.serve(async (req) => {
       agentRes?.body?._id ||
       null;
 
-    // Create a dedicated GHL contact so the widget visitor can be pre-identified.
-    // This contactId is the bridge: webhook -> contactId -> agentId.
-    let contactId: string | null = null;
+    // Bridge: contactId -> agentId. Prefer a caller-supplied contactId (live use:
+    // landing-page query param identifies a known prospect). Otherwise create a
+    // fresh demo contact so the widget visitor can still be pre-identified.
+    let contactId: string | null = parsed.data.contactId || null;
     let contactRes: any = null;
     if (agentId) {
-      const hostname = (() => { try { return new URL(url).hostname; } catch { return 'demo'; } })();
-      const stamp = Date.now().toString(36);
-      contactRes = await ghlFetch('/contacts/', {
-        method: 'POST',
-        body: JSON.stringify({
-          locationId,
-          firstName: 'Demo',
-          lastName: businessName.slice(0, 60),
-          email: `demo+${stamp}@${hostname}`.toLowerCase(),
-          source: 'AI Demo Widget',
-          tags: ['ai-demo', `agent:${agentId}`],
-          customFields: [],
-        }),
-      });
-      contactId = contactRes?.body?.contact?.id || contactRes?.body?.id || null;
+      if (!contactId) {
+        const hostname = (() => { try { return new URL(url).hostname; } catch { return 'demo'; } })();
+        const stamp = Date.now().toString(36);
+        contactRes = await ghlFetch('/contacts/', {
+          method: 'POST',
+          body: JSON.stringify({
+            locationId,
+            firstName: 'Demo',
+            lastName: businessName.slice(0, 60),
+            email: `demo+${stamp}@${hostname}`.toLowerCase(),
+            source: 'AI Demo Widget',
+            tags: ['ai-demo', `agent:${agentId}`],
+            customFields: [],
+          }),
+        });
+        contactId = contactRes?.body?.contact?.id || contactRes?.body?.id || null;
+      }
 
       if (contactId) {
         const supa = createClient(

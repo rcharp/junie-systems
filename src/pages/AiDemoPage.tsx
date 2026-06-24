@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,7 +22,10 @@ const STEP_FLOW: { key: Step; label: string }[] = [
 const AiDemoPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [urlInput, setUrlInput] = useState('https://ksjunkguy.com');
+  const [searchParams] = useSearchParams();
+  const presetContactId = searchParams.get('contact_id') || searchParams.get('contactId') || '';
+  const presetWebsite = searchParams.get('website') || searchParams.get('url') || '';
+  const [urlInput, setUrlInput] = useState(presetWebsite || 'https://ksjunkguy.com');
   const [activeUrl, setActiveUrl] = useState<string>('');
   const [activeWidget, setActiveWidget] = useState<string>('');
   const [activeContactId, setActiveContactId] = useState<string>('');
@@ -129,7 +132,7 @@ const AiDemoPage = () => {
 
     try {
       const { data, error: fnError } = await supabase.functions.invoke('train-ai-demo-widget', {
-        body: { url },
+        body: { url, ...(presetContactId ? { contactId: presetContactId } : {}) },
       });
       clearTimeout(stageTimer);
       clearTimeout(stageTimer2);
@@ -153,6 +156,17 @@ const AiDemoPage = () => {
       toast({ title: 'Training failed', description: e?.message ?? 'Try a different URL.', variant: 'destructive' });
     }
   };
+
+  // Auto-train when contact_id (and optionally website) are passed via URL.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (autoStartedRef.current) return;
+    if (!presetContactId && !presetWebsite) return;
+    if (!urlInput) return;
+    autoStartedRef.current = true;
+    train();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isWorking = ['crawling', 'training', 'pushing', 'loading'].includes(step);
   const currentIdx = STEP_FLOW.findIndex((s) => s.key === step);
