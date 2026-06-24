@@ -247,6 +247,15 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
+  // Debug: inspect an existing GHL widget to discover the correct chatType enum.
+  if (req.method === 'GET' && new URL(req.url).searchParams.get('debug_widget')) {
+    const u = new URL(req.url);
+    const widgetId = u.searchParams.get('debug_widget')!;
+    const locationId = u.searchParams.get('locationId') || Deno.env.get('AI_DEMO_LOCATION_ID') || '';
+    const r = await ghlFetch(`/chat-widget/data/${locationId}/${widgetId}`, { method: 'GET', headers: { Version: '2021-07-28' } });
+    return new Response(JSON.stringify(r, null, 2), { status: r.ok ? 200 : r.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+
   // GET: load an existing session by contact_id or website.
   if (req.method === 'GET') {
     try {
