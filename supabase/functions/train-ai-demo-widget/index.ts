@@ -11,7 +11,8 @@ const BodySchema = z.object({
 const MAX_PAGES = 8;
 const FETCH_TIMEOUT_MS = 8000;
 const GHL_BASE = 'https://services.leadconnectorhq.com';
-const GHL_VERSION = '2021-07-28';
+const GHL_VERSION = '2021-04-15';
+const AGENT_NAME_PREFIX = 'Demo Agent · ';
 
 const cache = new Map<string, { ts: number; payload: any }>();
 
