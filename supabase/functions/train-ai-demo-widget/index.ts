@@ -303,11 +303,9 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
 const processDemoKnowledgeBase = async (params: { url: string; locationId: string; requestedContactId: string }) => {
   const { url, locationId, requestedContactId } = params;
   const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-  const existing = await findExistingSession(supa, requestedContactId, url, false);
-  if (existing?.ghl_kb_id) return;
 
   const fallbackName = getFallbackBusinessName(url);
-  const kbName = requestedContactId || `Demo KB - ${fallbackName}`;
+  const kbName = `Demo KB - ${fallbackName} - ${new Date().toISOString()}`;
   const kbCreate = await ghlFetch('/knowledge-base/', {
     method: 'POST',
     body: JSON.stringify({ locationId, name: kbName }),
@@ -316,30 +314,26 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
   const kbId = pickId(kbCreate.body);
   if (!kbId) throw new Error(`KB create returned no id: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
 
-  if (requestedContactId) {
-    const { error: sessionError } = await supa
-      .from('demo_sessions')
-      .upsert([{
-        ghl_contact_id: requestedContactId,
-        ghl_agent_id: null,
-        ghl_kb_id: kbId,
-        ghl_widget_id: null,
-        widget_embed: null,
-        ghl_location_id: locationId,
-        prospect_url: url,
-        business_name: fallbackName,
-        knowledge_doc: 'Knowledge base created; website training queued.',
-      }], { onConflict: 'ghl_contact_id' });
-    if (sessionError) throw sessionError;
-  }
+  const { error: sessionError } = await supa
+    .from('demo_sessions')
+    .insert([{
+      ghl_contact_id: requestedContactId || null,
+      ghl_agent_id: null,
+      ghl_kb_id: kbId,
+      ghl_widget_id: null,
+      widget_embed: null,
+      ghl_location_id: locationId,
+      prospect_url: url,
+      business_name: fallbackName,
+      knowledge_doc: 'Knowledge base created; website training queued.',
+    }]);
+  if (sessionError) throw sessionError;
 
   const training = await trainKnowledgeBaseWebsite(kbId, url, locationId);
-  if (requestedContactId) {
-    await supa
-      .from('demo_sessions')
-      .update({ knowledge_doc: training.trained ? `Knowledge base trained from ${url}.` : `Knowledge base created for ${url}; training did not complete.` })
-      .eq('ghl_contact_id', requestedContactId);
-  }
+  await supa
+    .from('demo_sessions')
+    .update({ knowledge_doc: training.trained ? `Knowledge base trained from ${url}.` : `Knowledge base created for ${url}; training did not complete.` })
+    .eq('ghl_kb_id', kbId);
 };
 
 Deno.serve(async (req) => {
@@ -416,19 +410,7 @@ Deno.serve(async (req) => {
     }
     const requestedContactId = (parsed.data.contactId || '').trim();
 
-    const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const existing = await findExistingSession(supa, requestedContactId, url, !requestedContactId);
-    if (existing?.ghl_kb_id) {
-      return new Response(JSON.stringify({
-        ok: true,
-        reused: true,
-        businessName: existing.business_name,
-        kbId: existing.ghl_kb_id,
-        contactId: existing.ghl_contact_id,
-        locationId: existing.ghl_location_id,
-        url: existing.prospect_url,
-      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
+    // Reuse disabled: always create a new KB on every POST.
 
     scheduleBackground(processDemoKnowledgeBase({ url, locationId, requestedContactId }));
 
