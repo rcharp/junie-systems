@@ -288,6 +288,27 @@ const AiDemoPage = () => {
           </div>
         </div>
       </main>
+
+      <div className="fixed bottom-4 left-4 z-50">
+        <Button
+          variant="destructive"
+          size="sm"
+          onClick={async () => {
+            if (!window.confirm('Delete ALL demos and knowledge bases? This cannot be undone.')) return;
+            try {
+              const { data, error } = await supabase.functions.invoke('clear-ai-demos', { body: {} });
+              if (error) throw new Error(error.message);
+              if (!data?.ok) throw new Error(data?.error || 'Failed');
+              toast({ title: 'Cleared', description: `Deleted ${data.deleted} demo session(s).` });
+              setTimeout(() => window.location.reload(), 800);
+            } catch (e: any) {
+              toast({ title: 'Clear failed', description: e?.message ?? String(e), variant: 'destructive' });
+            }
+          }}
+        >
+          Clear All
+        </Button>
+      </div>
     </div>
   );
 };
