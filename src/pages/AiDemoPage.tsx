@@ -35,7 +35,14 @@ const AiDemoPage = () => {
   };
 
   const detect = () => {
-    const candidates = Array.from(document.querySelectorAll('iframe, [role="dialog"], [aria-label], [title], [class]'));
+    const chatWidget = document.querySelector('chat-widget');
+    const shadowRoot = chatWidget && chatWidget.shadowRoot;
+    const shadowActive = chatWidget?.getAttribute('data-active') === 'true'
+      || shadowRoot?.querySelector('[data-active="true"], .lc_text-widget--active');
+    const candidates = [
+      ...Array.from(document.querySelectorAll('iframe, [role="dialog"], [aria-label], [title], [class]')),
+      ...(shadowRoot ? Array.from(shadowRoot.querySelectorAll('iframe, [role="dialog"], [aria-label], [title], [class]')) : []),
+    ];
     const expanded = candidates.some((element) => {
       if (!visible(element)) return false;
       const rect = element.getBoundingClientRect();
@@ -44,7 +51,7 @@ const AiDemoPage = () => {
         .join(' ')
         .toLowerCase();
       return (label.includes('close') && (label.includes('chat') || label.includes('widget'))) || (rect.width > 180 && rect.height > 180);
-    });
+    }) || Boolean(shadowActive);
 
     if (expanded !== lastState) {
       lastState = expanded;
@@ -58,12 +65,26 @@ const AiDemoPage = () => {
     window.setTimeout(detect, 400);
   };
 
-  new MutationObserver(scheduleDetect).observe(document.documentElement, {
+  const observer = new MutationObserver(scheduleDetect);
+  observer.observe(document.documentElement, {
     childList: true,
     subtree: true,
     attributes: true,
     attributeFilter: ['class', 'style', 'aria-label', 'title'],
   });
+
+  const watchShadowRoot = () => {
+    const root = document.querySelector('chat-widget')?.shadowRoot;
+    if (root && !root.__junieWatched) {
+      root.__junieWatched = true;
+      observer.observe(root, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style', 'aria-label', 'title', 'data-active'],
+      });
+    }
+  };
 
   if ('ResizeObserver' in window) {
     new ResizeObserver(scheduleDetect).observe(document.body);
@@ -73,6 +94,7 @@ const AiDemoPage = () => {
   window.addEventListener('message', scheduleDetect);
   window.addEventListener('load', scheduleDetect);
   scheduleDetect();
+  window.setInterval(watchShadowRoot, 250);
   window.setInterval(detect, 1000);
 })();
 </script></body></html>`, [activeWidget]);
