@@ -274,6 +274,21 @@ Deno.serve(async (req) => {
       }
 
       if (contactId) {
+        // Clear any prior conversations for this contact so each new demo starts fresh.
+        try {
+          const convRes = await ghlFetch(
+            `/conversations/search?locationId=${encodeURIComponent(locationId)}&contactId=${encodeURIComponent(contactId)}&limit=100`,
+            { method: 'GET' },
+          );
+          const convs = (convRes?.body?.conversations || convRes?.body?.data || []) as any[];
+          await Promise.all(
+            (Array.isArray(convs) ? convs : [])
+              .map((c) => c?.id || c?._id)
+              .filter(Boolean)
+              .map((cid) => ghlFetch(`/conversations/${encodeURIComponent(cid)}`, { method: 'DELETE' }).catch(() => null)),
+          );
+        } catch (_) { /* best-effort */ }
+
         const supa = createClient(
           Deno.env.get('SUPABASE_URL')!,
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
