@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Globe, MessageSquare, Sparkles } from 'lucide-react';
 
-const DEFAULT_WIDGET = `<script src="https://widgets.leadconnectorhq.com/loader.js"  data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="REPLACE_WITH_WIDGET_ID"></script>`;
+const DEFAULT_WIDGET = `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="69bf21e6e6fe2a0cdde0ad28"></script>`;
 
 const AiDemoPage = () => {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ const AiDemoPage = () => {
   const [activeUrl, setActiveUrl] = useState('https://juniesystems.com');
   const [widgetCode, setWidgetCode] = useState(DEFAULT_WIDGET);
   const [activeWidget, setActiveWidget] = useState(DEFAULT_WIDGET);
-  const [widgetExpanded, setWidgetExpanded] = useState(false);
 
   const widgetSrcDoc = useMemo(() => `
 <!doctype html>
@@ -135,30 +134,14 @@ const AiDemoPage = () => {
                   />
                 )}
 
-                {/* Widget overlay - small bubble by default, expands when clicked so the rest of the phone stays scrollable */}
+                {/* Chat widget overlay */}
                 {activeWidget && (
-                  <div
-                    className="absolute bottom-3 right-3 z-20 transition-all"
-                    style={{
-                      width: widgetExpanded ? '300px' : '70px',
-                      height: widgetExpanded ? '480px' : '70px',
-                    }}
-                  >
-                    <iframe
-                      title="Chat Widget"
-                      srcDoc={widgetSrcDoc}
-                      className="w-full h-full border-0"
-                      style={{ background: 'transparent' }}
-                    />
-                    {/* Toggle handle */}
-                    <button
-                      onClick={() => setWidgetExpanded((v) => !v)}
-                      className="absolute -top-3 -left-3 w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-lg z-30"
-                      title={widgetExpanded ? 'Collapse widget' : 'Expand widget'}
-                    >
-                      {widgetExpanded ? '–' : '+'}
-                    </button>
-                  </div>
+                  <iframe
+                    title="Chat Widget"
+                    srcDoc={widgetSrcDoc}
+                    className="absolute bottom-0 right-0 border-0 z-20"
+                    style={{ width: '320px', height: '520px', background: 'transparent' }}
+                  />
                 )}
               </div>
             </div>
