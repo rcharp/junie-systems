@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Globe, MessageSquare, Sparkles } from 'lucide-react';
 
-const DEFAULT_WIDGET = `<script src="https://widgets.leadconnectorhq.com/loader.js"  data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="REPLACE_WITH_WIDGET_ID"></script>`;
+const DEFAULT_WIDGET = `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="69bf21e6e6fe2a0cdde0ad28"></script>`;
 
 const AiDemoPage = () => {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ const AiDemoPage = () => {
   const [activeUrl, setActiveUrl] = useState('https://juniesystems.com');
   const [widgetCode, setWidgetCode] = useState(DEFAULT_WIDGET);
   const [activeWidget, setActiveWidget] = useState(DEFAULT_WIDGET);
-  const [widgetExpanded, setWidgetExpanded] = useState(false);
 
   const widgetSrcDoc = useMemo(() => `
 <!doctype html>
