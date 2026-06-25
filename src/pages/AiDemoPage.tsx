@@ -258,6 +258,9 @@ ${identifyScript}
     if (autoStartedRef.current) return;
     if (!presetContactId && !presetWebsite) return;
     autoStartedRef.current = true;
+    // Optimistically show the website immediately if we already have a URL,
+    // so the iframe is visible while we fetch the widget embed in the background.
+    if (presetWebsite) setActiveUrl(normalizeUrl(presetWebsite));
     (async () => {
       await loadExisting();
     })();
@@ -388,10 +391,9 @@ ${identifyScript}
                   </div>
                 )}
                 {!activeUrl && (
-                  <div className="absolute inset-0 pt-9 flex items-center justify-center text-muted-foreground text-sm p-6 text-center">
-                    Your personalized demo is loading…
+                  <div className="absolute inset-0 pt-9 flex items-center justify-center bg-white">
+                    <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                   </div>
-
                 )}
                 {activeWidget && (
                   <iframe
