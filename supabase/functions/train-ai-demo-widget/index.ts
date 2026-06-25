@@ -277,7 +277,7 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
 
   // Poll status until discovery completes
   let discoveredUrls: string[] = [];
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 20; i++) {
     await new Promise((r) => setTimeout(r, 3000));
     const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId });
     if (operationId) qs.set('operationId', operationId);
