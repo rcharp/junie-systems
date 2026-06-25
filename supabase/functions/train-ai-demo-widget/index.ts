@@ -246,7 +246,11 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
     arr.map((u: any) => (typeof u === 'string' ? u : (u?.url || u?.link))).filter(Boolean);
 
   let finalStatus = '';
-  for (let i = 0; i < 30; i++) {
+  let stableCount = 0;
+  let lastIdCount = 0;
+  const DONE = ['complete', 'completed', 'done', 'success', 'finished', 'crawled', 'discovered', 'ready'];
+  const FAIL = ['failed', 'error', 'errored'];
+  for (let i = 0; i < 75; i++) {
     await new Promise((r) => setTimeout(r, 4000));
     const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId, operationId });
     const statusRes = await ghlFetch(`/knowledge-bases/crawler/status?${qs.toString()}`, {
@@ -254,7 +258,7 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
       headers: v3Headers,
     });
     const b: any = statusRes.body || {};
-    const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
+    const status = (b.status || b.state || b.data?.status || b.data?.state || '').toString().toLowerCase();
     finalStatus = status;
     const arr: any[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls
       || b.links || b.data?.links || b.documents || b.data?.documents || b.docs || b.data?.docs || [];
@@ -263,8 +267,19 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
       urlIds = collectIds(arr);
     }
     console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length} ids=${urlIds.length}`);
-    if (['complete', 'completed', 'done', 'success', 'finished'].includes(status) && urlIds.length) break;
-    if (['failed', 'error'].includes(status)) break;
+    if (FAIL.includes(status)) break;
+    if (DONE.includes(status) && urlIds.length) break;
+    // Fallback: if urlId count is non-zero and unchanged for 4 consecutive polls (~16s), assume crawl is done.
+    if (urlIds.length > 0 && urlIds.length === lastIdCount) {
+      stableCount++;
+      if (stableCount >= 4) {
+        console.log(`KB crawl appears stable at ${urlIds.length} urls (status=${status}); proceeding to train.`);
+        break;
+      }
+    } else {
+      stableCount = 0;
+      lastIdCount = urlIds.length;
+    }
   }
 
   if (!urlIds.length) {
