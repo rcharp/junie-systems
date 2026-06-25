@@ -152,10 +152,9 @@ const buildAgentInstructions = (businessName: string, websiteUrl: string, knowle
 
 const createAgent = async (params: { locationId: string; name: string; instructions: string; businessName: string; websiteUrl: string; isPrimary?: boolean }) => {
   const { locationId, name, instructions, businessName, websiteUrl, isPrimary = false } = params;
-  const r = await ghlFetch('/conversation-ai/agents', {
+  const r = await ghlFetch(`/conversation-ai/agents?locationId=${encodeURIComponent(locationId)}`, {
     method: 'POST',
     body: JSON.stringify({
-      locationId,
       name,
       businessName,
       channels: ['Live_Chat', 'WebChat'],
@@ -176,13 +175,14 @@ const createAgent = async (params: { locationId: string; name: string; instructi
   return id;
 };
 
-const updateAgent = async (agentId: string, patch: Record<string, unknown>) => {
-  const r = await ghlFetch(`/conversation-ai/agents/${agentId}`, {
+const updateAgent = async (agentId: string, locationId: string, patch: Record<string, unknown>) => {
+  const r = await ghlFetch(`/conversation-ai/agents/${agentId}?locationId=${encodeURIComponent(locationId)}`, {
     method: 'PUT',
     body: JSON.stringify(patch),
   });
   return r;
 };
+
 
 const setAgentPrimary = async (agentId: string, locationId: string) => {
   // Clear primary on all other agents in this location first.
@@ -193,13 +193,13 @@ const setAgentPrimary = async (agentId: string, locationId: string) => {
       const id = a?.id || a?._id;
       if (!id || id === agentId) continue;
       if (a?.isPrimary) {
-        await updateAgent(id, { isPrimary: false, locationId });
+        await updateAgent(id, locationId, { isPrimary: false });
       }
     }
   } catch (e) {
     console.warn('Listing agents to clear primary failed (non-fatal):', e);
   }
-  const r = await updateAgent(agentId, { isPrimary: true, locationId });
+  const r = await updateAgent(agentId, locationId, { isPrimary: true });
   if (!r.ok) console.warn('Set primary failed:', r.status, JSON.stringify(r.body).slice(0, 300));
   return r.ok;
 };
@@ -228,6 +228,12 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
   console.log('KB discover ok, operationId:', operationId);
 
   let discoveredUrls: string[] = [];
+  let urlIds: string[] = [];
+  const collectIds = (arr: any[]): string[] =>
+    arr.map((u: any) => (typeof u === 'string' ? u : (u?._id || u?.id || u?.urlId))).filter(Boolean);
+  const collectUrls = (arr: any[]): string[] =>
+    arr.map((u: any) => (typeof u === 'string' ? u : (u?.url || u?.link))).filter(Boolean);
+
   for (let i = 0; i < 20; i++) {
     await new Promise((r) => setTimeout(r, 3000));
     const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId });
@@ -235,18 +241,23 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
     const statusRes = await ghlFetch(`/knowledge-bases/crawler/status?${qs.toString()}`, { method: 'GET' });
     const b: any = statusRes.body || {};
     const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
-    const urls: string[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls || b.links || b.data?.links || [];
-    if (Array.isArray(urls) && urls.length) {
-      discoveredUrls = urls.map((u: any) => (typeof u === 'string' ? u : u?.url)).filter(Boolean);
+    const arr: any[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls
+      || b.links || b.data?.links || b.documents || b.data?.documents || b.docs || b.data?.docs || [];
+    if (Array.isArray(arr) && arr.length) {
+      discoveredUrls = collectUrls(arr);
+      urlIds = collectIds(arr);
     }
-    console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length}`);
-    if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
+    console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length} ids=${urlIds.length} body=${JSON.stringify(b).slice(0, 300)}`);
+    if (['complete', 'completed', 'done', 'success', 'finished'].includes(status) && urlIds.length) break;
     if (['failed', 'error'].includes(status)) break;
   }
 
-  if (!discoveredUrls.length) discoveredUrls = [url];
+  if (!urlIds.length) {
+    console.warn('KB train skipped: no urlIds discovered');
+    return { discovered: true, trained: false, trainedUrls: [] as string[] };
+  }
 
-  const trainBody: Record<string, unknown> = { knowledgeBaseId: kbId, locationId, urls: discoveredUrls };
+  const trainBody: Record<string, unknown> = { knowledgeBaseId: kbId, locationId, urlIds };
   if (operationId) trainBody.operationId = operationId;
 
   const trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
@@ -311,8 +322,7 @@ const processDemo = async (params: { url: string; locationId: string; requestedC
       knowledgeDoc = summary.doc;
       businessName = summary.businessName || fallbackName;
       if (agentId) {
-        const upd = await updateAgent(agentId, {
-          locationId,
+        const upd = await updateAgent(agentId, locationId, {
           businessName,
           instructions: buildAgentInstructions(businessName, url, knowledgeDoc),
         });
