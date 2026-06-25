@@ -40,7 +40,8 @@ const AiDemoPage = () => {
   const widgetFrameRef = useRef<HTMLIFrameElement | null>(null);
 
   const widgetSrcDoc = useMemo(() => {
-    const embed = buildWidgetScript('6a3be0987de81c3360287a78');
+    if (!activeWidget) return '';
+    const embed = activeWidget;
     const identity = activeContactId
       ? `window.leadConnector = window.leadConnector || {}; window.leadConnector.contactId = ${JSON.stringify(activeContactId)}; window.LCWidget = window.LCWidget || {}; window.LCWidget.contactId = ${JSON.stringify(activeContactId)};`
       : '';
@@ -339,12 +340,14 @@ const AiDemoPage = () => {
                   </div>
 
                 )}
-                <iframe
-                  ref={widgetFrameRef}
-                  title="Chat Widget"
-                  srcDoc={widgetSrcDoc}
-                  className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
-                />
+                {activeWidget && (
+                  <iframe
+                    ref={widgetFrameRef}
+                    title="Chat Widget"
+                    srcDoc={widgetSrcDoc}
+                    className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
+                  />
+                )}
               </div>
             </div>
           </div>
