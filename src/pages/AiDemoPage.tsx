@@ -378,6 +378,7 @@ ${identifyScript}
                 {activeUrl && (
                   <div className="absolute inset-0 pt-9 overflow-hidden bg-black">
                     <iframe
+                      key={`site-${activeContactId || activeUrl}`}
                       src={activeUrl}
                       title="Website Preview"
                       className="block border-0"
@@ -388,6 +389,13 @@ ${identifyScript}
                         transformOrigin: 'top left',
                       }}
                       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                      onLoad={(e) => {
+                        try {
+                          const w = (e.currentTarget as HTMLIFrameElement).contentWindow;
+                          w?.localStorage?.clear();
+                          w?.sessionStorage?.clear();
+                        } catch {}
+                      }}
                     />
                   </div>
                 )}
