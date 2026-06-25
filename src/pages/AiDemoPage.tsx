@@ -38,6 +38,10 @@ const AiDemoPage = () => {
   const [error, setError] = useState<string>('');
   const [result, setResult] = useState<any>(null);
   const widgetFrameRef = useRef<HTMLIFrameElement | null>(null);
+  const sessionIdRef = useRef<string>(
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+  );
+
 
   const widgetSrcDoc = useMemo(() => {
     if (!activeWidget) return '';
@@ -66,12 +70,15 @@ const AiDemoPage = () => {
   } catch (e) {}
 })();
 </script>`;
+    const sessionJson = JSON.stringify(sessionIdRef.current);
     const identifyScript = activeContactId
       ? `<script>
 (() => {
   const CONTACT_ID = ${contactJson};
-  const EMAIL = 'demo-' + CONTACT_ID + '@junie.ai';
-  const payload = { email: EMAIL, name: 'Demo Session', contactId: CONTACT_ID };
+  const SESSION_ID = ${sessionJson};
+  const EMAIL = 'demo-' + CONTACT_ID + '-' + SESSION_ID + '@junie.ai';
+  const payload = { email: EMAIL, name: 'Demo Session ' + SESSION_ID, contactId: CONTACT_ID };
+
   const identify = () => {
     try {
       if (window.LeadConnector && typeof window.LeadConnector.identify === 'function') {
