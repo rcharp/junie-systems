@@ -38,6 +38,10 @@ const AiDemoPage = () => {
   const [error, setError] = useState<string>('');
   const [result, setResult] = useState<any>(null);
   const widgetFrameRef = useRef<HTMLIFrameElement | null>(null);
+  const sessionIdRef = useRef<string>(
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+  );
+
 
   const widgetSrcDoc = useMemo(() => {
     if (!activeWidget) return '';
