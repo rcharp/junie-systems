@@ -340,7 +340,7 @@ const processDemo = async (params: { url: string; locationId: string; requestedC
       businessName = summary.businessName || fallbackName;
       if (agentId) {
         const upd = await updateAgent(agentId, locationId, {
-          name: `${businessName}${agentSuffix}`,
+          name: `${websiteLabel}${agentSuffix}`,
           businessName,
           instructions: buildAgentInstructions(businessName, url, knowledgeDoc),
         });
