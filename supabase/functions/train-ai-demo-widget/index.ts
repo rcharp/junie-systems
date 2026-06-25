@@ -152,10 +152,9 @@ const buildAgentInstructions = (businessName: string, websiteUrl: string, knowle
 
 const createAgent = async (params: { locationId: string; name: string; instructions: string; businessName: string; websiteUrl: string; isPrimary?: boolean }) => {
   const { locationId, name, instructions, businessName, websiteUrl, isPrimary = false } = params;
-  const r = await ghlFetch('/conversation-ai/agents', {
+  const r = await ghlFetch(`/conversation-ai/agents?locationId=${encodeURIComponent(locationId)}`, {
     method: 'POST',
     body: JSON.stringify({
-      locationId,
       name,
       businessName,
       channels: ['Live_Chat', 'WebChat'],
@@ -176,13 +175,14 @@ const createAgent = async (params: { locationId: string; name: string; instructi
   return id;
 };
 
-const updateAgent = async (agentId: string, patch: Record<string, unknown>) => {
-  const r = await ghlFetch(`/conversation-ai/agents/${agentId}`, {
+const updateAgent = async (agentId: string, locationId: string, patch: Record<string, unknown>) => {
+  const r = await ghlFetch(`/conversation-ai/agents/${agentId}?locationId=${encodeURIComponent(locationId)}`, {
     method: 'PUT',
     body: JSON.stringify(patch),
   });
   return r;
 };
+
 
 const setAgentPrimary = async (agentId: string, locationId: string) => {
   // Clear primary on all other agents in this location first.
