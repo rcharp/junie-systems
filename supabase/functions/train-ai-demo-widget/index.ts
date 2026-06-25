@@ -325,7 +325,51 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
   const fallbackName = getFallbackBusinessName(url);
   const kbName = requestedContactId || `Demo KB - ${fallbackName} - ${new Date().toISOString()}`;
 
-  // If a KB with the same name already exists in this location, delete it first.
+  // STEP 1: Create the agent + clone the chat widget FIRST.
+  // The widget is critical for the demo to be usable, so it must succeed
+  // before we spend time on the slow KB crawl/training.
+  let agentId: string | null = null;
+  let widgetId: string | null = null;
+  let widgetEmbed: string | null = null;
+  try {
+    agentId = await createAgent({
+      locationId,
+      name: `Demo Agent - ${fallbackName}`,
+      knowledgeDoc: `Knowledge base for ${url} is being trained. Use the attached GHL knowledge base for facts.`,
+      businessName: fallbackName,
+      websiteUrl: url,
+    });
+    console.log('Agent created:', agentId);
+  } catch (e) {
+    console.warn('Agent create failed (non-fatal):', e);
+  }
+
+  const widget = await createChatWidget({
+    locationId,
+    name: requestedContactId || `Demo Widget - ${fallbackName}`,
+    agentId: agentId || '',
+  });
+  widgetId = widget.id;
+  widgetEmbed = widget.embed;
+  console.log('Widget cloned:', widgetId);
+
+  // STEP 2: Insert session row with widget info so GET works immediately.
+  const { error: sessionError } = await supa
+    .from('demo_sessions')
+    .insert([{
+      ghl_contact_id: requestedContactId || null,
+      ghl_agent_id: agentId,
+      ghl_kb_id: null,
+      ghl_widget_id: widgetId,
+      widget_embed: widgetEmbed,
+      ghl_location_id: locationId,
+      prospect_url: url,
+      business_name: fallbackName,
+      knowledge_doc: 'Knowledge base creation queued.',
+    }]);
+  if (sessionError) throw sessionError;
+
+  // STEP 3: Create the KB (delete any existing with same name first).
   try {
     const list = await ghlFetch(`/knowledge-base/?locationId=${locationId}&limit=100`, { method: 'GET' });
     const items: any[] =
@@ -350,62 +394,12 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
   const kbId = pickId(kbCreate.body);
   if (!kbId) throw new Error(`KB create returned no id: ${JSON.stringify(kbCreate.body).slice(0, 400)}`);
 
-  const { error: sessionError } = await supa
-    .from('demo_sessions')
-    .insert([{
-      ghl_contact_id: requestedContactId || null,
-      ghl_agent_id: null,
-      ghl_kb_id: kbId,
-      ghl_widget_id: null,
-      widget_embed: null,
-      ghl_location_id: locationId,
-      prospect_url: url,
-      business_name: fallbackName,
-      knowledge_doc: 'Knowledge base created; website training queued.',
-    }]);
-  if (sessionError) throw sessionError;
-
-  // Create the agent + clone the chat widget FIRST so the demo is usable
-  // even if KB website training takes a long time (or stalls in polling).
-  let agentId: string | null = null;
-  let widgetId: string | null = null;
-  let widgetEmbed: string | null = null;
-  try {
-    agentId = await createAgent({
-      locationId,
-      name: `Demo Agent - ${fallbackName}`,
-      knowledgeDoc: `Knowledge base for ${url} is being trained. Use the attached GHL knowledge base for facts.`,
-      businessName: fallbackName,
-      websiteUrl: url,
-    });
-    console.log('Agent created:', agentId);
-  } catch (e) {
-    console.warn('Agent create failed (non-fatal):', e);
-  }
-
-  try {
-    const widget = await createChatWidget({
-      locationId,
-      name: requestedContactId || `Demo Widget - ${fallbackName}`,
-      agentId: agentId || '',
-    });
-    widgetId = widget.id;
-    widgetEmbed = widget.embed;
-    console.log('Widget cloned:', widgetId);
-  } catch (e) {
-    console.warn('Widget create failed (non-fatal):', e);
-  }
-
   await supa
     .from('demo_sessions')
-    .update({
-      ghl_agent_id: agentId,
-      ghl_widget_id: widgetId,
-      widget_embed: widgetEmbed,
-    })
-    .eq('ghl_kb_id', kbId);
+    .update({ ghl_kb_id: kbId })
+    .eq('ghl_widget_id', widgetId);
 
-  // Now do the slow KB website training in the background.
+  // STEP 4: Slow KB website training.
   const training = await trainKnowledgeBaseWebsite(kbId, url, locationId);
   const doc = training.trained
     ? `Knowledge base trained from ${url}. Ingested ${training.trainedUrls.length} page(s):\n- ${training.trainedUrls.join('\n- ')}`
