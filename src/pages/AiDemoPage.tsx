@@ -395,6 +395,7 @@ ${identifyScript}
                 )}
                 {activeWidget && (
                   <iframe
+                    key={activeContactId || 'widget'}
                     ref={widgetFrameRef}
                     title="Chat Widget"
                     srcDoc={widgetSrcDoc}
