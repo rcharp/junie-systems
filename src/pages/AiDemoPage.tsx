@@ -258,6 +258,9 @@ ${identifyScript}
     if (autoStartedRef.current) return;
     if (!presetContactId && !presetWebsite) return;
     autoStartedRef.current = true;
+    // Optimistically show the website immediately if we already have a URL,
+    // so the iframe is visible while we fetch the widget embed in the background.
+    if (presetWebsite) setActiveUrl(normalizeUrl(presetWebsite));
     (async () => {
       await loadExisting();
     })();
