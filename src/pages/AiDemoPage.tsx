@@ -340,12 +340,14 @@ const AiDemoPage = () => {
                   </div>
 
                 )}
-                <iframe
-                  ref={widgetFrameRef}
-                  title="Chat Widget"
-                  srcDoc={widgetSrcDoc}
-                  className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
-                />
+                {activeWidget && (
+                  <iframe
+                    ref={widgetFrameRef}
+                    title="Chat Widget"
+                    srcDoc={widgetSrcDoc}
+                    className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
+                  />
+                )}
               </div>
             </div>
           </div>
