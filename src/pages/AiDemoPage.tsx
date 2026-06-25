@@ -104,6 +104,7 @@ const AiDemoPage = () => {
   chat-widget{ transform: scale(0.78); transform-origin: bottom right; }
   chat-widget[data-active="true"]{ transform: scale(0.78); transform-origin: bottom right; }
 </style>
+${storageReset}
 <script>${identity}</script>
 </head><body>${embed}
 ${identifyScript}
