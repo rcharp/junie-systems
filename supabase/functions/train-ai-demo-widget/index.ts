@@ -269,53 +269,53 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
   });
   if (!discoverRes.ok) {
     console.warn('KB discover failed:', discoverRes.status, JSON.stringify(discoverRes.body).slice(0, 400));
-    return { discovered: false, trained: false };
+    return { discovered: false, trained: false, trainedUrls: [] as string[] };
   }
-  console.log('KB discover ok:', JSON.stringify(discoverRes.body).slice(0, 400));
+  const discoverBody: any = discoverRes.body || {};
+  const operationId: string | undefined = discoverBody.operationId || discoverBody.data?.operationId;
+  console.log('KB discover ok, operationId:', operationId, 'status:', discoverBody.status);
 
-  let discoveredUrls: string[] = [url];
-  for (let i = 0; i < 20; i++) {
-    await new Promise((r) => setTimeout(r, 2000));
-    const statusRes = await ghlFetch(
-      `/knowledge-bases/crawler/status?knowledgeBaseId=${kbId}&locationId=${locationId}`,
-      { method: 'GET' },
-    );
+  // Poll status until discovery completes
+  let discoveredUrls: string[] = [];
+  for (let i = 0; i < 60; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId });
+    if (operationId) qs.set('operationId', operationId);
+    const statusRes = await ghlFetch(`/knowledge-bases/crawler/status?${qs.toString()}`, { method: 'GET' });
     const b: any = statusRes.body || {};
     const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
-    const urls: string[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls || [];
-    if (Array.isArray(urls) && urls.length) discoveredUrls = urls;
+    const urls: string[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls || b.links || b.data?.links || [];
+    if (Array.isArray(urls) && urls.length) {
+      discoveredUrls = urls.map((u: any) => (typeof u === 'string' ? u : u?.url)).filter(Boolean);
+    }
+    console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length}`);
     if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
+    if (['failed', 'error'].includes(status)) {
+      console.warn('KB discover status reported failure');
+      break;
+    }
   }
 
-  const urlsToTrain = discoveredUrls;
+  if (!discoveredUrls.length) discoveredUrls = [url];
+
+  const trainBody: Record<string, unknown> = {
+    knowledgeBaseId: kbId,
+    locationId,
+    urls: discoveredUrls,
+  };
+  if (operationId) trainBody.operationId = operationId;
+
   const trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
     method: 'POST',
-    body: JSON.stringify({ knowledgeBaseId: kbId, locationId, urls: urlsToTrain }),
+    body: JSON.stringify(trainBody),
   });
   if (!trainRes.ok) {
     console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
     return { discovered: true, trained: false, trainedUrls: [] as string[] };
   }
-  console.log('KB train ok, requested urls:', urlsToTrain.length);
+  console.log('KB train ok, requested urls:', discoveredUrls.length, 'body:', JSON.stringify(trainRes.body).slice(0, 200));
 
-  // Poll trained URLs to confirm ingestion completed.
-  let trainedUrls: string[] = [];
-  for (let i = 0; i < 30; i++) {
-    await new Promise((r) => setTimeout(r, 3000));
-    const urlsRes = await ghlFetch(
-      `/knowledge-bases/crawler/urls?knowledgeBaseId=${kbId}&locationId=${locationId}`,
-      { method: 'GET' },
-    );
-    const b: any = urlsRes.body || {};
-    const list: any[] = b.urls || b.data?.urls || b.data || [];
-    trainedUrls = Array.isArray(list)
-      ? list.map((u) => (typeof u === 'string' ? u : u?.url)).filter(Boolean)
-      : [];
-    console.log(`KB trained urls poll ${i + 1}: ${trainedUrls.length}/${urlsToTrain.length}`);
-    if (trainedUrls.length >= urlsToTrain.length) break;
-  }
-
-  return { discovered: true, trained: true, trainedUrls };
+  return { discovered: true, trained: true, trainedUrls: discoveredUrls };
 };
 
 const processDemoKnowledgeBase = async (params: { url: string; locationId: string; requestedContactId: string }) => {
