@@ -42,8 +42,37 @@ const AiDemoPage = () => {
   const widgetSrcDoc = useMemo(() => {
     if (!activeWidget) return '';
     const embed = activeWidget;
+    const contactJson = JSON.stringify(activeContactId || '');
     const identity = activeContactId
-      ? `window.leadConnector = window.leadConnector || {}; window.leadConnector.contactId = ${JSON.stringify(activeContactId)}; window.LCWidget = window.LCWidget || {}; window.LCWidget.contactId = ${JSON.stringify(activeContactId)};`
+      ? `window.leadConnector = window.leadConnector || {}; window.leadConnector.contactId = ${contactJson}; window.LCWidget = window.LCWidget || {}; window.LCWidget.contactId = ${contactJson};`
+      : '';
+    const identifyScript = activeContactId
+      ? `<script>
+(() => {
+  const CONTACT_ID = ${contactJson};
+  const EMAIL = 'demo-' + CONTACT_ID + '@junie.ai';
+  const payload = { email: EMAIL, name: 'Demo Session', contactId: CONTACT_ID };
+  const identify = () => {
+    try {
+      if (window.LeadConnector && typeof window.LeadConnector.identify === 'function') {
+        window.LeadConnector.identify(payload);
+        return true;
+      }
+      if (window.LCWidget && typeof window.LCWidget.identify === 'function') {
+        window.LCWidget.identify(payload);
+        return true;
+      }
+    } catch (e) {}
+    return false;
+  };
+  window.addEventListener('message', (e) => {
+    const t = e && e.data && e.data.type;
+    if (t === 'LC_WIDGET_READY' || t === 'lc_widget_ready' || t === 'leadconnector:ready') identify();
+  });
+  let tries = 0;
+  const iv = setInterval(() => { tries++; if (identify() || tries > 60) clearInterval(iv); }, 300);
+})();
+</script>`
       : '';
     return `
 <!doctype html>
@@ -56,6 +85,8 @@ const AiDemoPage = () => {
 </style>
 <script>${identity}</script>
 </head><body>${embed}
+${identifyScript}
+
 
 <script>
 (() => {
