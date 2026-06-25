@@ -277,7 +277,7 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
 
   // Poll status until discovery completes
   let discoveredUrls: string[] = [];
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 20; i++) {
     await new Promise((r) => setTimeout(r, 3000));
     const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId });
     if (operationId) qs.set('operationId', operationId);
@@ -365,12 +365,8 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
     }]);
   if (sessionError) throw sessionError;
 
-  const training = await trainKnowledgeBaseWebsite(kbId, url, locationId);
-  const doc = training.trained
-    ? `Knowledge base trained from ${url}. Ingested ${training.trainedUrls.length} page(s):\n- ${training.trainedUrls.join('\n- ')}`
-    : `Knowledge base created for ${url}; training did not complete.`;
-
-  // Create an agent that references this KB, then clone + attach the chat widget.
+  // Create the agent + clone the chat widget FIRST so the demo is usable
+  // even if KB website training takes a long time (or stalls in polling).
   let agentId: string | null = null;
   let widgetId: string | null = null;
   let widgetEmbed: string | null = null;
@@ -378,10 +374,11 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
     agentId = await createAgent({
       locationId,
       name: `Demo Agent - ${fallbackName}`,
-      knowledgeDoc: doc,
+      knowledgeDoc: `Knowledge base for ${url} is being trained. Use the attached GHL knowledge base for facts.`,
       businessName: fallbackName,
       websiteUrl: url,
     });
+    console.log('Agent created:', agentId);
   } catch (e) {
     console.warn('Agent create failed (non-fatal):', e);
   }
@@ -394,6 +391,7 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
     });
     widgetId = widget.id;
     widgetEmbed = widget.embed;
+    console.log('Widget cloned:', widgetId);
   } catch (e) {
     console.warn('Widget create failed (non-fatal):', e);
   }
@@ -401,11 +399,21 @@ const processDemoKnowledgeBase = async (params: { url: string; locationId: strin
   await supa
     .from('demo_sessions')
     .update({
-      knowledge_doc: doc,
       ghl_agent_id: agentId,
       ghl_widget_id: widgetId,
       widget_embed: widgetEmbed,
     })
+    .eq('ghl_kb_id', kbId);
+
+  // Now do the slow KB website training in the background.
+  const training = await trainKnowledgeBaseWebsite(kbId, url, locationId);
+  const doc = training.trained
+    ? `Knowledge base trained from ${url}. Ingested ${training.trainedUrls.length} page(s):\n- ${training.trainedUrls.join('\n- ')}`
+    : `Knowledge base created for ${url}; training did not complete.`;
+
+  await supa
+    .from('demo_sessions')
+    .update({ knowledge_doc: doc })
     .eq('ghl_kb_id', kbId);
 };
 
