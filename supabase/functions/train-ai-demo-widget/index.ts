@@ -292,7 +292,8 @@ const processDemo = async (params: { url: string; locationId: string; requestedC
 
   const fallbackName = getFallbackBusinessName(url);
   const kbName = requestedContactId || `Demo KB - ${fallbackName} - ${new Date().toISOString()}`;
-  const agentName = requestedContactId ? `Demo Agent - ${requestedContactId}` : `Demo Agent - ${fallbackName}`;
+  const agentSuffix = requestedContactId ? ` - ${requestedContactId}` : '';
+  const agentName = `${fallbackName}${agentSuffix}`;
 
   // STEP 1: Create the per-demo agent with placeholder instructions so GET works immediately.
   const placeholder = buildAgentInstructions(fallbackName, url, `Knowledge for ${url} is still being assembled. If asked something specific, offer to have a team member follow up.`);
@@ -338,6 +339,7 @@ const processDemo = async (params: { url: string; locationId: string; requestedC
       businessName = summary.businessName || fallbackName;
       if (agentId) {
         const upd = await updateAgent(agentId, locationId, {
+          name: `${businessName}${agentSuffix}`,
           businessName,
           instructions: buildAgentInstructions(businessName, url, knowledgeDoc),
         });
