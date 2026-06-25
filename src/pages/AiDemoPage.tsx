@@ -46,6 +46,26 @@ const AiDemoPage = () => {
     const identity = activeContactId
       ? `window.leadConnector = window.leadConnector || {}; window.leadConnector.contactId = ${contactJson}; window.LCWidget = window.LCWidget || {}; window.LCWidget.contactId = ${contactJson};`
       : '';
+    // Wipe per-origin storage so each demo session starts with a fresh GHL
+    // visitor/conversation rather than reusing whatever the prior demo cached.
+    const storageReset = `<script>
+(() => {
+  try { localStorage.clear(); } catch (e) {}
+  try { sessionStorage.clear(); } catch (e) {}
+  try {
+    document.cookie.split(';').forEach((c) => {
+      const eq = c.indexOf('=');
+      const name = (eq > -1 ? c.substr(0, eq) : c).trim();
+      if (name) document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    });
+  } catch (e) {}
+  try {
+    if (window.indexedDB && indexedDB.databases) {
+      indexedDB.databases().then((dbs) => dbs.forEach((d) => d && d.name && indexedDB.deleteDatabase(d.name))).catch(() => {});
+    }
+  } catch (e) {}
+})();
+</script>`;
     const identifyScript = activeContactId
       ? `<script>
 (() => {
@@ -74,6 +94,7 @@ const AiDemoPage = () => {
 })();
 </script>`
       : '';
+
     return `
 <!doctype html>
 <html><head><meta charset="utf-8"/>
@@ -83,6 +104,7 @@ const AiDemoPage = () => {
   chat-widget{ transform: scale(0.78); transform-origin: bottom right; }
   chat-widget[data-active="true"]{ transform: scale(0.78); transform-origin: bottom right; }
 </style>
+${storageReset}
 <script>${identity}</script>
 </head><body>${embed}
 ${identifyScript}
@@ -373,6 +395,7 @@ ${identifyScript}
                 )}
                 {activeWidget && (
                   <iframe
+                    key={activeContactId || 'widget'}
                     ref={widgetFrameRef}
                     title="Chat Widget"
                     srcDoc={widgetSrcDoc}
