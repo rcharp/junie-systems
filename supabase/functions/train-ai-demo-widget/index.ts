@@ -322,8 +322,7 @@ const processDemo = async (params: { url: string; locationId: string; requestedC
       knowledgeDoc = summary.doc;
       businessName = summary.businessName || fallbackName;
       if (agentId) {
-        const upd = await updateAgent(agentId, {
-          locationId,
+        const upd = await updateAgent(agentId, locationId, {
           businessName,
           instructions: buildAgentInstructions(businessName, url, knowledgeDoc),
         });
