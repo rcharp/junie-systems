@@ -104,6 +104,32 @@ const AiDemoPage = () => {
   chat-widget{ transform: scale(0.78); transform-origin: bottom right; }
   chat-widget[data-active="true"]{ transform: scale(0.78); transform-origin: bottom right; }
 </style>
+<script>
+(() => {
+  // Hide the widget's "prompt/teaser" speech bubble that appears above the launcher.
+  const CSS = \`
+    [class*="prompt"], [class*="Prompt"],
+    [class*="teaser"], [class*="Teaser"],
+    [class*="greeting"], [class*="Greeting"],
+    [class*="preview"], [class*="Preview"],
+    [class*="bubble-message"], [class*="message-preview"],
+    .lc_text-widget--prompt, .lc-prompt, .lc-teaser { display: none !important; }
+  \`;
+  const inject = (root) => {
+    if (!root || root.__juniePromptHidden) return;
+    root.__juniePromptHidden = true;
+    const s = document.createElement('style');
+    s.textContent = CSS;
+    root.appendChild(s);
+  };
+  const tick = () => {
+    const cw = document.querySelector('chat-widget');
+    if (cw && cw.shadowRoot) inject(cw.shadowRoot);
+  };
+  setInterval(tick, 250);
+  tick();
+})();
+</script>
 ${storageReset}
 <script>${identity}</script>
 </head><body>${embed}
