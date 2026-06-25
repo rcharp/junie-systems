@@ -391,10 +391,9 @@ ${identifyScript}
                   </div>
                 )}
                 {!activeUrl && (
-                  <div className="absolute inset-0 pt-9 flex items-center justify-center text-muted-foreground text-sm p-6 text-center">
-                    Your personalized demo is loading…
+                  <div className="absolute inset-0 pt-9 flex items-center justify-center bg-white">
+                    <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                   </div>
-
                 )}
                 {activeWidget && (
                   <iframe
