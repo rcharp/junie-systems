@@ -292,7 +292,7 @@ const processDemo = async (params: { url: string; locationId: string; requestedC
 
   const fallbackName = getFallbackBusinessName(url);
   const websiteLabel = (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } })();
-  const kbName = requestedContactId || `Demo KB - ${fallbackName} - ${new Date().toISOString()}`;
+  const kbName = `${websiteLabel}${requestedContactId ? ` - ${requestedContactId}` : ''}`;
   const agentSuffix = requestedContactId ? ` - ${requestedContactId}` : '';
   const agentName = `${websiteLabel}${agentSuffix}`;
 
