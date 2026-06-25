@@ -215,8 +215,13 @@ const scheduleBackground = (promise: Promise<unknown>) => {
 };
 
 const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: string) => {
+  // Crawler endpoints require Version: v3 per
+  // https://marketplace.gohighlevel.com/docs/ghl/knowledge-base/train-discovered-urls
+  const v3Headers = { Version: 'v3' };
+
   const discoverRes = await ghlFetch(`/knowledge-bases/crawler`, {
     method: 'POST',
+    headers: v3Headers,
     body: JSON.stringify({ knowledgeBaseId: kbId, url, locationId, option: 'Domain' }),
   });
   if (!discoverRes.ok) {
@@ -224,8 +229,14 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
     return { discovered: false, trained: false, trainedUrls: [] as string[] };
   }
   const discoverBody: any = discoverRes.body || {};
-  const operationId: string | undefined = discoverBody.operationId || discoverBody.data?.operationId;
+  const operationId: string | undefined =
+    discoverBody.operationId || discoverBody.data?.operationId || discoverBody._id || discoverBody.id;
   console.log('KB discover ok, operationId:', operationId);
+
+  if (!operationId) {
+    console.warn('KB discover returned no operationId; cannot poll or train.');
+    return { discovered: true, trained: false, trainedUrls: [] as string[] };
+  }
 
   let discoveredUrls: string[] = [];
   let urlIds: string[] = [];
@@ -234,40 +245,44 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
   const collectUrls = (arr: any[]): string[] =>
     arr.map((u: any) => (typeof u === 'string' ? u : (u?.url || u?.link))).filter(Boolean);
 
-  for (let i = 0; i < 20; i++) {
-    await new Promise((r) => setTimeout(r, 3000));
-    const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId });
-    if (operationId) qs.set('operationId', operationId);
-    const statusRes = await ghlFetch(`/knowledge-bases/crawler/status?${qs.toString()}`, { method: 'GET' });
+  let finalStatus = '';
+  for (let i = 0; i < 30; i++) {
+    await new Promise((r) => setTimeout(r, 4000));
+    const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId, operationId });
+    const statusRes = await ghlFetch(`/knowledge-bases/crawler/status?${qs.toString()}`, {
+      method: 'GET',
+      headers: v3Headers,
+    });
     const b: any = statusRes.body || {};
     const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
+    finalStatus = status;
     const arr: any[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls
       || b.links || b.data?.links || b.documents || b.data?.documents || b.docs || b.data?.docs || [];
     if (Array.isArray(arr) && arr.length) {
       discoveredUrls = collectUrls(arr);
       urlIds = collectIds(arr);
     }
-    console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length} ids=${urlIds.length} body=${JSON.stringify(b).slice(0, 300)}`);
+    console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length} ids=${urlIds.length}`);
     if (['complete', 'completed', 'done', 'success', 'finished'].includes(status) && urlIds.length) break;
     if (['failed', 'error'].includes(status)) break;
   }
 
   if (!urlIds.length) {
-    console.warn('KB train skipped: no urlIds discovered');
+    console.warn(`KB train skipped: no urlIds discovered (status=${finalStatus})`);
     return { discovered: true, trained: false, trainedUrls: [] as string[] };
   }
 
-  const trainBody: Record<string, unknown> = { knowledgeBaseId: kbId, locationId, urlIds };
-  if (operationId) trainBody.operationId = operationId;
-
+  const trainBody = { knowledgeBaseId: kbId, locationId, operationId, urlIds };
   const trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
     method: 'POST',
+    headers: v3Headers,
     body: JSON.stringify(trainBody),
   });
   if (!trainRes.ok) {
     console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
     return { discovered: true, trained: false, trainedUrls: [] as string[] };
   }
+  console.log(`KB trained ${urlIds.length} urls successfully`);
   return { discovered: true, trained: true, trainedUrls: discoveredUrls };
 };
 
