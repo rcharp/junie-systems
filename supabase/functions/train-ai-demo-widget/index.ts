@@ -288,14 +288,24 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
   }
 
   const trainBody = { knowledgeBaseId: kbId, locationId, operationId, urlIds };
-  const trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
+  let trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
     method: 'POST',
     headers: v3Headers,
     body: JSON.stringify(trainBody),
   });
   if (!trainRes.ok) {
-    console.warn('KB train failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
-    return { discovered: true, trained: false, trainedUrls: [] as string[] };
+    console.warn('KB train (urlIds) failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
+    // Fallback: some tenants expect `urls` array of strings instead of `urlIds`.
+    const fallbackBody = { knowledgeBaseId: kbId, locationId, operationId, urls: discoveredUrls };
+    trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
+      method: 'POST',
+      headers: v3Headers,
+      body: JSON.stringify(fallbackBody),
+    });
+    if (!trainRes.ok) {
+      console.warn('KB train (urls) failed:', trainRes.status, JSON.stringify(trainRes.body).slice(0, 400));
+      return { discovered: true, trained: false, trainedUrls: [] as string[] };
+    }
   }
   console.log(`KB trained ${urlIds.length} urls successfully`);
   return { discovered: true, trained: true, trainedUrls: discoveredUrls };
