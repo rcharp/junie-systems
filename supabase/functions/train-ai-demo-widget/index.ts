@@ -193,13 +193,13 @@ const setAgentPrimary = async (agentId: string, locationId: string) => {
       const id = a?.id || a?._id;
       if (!id || id === agentId) continue;
       if (a?.isPrimary) {
-        await updateAgent(id, { isPrimary: false, locationId });
+        await updateAgent(id, locationId, { isPrimary: false });
       }
     }
   } catch (e) {
     console.warn('Listing agents to clear primary failed (non-fatal):', e);
   }
-  const r = await updateAgent(agentId, { isPrimary: true, locationId });
+  const r = await updateAgent(agentId, locationId, { isPrimary: true });
   if (!r.ok) console.warn('Set primary failed:', r.status, JSON.stringify(r.body).slice(0, 300));
   return r.ok;
 };
