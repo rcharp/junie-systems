@@ -291,9 +291,10 @@ const processDemo = async (params: { url: string; locationId: string; requestedC
   const supa = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   const fallbackName = getFallbackBusinessName(url);
+  const websiteLabel = (() => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; } })();
   const kbName = requestedContactId || `Demo KB - ${fallbackName} - ${new Date().toISOString()}`;
   const agentSuffix = requestedContactId ? ` - ${requestedContactId}` : '';
-  const agentName = `${fallbackName}${agentSuffix}`;
+  const agentName = `${websiteLabel}${agentSuffix}`;
 
   // STEP 1: Create the per-demo agent with placeholder instructions so GET works immediately.
   const placeholder = buildAgentInstructions(fallbackName, url, `Knowledge for ${url} is still being assembled. If asked something specific, offer to have a team member follow up.`);
