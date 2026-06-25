@@ -228,6 +228,12 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
   console.log('KB discover ok, operationId:', operationId);
 
   let discoveredUrls: string[] = [];
+  let urlIds: string[] = [];
+  const collectIds = (arr: any[]): string[] =>
+    arr.map((u: any) => (typeof u === 'string' ? u : (u?._id || u?.id || u?.urlId))).filter(Boolean);
+  const collectUrls = (arr: any[]): string[] =>
+    arr.map((u: any) => (typeof u === 'string' ? u : (u?.url || u?.link))).filter(Boolean);
+
   for (let i = 0; i < 20; i++) {
     await new Promise((r) => setTimeout(r, 3000));
     const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId });
@@ -235,18 +241,23 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
     const statusRes = await ghlFetch(`/knowledge-bases/crawler/status?${qs.toString()}`, { method: 'GET' });
     const b: any = statusRes.body || {};
     const status = (b.status || b.state || b.data?.status || '').toString().toLowerCase();
-    const urls: string[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls || b.links || b.data?.links || [];
-    if (Array.isArray(urls) && urls.length) {
-      discoveredUrls = urls.map((u: any) => (typeof u === 'string' ? u : u?.url)).filter(Boolean);
+    const arr: any[] = b.urls || b.data?.urls || b.discoveredUrls || b.data?.discoveredUrls
+      || b.links || b.data?.links || b.documents || b.data?.documents || b.docs || b.data?.docs || [];
+    if (Array.isArray(arr) && arr.length) {
+      discoveredUrls = collectUrls(arr);
+      urlIds = collectIds(arr);
     }
-    console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length}`);
-    if (['complete', 'completed', 'done', 'success', 'finished'].includes(status)) break;
+    console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length} ids=${urlIds.length} body=${JSON.stringify(b).slice(0, 300)}`);
+    if (['complete', 'completed', 'done', 'success', 'finished'].includes(status) && urlIds.length) break;
     if (['failed', 'error'].includes(status)) break;
   }
 
-  if (!discoveredUrls.length) discoveredUrls = [url];
+  if (!urlIds.length) {
+    console.warn('KB train skipped: no urlIds discovered');
+    return { discovered: true, trained: false, trainedUrls: [] as string[] };
+  }
 
-  const trainBody: Record<string, unknown> = { knowledgeBaseId: kbId, locationId, urls: discoveredUrls };
+  const trainBody: Record<string, unknown> = { knowledgeBaseId: kbId, locationId, urlIds };
   if (operationId) trainBody.operationId = operationId;
 
   const trainRes = await ghlFetch(`/knowledge-bases/crawler/train`, {
