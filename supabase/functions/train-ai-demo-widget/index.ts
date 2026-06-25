@@ -194,10 +194,10 @@ const createChatWidget = async (params: { locationId: string; name: string; agen
   const { locationId, name, agentId } = params;
 
   // 1) Clone the template widget.
-  const cloneRes = await ghlFetch(`/chat-widget/clone/${locationId}/${TEMPLATE_WIDGET_ID}`, {
+  const cloneRes = await ghlFetch(`/chat-widget/clone`, {
     method: 'POST',
-    headers: { Version: '2021-07-28' },
-    body: JSON.stringify({ name }),
+    headers: { Version: '2021-04-15' },
+    body: JSON.stringify({ locationId, chatWidgetId: TEMPLATE_WIDGET_ID, name }),
   });
   if (!cloneRes.ok) throw new Error(`Widget clone failed ${cloneRes.status}: ${JSON.stringify(cloneRes.body).slice(0, 400)}`);
   const id = pickId(cloneRes.body);
