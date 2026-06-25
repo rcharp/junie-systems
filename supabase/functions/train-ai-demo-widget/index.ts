@@ -250,8 +250,11 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
   let lastIdCount = 0;
   const DONE = ['complete', 'completed', 'done', 'success', 'finished', 'crawled', 'discovered', 'ready'];
   const FAIL = ['failed', 'error', 'errored'];
-  for (let i = 0; i < 75; i++) {
-    await new Promise((r) => setTimeout(r, 4000));
+  // Poll every 2s for up to ~5 minutes; train as soon as crawl is ready.
+  const POLL_INTERVAL_MS = 2000;
+  const MAX_POLLS = 150;
+  for (let i = 0; i < MAX_POLLS; i++) {
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     const qs = new URLSearchParams({ knowledgeBaseId: kbId, locationId, operationId });
     const statusRes = await ghlFetch(`/knowledge-bases/crawler/status?${qs.toString()}`, {
       method: 'GET',
@@ -269,10 +272,10 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
     console.log(`KB status poll ${i + 1} [${statusRes.status}]: status=${status} urls=${discoveredUrls.length} ids=${urlIds.length}`);
     if (FAIL.includes(status)) break;
     if (DONE.includes(status) && urlIds.length) break;
-    // Fallback: if urlId count is non-zero and unchanged for 4 consecutive polls (~16s), assume crawl is done.
+    // Fallback: if urlId count is non-zero and unchanged for 5 consecutive polls (~10s), assume crawl is done.
     if (urlIds.length > 0 && urlIds.length === lastIdCount) {
       stableCount++;
-      if (stableCount >= 4) {
+      if (stableCount >= 5) {
         console.log(`KB crawl appears stable at ${urlIds.length} urls (status=${status}); proceeding to train.`);
         break;
       }
@@ -281,6 +284,7 @@ const trainKnowledgeBaseWebsite = async (kbId: string, url: string, locationId: 
       lastIdCount = urlIds.length;
     }
   }
+
 
   if (!urlIds.length) {
     console.warn(`KB train skipped: no urlIds discovered (status=${finalStatus})`);
