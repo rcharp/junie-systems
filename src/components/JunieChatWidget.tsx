@@ -27,19 +27,25 @@ export default function JunieChatWidget(props: Props) {
 
 function JunieChatWidgetInner({ contactId, businessName, accent = '#4F46E5', embedded = false }: Props) {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<'chat' | 'voice'>('chat');
+  const [mode, setMode] = useState<'chooser' | 'chat' | 'voice'>('chooser');
+  const greeting = `Thanks for reaching out to ${businessName || 'us'}, how can I help?`;
   const [messages, setMessages] = useState<Msg[]>([
-    { role: 'assistant', content: `Hi! 👋 How can I help you today?` },
+    { role: 'assistant', content: greeting },
   ]);
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // Reset on contact change
+  // Reset chat thread when contact or business name changes
   useEffect(() => {
-    setMessages([{ role: 'assistant', content: `Hi! 👋 How can I help you today?` }]);
-  }, [contactId]);
+    setMessages([{ role: 'assistant', content: `Thanks for reaching out to ${businessName || 'us'}, how can I help?` }]);
+  }, [contactId, businessName]);
+
+  // Reset to chooser whenever the widget is reopened
+  useEffect(() => {
+    if (open) setMode('chooser');
+  }, [open]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
