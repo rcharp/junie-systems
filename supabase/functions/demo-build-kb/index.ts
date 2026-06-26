@@ -37,8 +37,8 @@ async function fetchPage(url: string): Promise<string> {
     const ct = r.headers.get('content-type') || '';
     if (r.ok && ct.includes('text/html')) {
       const html = await r.text();
-      const textLen = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().length;
-      if (textLen > 500) return html;
+      // Measure visible text (after stripping scripts/styles) so SPA shells fall through to Browserless
+      if (htmlToText(html).length > 400) return html;
     }
   } catch {}
 
