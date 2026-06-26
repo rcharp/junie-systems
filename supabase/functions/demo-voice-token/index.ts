@@ -13,31 +13,14 @@ async function buildPromptForContact(contactId: string): Promise<{ prompt: strin
   const { data: session } = await sb.from('demo_sessions').select('*').eq('ghl_contact_id', contactId).maybeSingle();
   const businessName = session?.business_name || 'this business';
   const url = session?.prospect_url || '';
-
-  // Grab a broad sample of KB chunks (newest 30) to embed in the agent prompt
-  const { data: chunks } = await sb
-    .from('kb_chunks')
-    .select('content,url')
-    .eq('contact_id', contactId)
-    .limit(30);
-
-  let kb = '';
-  if (chunks?.length) {
-    // Cap total prompt size
-    let acc = '';
-    for (const c of chunks) {
-      if (acc.length + c.content.length > 18000) break;
-      acc += `\n---\n${c.content}`;
-    }
-    kb = acc;
-  }
+  const kb = (session?.knowledge_doc || '').slice(0, 20000);
 
   const prompt = `You are a friendly, helpful AI phone assistant for ${businessName}${url ? ` (${url})` : ''}.
 Talk like a real team member — warm, concise, conversational. Keep replies short (1-3 sentences).
 Only use information from the Knowledge Base below. If a question isn't covered, politely say so and offer to take their info so the team can follow up. Never mention "knowledge base" or that you're an AI.
 
 Knowledge Base:
-${kb || '(no info indexed yet — answer general questions politely and offer to connect them with the team.)'}`;
+${kb || '(Knowledge base is still being built — answer general questions politely and offer to connect them with the team.)'}`;
 
   const firstMessage = `Hi! Thanks for calling ${businessName}. How can I help you today?`;
   return { prompt, firstMessage, businessName };

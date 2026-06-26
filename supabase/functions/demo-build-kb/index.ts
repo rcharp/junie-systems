@@ -6,11 +6,11 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
 
-const MAX_PAGES = 25;
-const CHUNK_SIZE = 1200;
-const CHUNK_OVERLAP = 150;
+const MAX_PAGES = 40;
 const BLOG_RE = /\/(blog|posts?|news|articles?|tag|category|author)(\/|$)/i;
 const ASSET_RE = /\.(jpg|jpeg|png|gif|svg|webp|pdf|zip|mp4|mp3|css|js|ico|woff2?)(\?|$)/i;
+const MAX_CHARS_PER_PAGE = 6000;
+const MAX_TOTAL_CHARS = 120000;
 
 const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
@@ -27,15 +27,6 @@ function htmlToText(html: string): string {
     .replace(/&gt;/g, '>')
     .replace(/\s+/g, ' ')
     .trim();
-}
-
-function chunkText(text: string, url: string): { content: string; url: string }[] {
-  const out: { content: string; url: string }[] = [];
-  for (let i = 0; i < text.length; i += CHUNK_SIZE - CHUNK_OVERLAP) {
-    const slice = text.slice(i, i + CHUNK_SIZE).trim();
-    if (slice.length > 100) out.push({ content: `Source: ${url}\n\n${slice}`, url });
-  }
-  return out;
 }
 
 async function fetchPage(url: string): Promise<string> {
@@ -78,7 +69,7 @@ async function crawlSite(startUrl: string): Promise<{ url: string; text: string 
     const html = await fetchPage(url);
     if (!html) continue;
     const text = htmlToText(html);
-    if (text.length > 200) pages.push({ url, text });
+    if (text.length > 200) pages.push({ url, text: text.slice(0, MAX_CHARS_PER_PAGE) });
     for (const link of extractLinks(html, base)) {
       if (!seen.has(link) && seen.size < MAX_PAGES * 3) {
         seen.add(link);
@@ -89,54 +80,69 @@ async function crawlSite(startUrl: string): Promise<{ url: string; text: string 
   return pages;
 }
 
-async function embedBatch(inputs: string[]): Promise<number[][]> {
-  const r = await fetch('https://ai.gateway.lovable.dev/v1/embeddings', {
+async function summarizeBusiness(url: string, pages: { url: string; text: string }[]): Promise<string> {
+  let combined = '';
+  for (const p of pages) {
+    const block = `\n\n=== ${p.url} ===\n${p.text}`;
+    if (combined.length + block.length > MAX_TOTAL_CHARS) break;
+    combined += block;
+  }
+
+  const system = `You are a research analyst building a knowledge base for an AI receptionist. Extract every concrete fact about the business from the crawled pages. Output a detailed, well-organized markdown document the AI will use to answer customer questions.
+
+Required sections (omit a section only if truly nothing was found):
+# Business Overview
+# Services Offered  (bullet every service, with any details/sub-services)
+# Pricing  (any prices, packages, fees, minimums, financing)
+# Service Areas  (cities, regions, ZIPs, radius)
+# Hours of Operation
+# Contact & Booking  (phone, email, address, booking links)
+# About / Team
+# Guarantees & Policies  (warranties, satisfaction, insurance, licenses)
+# FAQ  (every question/answer you can infer from the site)
+# Other Notable Info
+
+Rules:
+- Be exhaustive. Capture specifics: numbers, prices, brand names, certifications, response times.
+- Use only facts from the source text. Do NOT invent.
+- Keep it scannable: short bullets, clear headings.`;
+
+  const user = `Source website: ${url}\n\nCrawled pages:\n${combined}`;
+
+  const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'openai/text-embedding-3-small', input: inputs }),
+    body: JSON.stringify({
+      model: 'google/gemini-2.5-pro',
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    }),
   });
-  if (!r.ok) throw new Error(`Embed failed: ${r.status} ${await r.text()}`);
+  if (!r.ok) throw new Error(`Summarize failed: ${r.status} ${await r.text()}`);
   const j = await r.json();
-  return j.data.map((d: any) => d.embedding);
+  return j.choices?.[0]?.message?.content ?? '';
 }
 
 async function processDemo(contactId: string, url: string, businessName: string) {
+  console.log(`[demo-build-kb] starting ${contactId} ${url}`);
   const pages = await crawlSite(url);
-  console.log(`[demo-build-kb] crawled ${pages.length} pages for ${contactId}`);
-
-  // Delete previous chunks for this contact
-  await sb.from('kb_chunks').delete().eq('contact_id', contactId);
-
-  const allChunks: { content: string; url: string }[] = [];
-  for (const p of pages) {
-    allChunks.push(...chunkText(p.text, p.url));
-  }
-  console.log(`[demo-build-kb] ${allChunks.length} chunks`);
-
-  // Embed in batches of 32
-  const BATCH = 32;
-  for (let i = 0; i < allChunks.length; i += BATCH) {
-    const batch = allChunks.slice(i, i + BATCH);
-    const embeddings = await embedBatch(batch.map((c) => c.content));
-    const rows = batch.map((c, idx) => ({
-      contact_id: contactId,
-      url: c.url,
-      content: c.content,
-      embedding: embeddings[idx] as any,
-    }));
-    const { error } = await sb.from('kb_chunks').insert(rows);
-    if (error) console.error('[demo-build-kb] insert error', error);
-  }
-
-  await sb.from('demo_sessions').upsert(
-    {
-      ghl_contact_id: contactId,
-      prospect_url: url,
-      business_name: businessName,
+  console.log(`[demo-build-kb] crawled ${pages.length} pages`);
+  if (!pages.length) {
+    await sb.from('demo_sessions').update({
+      knowledge_doc: `(Could not crawl ${url})`,
       updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'ghl_contact_id' },
-  );
+    }).eq('ghl_contact_id', contactId);
+    return;
+  }
+  const doc = await summarizeBusiness(url, pages);
+  console.log(`[demo-build-kb] knowledge_doc ${doc.length} chars`);
+  await sb.from('demo_sessions').update({
+    knowledge_doc: doc,
+    business_name: businessName,
+    updated_at: new Date().toISOString(),
+  }).eq('ghl_contact_id', contactId);
   console.log(`[demo-build-kb] done ${contactId}`);
 }
 
@@ -149,8 +155,14 @@ Deno.serve(async (req) => {
       if (!contactId) return Response.json({ ok: false, error: 'contact_id required' }, { status: 400, headers: corsHeaders });
       const { data } = await sb.from('demo_sessions').select('*').eq('ghl_contact_id', contactId).maybeSingle();
       if (!data) return Response.json({ ok: false, error: 'session not found' }, { status: 404, headers: corsHeaders });
-      const { count } = await sb.from('kb_chunks').select('*', { count: 'exact', head: true }).eq('contact_id', contactId);
-      return Response.json({ ok: true, contactId, url: data.prospect_url, businessName: data.business_name, chunks: count ?? 0 }, { headers: corsHeaders });
+      return Response.json({
+        ok: true,
+        contactId,
+        url: data.prospect_url,
+        businessName: data.business_name,
+        ready: !!data.knowledge_doc,
+        knowledgeChars: data.knowledge_doc?.length ?? 0,
+      }, { headers: corsHeaders });
     }
 
     const body = await req.json();
@@ -162,9 +174,15 @@ Deno.serve(async (req) => {
     const url = /^https?:\/\//i.test(rawUrl) ? rawUrl : `https://${rawUrl}`;
     const businessName = new URL(url).hostname.replace(/^www\./, '');
 
-    // Insert/upsert immediately so GET works
+    // Upsert row immediately so the demo can load while crawl runs
     await sb.from('demo_sessions').upsert(
-      { ghl_contact_id: contactId, prospect_url: url, business_name: businessName, updated_at: new Date().toISOString() },
+      {
+        ghl_contact_id: contactId,
+        prospect_url: url,
+        business_name: businessName,
+        knowledge_doc: null,
+        updated_at: new Date().toISOString(),
+      },
       { onConflict: 'ghl_contact_id' },
     );
 
