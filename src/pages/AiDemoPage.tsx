@@ -1,19 +1,14 @@
 // @ts-nocheck
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowLeft, Globe, Sparkles, Check, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import JunieChatWidget from '@/components/JunieChatWidget';
 
-
-const buildWidgetScript = (widgetId: string) =>
-  `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="${widgetId}"></script>`;
-
 type Step = 'idle' | 'crawling' | 'training' | 'pushing' | 'loading' | 'ready' | 'error';
+
 
 const STEP_FLOW: { key: Step; label: string }[] = [
   { key: 'crawling', label: 'Crawling website' },
