@@ -203,23 +203,41 @@ function JunieChatWidgetInner({ contactId, businessName, accent = '#4F46E5', emb
             </button>
           </div>
 
-          {/* Mode tabs */}
-          <div className="flex border-b border-gray-100 text-sm">
-            <button
-              onClick={() => setMode('chat')}
-              className={`flex-1 py-2 font-medium ${mode === 'chat' ? 'text-gray-900 border-b-2' : 'text-gray-500'}`}
-              style={mode === 'chat' ? { borderColor: accent } : {}}
-            >
-              <MessageCircle className="w-4 h-4 inline mr-1" /> Chat
-            </button>
-            <button
-              onClick={() => setMode('voice')}
-              className={`flex-1 py-2 font-medium ${mode === 'voice' ? 'text-gray-900 border-b-2' : 'text-gray-500'}`}
-              style={mode === 'voice' ? { borderColor: accent } : {}}
-            >
-              <Phone className="w-4 h-4 inline mr-1" /> Voice
-            </button>
-          </div>
+          {/* Back button when inside a mode */}
+          {mode !== 'chooser' && (
+            <div className="flex items-center border-b border-gray-100 text-sm bg-white">
+              <button
+                onClick={() => setMode('chooser')}
+                className="flex items-center gap-1 px-3 py-2 text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4" /> Try the other one
+              </button>
+            </div>
+          )}
+
+          {mode === 'chooser' && (
+            <div className="flex-1 flex flex-col items-center justify-center gap-5 p-6 bg-gray-50 text-center">
+              <div>
+                <div className="text-base font-semibold text-gray-900">Choose a demo</div>
+                <div className="text-sm text-gray-500 mt-1">Try our Live Chat or Voice Agent</div>
+              </div>
+              <div className="flex flex-col gap-3 w-full max-w-[240px]">
+                <button
+                  onClick={() => setMode('chat')}
+                  className="w-full py-3 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 shadow"
+                  style={{ background: accent }}
+                >
+                  <MessageCircle className="w-4 h-4" /> Live Chat
+                </button>
+                <button
+                  onClick={() => setMode('voice')}
+                  className="w-full py-3 rounded-xl bg-white border border-gray-200 text-gray-900 text-sm font-semibold flex items-center justify-center gap-2 hover:bg-gray-50"
+                >
+                  <Phone className="w-4 h-4" /> Voice Agent
+                </button>
+              </div>
+            </div>
+          )}
 
           {mode === 'chat' && (
             <>
@@ -286,12 +304,19 @@ function JunieChatWidgetInner({ contactId, businessName, accent = '#4F46E5', emb
           {mode === 'voice' && (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6 bg-gray-50 text-center">
               <div
-                className={`w-24 h-24 rounded-full flex items-center justify-center text-white shadow-lg transition-transform ${
-                  conversation.isSpeaking ? 'animate-pulse scale-110' : ''
+                className={`w-28 h-28 rounded-full overflow-hidden shadow-lg ring-4 transition-transform ${
+                  conversation.isSpeaking ? 'animate-pulse scale-105' : ''
                 }`}
-                style={{ background: accent }}
+                style={{ '--tw-ring-color': accent, boxShadow: `0 0 0 4px ${accent}33` } as any}
               >
-                {conversation.status === 'connected' ? <Mic className="w-10 h-10" /> : <Phone className="w-10 h-10" />}
+                <img
+                  src={receptionistImg}
+                  alt="Receptionist"
+                  width={512}
+                  height={512}
+                  loading="lazy"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="text-sm text-gray-700">
                 {voiceStarting && 'Connecting…'}
@@ -316,7 +341,7 @@ function JunieChatWidgetInner({ contactId, businessName, accent = '#4F46E5', emb
                 </button>
               )}
               <p className="text-[11px] text-gray-400 max-w-[260px]">
-                Allow microphone access when prompted. Powered by ElevenLabs.
+                Allow microphone access when prompted.
               </p>
             </div>
           )}
