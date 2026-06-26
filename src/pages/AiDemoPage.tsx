@@ -212,15 +212,15 @@ const AiDemoPage = () => {
                     <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                   </div>
                 )}
-                {activeWidget && (
-                  <iframe
-                    key={activeContactId || 'widget'}
-                    ref={widgetFrameRef}
-                    title="Chat Widget"
-                    srcDoc={widgetSrcDoc}
-                    className={`absolute bottom-0 right-0 z-20 border-0 bg-transparent transition-[width,height] duration-200 ${widgetExpanded ? 'h-full w-full' : 'h-[104px] w-[104px]'}`}
+                {activeContactId && (
+                  <JunieChatWidget
+                    key={activeContactId}
+                    contactId={activeContactId}
+                    businessName={businessName}
+                    embedded
                   />
                 )}
+
               </div>
             </div>
           </div>
