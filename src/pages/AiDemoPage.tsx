@@ -171,54 +171,8 @@ const AiDemoPage = () => {
               </div>
             )}
 
-            {step === 'ready' && (knowledgeDoc || agentId) && (
-              <Card className="border-primary/30">
-                <CardContent className="p-4 space-y-3">
-                  <div className="text-sm font-semibold text-foreground">
-                    Finish setup in GHL
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Copy the generated knowledge doc and paste it into the agent's Knowledge Base in GHL.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          await navigator.clipboard.writeText(knowledgeDoc || '');
-                          toast({ title: 'Copied', description: 'Knowledge doc copied to clipboard.' });
-                        } catch {
-                          toast({ title: 'Copy failed', variant: 'destructive' });
-                        }
-                      }}
-                      disabled={!knowledgeDoc}
-                    >
-                      Copy knowledge doc
-                    </Button>
-                    {locationId && agentId && (
-                      <a
-                        href={`https://app.gohighlevel.com/v2/location/${locationId}/conversation-ai/agents/${agentId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button size="sm">Open agent in GHL</Button>
-                      </a>
-                    )}
-                    {locationId && (
-                      <a
-                        href={`https://app.gohighlevel.com/v2/location/${locationId}/knowledge-base`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Button size="sm" variant="secondary">Open Knowledge Base</Button>
-                      </a>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
+
 
 
 
