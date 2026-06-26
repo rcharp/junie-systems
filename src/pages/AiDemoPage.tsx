@@ -231,7 +231,103 @@ const AiDemoPage = () => {
         </div>
       </main>
 
-      <div className="fixed bottom-4 left-4 z-50">
+      <DemoDebugPanel />
+    </div>
+  );
+};
+
+const DemoDebugPanel = () => {
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [rows, setRows] = useState<any[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('demo_sessions')
+      .select('id,ghl_contact_id,prospect_url,business_name,knowledge_doc,ghl_kb_id,ghl_widget_id,ghl_agent_id,created_at,updated_at')
+      .order('created_at', { ascending: false });
+    setLoading(false);
+    if (error) {
+      toast({ title: 'Load failed', description: error.message, variant: 'destructive' });
+      return;
+    }
+    setRows(data || []);
+  };
+
+  const toggle = async () => {
+    const next = !open;
+    setOpen(next);
+    if (next && !rows) await load();
+  };
+
+  return (
+    <div className="fixed bottom-4 left-4 z-50 flex flex-col gap-2 items-start max-w-[95vw]">
+      {open && (
+        <div className="bg-white border border-gray-300 rounded-lg shadow-xl p-3 w-[900px] max-w-[95vw] max-h-[70vh] overflow-auto">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-semibold">Stored demo sessions {rows ? `(${rows.length})` : ''}</div>
+            <Button size="sm" variant="outline" onClick={load} disabled={loading}>
+              {loading ? 'Loading…' : 'Refresh'}
+            </Button>
+          </div>
+          {loading && !rows ? (
+            <div className="text-xs text-gray-500 p-4">Loading…</div>
+          ) : (
+            <table className="w-full text-xs">
+              <thead className="text-left text-gray-600 border-b">
+                <tr>
+                  <th className="py-1 pr-2">Contact ID</th>
+                  <th className="py-1 pr-2">Website</th>
+                  <th className="py-1 pr-2">Business</th>
+                  <th className="py-1 pr-2">KB chars</th>
+                  <th className="py-1 pr-2">Created</th>
+                  <th className="py-1 pr-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {(rows || []).map((r) => {
+                  const isOpen = expandedId === r.id;
+                  return (
+                    <>
+                      <tr key={r.id} className="border-b align-top">
+                        <td className="py-1 pr-2 font-mono">{r.ghl_contact_id}</td>
+                        <td className="py-1 pr-2 break-all">{r.prospect_url}</td>
+                        <td className="py-1 pr-2">{r.business_name}</td>
+                        <td className="py-1 pr-2">{r.knowledge_doc?.length ?? 0}</td>
+                        <td className="py-1 pr-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString()}</td>
+                        <td className="py-1 pr-2">
+                          <button className="text-blue-600 underline" onClick={() => setExpandedId(isOpen ? null : r.id)}>
+                            {isOpen ? 'Hide' : 'View'}
+                          </button>
+                        </td>
+                      </tr>
+                      {isOpen && (
+                        <tr>
+                          <td colSpan={6} className="py-2 pr-2">
+                            <div className="text-[11px] text-gray-600 mb-1">
+                              kb_id: {r.ghl_kb_id || '—'} · widget_id: {r.ghl_widget_id || '—'} · agent_id: {r.ghl_agent_id || '—'}
+                            </div>
+                            <pre className="whitespace-pre-wrap bg-gray-50 border rounded p-2 max-h-[40vh] overflow-auto text-[11px]">
+{r.knowledge_doc || '(empty)'}
+                            </pre>
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  );
+                })}
+                {rows && rows.length === 0 && (
+                  <tr><td colSpan={6} className="py-3 text-center text-gray-500">No demos yet</td></tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+      <div className="flex gap-2">
         <Button
           variant="destructive"
           size="sm"
@@ -249,6 +345,9 @@ const AiDemoPage = () => {
           }}
         >
           Clear All
+        </Button>
+        <Button variant="secondary" size="sm" onClick={toggle}>
+          {open ? 'Hide Data' : 'View Data'}
         </Button>
       </div>
     </div>
