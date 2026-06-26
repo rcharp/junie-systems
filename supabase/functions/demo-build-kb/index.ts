@@ -5,6 +5,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
+const BROWSERLESS_API_KEY = Deno.env.get('BROWSERLESS_API_KEY') || '';
 
 const MAX_PAGES = 40;
 const BLOG_RE = /\/(blog|posts?|news|articles?|tag|category|author)(\/|$)/i;
@@ -30,13 +31,31 @@ function htmlToText(html: string): string {
 }
 
 async function fetchPage(url: string): Promise<string> {
+  // Try plain fetch first (fast). If body is tiny (SPA shell), fall back to Browserless.
   try {
     const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 JunieDemoBot' } });
-    if (!r.ok) return '';
     const ct = r.headers.get('content-type') || '';
-    if (!ct.includes('text/html')) return '';
+    if (r.ok && ct.includes('text/html')) {
+      const html = await r.text();
+      const textLen = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().length;
+      if (textLen > 500) return html;
+    }
+  } catch {}
+
+  if (!BROWSERLESS_API_KEY) return '';
+  try {
+    const r = await fetch(`https://production-sfo.browserless.io/content?token=${BROWSERLESS_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, waitFor: 1500, gotoOptions: { waitUntil: 'networkidle2', timeout: 25000 } }),
+    });
+    if (!r.ok) {
+      console.error('[demo-build-kb] browserless', url, r.status, await r.text().catch(() => ''));
+      return '';
+    }
     return await r.text();
-  } catch {
+  } catch (e) {
+    console.error('[demo-build-kb] browserless err', url, e);
     return '';
   }
 }
