@@ -1,0 +1,1 @@
+ALTER TABLE public.demo_sessions ADD CONSTRAINT demo_sessions_ghl_contact_id_key UNIQUE (ghl_contact_id);
