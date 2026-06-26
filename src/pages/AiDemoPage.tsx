@@ -221,6 +221,7 @@ const AiDemoPage = () => {
                     key={activeContactId}
                     contactId={activeContactId}
                     businessName={businessName}
+                    accent="#1E6BFF"
                     embedded
                   />
                 )}
