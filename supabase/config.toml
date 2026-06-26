@@ -12,3 +12,14 @@ verify_jwt = false
 [functions.ghl-chat-webhook]
 verify_jwt = false
 
+[functions.demo-build-kb]
+verify_jwt = false
+
+[functions.demo-chat]
+verify_jwt = false
+
+[functions.demo-voice-token]
+verify_jwt = false
+
+
+

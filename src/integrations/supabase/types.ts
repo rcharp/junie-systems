@@ -89,6 +89,33 @@ export type Database = {
         }
         Relationships: []
       }
+      kb_chunks: {
+        Row: {
+          contact_id: string
+          content: string
+          created_at: string
+          embedding: string
+          id: string
+          url: string | null
+        }
+        Insert: {
+          contact_id: string
+          content: string
+          created_at?: string
+          embedding: string
+          id?: string
+          url?: string | null
+        }
+        Update: {
+          contact_id?: string
+          content?: string
+          created_at?: string
+          embedding?: string
+          id?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       pipeline_companies: {
         Row: {
           audio_url: string | null
@@ -205,6 +232,19 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      match_kb_chunks: {
+        Args: {
+          match_contact_id: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          id: string
+          similarity: number
+          url: string
+        }[]
       }
     }
     Enums: {
