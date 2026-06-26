@@ -7,6 +7,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ArrowLeft, Globe, Sparkles, Check, Loader2, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import JunieChatWidget from '@/components/JunieChatWidget';
+
 
 const buildWidgetScript = (widgetId: string) =>
   `<script src="https://widgets.leadconnectorhq.com/loader.js" data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js" data-widget-id="${widgetId}"></script>`;
@@ -28,12 +30,10 @@ const AiDemoPage = () => {
   const presetWebsite = searchParams.get('website') || searchParams.get('url') || '';
   const [urlInput, setUrlInput] = useState(presetWebsite || '');
   const [activeUrl, setActiveUrl] = useState<string>('');
-  const [activeWidget, setActiveWidget] = useState<string>('');
   const [activeContactId, setActiveContactId] = useState<string>('');
-  const [knowledgeDoc, setKnowledgeDoc] = useState<string>('');
-  const [locationId, setLocationId] = useState<string>('');
-  const [agentId, setAgentId] = useState<string>('');
+  const [businessName, setBusinessName] = useState<string>('');
   const [widgetExpanded, setWidgetExpanded] = useState(false);
+
   const [step, setStep] = useState<Step>('idle');
   const [error, setError] = useState<string>('');
   const [result, setResult] = useState<any>(null);
@@ -186,7 +186,6 @@ ${identifyScript}
   const train = async () => {
     setError('');
     setResult(null);
-    setActiveWidget('');
     setActiveContactId('');
     setWidgetExpanded(false);
     const url = normalizeUrl(urlInput);
@@ -195,49 +194,37 @@ ${identifyScript}
 
     setStep('crawling');
     const stageTimer = setTimeout(() => setStep('training'), 1500);
-    const stageTimer2 = setTimeout(() => setStep('pushing'), 6000);
 
     try {
-      const { data, error: fnError } = await supabase.functions.invoke('train-ai-demo-widget', {
-        body: { url, ...(presetContactId ? { contactId: presetContactId } : {}) },
+      const contactId = presetContactId || `demo-${Date.now().toString(36)}`;
+      const { data, error: fnError } = await supabase.functions.invoke('demo-build-kb', {
+        body: { url, contactId },
       });
       clearTimeout(stageTimer);
-      clearTimeout(stageTimer2);
-
       if (fnError) throw new Error(fnError.message);
       if (!data?.ok) throw new Error(data?.error || 'Training failed');
 
       setResult(data);
-      setStep('loading');
-      setTimeout(() => {
-        if (data.contactId) setActiveContactId(data.contactId);
-        if (data.knowledgeDoc) setKnowledgeDoc(data.knowledgeDoc);
-        if (data.locationId) setLocationId(data.locationId);
-        if (data.agentId) setAgentId(data.agentId);
-        const embed = data.widgetEmbed || (data.widgetId ? buildWidgetScript(data.widgetId) : '');
-        if (!embed) throw new Error('No widget embed returned');
-        setActiveWidget(embed);
-        setStep('ready');
-      }, 600);
+      setActiveContactId(data.contactId);
+      setBusinessName(data.businessName || '');
+      setStep('ready');
     } catch (e: any) {
       clearTimeout(stageTimer);
-      clearTimeout(stageTimer2);
       setStep('error');
       setError(e?.message ?? String(e));
       toast({ title: 'Training failed', description: e?.message ?? 'Try a different URL.', variant: 'destructive' });
     }
   };
 
-  // Load an existing session by contact_id/website without re-training.
+  // Load an existing session by contact_id without re-training.
   const loadExisting = async () => {
     try {
       setStep('loading');
       const qs = new URLSearchParams();
       if (presetContactId) qs.set('contact_id', presetContactId);
-      if (presetWebsite) qs.set('website', normalizeUrl(presetWebsite));
       const base = (import.meta as any).env?.VITE_SUPABASE_URL;
       const anon = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const res = await fetch(`${base}/functions/v1/train-ai-demo-widget?${qs.toString()}`, {
+      const res = await fetch(`${base}/functions/v1/demo-build-kb?${qs.toString()}`, {
         method: 'GET',
         headers: { apikey: anon, Authorization: `Bearer ${anon}` },
       });
@@ -245,12 +232,7 @@ ${identifyScript}
       if (!res.ok || !data?.ok) throw new Error(data?.error || 'Session not found');
       setActiveUrl(data.url);
       setActiveContactId(data.contactId || '');
-      if (data.knowledgeDoc) setKnowledgeDoc(data.knowledgeDoc);
-      if (data.locationId) setLocationId(data.locationId);
-      if (data.agentId) setAgentId(data.agentId);
-      const embed = data.widgetEmbed || (data.widgetId ? buildWidgetScript(data.widgetId) : '');
-      if (!embed) throw new Error('No widget embed for this session');
-      setActiveWidget(embed);
+      setBusinessName(data.businessName || '');
       setStep('ready');
       return true;
     } catch (e: any) {
@@ -259,21 +241,20 @@ ${identifyScript}
     }
   };
 
-  // Auto-load (or fall back to auto-train) when query params are present.
+  // Auto-load when query params are present.
   const autoStartedRef = useRef(false);
   useEffect(() => {
     if (autoStartedRef.current) return;
     if (!presetContactId && !presetWebsite) return;
     autoStartedRef.current = true;
-    // Optimistically show the website + widget immediately so nothing pops in late.
     if (presetWebsite) setActiveUrl(normalizeUrl(presetWebsite));
-    if (presetContactId) setActiveContactId(presetContactId);
-    setActiveWidget(buildWidgetScript('6a3be0987de81c3360287a78'));
-    (async () => {
-      await loadExisting();
-    })();
+    if (presetContactId) {
+      setActiveContactId(presetContactId);
+      (async () => { await loadExisting(); })();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
 
   const isWorking = ['crawling', 'training', 'pushing', 'loading'].includes(step);
   const currentIdx = STEP_FLOW.findIndex((s) => s.key === step);
