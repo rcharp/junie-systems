@@ -16,7 +16,15 @@ interface Props {
   embedded?: boolean;
 }
 
-export default function JunieChatWidget({ contactId, businessName, accent = '#4F46E5', embedded = false }: Props) {
+export default function JunieChatWidget(props: Props) {
+  return (
+    <ConversationProvider>
+      <JunieChatWidgetInner {...props} />
+    </ConversationProvider>
+  );
+}
+
+function JunieChatWidgetInner({ contactId, businessName, accent = '#4F46E5', embedded = false }: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'chat' | 'voice'>('chat');
   const [messages, setMessages] = useState<Msg[]>([
