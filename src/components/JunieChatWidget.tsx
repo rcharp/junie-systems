@@ -1,9 +1,10 @@
 // @ts-nocheck
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { MessageCircle, X, Send, Mic, MicOff, Phone } from 'lucide-react';
+import { MessageCircle, X, Send, Mic, MicOff, Phone, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { useConversation, ConversationProvider } from '@elevenlabs/react';
 import { supabase } from '@/integrations/supabase/client';
+import receptionistImg from '@/assets/receptionist.jpg';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
