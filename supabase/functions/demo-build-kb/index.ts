@@ -42,20 +42,27 @@ async function fetchPage(url: string): Promise<string> {
     }
   } catch {}
 
-  if (!BROWSERLESS_API_KEY) return '';
+  if (!BROWSERLESS_API_KEY) { console.warn('[demo-build-kb] no BROWSERLESS key, skipping render', url); return ''; }
+  console.log('[demo-build-kb] browserless fallback', url);
   try {
     const r = await fetch(`https://production-sfo.browserless.io/content?token=${BROWSERLESS_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, waitFor: 1500, gotoOptions: { waitUntil: 'networkidle2', timeout: 25000 } }),
+      body: JSON.stringify({
+        url,
+        gotoOptions: { waitUntil: 'networkidle2', timeout: 30000 },
+        waitForTimeout: 2000,
+      }),
     });
     if (!r.ok) {
-      console.error('[demo-build-kb] browserless', url, r.status, await r.text().catch(() => ''));
+      console.error('[demo-build-kb] browserless', url, r.status, (await r.text().catch(() => '')).slice(0, 300));
       return '';
     }
-    return await r.text();
+    const html = await r.text();
+    console.log('[demo-build-kb] browserless ok', url, html.length);
+    return html;
   } catch (e) {
-    console.error('[demo-build-kb] browserless err', url, e);
+    console.error('[demo-build-kb] browserless err', url, String(e));
     return '';
   }
 }
