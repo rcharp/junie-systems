@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { MessageCircle, X, Send, Mic, MicOff, Phone } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import { useConversation } from '@elevenlabs/react';
+import { useConversation, ConversationProvider } from '@elevenlabs/react';
 import { supabase } from '@/integrations/supabase/client';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -16,7 +16,15 @@ interface Props {
   embedded?: boolean;
 }
 
-export default function JunieChatWidget({ contactId, businessName, accent = '#4F46E5', embedded = false }: Props) {
+export default function JunieChatWidget(props: Props) {
+  return (
+    <ConversationProvider>
+      <JunieChatWidgetInner {...props} />
+    </ConversationProvider>
+  );
+}
+
+function JunieChatWidgetInner({ contactId, businessName, accent = '#4F46E5', embedded = false }: Props) {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<'chat' | 'voice'>('chat');
   const [messages, setMessages] = useState<Msg[]>([

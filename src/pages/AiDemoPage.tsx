@@ -111,7 +111,16 @@ const AiDemoPage = () => {
     if (presetWebsite) setActiveUrl(normalizeUrl(presetWebsite));
     if (presetContactId) {
       setActiveContactId(presetContactId);
-      (async () => { await loadExisting(); })();
+      (async () => {
+        const found = await loadExisting();
+        if (!found && presetWebsite) {
+          setUrlInput(presetWebsite);
+          await train();
+        }
+      })();
+    } else if (presetWebsite) {
+      setUrlInput(presetWebsite);
+      (async () => { await train(); })();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
