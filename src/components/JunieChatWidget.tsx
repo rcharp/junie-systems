@@ -285,7 +285,7 @@ function JunieChatWidgetInner({ contactId, businessName, accent = '#4F46E5', emb
                   }}
                   placeholder="Type a message..."
                   rows={1}
-                  className="flex-1 resize-none border border-gray-200 rounded-2xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-0 max-h-24"
+                  className="flex-1 resize-none border border-gray-200 rounded-2xl px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 bg-white focus:outline-none focus:ring-2 focus:ring-offset-0 max-h-24"
                   style={{ '--tw-ring-color': accent } as any}
                 />
                 <button
